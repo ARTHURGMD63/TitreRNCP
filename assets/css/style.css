@@ -25,6 +25,22 @@
 
 html { font-size: 16px; scroll-behavior: smooth; }
 
+/* ── SPA Transitions ─────────────────────────────────────────────────────── */
+.app-shell {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+body { overflow-x: hidden; }
+
+/* Prevent flash on tap (mobile) */
+* { -webkit-tap-highlight-color: transparent; }
+
+/* Bottom nav tap feedback */
+.nav-item { transition: opacity 120ms ease; }
+.nav-item:active { opacity: 0.6; }
+
 body {
   font-family: 'DM Sans', sans-serif;
   background: var(--bg);

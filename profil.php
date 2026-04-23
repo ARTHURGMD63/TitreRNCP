@@ -288,6 +288,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profil'])) {
 </nav>
 
 <div class="toast" id="toast"></div>
+<script src="/assets/js/router.js"></script>
 <script src="/assets/js/app.js"></script>
 </body>
 </html>
