@@ -288,6 +288,7 @@ $currentMonth = strtoupper($moisFr[date('F')] ?? date('F'));
 
 <div class="toast" id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="/assets/js/router.js"></script>
 <script src="/assets/js/app.js"></script>
 </body>
 </html>

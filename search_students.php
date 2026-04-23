@@ -166,6 +166,7 @@ if (!$q) {
 </nav>
 
 <div class="toast" id="toast"></div>
+<script src="/assets/js/router.js"></script>
 <script src="/assets/js/app.js"></script>
 </body>
 </html>
