@@ -1,6 +1,8 @@
 -- StudentLink Database Setup
+-- Local: creates 'studentlink' DB | Railway: uses existing 'railway' DB
 CREATE DATABASE IF NOT EXISTS studentlink CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE studentlink;
+-- If on Railway, run: USE railway; instead of the two lines above
 
 CREATE TABLE IF NOT EXISTS users (
     id INT PRIMARY KEY AUTO_INCREMENT,

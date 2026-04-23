@@ -10,7 +10,7 @@ $stmt->execute([$uid]);
 $etab = $stmt->fetch();
 
 if (!$etab) {
-    echo "<p>Aucun établissement trouvé. <a href='/TitreRNCP/auth/logout.php'>Déconnexion</a></p>";
+    echo "<p>Aucun établissement trouvé. <a href='/auth/logout.php'>Déconnexion</a></p>";
     exit;
 }
 
@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_event'])) {
     $eid = (int)$_POST['delete_event'];
     $stmt = $pdo->prepare("DELETE FROM evenements WHERE id=? AND etablissement_id=?");
     $stmt->execute([$eid, $etab['id']]);
-    header('Location: /TitreRNCP/partenaire/evenements.php?deleted=1');
+    header('Location: /partenaire/evenements.php?deleted=1');
     exit;
 }
 
@@ -43,7 +43,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Mes événements</title>
-<link rel="stylesheet" href="/TitreRNCP/assets/css/style.css">
+<link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>
 <div class="partner-shell">
@@ -55,20 +55,20 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
       </div>
     </div>
     <nav class="sidebar-nav">
-      <a href="/TitreRNCP/partenaire/dashboard.php" class="sidebar-link">
+      <a href="/partenaire/dashboard.php" class="sidebar-link">
         <span class="icon">📊</span> Dashboard
       </a>
-      <a href="/TitreRNCP/partenaire/evenements.php" class="sidebar-link active">
+      <a href="/partenaire/evenements.php" class="sidebar-link active">
         <span class="icon">🎉</span> Événements
       </a>
-      <a href="/TitreRNCP/partenaire/create_event.php" class="sidebar-link">
+      <a href="/partenaire/create_event.php" class="sidebar-link">
         <span class="icon">➕</span> Créer un event
       </a>
     </nav>
     <div class="sidebar-venue" style="margin-top:48px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.1);">
       <div class="sidebar-venue-name"><?= htmlspecialchars(strtoupper($etab['nom'])) ?></div>
       <div class="sidebar-venue-city"><?= htmlspecialchars($etab['ville']) ?></div>
-      <a href="/TitreRNCP/auth/logout.php" style="display:block;margin-top:12px;font-size:12px;color:rgba(255,255,255,0.4);text-decoration:none;">
+      <a href="/auth/logout.php" style="display:block;margin-top:12px;font-size:12px;color:rgba(255,255,255,0.4);text-decoration:none;">
         → Déconnexion
       </a>
     </div>
@@ -82,7 +82,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
           Mes <?= count($evenements) ?> événement<?= count($evenements)>1?'s':'' ?>
         </div>
       </div>
-      <a href="/TitreRNCP/partenaire/create_event.php" class="btn btn-primary">
+      <a href="/partenaire/create_event.php" class="btn btn-primary">
         + Créer un événement
       </a>
     </div>
@@ -112,7 +112,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
           <?php if (empty($evenements)): ?>
           <tr>
             <td colspan="8" style="text-align:center;padding:40px;color:var(--gris);">
-              Aucun événement. <a href="/TitreRNCP/partenaire/create_event.php" style="color:var(--bleu);font-weight:600;">Créez-en un !</a>
+              Aucun événement. <a href="/partenaire/create_event.php" style="color:var(--bleu);font-weight:600;">Créez-en un !</a>
             </td>
           </tr>
           <?php endif; ?>

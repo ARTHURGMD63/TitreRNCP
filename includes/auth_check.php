@@ -1,9 +1,16 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-function requireLogin(string $redirect = '/TitreRNCP/auth/login.php'): void {
+function baseUrl(string $path = ''): string {
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $isLocal = str_contains($host, 'localhost') || str_contains($host, '127.0.0.1');
+    $base = $isLocal ? '/TitreRNCP' : '';
+    return $base . $path;
+}
+
+function requireLogin(string $redirect = ''): void {
     if (empty($_SESSION['user_id'])) {
-        header('Location: ' . $redirect);
+        header('Location: ' . baseUrl('/auth/login.php'));
         exit;
     }
 }
@@ -11,7 +18,7 @@ function requireLogin(string $redirect = '/TitreRNCP/auth/login.php'): void {
 function requirePartner(): void {
     requireLogin();
     if ($_SESSION['user_type'] !== 'partenaire') {
-        header('Location: /TitreRNCP/explore.php');
+        header('Location: ' . baseUrl('/explore.php'));
         exit;
     }
 }
@@ -19,7 +26,7 @@ function requirePartner(): void {
 function requireStudent(): void {
     requireLogin();
     if ($_SESSION['user_type'] !== 'etudiant') {
-        header('Location: /TitreRNCP/partenaire/dashboard.php');
+        header('Location: ' . baseUrl('/partenaire/dashboard.php'));
         exit;
     }
 }

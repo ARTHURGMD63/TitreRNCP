@@ -11,7 +11,7 @@ $stmt->execute([$uid]);
 $etab = $stmt->fetch();
 
 if (!$etab) {
-    header('Location: /TitreRNCP/partenaire/evenements.php');
+    header('Location: /partenaire/evenements.php');
     exit;
 }
 
@@ -110,7 +110,7 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Dashboard Partenaire</title>
-<link rel="stylesheet" href="/TitreRNCP/assets/css/style.css">
+<link rel="stylesheet" href="/assets/css/style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
@@ -126,13 +126,13 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
     </div>
 
     <nav class="sidebar-nav">
-      <a href="/TitreRNCP/partenaire/dashboard.php" class="sidebar-link active">
+      <a href="/partenaire/dashboard.php" class="sidebar-link active">
         <span class="icon">📊</span> Dashboard
       </a>
-      <a href="/TitreRNCP/partenaire/evenements.php" class="sidebar-link">
+      <a href="/partenaire/evenements.php" class="sidebar-link">
         <span class="icon">🎉</span> Événements
       </a>
-      <a href="/TitreRNCP/partenaire/create_event.php" class="sidebar-link">
+      <a href="/partenaire/create_event.php" class="sidebar-link">
         <span class="icon">➕</span> Créer un event
       </a>
     </nav>
@@ -140,7 +140,7 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
     <div class="sidebar-venue" style="margin-top:48px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.1);">
       <div class="sidebar-venue-name"><?= htmlspecialchars(strtoupper($etab['nom'] ?? '')) ?></div>
       <div class="sidebar-venue-city"><?= htmlspecialchars($etab['ville'] ?? 'Clermont-Ferrand') ?></div>
-      <a href="/TitreRNCP/auth/logout.php" style="display:block;margin-top:12px;font-size:12px;color:rgba(255,255,255,0.4);text-decoration:none;">
+      <a href="/auth/logout.php" style="display:block;margin-top:12px;font-size:12px;color:rgba(255,255,255,0.4);text-decoration:none;">
         → Déconnexion
       </a>
     </div>
@@ -268,10 +268,10 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
             📷 Scanner un Pass
           </button>
           <?php endif; ?>
-          <a href="/TitreRNCP/partenaire/evenements.php" class="btn btn-outline btn-full">
+          <a href="/partenaire/evenements.php" class="btn btn-outline btn-full">
             Gérer les événements
           </a>
-          <a href="/TitreRNCP/partenaire/create_event.php" class="btn btn-primary btn-full">
+          <a href="/partenaire/create_event.php" class="btn btn-primary btn-full">
             + Créer un événement
           </a>
         </div>
@@ -298,7 +298,7 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
   </div>
 </div>
 
-<script src="/TitreRNCP/assets/js/app.js"></script>
+<script src="/assets/js/app.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const btnStart = document.getElementById('btn-start-scan');
@@ -361,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         html5QrcodeScanner.pause(true);
 
-        fetch('/TitreRNCP/partenaire/api_scan.php', {
+        fetch('/partenaire/api_scan.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ qr_code: decodedText, event_id: eventId })
