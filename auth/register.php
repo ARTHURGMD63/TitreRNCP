@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $loc = $type === 'partenaire'
                 ? '/partenaire/dashboard.php'
-                : '/explore.php';
+                : '/onboarding.php';
             header('Location: ' . $loc);
             exit;
         } catch (PDOException $e) {
