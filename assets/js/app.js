@@ -388,6 +388,31 @@ function initApp() {
   });
 }
 
+  // Event countdowns
+  document.querySelectorAll('.event-countdown').forEach(el => {
+    if (el._init) return; el._init = true;
+    const ts = parseInt(el.dataset.ts) * 1000;
+    function tickCountdown() {
+      const diff = ts - Date.now();
+      if (diff <= 0) { el.textContent = 'EN COURS'; return; }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      if (h > 48) {
+        const days = Math.floor(h / 24);
+        el.textContent = `dans ${days}j`;
+      } else if (h > 0) {
+        el.textContent = `dans ${h}h${m < 10 ? '0' : ''}${m}`;
+      } else {
+        el.textContent = `dans ${m}min${s < 10 ? '0' : ''}${s}s`;
+      }
+      setTimeout(tickCountdown, 1000);
+    }
+    tickCountdown();
+  });
+
+}
+
 // Auto-init on page load
 window.initApp = initApp;
 document.addEventListener('DOMContentLoaded', initApp);

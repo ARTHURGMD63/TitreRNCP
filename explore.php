@@ -213,6 +213,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
             <a href="view_event.php?id=<?= $e['id'] ?>" style="text-decoration:none; color:inherit; display:block;">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                 <div class="label" style="opacity:0.8;">CE SOIR · <?= date('H\hi', strtotime($e['date_heure'])) ?></div>
+                <span class="event-countdown" data-ts="<?= strtotime($e['date_heure']) ?>" style="font-size:10px;font-weight:800;color:rgba(255,255,255,0.9);letter-spacing:0.05em;display:block;margin-top:2px;"></span>
                 <div class="flash-badge" data-expiry="<?= $expiryTs ?>">FLASH</div>
               </div>
               <div class="event-title"><?= htmlspecialchars($e['titre']) ?></div>
@@ -252,9 +253,10 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
         <?php else: ?>
           <div class="event-card event-card-regular type-<?= $e['type'] ?>" style="margin-bottom:20px; position:relative;">
             <a href="view_event.php?id=<?= $e['id'] ?>" style="text-decoration:none; color:inherit; display:block;">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
                 <span class="event-meta"><?= strtoupper($typeLabels[$e['type']]) ?> · <?= date('D j M', strtotime($e['date_heure'])) ?></span>
                 <?php if ($e['is_gratuit']): ?><span class="badge badge-bar">GRATUIT</span><?php endif; ?>
+                <span class="event-countdown" data-ts="<?= strtotime($e['date_heure']) ?>" style="font-size:10px;font-weight:800;color:var(--rouge);letter-spacing:0.05em;"></span>
               </div>
               <div class="event-title" style="font-size:1.3rem; padding-right:80px;"><?= htmlspecialchars($e['titre']) ?></div>
               <div class="event-lieu"><?= htmlspecialchars($e['etablissement_nom']) ?></div>
