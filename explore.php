@@ -199,7 +199,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
       </div>
 
       <!-- Rich Event Cards (Restored Original Design) -->
-      <?php foreach ($evenements as $e): 
+      <?php $firstCard = true; foreach ($evenements as $e):
         $isFlash = $e['is_flash'] && strtotime($e['flash_expiry'] ?? '') > time();
         $isFull = $e['nb_inscrits'] >= $e['quota'];
         $pct = $e['quota'] > 0 ? round($e['nb_inscrits'] / $e['quota'] * 100) : 0;
@@ -213,11 +213,17 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
             <a href="view_event.php?id=<?= $e['id'] ?>" style="text-decoration:none; color:inherit; display:block;">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                 <div class="label" style="opacity:0.8;">CE SOIR · <?= date('H\hi', strtotime($e['date_heure'])) ?></div>
-                <span class="event-countdown" data-ts="<?= strtotime($e['date_heure']) ?>" style="font-size:10px;font-weight:800;color:rgba(255,255,255,0.9);letter-spacing:0.05em;display:block;margin-top:2px;"></span>
                 <div class="flash-badge" data-expiry="<?= $expiryTs ?>">FLASH</div>
               </div>
               <div class="event-title"><?= htmlspecialchars($e['titre']) ?></div>
               <div class="event-lieu"><?= htmlspecialchars($e['etablissement_nom']) ?> — <?= htmlspecialchars($e['ville']) ?></div>
+              <?php if ($firstCard): ?>
+              <div style="margin-top:14px;padding:10px 14px;background:rgba(0,0,0,0.25);border-radius:4px;display:flex;align-items:center;gap:10px;">
+                <svg width="16" height="16" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.05em;">Commence dans</span>
+                <span class="event-countdown" data-ts="<?= strtotime($e['date_heure']) ?>" style="font-size:20px;font-weight:900;color:#fff;letter-spacing:-0.02em;font-family:'DM Sans',sans-serif;">--:--:--</span>
+              </div>
+              <?php $firstCard = false; endif; ?>
             </a>
             
             <button class="btn-follow-etab" data-etab-id="<?= $e['etab_id'] ?>" data-following="<?= $isFollowedEtab?'1':'0' ?>"
@@ -253,10 +259,9 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
         <?php else: ?>
           <div class="event-card event-card-regular type-<?= $e['type'] ?>" style="margin-bottom:20px; position:relative;">
             <a href="view_event.php?id=<?= $e['id'] ?>" style="text-decoration:none; color:inherit; display:block;">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                 <span class="event-meta"><?= strtoupper($typeLabels[$e['type']]) ?> · <?= date('D j M', strtotime($e['date_heure'])) ?></span>
                 <?php if ($e['is_gratuit']): ?><span class="badge badge-bar">GRATUIT</span><?php endif; ?>
-                <span class="event-countdown" data-ts="<?= strtotime($e['date_heure']) ?>" style="font-size:10px;font-weight:800;color:var(--rouge);letter-spacing:0.05em;"></span>
               </div>
               <div class="event-title" style="font-size:1.3rem; padding-right:80px;"><?= htmlspecialchars($e['titre']) ?></div>
               <div class="event-lieu"><?= htmlspecialchars($e['etablissement_nom']) ?></div>
