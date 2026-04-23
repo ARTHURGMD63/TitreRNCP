@@ -13,15 +13,30 @@ $q = trim($_GET['q'] ?? '');
 // ── LOGIC FOR PEOPLE ────────────────────────────────────────────────────────
 $students = [];
 $myInterests = [];
+$filterEcole = trim($_GET['ecole'] ?? '');
+$filterInterest = trim($_GET['interest'] ?? '');
+$allEcoles = [];
+$allInterests = [];
+
 if ($view === 'people') {
     $stmt = $pdo->prepare("SELECT interests FROM users WHERE id = ?");
     $stmt->execute([$uid]);
     $me = $stmt->fetch();
     $myInterests = $me['interests'] ? explode(',', $me['interests']) : [];
 
+    // Get all distinct schools for filter
+    $stmtE = $pdo->query("SELECT DISTINCT ecole FROM users WHERE type='etudiant' AND ecole IS NOT NULL AND ecole != '' ORDER BY ecole");
+    $allEcoles = $stmtE->fetchAll(PDO::FETCH_COLUMN);
+
+    // Get all distinct interests for filter
+    $stmtI = $pdo->query("SELECT interests FROM users WHERE type='etudiant' AND interests IS NOT NULL AND interests != ''");
+    $rawInterests = $stmtI->fetchAll(PDO::FETCH_COLUMN);
+    $allInterests = array_unique(array_merge(...array_map(fn($i) => array_map('trim', explode(',', $i)), $rawInterests)));
+    sort($allInterests);
+
     $sqlP = "SELECT id, nom, prenom, ecole, promo, interests,
                     (SELECT COUNT(*) FROM follows_users fu WHERE fu.follower_id=? AND fu.followed_id=users.id) AS is_following
-             FROM users 
+             FROM users
              WHERE type='etudiant' AND id != ?";
     $paramsP = [$uid, $uid];
 
@@ -29,6 +44,14 @@ if ($view === 'people') {
         $sqlP .= " AND (nom LIKE ? OR prenom LIKE ? OR ecole LIKE ? OR interests LIKE ?)";
         $term = "%$q%";
         $paramsP[] = $term; $paramsP[] = $term; $paramsP[] = $term; $paramsP[] = $term;
+    }
+    if ($filterEcole) {
+        $sqlP .= " AND ecole = ?";
+        $paramsP[] = $filterEcole;
+    }
+    if ($filterInterest) {
+        $sqlP .= " AND FIND_IN_SET(?, REPLACE(interests, ', ', ',')) > 0";
+        $paramsP[] = $filterInterest;
     }
 
     $stmtP = $pdo->prepare($sqlP);
@@ -40,7 +63,7 @@ if ($view === 'people') {
         $common = array_intersect($myInterests, $sInterests);
         $s['common_interests'] = $common;
         $s['score'] = count($common);
-        
+
         $stmtSq = $pdo->prepare("
             SELECT COUNT(*) FROM squad_membres sm1
             JOIN squad_membres sm2 ON sm1.squad_id = sm2.squad_id
@@ -50,7 +73,7 @@ if ($view === 'people') {
         $s['shared_squads'] = $stmtSq->fetchColumn();
     }
 
-    if (!$q) {
+    if (!$q && !$filterEcole && !$filterInterest) {
         usort($students, function($a, $b) {
             if ($a['score'] === $b['score']) return $b['shared_squads'] <=> $a['shared_squads'];
             return $b['score'] <=> $a['score'];
@@ -303,15 +326,51 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
 
     <?php else: ?>
       <!-- People Section (Matching Original Design) -->
-      <form method="GET" style="margin-bottom:24px;">
+      <form method="GET" id="people-filters">
         <input type="hidden" name="view" value="people">
-        <div style="position:relative;">
-          <input type="text" name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Chercher un nom ou une passion..." 
-                 style="width:100%;padding:14px 16px;border:3px solid var(--noir);box-shadow:4px 4px 0 var(--noir);font-size:14px;outline:none;">
-          <button type="submit" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--noir);display:flex;align-items:center;justify-content:center;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+
+        <!-- Search -->
+        <div style="position:relative;margin-bottom:14px;">
+          <input type="text" name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Chercher un nom ou une passion..."
+                 style="width:100%;padding:14px 16px;border:3px solid var(--noir);box-shadow:4px 4px 0 var(--noir);font-size:14px;outline:none;background:var(--blanc);">
+          <button type="submit" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--noir);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           </button>
         </div>
+
+        <!-- Filter row -->
+        <div style="display:flex;gap:8px;margin-bottom:20px;">
+          <div style="flex:1;position:relative;">
+            <select name="ecole" onchange="this.form.submit()"
+                    style="width:100%;padding:10px 32px 10px 12px;border:2px solid var(--noir);background:<?= $filterEcole?'var(--noir)':'var(--blanc)' ?>;color:<?= $filterEcole?'var(--blanc)':'var(--noir)' ?>;font-size:12px;font-weight:700;appearance:none;cursor:pointer;">
+              <option value="">Toutes les écoles</option>
+              <?php foreach ($allEcoles as $e): ?>
+                <option value="<?= htmlspecialchars($e) ?>" <?= $filterEcole===$e?'selected':'' ?>><?= htmlspecialchars($e) ?></option>
+              <?php endforeach; ?>
+            </select>
+            <svg style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="<?= $filterEcole?'white':'var(--noir)' ?>" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+
+          <?php if (!empty($allInterests)): ?>
+          <div style="flex:1;position:relative;">
+            <select name="interest" onchange="this.form.submit()"
+                    style="width:100%;padding:10px 32px 10px 12px;border:2px solid var(--noir);background:<?= $filterInterest?'var(--bleu)':'var(--blanc)' ?>;color:<?= $filterInterest?'var(--blanc)':'var(--noir)' ?>;font-size:12px;font-weight:700;appearance:none;cursor:pointer;">
+              <option value="">Tous les intérêts</option>
+              <?php foreach ($allInterests as $int): ?>
+                <option value="<?= htmlspecialchars($int) ?>" <?= $filterInterest===$int?'selected':'' ?>>#<?= htmlspecialchars($int) ?></option>
+              <?php endforeach; ?>
+            </select>
+            <svg style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="<?= $filterInterest?'white':'var(--noir)' ?>" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <?php endif; ?>
+        </div>
+
+        <?php if ($filterEcole || $filterInterest || $q): ?>
+          <div style="margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:12px;font-weight:700;color:var(--gris);"><?= count($students) ?> résultat<?= count($students)>1?'s':'' ?></span>
+            <a href="?view=people" style="font-size:11px;font-weight:800;color:var(--rouge);text-transform:uppercase;letter-spacing:0.05em;text-decoration:none;">Réinitialiser</a>
+          </div>
+        <?php endif; ?>
       </form>
 
       <div style="display:flex;flex-direction:column;gap:16px;">
