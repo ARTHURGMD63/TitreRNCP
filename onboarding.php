@@ -336,7 +336,45 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
       </div>
     </div>
 
-    <!-- SLIDE 4 : Let's go -->
+    <!-- SLIDE 4 : Rencontres -->
+    <div class="onb-slide slide-4-meet" style="--meet-color: #F07820;">
+      <div class="onb-visual" style="background: var(--orange);">
+        <div class="onb-visual-inner" style="gap:10px;">
+          <!-- Profile cards stacked -->
+          <div style="position:relative;width:200px;height:140px;">
+            <div class="onb-mock-card" style="position:absolute;top:0;left:0;transform:rotate(-3deg);opacity:0.6;width:180px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:32px;height:32px;background:var(--bleu);border:2px solid var(--noir);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:var(--blanc);">L</div>
+                <div><div style="font-weight:800;font-size:13px;color:var(--noir);">Léa M.</div><div style="font-size:10px;color:var(--gris);">SIGMA · M1</div></div>
+              </div>
+            </div>
+            <div class="onb-mock-card" style="position:absolute;top:20px;left:10px;width:180px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:32px;height:32px;background:var(--rouge);border:2px solid var(--noir);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:var(--blanc);">A</div>
+                <div><div style="font-weight:800;font-size:13px;color:var(--noir);">Arthur M.</div><div style="font-size:10px;color:var(--gris);">UCA · L2</div></div>
+              </div>
+              <div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap;">
+                <span style="font-size:9px;background:var(--bleu-clair);color:var(--bleu);border:1px solid var(--bleu);padding:2px 6px;font-weight:700;">#running</span>
+                <span style="font-size:9px;background:var(--bleu-clair);color:var(--bleu);border:1px solid var(--bleu);padding:2px 6px;font-weight:700;">#bars</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="onb-stat stat-br" style="padding:10px 14px;">
+          <div>
+            <div class="onb-stat-num" style="color:var(--orange);">+24</div>
+            <div class="onb-stat-label">étudiants<br>près de toi</div>
+          </div>
+        </div>
+      </div>
+      <div class="onb-text">
+        <div class="onb-tag" style="color:var(--orange);">Rencontres</div>
+        <div class="onb-title">Trouve tes<br>futurs <em style="color:var(--orange);">potes.</em></div>
+        <div class="onb-desc">Découvre des étudiants qui partagent tes intérêts, vont aux mêmes événements que toi — et abonne-toi pour rester connecté.</div>
+      </div>
+    </div>
+
+    <!-- SLIDE 5 : Let's go -->
     <div class="onb-slide slide-4">
       <div class="onb-visual">
         <div class="onb-visual-inner">
@@ -374,6 +412,7 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
       <div class="onb-dot"></div>
       <div class="onb-dot"></div>
       <div class="onb-dot"></div>
+      <div class="onb-dot"></div>
     </div>
     <button class="onb-btn" id="next-btn" onclick="next()">
       Suivant
@@ -387,7 +426,7 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
 
 <script>
 let current = 0;
-const total = 4;
+const total = 5;
 const slides = document.getElementById('slides');
 const dots = document.querySelectorAll('.onb-dot');
 const btn = document.getElementById('next-btn');
