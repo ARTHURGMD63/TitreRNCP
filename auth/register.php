@@ -1,7 +1,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 if (!empty($_SESSION['user_id'])) {
-    header('Location: /TitreRNCP/index.php');
+    header('Location: /index.php');
     exit;
 }
 
@@ -52,8 +52,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_ecole']  = $ecole;
 
             $loc = $type === 'partenaire'
-                ? '/TitreRNCP/partenaire/dashboard.php'
-                : '/TitreRNCP/explore.php';
+                ? '/partenaire/dashboard.php'
+                : '/explore.php';
             header('Location: ' . $loc);
             exit;
         } catch (PDOException $e) {
@@ -71,7 +71,7 @@ $selectedType = $_POST['type'] ?? 'etudiant';
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Inscription</title>
-<link rel="stylesheet" href="/TitreRNCP/assets/css/style.css">
+<link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>
 <div class="auth-page" style="padding-top:24px;">
@@ -174,10 +174,10 @@ $selectedType = $_POST['type'] ?? 'etudiant';
   </form>
 
   <div class="auth-link">
-    Déjà un compte ? <a href="/TitreRNCP/auth/login.php">Se connecter</a>
+    Déjà un compte ? <a href="/auth/login.php">Se connecter</a>
   </div>
 </div>
 
-<script src="/TitreRNCP/assets/js/app.js"></script>
+<script src="/assets/js/app.js"></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 if (!empty($_SESSION['user_id'])) {
-    header('Location: /TitreRNCP/index.php');
+    header('Location: /index.php');
     exit;
 }
 
@@ -25,8 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_ecole']  = $user['ecole'];
 
             $loc = $user['type'] === 'partenaire'
-                ? '/TitreRNCP/partenaire/dashboard.php'
-                : '/TitreRNCP/explore.php';
+                ? '/partenaire/dashboard.php'
+                : '/explore.php';
             header('Location: ' . $loc);
             exit;
         } else {
@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Connexion</title>
-<link rel="stylesheet" href="/TitreRNCP/assets/css/style.css">
+<link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>
 <div class="auth-page">
@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </form>
 
   <div class="auth-link">
-    Pas encore de compte ? <a href="/TitreRNCP/auth/register.php">Créer un compte</a>
+    Pas encore de compte ? <a href="/auth/register.php">Créer un compte</a>
   </div>
 
   <div style="margin-top:32px; padding:16px; background:rgba(0,0,0,0.05); border-radius:6px; font-size:12px; color:var(--gris);">

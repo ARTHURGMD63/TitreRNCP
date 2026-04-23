@@ -59,10 +59,10 @@ $upcomingEvents = $stmtEv->fetchAll();
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= htmlspecialchars($u['prenom']) ?> — StudentLink</title>
-<link rel="stylesheet" href="/TitreRNCP/assets/css/style.css">
-<link rel="icon" type="image/png" href="/TitreRNCP/Logo.png">
-<link rel="apple-touch-icon" href="/TitreRNCP/Logo.png">
-<link rel="manifest" href="/TitreRNCP/manifest.json">
+<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="icon" type="image/png" href="/Logo.png">
+<link rel="apple-touch-icon" href="/Logo.png">
+<link rel="manifest" href="/manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="StudentLink">
@@ -226,6 +226,6 @@ $upcomingEvents = $stmtEv->fetchAll();
 </div>
 
 <div class="toast" id="toast"></div>
-<script src="/TitreRNCP/assets/js/app.js"></script>
+<script src="/assets/js/app.js"></script>
 </body>
 </html>

@@ -67,7 +67,7 @@ if (!$q) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Découvrir des étudiants</title>
-<link rel="stylesheet" href="/TitreRNCP/assets/css/style.css">
+<link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>
 <div class="app-shell">
@@ -138,7 +138,7 @@ if (!$q) {
       </div>
     <?php endif; ?>
 
-    <a href="/TitreRNCP/profil.php" class="btn btn-outline btn-full mt-24">
+    <a href="/profil.php" class="btn btn-outline btn-full mt-24">
       ← Retour à mon profil
     </a>
   </div>
@@ -147,25 +147,25 @@ if (!$q) {
 
 <!-- Bottom Nav -->
 <nav class="bottom-nav">
-  <a href="/TitreRNCP/explore.php" class="nav-item">
+  <a href="/explore.php" class="nav-item">
     <span class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></span>
     <span>Explore</span>
   </a>
-  <a href="/TitreRNCP/squads.php" class="nav-item">
+  <a href="/squads.php" class="nav-item">
     <span class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
     <span>Squads</span>
   </a>
-  <a href="/TitreRNCP/wallet.php" class="nav-item">
+  <a href="/wallet.php" class="nav-item">
     <span class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg></span>
     <span>Wallet</span>
   </a>
-  <a href="/TitreRNCP/profil.php" class="nav-item active">
+  <a href="/profil.php" class="nav-item active">
     <span class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
     <span>Moi</span>
   </a>
 </nav>
 
 <div class="toast" id="toast"></div>
-<script src="/TitreRNCP/assets/js/app.js"></script>
+<script src="/assets/js/app.js"></script>
 </body>
 </html>
