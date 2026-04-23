@@ -339,31 +339,32 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
     <!-- SLIDE 4 : Rencontres -->
     <div class="onb-slide slide-4-meet" style="--meet-color: #F07820;">
       <div class="onb-visual" style="background: var(--orange);">
-        <div class="onb-visual-inner" style="gap:10px;">
-          <!-- Profile cards stacked -->
-          <div style="position:relative;width:200px;height:140px;">
-            <div class="onb-mock-card" style="position:absolute;top:0;left:0;transform:rotate(-3deg);opacity:0.6;width:180px;">
+        <div class="onb-visual-inner" style="gap:12px;width:100%;padding:24px 28px;">
+          <div class="onb-mock-card" style="width:100%;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
               <div style="display:flex;align-items:center;gap:10px;">
-                <div style="width:32px;height:32px;background:var(--bleu);border:2px solid var(--noir);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:var(--blanc);">L</div>
-                <div><div style="font-weight:800;font-size:13px;color:var(--noir);">Léa M.</div><div style="font-size:10px;color:var(--gris);">SIGMA · M1</div></div>
+                <div style="width:36px;height:36px;background:var(--bleu);border:2px solid var(--noir);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:var(--blanc);flex-shrink:0;">L</div>
+                <div><div style="font-weight:800;font-size:14px;color:var(--noir);">Léa M.</div><div style="font-size:10px;color:var(--gris);">SIGMA · M1</div></div>
               </div>
+              <span style="font-size:9px;background:var(--noir);color:var(--blanc);padding:4px 8px;font-weight:800;">+ SUIVRE</span>
             </div>
-            <div class="onb-mock-card" style="position:absolute;top:20px;left:10px;width:180px;">
-              <div style="display:flex;align-items:center;gap:10px;">
-                <div style="width:32px;height:32px;background:var(--rouge);border:2px solid var(--noir);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:var(--blanc);">A</div>
-                <div><div style="font-weight:800;font-size:13px;color:var(--noir);">Arthur M.</div><div style="font-size:10px;color:var(--gris);">UCA · L2</div></div>
-              </div>
-              <div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap;">
-                <span style="font-size:9px;background:var(--bleu-clair);color:var(--bleu);border:1px solid var(--bleu);padding:2px 6px;font-weight:700;">#running</span>
-                <span style="font-size:9px;background:var(--bleu-clair);color:var(--bleu);border:1px solid var(--bleu);padding:2px 6px;font-weight:700;">#bars</span>
-              </div>
+            <div style="margin-top:8px;display:flex;gap:4px;">\
+              <span style="font-size:9px;background:var(--bleu-clair);color:var(--bleu);border:1px solid var(--bleu);padding:2px 6px;font-weight:700;">#muscu</span>
+              <span style="font-size:9px;background:var(--bleu-clair);color:var(--bleu);border:1px solid var(--bleu);padding:2px 6px;font-weight:700;">#boites</span>
             </div>
           </div>
-        </div>
-        <div class="onb-stat stat-br" style="padding:10px 14px;">
-          <div>
-            <div class="onb-stat-num" style="color:var(--orange);">+24</div>
-            <div class="onb-stat-label">étudiants<br>près de toi</div>
+          <div class="onb-mock-card" style="width:100%;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:36px;height:36px;background:var(--rouge);border:2px solid var(--noir);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:var(--blanc);flex-shrink:0;">A</div>
+                <div><div style="font-weight:800;font-size:14px;color:var(--noir);">Arthur M.</div><div style="font-size:10px;color:var(--gris);">UCA · L2</div></div>
+              </div>
+              <span style="font-size:9px;background:var(--noir);color:var(--blanc);padding:4px 8px;font-weight:800;">+ SUIVRE</span>
+            </div>
+            <div style="margin-top:8px;display:flex;gap:4px;">
+              <span style="font-size:9px;background:var(--bleu-clair);color:var(--bleu);border:1px solid var(--bleu);padding:2px 6px;font-weight:700;">#running</span>
+              <span style="font-size:9px;background:var(--bleu-clair);color:var(--bleu);border:1px solid var(--bleu);padding:2px 6px;font-weight:700;">#bars</span>
+            </div>
           </div>
         </div>
       </div>
