@@ -1,14 +1,17 @@
 <?php
-define('DB_HOST', 'sql100.infinityfree.com');
-define('DB_NAME', 'if0_40695033_safepass');
-define('DB_USER', 'if0_40695033'); // À vérifier sur ton panel InfinityFree
-define('DB_PASS', 'TON_MOT_DE_PASSE_INFINITY'); // Mets ton mot de passe vPanel ici
+// Railway or Local Database Configuration
+define('DB_HOST', getenv('MYSQLHOST') ?: 'localhost');
+define('DB_NAME', getenv('MYSQLDATABASE') ?: 'studentlink');
+define('DB_USER', getenv('MYSQLUSER') ?: 'root');
+define('DB_PASS', getenv('MYSQLPASSWORD') ?: '');
+define('DB_PORT', getenv('MYSQLPORT') ?: '3306');
 
 try {
     $pdo = new PDO(
-        "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
+        "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4",
         DB_USER,
-        DB_PASS
+        DB_PASS,
+        [PDO::ATTR_TIMEOUT => 10]
     );
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
