@@ -27,37 +27,16 @@ async function navigate(url, push = true) {
   const shell = document.querySelector('.app-shell');
   if (!shell) { location.href = url; return; }
 
-  // Animate out
-  shell.style.transition = 'transform 220ms cubic-bezier(0.4,0,0.2,1), opacity 180ms ease';
-  shell.style.transform = `translateX(${dir * -40}px)`;
-  shell.style.opacity = '0';
-
   try {
     const res = await fetch(url, { headers: { 'X-SPA': '1' } });
-    if (res.redirected) {
-      location.href = res.url;
-      return;
-    }
+    if (res.redirected) { location.href = res.url; return; }
     const html = await res.text();
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
-
     const newShell = doc.querySelector('.app-shell');
     const newTitle = doc.querySelector('title')?.textContent || '';
-
     if (!newShell) { location.href = url; return; }
 
-    // Prepare new content offscreen
-    newShell.style.transform = `translateX(${dir * 40}px)`;
-    newShell.style.opacity = '0';
-    newShell.style.transition = 'none';
-
-    await new Promise(r => setTimeout(r, 200));
-
-    shell.replaceWith(newShell);
-    document.title = newTitle;
-
-    // Copy new styles if any inline <style> tags differ
     doc.querySelectorAll('style').forEach(s => {
       if (!document.head.querySelector(`style[data-page="${targetPath}"]`)) {
         const clone = s.cloneNode(true);
@@ -66,23 +45,13 @@ async function navigate(url, push = true) {
       }
     });
 
-    // Animate in
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        newShell.style.transition = 'transform 220ms cubic-bezier(0.4,0,0.2,1), opacity 180ms ease';
-        newShell.style.transform = 'translateX(0)';
-        newShell.style.opacity = '1';
-      });
-    });
-
+    shell.replaceWith(newShell);
+    document.title = newTitle;
     if (push) history.pushState({ path: url }, '', url);
     currentPath = targetPath;
 
-    // Re-init page scripts
-    setTimeout(() => {
-      initPageScripts();
-      isNavigating = false;
-    }, 240);
+    initPageScripts();
+    isNavigating = false;
 
   } catch (e) {
     location.href = url;
