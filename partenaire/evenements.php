@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_event'])) {
     $eid = (int)$_POST['delete_event'];
     $stmt = $pdo->prepare("DELETE FROM evenements WHERE id=? AND etablissement_id=?");
     $stmt->execute([$eid, $etab['id']]);
-    header('Location: /partenaire/evenements.php?deleted=1');
+    header('Location: ' . baseUrl('/partenaire/evenements.php?deleted=1'));
     exit;
 }
 
