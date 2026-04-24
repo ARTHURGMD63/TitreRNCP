@@ -5,6 +5,7 @@ if (!empty($_SESSION['user_id'])) {
     exit;
 }
 
+require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/db.php';
 $error   = '';
 $success = '';
@@ -71,7 +72,7 @@ $selectedType = $_POST['type'] ?? 'etudiant';
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Inscription</title>
-<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="<?= baseUrl() ?>/assets/css/style.css">
 </head>
 <body>
 <div class="auth-page" style="padding-top:24px;">
@@ -178,6 +179,6 @@ $selectedType = $_POST['type'] ?? 'etudiant';
   </div>
 </div>
 
-<script src="/assets/js/app.js"></script>
+<script src="<?= baseUrl() ?>/assets/js/app.js"></script>
 </body>
 </html>

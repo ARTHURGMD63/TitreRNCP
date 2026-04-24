@@ -142,7 +142,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Hub</title>
-<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="<?= baseUrl() ?>/assets/css/style.css">
 <link rel="icon" type="image/png" href="/Logo.png">
 <link rel="apple-touch-icon" href="/Logo.png">
 <link rel="manifest" href="/manifest.json">
@@ -481,8 +481,9 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
 </div>
 
 <div class="toast" id="toast"></div>
-<script src="/assets/js/app.js"></script>
+<script src="<?= baseUrl() ?>/assets/js/app.js"></script>
 <script>
+const _BASE = location.hostname === 'localhost' || location.hostname === '127.0.0.1' ? '/TitreRNCP' : '';
 let inviteType = '', inviteTargetId = 0;
 
 function openInviteModal(type, targetId, targetName) {
@@ -508,7 +509,7 @@ document.querySelectorAll('.btn-send-invite').forEach(btn => {
     const toUserId = btn.dataset.userId;
     btn.disabled = true; btn.textContent = '...';
     try {
-      const res = await fetch('/api/inviter.php', {
+      const res = await fetch(_BASE + '/api/inviter.php', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'send', to_user_id: toUserId, type: inviteType, target_id: inviteTargetId })
       });

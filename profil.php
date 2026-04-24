@@ -98,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profil'])) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Moi</title>
-<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="<?= baseUrl() ?>/assets/css/style.css">
 <link rel="icon" type="image/png" href="/Logo.png">
 <link rel="apple-touch-icon" href="/Logo.png">
 <link rel="manifest" href="/manifest.json">
@@ -341,15 +341,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profil'])) {
 
 <div class="toast" id="toast"></div>
 
-<script src="/assets/js/app.js"></script>
+<script src="<?= baseUrl() ?>/assets/js/app.js"></script>
 <script>
+const _BASE = location.hostname === 'localhost' || location.hostname === '127.0.0.1' ? '/TitreRNCP' : '';
 document.querySelectorAll('.btn-accept-invite, .btn-decline-invite').forEach(btn => {
   btn.addEventListener('click', async () => {
     const id = btn.dataset.id;
     const action = btn.classList.contains('btn-accept-invite') ? 'accept' : 'decline';
     btn.disabled = true; btn.textContent = '...';
     try {
-      const res = await fetch('/api/inviter.php', {
+      const res = await fetch(_BASE + '/api/inviter.php', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, invite_id: id })
       });

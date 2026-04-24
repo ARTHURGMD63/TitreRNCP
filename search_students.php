@@ -67,7 +67,7 @@ if (!$q) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Découvrir des étudiants</title>
-<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="<?= baseUrl() ?>/assets/css/style.css">
 </head>
 <body>
 <div class="app-shell">
@@ -167,6 +167,6 @@ if (!$q) {
 
 <div class="toast" id="toast"></div>
 
-<script src="/assets/js/app.js"></script>
+<script src="<?= baseUrl() ?>/assets/js/app.js"></script>
 </body>
 </html>
