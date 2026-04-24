@@ -80,7 +80,8 @@ $success = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profil'])) {
     $ecole = trim($_POST['ecole'] ?? '');
     $promo = trim($_POST['promo'] ?? '');
-    $interests = isset($_POST['interests']) ? implode(',', $_POST['interests']) : '';
+    $allowedInterests = ['Sorties','Boîtes','Running','Muscu','Vélo','Foot','Tennis','Gaming','Cuisine','Voyage','Cinéma','Lecture','Musique','Art','Photo','Animaux','Code','Yoga','Échecs','Mixologie','Bénévolat','Soirées'];
+    $interests = isset($_POST['interests']) ? implode(',', array_intersect((array)$_POST['interests'], $allowedInterests)) : '';
     
     $pdo->prepare("UPDATE users SET ecole=?, promo=?, interests=? WHERE id=?")->execute([$ecole, $promo, $interests, $uid]);
     

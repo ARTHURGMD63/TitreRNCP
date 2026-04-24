@@ -9,13 +9,13 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'etudiant') {
 }
 
 $input = json_decode(file_get_contents('php://input'), true);
-$titre = trim($input['titre'] ?? '');
+$titre = substr(trim($input['titre'] ?? ''), 0, 255);
 $type = $input['type'] ?? 'autre';
 $niveau = $input['niveau'] ?? 'tous';
 $date_heure = $input['date_heure'] ?? '';
-$quota = (int)($input['quota'] ?? 10);
-$lieu = trim($input['lieu'] ?? '');
-$desc = trim($input['description'] ?? '');
+$quota = max(2, min(500, (int)($input['quota'] ?? 10)));
+$lieu = substr(trim($input['lieu'] ?? ''), 0, 255);
+$desc = substr(trim($input['description'] ?? ''), 0, 1000);
 
 if (!$titre || !$date_heure) {
     echo json_encode(['success' => false, 'message' => 'Veuillez remplir les champs obligatoires']);

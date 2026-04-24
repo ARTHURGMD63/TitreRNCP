@@ -42,7 +42,7 @@ if ($view === 'people') {
 
     if ($q) {
         $sqlP .= " AND (nom LIKE ? OR prenom LIKE ? OR ecole LIKE ? OR interests LIKE ?)";
-        $term = "%$q%";
+        $term = '%' . addcslashes($q, '%_') . '%';
         $paramsP[] = $term; $paramsP[] = $term; $paramsP[] = $term; $paramsP[] = $term;
     }
     if ($filterEcole) {

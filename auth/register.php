@@ -46,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt2->execute([$userId, $etablNom, $etablType, $etablVille]);
             }
 
+            session_regenerate_id(true);
             $_SESSION['user_id']     = $userId;
             $_SESSION['user_prenom'] = $prenom;
             $_SESSION['user_nom']    = $nom;
@@ -53,8 +54,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_ecole']  = $ecole;
 
             $loc = $type === 'partenaire'
-                ? '/partenaire/dashboard.php'
-                : '/onboarding.php';
+                ? baseUrl('/partenaire/dashboard.php')
+                : baseUrl('/onboarding.php');
             header('Location: ' . $loc);
             exit;
         } catch (PDOException $e) {

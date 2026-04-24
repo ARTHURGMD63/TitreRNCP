@@ -19,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = $stmt->fetch();
 
         if ($user && password_verify($pass, $user['password'])) {
+            session_regenerate_id(true);
             $_SESSION['user_id']     = $user['id'];
             $_SESSION['user_prenom'] = $user['prenom'];
             $_SESSION['user_nom']    = $user['nom'];
@@ -26,8 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_ecole']  = $user['ecole'];
 
             $loc = $user['type'] === 'partenaire'
-                ? '/partenaire/dashboard.php'
-                : '/explore.php';
+                ? baseUrl('/partenaire/dashboard.php')
+                : baseUrl('/explore.php');
             header('Location: ' . $loc);
             exit;
         } else {
