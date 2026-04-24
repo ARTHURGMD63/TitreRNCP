@@ -314,13 +314,11 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
               <div style="font-size:11px;font-weight:700;"><?= $e['nb_inscrits'] ?>/<?= $e['quota'] ?> places</div>
               <div style="display:flex;gap:6px;">
-                <?php if (!empty($following)): ?>
                 <button onclick="openInviteModal('event', <?= $e['id'] ?>, '<?= htmlspecialchars($e['titre'], ENT_QUOTES) ?>')"
                         style="background:none;border:2px solid var(--noir);padding:7px 10px;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
                   Inviter
                 </button>
-                <?php endif; ?>
                 <button class="btn btn-primary btn-join-event" data-event-id="<?= $e['id'] ?>" style="padding:8px 16px;font-size:12px;" <?= $e['deja_inscrit']?'disabled':'' ?>>
                   <?= $e['deja_inscrit']?'✓ Inscrit':'Rejoindre' ?>
                 </button>
