@@ -348,7 +348,7 @@ function initApp() {
 
   // Social Follow
   async function handleFollow(btn, type) {
-    if (btn._followInit) return; btn._followInit = true;
+    if (btn.disabled) return;
     const targetId = type === 'user' ? btn.dataset.userId : btn.dataset.etabId;
     const isFollowing = btn.dataset.following === '1';
     btn.disabled = true;
@@ -363,16 +363,15 @@ function initApp() {
       if (data.success) {
         const nowFollowing = data.action === 'follow';
         btn.dataset.following = nowFollowing ? '1' : '0';
-        btn._followInit = false;
         btn.textContent = nowFollowing ? '✓ Suivi' : '+ Suivre';
+        btn.style.background = nowFollowing ? 'var(--noir)' : 'transparent';
+        btn.style.color = nowFollowing ? 'var(--blanc)' : 'var(--noir)';
         showToast(nowFollowing ? 'Abonnement ajouté !' : 'Abonnement retiré');
       } else {
-        btn._followInit = false;
         btn.textContent = originalText;
         showToast(data.message || 'Erreur', 'error');
       }
     } catch {
-      btn._followInit = false;
       btn.textContent = originalText;
       showToast('Erreur réseau', 'error');
     } finally { btn.disabled = false; }
