@@ -31,6 +31,20 @@ $stmt = $pdo->prepare("SELECT COUNT(*) FROM follows_users WHERE followed_id=?");
 $stmt->execute([$uid]);
 $nbFollowers = $stmt->fetchColumn();
 
+// Invitations reçues
+$stmtInvites = $pdo->prepare("
+    SELECT inv.*, u.prenom AS from_prenom, u.nom AS from_nom,
+           CASE WHEN inv.type='event' THEN e.titre ELSE s.titre END AS target_nom
+    FROM invitations inv
+    JOIN users u ON u.id = inv.from_user_id
+    LEFT JOIN evenements e ON inv.type='event' AND e.id = inv.target_id
+    LEFT JOIN squads s ON inv.type='squad' AND s.id = inv.target_id
+    WHERE inv.to_user_id = ? AND inv.statut = 'pending'
+    ORDER BY inv.created_at DESC
+");
+$stmtInvites->execute([$uid]);
+$invitations = $stmtInvites->fetchAll();
+
 // Social feed (activity of followed users)
 $stmtFeed = $pdo->prepare("
     SELECT 'event' AS type, u.prenom, u.nom, e.titre, et.nom AS lieu, i.created_at AS ts
@@ -173,6 +187,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profil'])) {
     </div>
     <?php endif; ?>
 
+    <!-- INVITATIONS REÇUES -->
+    <?php if (!empty($invitations)): ?>
+    <div style="margin-bottom:24px;">
+      <div class="section-title" style="margin-bottom:14px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 11.23 19.79 19.79 0 0 1 1.61 2.6 2 2 0 0 1 3.6.42h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 7.91a16 16 0 0 0 6.18 6.18l1-1a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        Invitations
+        <span style="background:var(--rouge);color:var(--blanc);font-size:10px;font-weight:800;padding:2px 7px;margin-left:8px;"><?= count($invitations) ?></span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <?php foreach ($invitations as $inv): ?>
+        <div style="background:var(--blanc);border:2px solid var(--noir);box-shadow:3px 3px 0 var(--noir);padding:14px 16px;">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+            <div>
+              <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:<?= $inv['type']==='event'?'var(--rouge)':'var(--bleu)' ?>;margin-bottom:4px;">
+                <?= $inv['type']==='event'?'Événement':'Squad sport' ?>
+              </div>
+              <div style="font-weight:800;font-size:14px;margin-bottom:4px;"><?= htmlspecialchars($inv['target_nom'] ?? 'Inconnu') ?></div>
+              <div style="font-size:11px;color:var(--gris);">
+                Invité par <strong><?= htmlspecialchars($inv['from_prenom'] . ' ' . $inv['from_nom'][0] . '.') ?></strong>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+              <button class="btn-accept-invite" data-id="<?= $inv['id'] ?>"
+                      style="background:var(--noir);color:var(--blanc);border:2px solid var(--noir);padding:7px 12px;font-size:11px;font-weight:800;cursor:pointer;text-transform:uppercase;">
+                Accepter
+              </button>
+              <button class="btn-decline-invite" data-id="<?= $inv['id'] ?>"
+                      style="background:none;border:2px solid var(--gris);padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;color:var(--gris);text-transform:uppercase;">
+                Refuser
+              </button>
+            </div>
+          </div>
+        </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
+    <?php endif; ?>
+
     <!-- SECTION 1: MON PROFIL -->
     <div class="profile-card">
       <div class="section-title">
@@ -290,5 +342,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profil'])) {
 <div class="toast" id="toast"></div>
 
 <script src="/assets/js/app.js"></script>
+<script>
+document.querySelectorAll('.btn-accept-invite, .btn-decline-invite').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const id = btn.dataset.id;
+    const action = btn.classList.contains('btn-accept-invite') ? 'accept' : 'decline';
+    btn.disabled = true; btn.textContent = '...';
+    try {
+      const res = await fetch('/api/inviter.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, invite_id: id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const card = btn.closest('div[style*="background:var(--blanc)"]');
+        card.style.opacity = '0.4';
+        card.style.pointerEvents = 'none';
+        if (action === 'accept') {
+          showToast('Invitation acceptée ! Tu es inscrit.', 'success');
+        } else {
+          showToast('Invitation refusée.', '');
+        }
+        setTimeout(() => card.closest('div[style*="gap:10px"]')?.removeChild(card), 800);
+      }
+    } catch { btn.disabled = false; btn.textContent = action === 'accept' ? 'Accepter' : 'Refuser'; }
+  });
+});
+</script>
 </body>
 </html>

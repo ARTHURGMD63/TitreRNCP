@@ -82,6 +82,11 @@ if ($view === 'people') {
     }
 }
 
+// ── ABONNÉS (pour modal invitation) ─────────────────────────────────────────
+$stmtFollowing = $pdo->prepare("SELECT u.id, u.prenom, u.nom FROM follows_users f JOIN users u ON u.id = f.followed_id WHERE f.follower_id = ? AND u.type = 'etudiant'");
+$stmtFollowing->execute([$uid]);
+$following = $stmtFollowing->fetchAll();
+
 // ── LOGIC FOR EVENTS ────────────────────────────────────────────────────────
 $evenements = [];
 $friendsByEvent = [];
@@ -306,11 +311,20 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
               <?= htmlspecialchars(mb_substr($e['description'] ?? '', 0, 100)) ?>...
             </div>
 
-            <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
               <div style="font-size:11px;font-weight:700;"><?= $e['nb_inscrits'] ?>/<?= $e['quota'] ?> places</div>
-              <button class="btn btn-primary btn-join-event" data-event-id="<?= $e['id'] ?>" style="padding:8px 16px;font-size:12px;" <?= $e['deja_inscrit']?'disabled':'' ?>>
-                <?= $e['deja_inscrit']?'✓ Inscrit':'Rejoindre' ?>
-              </button>
+              <div style="display:flex;gap:6px;">
+                <?php if (!empty($following)): ?>
+                <button onclick="openInviteModal('event', <?= $e['id'] ?>, '<?= htmlspecialchars($e['titre'], ENT_QUOTES) ?>')"
+                        style="background:none;border:2px solid var(--noir);padding:7px 10px;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                  Inviter
+                </button>
+                <?php endif; ?>
+                <button class="btn btn-primary btn-join-event" data-event-id="<?= $e['id'] ?>" style="padding:8px 16px;font-size:12px;" <?= $e['deja_inscrit']?'disabled':'' ?>>
+                  <?= $e['deja_inscrit']?'✓ Inscrit':'Rejoindre' ?>
+                </button>
+              </div>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; margin-bottom:4px; font-size:10px; font-weight:800; color:var(--noir); text-transform:uppercase; letter-spacing:0.05em;">
               <span>Taux d'inscription</span>
@@ -436,8 +450,81 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
   </a>
 </nav>
 
-<div class="toast" id="toast"></div>
+<!-- Modal Invitation -->
+<div id="modal-invite" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:flex-end;">
+  <div style="background:var(--bg);border-top:3px solid var(--noir);width:100%;max-height:75vh;overflow-y:auto;padding:24px 20px 40px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div>
+        <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--rouge);margin-bottom:4px;">Inviter un ami</div>
+        <div class="display" id="invite-target-name" style="font-size:1.2rem;"></div>
+      </div>
+      <button onclick="closeInviteModal()" style="background:none;border:2px solid var(--noir);width:36px;height:36px;font-size:18px;cursor:pointer;">✕</button>
+    </div>
+    <div id="invite-user-list" style="display:flex;flex-direction:column;gap:10px;">
+      <?php foreach ($following as $f): ?>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:var(--blanc);border:2px solid var(--noir);">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:40px;height:40px;background:var(--bleu);border:2px solid var(--noir);display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--blanc);font-size:15px;flex-shrink:0;">
+            <?= strtoupper(mb_substr($f['prenom'], 0, 1)) ?>
+          </div>
+          <div style="font-weight:800;font-size:14px;"><?= htmlspecialchars($f['prenom'] . ' ' . $f['nom'][0] . '.') ?></div>
+        </div>
+        <button class="btn-send-invite" data-user-id="<?= $f['id'] ?>"
+                style="background:var(--noir);color:var(--blanc);border:2px solid var(--noir);padding:8px 14px;font-size:11px;font-weight:800;cursor:pointer;text-transform:uppercase;">
+          Inviter
+        </button>
+      </div>
+      <?php endforeach; ?>
+      <?php if (empty($following)): ?>
+      <div style="text-align:center;padding:24px;color:var(--gris);font-size:14px;">Tu ne suis personne encore.</div>
+      <?php endif; ?>
+    </div>
+  </div>
+</div>
 
+<div class="toast" id="toast"></div>
 <script src="/assets/js/app.js"></script>
+<script>
+let inviteType = '', inviteTargetId = 0;
+
+function openInviteModal(type, targetId, targetName) {
+  inviteType = type; inviteTargetId = targetId;
+  document.getElementById('invite-target-name').textContent = targetName;
+  const modal = document.getElementById('modal-invite');
+  modal.style.display = 'flex';
+  document.querySelectorAll('.btn-send-invite').forEach(b => {
+    b.textContent = 'Inviter'; b.disabled = false; b.style.background = 'var(--noir)';
+  });
+}
+
+function closeInviteModal() {
+  document.getElementById('modal-invite').style.display = 'none';
+}
+
+document.getElementById('modal-invite').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-invite')) closeInviteModal();
+});
+
+document.querySelectorAll('.btn-send-invite').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const toUserId = btn.dataset.userId;
+    btn.disabled = true; btn.textContent = '...';
+    try {
+      const res = await fetch('/api/inviter.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'send', to_user_id: toUserId, type: inviteType, target_id: inviteTargetId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        btn.textContent = '✓ Envoyé'; btn.style.background = 'var(--bleu)';
+        showToast('Invitation envoyée !', 'success');
+      } else {
+        btn.disabled = false; btn.textContent = 'Inviter';
+        showToast(data.message || 'Erreur', 'error');
+      }
+    } catch { btn.disabled = false; btn.textContent = 'Inviter'; showToast('Erreur réseau', 'error'); }
+  });
+});
+</script>
 </body>
 </html>
