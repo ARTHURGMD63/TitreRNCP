@@ -5,6 +5,7 @@ if (!empty($_SESSION['user_id'])) {
     exit;
 }
 
+require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/db.php';
 $error = '';
 
@@ -43,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Connexion</title>
-<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="<?= baseUrl() ?>/assets/css/style.css">
 </head>
 <body>
 <div class="auth-page">

@@ -1,5 +1,8 @@
 /* StudentLink — app.js */
 
+// Detect base path for local WAMP vs Railway
+const BASE = location.hostname === 'localhost' || location.hostname === '127.0.0.1' ? '/TitreRNCP' : '';
+
 // ─── Toast ───────────────────────────────────────────────────────────────────
 function showToast(msg, type = '') {
   const t = document.getElementById('toast');
@@ -42,7 +45,7 @@ function initApp() {
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>';
       try {
-        const res = await fetch('/api/inscrire.php', {
+        const res = await fetch(BASE + '/api/inscrire.php', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ evenement_id: id })
         });
@@ -74,7 +77,7 @@ function initApp() {
       const id = btn.dataset.squadId;
       btn.disabled = true;
       try {
-        const res = await fetch('/api/rejoindre_squad.php', {
+        const res = await fetch(BASE + '/api/rejoindre_squad.php', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ squad_id: id })
         });
@@ -149,7 +152,7 @@ function initApp() {
       btn.innerHTML = '<span class="spinner"></span>';
       const body = Object.fromEntries(new FormData(createSquadForm));
       try {
-        const res = await fetch('/api/create_squad.php', {
+        const res = await fetch(BASE + '/api/create_squad.php', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body)
         });
@@ -245,7 +248,7 @@ function initApp() {
       const id = btn.dataset.id;
       btn.disabled = true;
       try {
-        const res = await fetch('/api/annuler_pass.php', {
+        const res = await fetch(BASE + '/api/annuler_pass.php', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ inscription_id: id })
         });
@@ -269,7 +272,7 @@ function initApp() {
       const id = btn.dataset.id;
       btn.disabled = true;
       try {
-        const res = await fetch('/api/quitter_squad.php', {
+        const res = await fetch(BASE + '/api/quitter_squad.php', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ squad_id: id })
         });
@@ -315,7 +318,7 @@ function initApp() {
           list.querySelectorAll('.btn-kick-member').forEach(kbtn => {
             kbtn.addEventListener('click', async () => {
               if (!confirm("Retirer cette personne du groupe ?")) return;
-              const kres = await fetch('/api/remove_squad_member.php', {
+              const kres = await fetch(BASE + '/api/remove_squad_member.php', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ squad_id: kbtn.dataset.squad, member_id: kbtn.dataset.user })
               });
@@ -336,7 +339,7 @@ function initApp() {
     const id = btn.dataset.id;
     btn.disabled = true;
     try {
-      const res = await fetch('/api/delete_squad.php', {
+      const res = await fetch(BASE + '/api/delete_squad.php', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ squad_id: id })
       });
@@ -355,7 +358,7 @@ function initApp() {
     const originalText = btn.textContent;
     btn.textContent = '...';
     try {
-      const res = await fetch('/api/follow.php', {
+      const res = await fetch(BASE + '/api/follow.php', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: isFollowing ? 'unfollow' : 'follow', type, target_id: targetId })
       });
@@ -385,7 +388,6 @@ function initApp() {
     if (btn._init) return; btn._init = true;
     btn.addEventListener('click', () => handleFollow(btn, 'etablissement'));
   });
-}
 
   // Event countdowns
   document.querySelectorAll('.event-countdown').forEach(el => {
@@ -414,4 +416,8 @@ function initApp() {
 
 // Auto-init on page load
 window.initApp = initApp;
-document.addEventListener('DOMContentLoaded', initApp);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}

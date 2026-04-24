@@ -110,7 +110,7 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Dashboard Partenaire</title>
-<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="<?= baseUrl() ?>/assets/css/style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
@@ -298,7 +298,7 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
   </div>
 </div>
 
-<script src="/assets/js/app.js"></script>
+<script src="<?= baseUrl() ?>/assets/js/app.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const btnStart = document.getElementById('btn-start-scan');
