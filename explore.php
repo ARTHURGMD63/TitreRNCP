@@ -111,7 +111,9 @@ if ($view === 'events') {
 
     $sqlE = "SELECT e.*, et.id AS etab_id, et.nom AS etablissement_nom, et.type AS etab_type, et.ville,
                    (SELECT COUNT(*) FROM inscriptions i WHERE i.evenement_id = e.id AND i.statut != 'annule') AS nb_inscrits,
-                   (SELECT COUNT(*) FROM inscriptions i WHERE i.evenement_id = e.id AND i.user_id = ? AND i.statut != 'annule') AS deja_inscrit
+                   (SELECT COUNT(*) FROM inscriptions i WHERE i.evenement_id = e.id AND i.user_id = ? AND i.statut != 'annule') AS deja_inscrit,
+                   (SELECT ROUND(AVG(a.note),1) FROM avis a JOIN evenements pe ON pe.id = a.evenement_id WHERE pe.etablissement_id = e.etablissement_id) AS etab_note,
+                   (SELECT COUNT(*) FROM avis a JOIN evenements pe ON pe.id = a.evenement_id WHERE pe.etablissement_id = e.etablissement_id) AS etab_nb_avis
             FROM evenements e
             JOIN etablissements et ON et.id = e.etablissement_id
             WHERE e.date_heure >= NOW()";
@@ -142,6 +144,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Hub</title>
+<?= themeBootScript() ?>
 <link rel="stylesheet" href="<?= baseUrl() ?>/assets/css/style.css">
 <link rel="icon" type="image/png" href="/Logo.png">
 <link rel="apple-touch-icon" href="/Logo.png">
@@ -292,7 +295,13 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
                 <?php if ($e['is_gratuit']): ?><span class="badge badge-bar">GRATUIT</span><?php endif; ?>
               </div>
               <div class="event-title" style="font-size:1.3rem; padding-right:80px;"><?= htmlspecialchars($e['titre']) ?></div>
-              <div class="event-lieu"><?= htmlspecialchars($e['etablissement_nom']) ?></div>
+              <div class="event-lieu" style="display:flex;align-items:center;gap:8px;">
+                <?= htmlspecialchars($e['etablissement_nom']) ?>
+                <?php if ($e['etab_nb_avis'] > 0): ?>
+                  <span style="color:#F5B400;font-weight:700;font-size:12px;">★ <?= $e['etab_note'] ?></span>
+                  <span style="color:var(--gris);font-size:11px;">(<?= $e['etab_nb_avis'] ?>)</span>
+                <?php endif; ?>
+              </div>
             </a>
             
             <button class="btn-follow-etab" data-etab-id="<?= $e['etab_id'] ?>" data-following="<?= $isFollowedEtab?'1':'0' ?>"

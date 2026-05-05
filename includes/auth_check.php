@@ -35,6 +35,10 @@ function isLoggedIn(): bool {
     return !empty($_SESSION['user_id']);
 }
 
+function themeBootScript(): string {
+    return '<script>(function(){var t=localStorage.getItem("theme")||"light";document.documentElement.setAttribute("data-theme",t);})();</script>';
+}
+
 function currentUser(): array {
     return [
         'id'     => $_SESSION['user_id'] ?? null,

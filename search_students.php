@@ -67,6 +67,7 @@ if (!$q) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Découvrir des étudiants</title>
+<?= themeBootScript() ?>
 <link rel="stylesheet" href="<?= baseUrl() ?>/assets/css/style.css">
 </head>
 <body>
