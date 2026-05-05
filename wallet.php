@@ -67,6 +67,7 @@ $currentMonth = strtoupper($moisFr[date('F')] ?? date('F'));
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Wallet</title>
+<?= themeBootScript() ?>
 <link rel="stylesheet" href="<?= baseUrl() ?>/assets/css/style.css">
 <link rel="icon" type="image/png" href="/Logo.png">
 <link rel="apple-touch-icon" href="/Logo.png">
@@ -247,12 +248,17 @@ $currentMonth = strtoupper($moisFr[date('F')] ?? date('F'));
 
     <?php if (!empty($passesOld)): ?>
     <div class="section-divider"><span class="sd-label">Historique</span></div>
-    <?php foreach ($passesOld as $p): ?>
-    <div class="pass-item" style="opacity:0.5;">
-      <div class="pass-dot" style="background:var(--gris);"></div>
+    <?php foreach ($passesOld as $p):
+      $canReview = $p['statut'] === 'checkin';
+    ?>
+    <div class="pass-item" style="opacity:<?= $canReview ? '1' : '0.5' ?>;">
+      <div class="pass-dot" style="background:<?= $canReview ? 'var(--lime)' : 'var(--gris)' ?>;"></div>
       <div class="pass-item-info">
         <div class="pass-item-name"><?= htmlspecialchars($p['etablissement_nom']) ?></div>
         <div class="pass-item-sub"><?= htmlspecialchars($p['titre']) ?> · <?= date('D j M', strtotime($p['date_heure'])) ?></div>
+        <?php if ($canReview): ?>
+          <a href="<?= baseUrl('/avis.php?event_id=' . $p['evenement_id']) ?>" style="display:inline-block;margin-top:6px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--bleu);text-decoration:none;">★ Laisser un avis →</a>
+        <?php endif; ?>
       </div>
       <div class="pass-item-eco" style="color:var(--gris);">
         <?php if ($p['reduction'] > 0 && $p['prix_normal'] > 0):

@@ -39,6 +39,7 @@ $dayFr = ['Sun'=>'Dim','Mon'=>'Lun','Tue'=>'Mar','Wed'=>'Mer','Thu'=>'Jeu','Fri'
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Squads</title>
+<?= themeBootScript() ?>
 <link rel="stylesheet" href="<?= baseUrl() ?>/assets/css/style.css">
 <link rel="icon" type="image/png" href="/Logo.png">
 <link rel="apple-touch-icon" href="/Logo.png">

@@ -9,6 +9,7 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Bienvenue — StudentLink</title>
+<?= themeBootScript() ?>
 <link rel="stylesheet" href="<?= baseUrl() ?>/assets/css/style.css">
 <link rel="icon" type="image/png" href="/Logo.png">
 <meta name="apple-mobile-web-app-capable" content="yes">

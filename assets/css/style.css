@@ -21,6 +21,23 @@
   --nav-h: 64px;
 }
 
+/* ── Dark mode ──────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg: #121212;
+  --noir: #F2EDE3;
+  --blanc: #1E1E1E;
+  --gris-clair: #2A2A2A;
+  --gris: #9A9A9A;
+  --gris-fonce: #CCCCCC;
+  --bleu-clair: #1A1A3E;
+  --rouge-clair: #3E1A1A;
+  --lime-clair: #1E3E1A;
+  --shadow: 4px 4px 0px #000;
+  --shadow-sm: 2px 2px 0px #000;
+}
+[data-theme="dark"] body { color: #F2EDE3; }
+[data-theme="dark"] img.logo-dark-invert { filter: invert(1); }
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { font-size: 16px; scroll-behavior: smooth; }

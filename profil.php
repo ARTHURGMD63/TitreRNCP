@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/auth_check.php';
 require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/gamification.php';
 requireStudent();
 $user = currentUser();
 $uid = $user['id'];
@@ -99,6 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profil'])) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Moi</title>
+<?= themeBootScript() ?>
 <link rel="stylesheet" href="<?= baseUrl() ?>/assets/css/style.css">
 <link rel="icon" type="image/png" href="/Logo.png">
 <link rel="apple-touch-icon" href="/Logo.png">
@@ -297,6 +299,89 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profil'])) {
       </div>
     </div>
     <?php endif; ?>
+
+    <!-- SECTION GAMIFICATION -->
+    <?php
+    checkBadges($pdo, $uid);
+    $gamStats = getUserStats($pdo, $uid);
+    $xp = getXp($gamStats);
+    $level = getLevel($xp);
+    $xpCurrentLevel = xpForLevel($level);
+    $xpNextLevel = xpForLevel($level + 1);
+    $xpProgress = max(0, min(100, ($xp - $xpCurrentLevel) / max(1, $xpNextLevel - $xpCurrentLevel) * 100));
+    $myBadges = getUserBadges($pdo, $uid);
+    $allBadges = getAllBadges($pdo);
+    $unlockedCodes = array_column($myBadges, 'code');
+    ?>
+    <div class="profile-card">
+      <div class="section-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+        Niveau & Badges
+      </div>
+
+      <!-- Level + XP -->
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;">
+        <div style="width:54px;height:54px;border-radius:50%;background:var(--rouge);border:3px solid var(--noir);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:900;font-size:1.4rem;color:var(--blanc);box-shadow:3px 3px 0 var(--noir);flex-shrink:0;">
+          <?= $level ?>
+        </div>
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gris);margin-bottom:6px;">
+            <span>Niveau <?= $level ?></span>
+            <span><?= $xp ?> / <?= $xpNextLevel ?> XP</span>
+          </div>
+          <div style="height:10px;background:var(--gris-clair);border:2px solid var(--noir);overflow:hidden;">
+            <div style="height:100%;background:var(--lime);width:<?= round($xpProgress) ?>%;transition:width .4s;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:11px;color:var(--gris);margin-bottom:18px;">
+        <?= $gamStats['events'] ?> events · <?= $gamStats['squads'] ?> squads · <?= $gamStats['follows'] ?> abonnements · <?= $gamStats['avis'] ?> avis
+      </div>
+
+      <!-- Badges grid -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+        <?php foreach ($allBadges as $b):
+          $unlocked = in_array($b['code'], $unlockedCodes);
+        ?>
+        <div style="background:<?= $unlocked ? 'var(--lime)' : 'var(--gris-clair)' ?>;border:2px solid var(--noir);box-shadow:<?= $unlocked ? '3px 3px 0 var(--noir)' : 'none' ?>;padding:12px 6px;text-align:center;opacity:<?= $unlocked ? '1' : '0.45' ?>;">
+          <div style="font-size:1.6rem;line-height:1;margin-bottom:4px;filter:<?= $unlocked ? 'none' : 'grayscale(1)' ?>;"><?= htmlspecialchars($b['icon'] ?? '🏆') ?></div>
+          <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--noir);line-height:1.2;"><?= htmlspecialchars($b['nom']) ?></div>
+        </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
+
+    <!-- SECTION APPARENCE -->
+    <div class="profile-card">
+      <div class="section-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        Apparence
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <button type="button" onclick="window.setTheme('light')" id="theme-light-btn"
+                style="background:var(--blanc);border:2px solid var(--noir);box-shadow:3px 3px 0 var(--noir);padding:14px;font-weight:800;font-size:13px;cursor:pointer;text-transform:uppercase;letter-spacing:.04em;">
+          ☀ Clair
+        </button>
+        <button type="button" onclick="window.setTheme('dark')" id="theme-dark-btn"
+                style="background:#1E1E1E;color:#F2EDE3;border:2px solid var(--noir);box-shadow:3px 3px 0 var(--noir);padding:14px;font-weight:800;font-size:13px;cursor:pointer;text-transform:uppercase;letter-spacing:.04em;">
+          ☾ Sombre
+        </button>
+      </div>
+    </div>
+
+    <!-- SECTION LÉGAL -->
+    <div class="profile-card" style="padding:0;overflow:hidden;">
+      <a href="<?= baseUrl('/mentions-legales.php') ?>" style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:2px solid var(--noir);text-decoration:none;color:var(--noir);font-size:12px;font-weight:700;">
+        Mentions légales <span style="color:var(--gris);">→</span>
+      </a>
+      <a href="<?= baseUrl('/cgu.php') ?>" style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:2px solid var(--noir);text-decoration:none;color:var(--noir);font-size:12px;font-weight:700;">
+        CGU <span style="color:var(--gris);">→</span>
+      </a>
+      <a href="<?= baseUrl('/confidentialite.php') ?>" style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;text-decoration:none;color:var(--noir);font-size:12px;font-weight:700;">
+        Politique de confidentialité <span style="color:var(--gris);">→</span>
+      </a>
+    </div>
 
     <!-- SECTION 4: COMPTE -->
     <div class="profile-card" style="padding:0;overflow:hidden;">
