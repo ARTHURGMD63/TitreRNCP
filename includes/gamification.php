@@ -58,9 +58,14 @@ function checkBadges(PDO $pdo, int $uid): array {
     ];
     foreach ($map as $code => $cond) {
         if ($cond) {
-            $stmt = $pdo->prepare("INSERT IGNORE INTO user_badges (user_id, badge_code) VALUES (?,?)");
-            $stmt->execute([$uid, $code]);
-            if ($stmt->rowCount() > 0) $unlocked[] = $code;
+            // SELECT + INSERT to stay compatible with MySQL and SQLite (tests)
+            $check = $pdo->prepare("SELECT 1 FROM user_badges WHERE user_id=? AND badge_code=?");
+            $check->execute([$uid, $code]);
+            if (!$check->fetch()) {
+                $ins = $pdo->prepare("INSERT INTO user_badges (user_id, badge_code) VALUES (?,?)");
+                $ins->execute([$uid, $code]);
+                $unlocked[] = $code;
+            }
         }
     }
     return $unlocked;

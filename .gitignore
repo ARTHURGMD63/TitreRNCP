@@ -26,6 +26,14 @@ package-lock.json
 *.sqlite
 *.db
 
+# Composer / PHP tooling
+vendor/
+composer.lock
+.phpunit.cache/
+.phpunit.result.cache
+coverage/
+.phpstan.cache/
+
 # Misc
 .claude/
 .git/

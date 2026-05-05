@@ -1,0 +1,18 @@
+parameters:
+    level: 5
+    paths:
+        - includes
+        - api
+        - auth
+    excludePaths:
+        - vendor
+        - tests
+        - .phpunit.cache
+    ignoreErrors:
+        # PHP superglobals are dynamic
+        - '#Variable \$_SESSION#'
+        - '#Variable \$_POST#'
+        - '#Variable \$_GET#'
+        - '#Variable \$_SERVER#'
+    treatPhpDocTypesAsCertain: false
+    reportUnmatchedIgnoredErrors: false
