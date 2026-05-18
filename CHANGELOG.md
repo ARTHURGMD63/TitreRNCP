@@ -7,11 +7,40 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-05-18
+
+### Added
+- **CSRF protection** sur tous les formulaires POST (`csrfToken()`, `csrfField()`, `csrfVerify()`)
+- **Rate limiting** anti-bruteforce sur le login (5 tentatives / 15 min par IP, table `login_attempts`)
+- **Mot de passe oublié** complet : `forgot.php` + `reset.php`, tokens SHA-256 à usage unique (1h)
+- **Headers de sécurité HTTP** : X-Frame-Options, X-Content-Type-Options, CSP, HSTS, Referrer-Policy
+- `includes/security.php` centralisant tous les helpers sécurité
+- `SECURITY.md` documentant la couverture OWASP Top 10
+- Migration `db_migrations_v3.sql` (tables `login_attempts`, `password_resets`)
+- Lien "Mot de passe oublié ?" sur la page de connexion
+
+### Changed
+- `auth_check.php` inclut désormais `security.php` et appelle `setSecurityHeaders()` automatiquement
+- Login, Register, Avis, Create Event, Delete Event protégés par CSRF
+
+## [1.2.0] - 2026-04-30
+
 ### Added
 - Pipeline CI GitHub Actions (lint, PHPStan, PHPUnit) sur PHP 8.1 / 8.2 / 8.3
 - Suite de tests PHPUnit (unitaires + intégration SQLite)
 - Configuration PHPStan niveau 5
 - `CHANGELOG.md` et `CONTRIBUTING.md`
+- **Gamification** : système XP / niveaux / badges (9 badges débloquables)
+- **Dark mode** persistant via `localStorage` avec toggle dans le profil
+- **Avis & notes** 1-5★ après check-in d'un événement (`avis.php`)
+- **Note moyenne** affichée sur les cartes d'événements dans `/explore.php`
+- **Pages légales** : Mentions légales, CGU, Politique de confidentialité (RGPD)
+- Module `includes/gamification.php` (helpers XP, niveau, badges)
+- Migration `db_migrations_v2.sql` (tables `avis`, `badges`, `user_badges`, `user_settings`)
+
+### Changed
+- Section profil enrichie (barre XP, grille de badges, sélecteur de thème)
+- `themeBootScript()` injecté en `<head>` pour éviter le flash en dark mode
 
 ## [1.2.0] - 2026-04-30
 

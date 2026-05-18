@@ -16,6 +16,7 @@ if (!$etab) {
 
 // Handle delete
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_event'])) {
+    csrfVerify();
     $eid = (int)$_POST['delete_event'];
     $stmt = $pdo->prepare("DELETE FROM evenements WHERE id=? AND etablissement_id=?");
     $stmt->execute([$eid, $etab['id']]);
@@ -148,6 +149,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
             </td>
             <td>
               <form method="POST" onsubmit="return confirm('Supprimer cet événement ?')">
+                <?= csrfField() ?>
                 <input type="hidden" name="delete_event" value="<?= $e['id'] ?>">
                 <button type="submit" style="background:none;border:none;color:var(--rouge);cursor:pointer;font-size:16px;" title="Supprimer">🗑</button>
               </form>

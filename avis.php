@@ -26,6 +26,7 @@ $success = false;
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrfVerify();
     $note = (int)($_POST['note'] ?? 0);
     $commentaire = substr(trim($_POST['commentaire'] ?? ''), 0, 1000);
 
@@ -100,6 +101,7 @@ $existing = $stmt->fetch();
   <?php endif; ?>
 
   <form method="POST">
+    <?= csrfField() ?>
     <div style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;text-align:center;">Ta note</div>
     <div class="stars" id="stars">
       <?php for ($i = 1; $i <= 5; $i++): ?>

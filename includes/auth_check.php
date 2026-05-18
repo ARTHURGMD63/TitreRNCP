@@ -1,5 +1,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
+require_once __DIR__ . '/security.php';
+setSecurityHeaders();
 
 function baseUrl(string $path = ''): string {
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';

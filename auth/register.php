@@ -14,6 +14,7 @@ $ecoles = ['UCA', 'SIGMA Clermont', 'INP Ingénieurs', 'IFSI', 'Autre'];
 $promos = ['L1','L2','L3','M1','M2','BUT1','BUT2','BUT3'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrfVerify();
     $type    = in_array($_POST['type'] ?? '', ['etudiant','partenaire']) ? $_POST['type'] : 'etudiant';
     $prenom  = trim($_POST['prenom'] ?? '');
     $nom     = trim($_POST['nom'] ?? '');
@@ -101,6 +102,7 @@ $selectedType = $_POST['type'] ?? 'etudiant';
   <?php endif; ?>
 
   <form method="POST">
+    <?= csrfField() ?>
     <input type="hidden" name="type" id="user-type-input" value="<?= htmlspecialchars($selectedType) ?>">
 
     <div class="form-row">

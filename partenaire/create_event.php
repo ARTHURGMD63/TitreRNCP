@@ -18,6 +18,7 @@ $errors = [];
 $success = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrfVerify();
     $titre       = trim($_POST['titre'] ?? '');
     $description = trim($_POST['description'] ?? '');
     $type        = $_POST['type'] ?? '';
@@ -169,6 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <?php endif; ?>
 
       <form method="POST">
+        <?= csrfField() ?>
         <div class="form-section-title">Informations générales</div>
 
         <div class="form-group">

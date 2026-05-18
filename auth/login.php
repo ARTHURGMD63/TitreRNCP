@@ -9,16 +9,25 @@ require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/db.php';
 $error = '';
 
+$ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+$ip = trim(explode(',', $ip)[0]); // Prend la première IP si proxy
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrfVerify();
+
     $email = trim($_POST['email'] ?? '');
     $pass  = $_POST['password'] ?? '';
 
-    if ($email && $pass) {
+    // Rate limiting
+    if (isRateLimited($pdo, $ip)) {
+        $error = 'Trop de tentatives. Réessaye dans 15 minutes.';
+    } elseif ($email && $pass) {
         $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
         $stmt->execute([$email]);
         $user = $stmt->fetch();
 
         if ($user && password_verify($pass, $user['password'])) {
+            clearLoginAttempts($pdo, $ip);
             session_regenerate_id(true);
             $_SESSION['user_id']     = $user['id'];
             $_SESSION['user_prenom'] = $user['prenom'];
@@ -32,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: ' . $loc);
             exit;
         } else {
+            recordLoginAttempt($pdo, $ip, $email);
             $error = 'Email ou mot de passe incorrect.';
         }
     } else {
@@ -64,6 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <?php endif; ?>
 
   <form method="POST">
+    <?= csrfField() ?>
     <div class="form-group">
       <label for="email">Email</label>
       <input type="email" id="email" name="email"
@@ -79,8 +90,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </button>
   </form>
 
+  <div class="auth-link" style="margin-top:12px;">
+    <a href="<?= baseUrl('/auth/forgot.php') ?>" style="font-size:13px;color:var(--gris);">Mot de passe oublié ?</a>
+  </div>
+
   <div class="auth-link">
-    Pas encore de compte ? <a href="/auth/register.php">Créer un compte</a>
+    Pas encore de compte ? <a href="<?= baseUrl('/auth/register.php') ?>">Créer un compte</a>
   </div>
 
   <div style="margin-top:32px; padding:16px; background:rgba(0,0,0,0.05); border-radius:6px; font-size:12px; color:var(--gris);">
