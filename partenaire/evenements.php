@@ -89,6 +89,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
       </a>
     </div>
 
+    <?= csrfFlash() ?>
     <?php if (isset($_GET['deleted'])): ?>
       <div class="form-success">Événement supprimé.</div>
     <?php endif; ?>

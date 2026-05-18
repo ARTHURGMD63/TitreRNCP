@@ -229,6 +229,7 @@ $flashLocal = $event['flash_expiry'] ? date('Y-m-d\TH:i', strtotime($event['flas
     </div>
 
     <div class="form-card">
+      <?= csrfFlash() ?>
       <?php if (!empty($errors)): ?>
       <ul class="form-errors" role="alert" aria-live="assertive">
         <?php foreach ($errors as $err): ?>
