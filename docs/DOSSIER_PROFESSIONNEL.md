@@ -20,7 +20,7 @@ On veut se retrouver. On veut faire des trucs ensemble. Mais on veut aussi payer
 
 ## 1.2 Contexte local
 
-Clermont-Ferrand compte plus de **40 000 étudiants** répartis entre l'UCA, SIGMA Clermont, l'INP Ingénieurs, l'IFSI, Hesias et d'autres établissements. C'est une ville étudiante à part entière, avec une vie nocturne et sportive réelle — mais sans outil numérique dédié à cette communauté.
+Clermont-Ferrand compte **42 500 étudiants** répartis entre l'UCA, SIGMA Clermont, l'INP Ingénieurs, l'IFSI, Hesias et d'autres établissements. À l'échelle nationale, la France recense **3 012 800 étudiants** — un marché considérable, dont StudentLink adresse en premier lieu le bassin clermontois avant toute logique de déploiement national. C'est une ville étudiante à part entière, avec une vie nocturne et sportive réelle — mais sans outil numérique dédié à cette communauté.
 
 Les établissements (bars, boîtes, restos, afterworks) communiquent avec des flyers, Instagram et des groupes Facebook qui tombent dans l'oubli. Ils organisent des soirées sans savoir combien de personnes vont venir. Ils n'ont aucune donnée sur leur audience. Et les étudiants, de leur côté, passent à côté d'offres qui leur seraient pourtant destinées.
 
