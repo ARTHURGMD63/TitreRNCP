@@ -7,6 +7,17 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-05-18
+
+### Fixed
+- Hardcoded `/partenaire/*` and `/auth/*` URLs in `dashboard.php` and `evenements.php` → `baseUrl()` (local/Railway compat)
+- `fetch('/partenaire/api_scan.php')` → `fetch(BASE + '/partenaire/api_scan.php')` in QR scanner
+
+### Added
+- `partenaire/edit_event.php` — full edit form with CSRF protection, pre-populated fields, live stats bar (inscrits / check-in), flash toggle, ownership guard
+- ✏️ edit button in événements table linking to edit page
+- `?updated=1` success banner after saving changes
+
 ## [1.5.0] - 2026-05-18
 
 ### Added
