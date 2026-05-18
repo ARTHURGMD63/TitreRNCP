@@ -7,6 +7,16 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-05-18
+
+### Added
+- **README.md** complet (badges CI, stack, install, structure, démo)
+- **docs/MCD.md** — Modèle Conceptuel de Données avec diagramme Mermaid ER (15 tables)
+- **docs/UML_DIAGRAMMES.md** — 6 diagrammes UML (cas d'usage, séquences, classes)
+- **docs/ARCHITECTURE.md** — Architecture technique, patterns, choix justifiés
+- **docs/MANUEL_UTILISATEUR.md** — Guide complet étudiant (wallet, badges, squads, FAQ)
+- **docs/API.md** — Référence de tous les endpoints `/api/*.php`
+
 ## [1.3.0] - 2026-05-18
 
 ### Added
