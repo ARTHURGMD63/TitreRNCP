@@ -127,13 +127,13 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
     </div>
 
     <nav class="sidebar-nav">
-      <a href="/partenaire/dashboard.php" class="sidebar-link active">
+      <a href="<?= baseUrl('/partenaire/dashboard.php') ?>" class="sidebar-link active">
         <span class="icon">📊</span> Dashboard
       </a>
-      <a href="/partenaire/evenements.php" class="sidebar-link">
+      <a href="<?= baseUrl('/partenaire/evenements.php') ?>" class="sidebar-link">
         <span class="icon">🎉</span> Événements
       </a>
-      <a href="/partenaire/create_event.php" class="sidebar-link">
+      <a href="<?= baseUrl('/partenaire/create_event.php') ?>" class="sidebar-link">
         <span class="icon">➕</span> Créer un event
       </a>
     </nav>
@@ -141,7 +141,7 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
     <div class="sidebar-venue" style="margin-top:48px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.1);">
       <div class="sidebar-venue-name"><?= htmlspecialchars(strtoupper($etab['nom'] ?? '')) ?></div>
       <div class="sidebar-venue-city"><?= htmlspecialchars($etab['ville'] ?? 'Clermont-Ferrand') ?></div>
-      <a href="/auth/logout.php" style="display:block;margin-top:12px;font-size:12px;color:rgba(255,255,255,0.4);text-decoration:none;">
+      <a href="<?= baseUrl('/auth/logout.php') ?>" style="display:block;margin-top:12px;font-size:12px;color:rgba(255,255,255,0.4);text-decoration:none;">
         → Déconnexion
       </a>
     </div>
@@ -269,10 +269,10 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
             📷 Scanner un Pass
           </button>
           <?php endif; ?>
-          <a href="/partenaire/evenements.php" class="btn btn-outline btn-full">
+          <a href="<?= baseUrl('/partenaire/evenements.php') ?>" class="btn btn-outline btn-full">
             Gérer les événements
           </a>
-          <a href="/partenaire/create_event.php" class="btn btn-primary btn-full">
+          <a href="<?= baseUrl('/partenaire/create_event.php') ?>" class="btn btn-primary btn-full">
             + Créer un événement
           </a>
         </div>
@@ -362,7 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         html5QrcodeScanner.pause(true);
 
-        fetch('/partenaire/api_scan.php', {
+        fetch(BASE + '/partenaire/api_scan.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ qr_code: decodedText, event_id: eventId })
