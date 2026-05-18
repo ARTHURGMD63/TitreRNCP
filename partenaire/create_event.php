@@ -161,6 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <div class="form-card">
+      <?= csrfFlash() ?>
       <?php if (!empty($errors)): ?>
       <ul class="form-errors">
         <?php foreach ($errors as $e): ?>

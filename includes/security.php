@@ -49,12 +49,16 @@ function csrfField(): string {
     return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars(csrfToken()) . '">';
 }
 
-/** Vérifie le token CSRF. Stoppe l'exécution si invalide. */
+/** Vérifie le token CSRF. Redirige vers la page précédente si invalide. */
 function csrfVerify(): void {
     $token = $_POST['csrf_token'] ?? '';
     if (!hash_equals(csrfToken(), $token)) {
-        http_response_code(403);
-        die('CSRF token invalide. <a href="javascript:history.back()">Retour</a>');
+        // Régénère un token frais pour que la prochaine soumission fonctionne
+        unset($_SESSION['csrf_token']);
+        $_SESSION['csrf_error'] = 'Session expirée. Veuillez réessayer.';
+        $back = $_SERVER['HTTP_REFERER'] ?? '/';
+        header('Location: ' . $back);
+        exit;
     }
 }
 

@@ -41,6 +41,16 @@ function themeBootScript(): string {
     return '<script>(function(){var t=localStorage.getItem("theme")||"light";document.documentElement.setAttribute("data-theme",t);})();</script>';
 }
 
+/** Retourne et efface le flash CSRF s'il existe, sinon ''. */
+function csrfFlash(): string {
+    if (!empty($_SESSION['csrf_error'])) {
+        $msg = $_SESSION['csrf_error'];
+        unset($_SESSION['csrf_error']);
+        return '<div class="form-error" role="alert" aria-live="assertive">' . htmlspecialchars($msg) . '</div>';
+    }
+    return '';
+}
+
 function currentUser(): array {
     return [
         'id'     => $_SESSION['user_id'] ?? null,

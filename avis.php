@@ -94,6 +94,7 @@ $existing = $stmt->fetch();
     </div>
   <?php endif; ?>
 
+  <?= csrfFlash() ?>
   <?php if ($error): ?>
     <div style="background:var(--rouge-clair);border:2px solid var(--rouge);padding:14px;color:var(--rouge);font-weight:600;margin-bottom:24px;">
       <?= htmlspecialchars($error) ?>
