@@ -79,6 +79,7 @@ $userInterests = $u['interests'] ? explode(',', $u['interests']) : [];
 
 $success = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profil'])) {
+    csrfVerify();
     $ecole = trim($_POST['ecole'] ?? '');
     $promo = trim($_POST['promo'] ?? '');
     $allowedInterests = ['Sorties','Boîtes','Running','Muscu','Vélo','Foot','Tennis','Gaming','Cuisine','Voyage','Cinéma','Lecture','Musique','Art','Photo','Animaux','Code','Yoga','Échecs','Mixologie','Bénévolat','Soirées'];
@@ -236,6 +237,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profil'])) {
         Mon Profil
       </div>
       <form method="POST">
+        <?= csrfField() ?>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
           <div class="form-group" style="margin-bottom:0;">
             <label>École</label>
