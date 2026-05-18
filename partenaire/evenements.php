@@ -10,7 +10,7 @@ $stmt->execute([$uid]);
 $etab = $stmt->fetch();
 
 if (!$etab) {
-    echo "<p>Aucun établissement trouvé. <a href='/auth/logout.php'>Déconnexion</a></p>";
+    echo "<p>Aucun établissement trouvé. <a href='" . baseUrl('/auth/logout.php') . "'>Déconnexion</a></p>";
     exit;
 }
 
@@ -57,20 +57,20 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
       </div>
     </div>
     <nav class="sidebar-nav">
-      <a href="/partenaire/dashboard.php" class="sidebar-link">
+      <a href="<?= baseUrl('/partenaire/dashboard.php') ?>" class="sidebar-link">
         <span class="icon">📊</span> Dashboard
       </a>
-      <a href="/partenaire/evenements.php" class="sidebar-link active">
+      <a href="<?= baseUrl('/partenaire/evenements.php') ?>" class="sidebar-link active">
         <span class="icon">🎉</span> Événements
       </a>
-      <a href="/partenaire/create_event.php" class="sidebar-link">
+      <a href="<?= baseUrl('/partenaire/create_event.php') ?>" class="sidebar-link">
         <span class="icon">➕</span> Créer un event
       </a>
     </nav>
     <div class="sidebar-venue" style="margin-top:48px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.1);">
       <div class="sidebar-venue-name"><?= htmlspecialchars(strtoupper($etab['nom'])) ?></div>
       <div class="sidebar-venue-city"><?= htmlspecialchars($etab['ville']) ?></div>
-      <a href="/auth/logout.php" style="display:block;margin-top:12px;font-size:12px;color:rgba(255,255,255,0.4);text-decoration:none;">
+      <a href="<?= baseUrl('/auth/logout.php') ?>" style="display:block;margin-top:12px;font-size:12px;color:rgba(255,255,255,0.4);text-decoration:none;">
         → Déconnexion
       </a>
     </div>
@@ -84,7 +84,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
           Mes <?= count($evenements) ?> événement<?= count($evenements)>1?'s':'' ?>
         </div>
       </div>
-      <a href="/partenaire/create_event.php" class="btn btn-primary">
+      <a href="<?= baseUrl('/partenaire/create_event.php') ?>" class="btn btn-primary">
         + Créer un événement
       </a>
     </div>
@@ -94,6 +94,9 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
     <?php endif; ?>
     <?php if (isset($_GET['created'])): ?>
       <div class="form-success">Événement créé avec succès !</div>
+    <?php endif; ?>
+    <?php if (isset($_GET['updated'])): ?>
+      <div class="form-success">Événement mis à jour avec succès !</div>
     <?php endif; ?>
 
     <div style="background:var(--blanc);border-radius:var(--radius);overflow:hidden;">
@@ -114,7 +117,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
           <?php if (empty($evenements)): ?>
           <tr>
             <td colspan="8" style="text-align:center;padding:40px;color:var(--gris);">
-              Aucun événement. <a href="/partenaire/create_event.php" style="color:var(--bleu);font-weight:600;">Créez-en un !</a>
+              Aucun événement. <a href="<?= baseUrl('/partenaire/create_event.php') ?>" style="color:var(--bleu);font-weight:600;">Créez-en un !</a>
             </td>
           </tr>
           <?php endif; ?>
@@ -147,11 +150,14 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
                 <span style="color:#2e7d32;font-size:12px;font-weight:600;">Actif</span>
               <?php endif; ?>
             </td>
-            <td>
-              <form method="POST" onsubmit="return confirm('Supprimer cet événement ?')">
+            <td style="white-space:nowrap;">
+              <a href="<?= baseUrl('/partenaire/edit_event.php?id=' . $e['id']) ?>"
+                 style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:2px solid var(--noir);background:var(--blanc);color:var(--noir);text-decoration:none;font-size:14px;margin-right:4px;"
+                 title="Modifier">✏️</a>
+              <form method="POST" onsubmit="return confirm('Supprimer cet événement ?')" style="display:inline;">
                 <?= csrfField() ?>
                 <input type="hidden" name="delete_event" value="<?= $e['id'] ?>">
-                <button type="submit" style="background:none;border:none;color:var(--rouge);cursor:pointer;font-size:16px;" title="Supprimer">🗑</button>
+                <button type="submit" style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:2px solid var(--rouge);background:var(--blanc);color:var(--rouge);cursor:pointer;font-size:14px;" title="Supprimer">🗑</button>
               </form>
             </td>
           </tr>
