@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </div>
 
   <?php if ($error): ?>
-    <div class="form-error"><?= htmlspecialchars($error) ?></div>
+    <div class="form-error" role="alert" aria-live="assertive"><?= htmlspecialchars($error) ?></div>
   <?php endif; ?>
 
   <form method="POST">

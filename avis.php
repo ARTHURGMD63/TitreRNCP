@@ -102,18 +102,24 @@ $existing = $stmt->fetch();
 
   <form method="POST">
     <?= csrfField() ?>
-    <div style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;text-align:center;">Ta note</div>
-    <div class="stars" id="stars">
+    <div id="stars-label" style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;text-align:center;">Ta note</div>
+    <div class="stars" id="stars" role="radiogroup" aria-labelledby="stars-label" aria-required="true">
       <?php for ($i = 1; $i <= 5; $i++): ?>
-        <span class="star <?= ($existing && $existing['note'] >= $i) ? 'filled' : '' ?>" data-value="<?= $i ?>">★</span>
+        <span class="star <?= ($existing && $existing['note'] >= $i) ? 'filled' : '' ?>"
+              role="radio"
+              aria-label="<?= $i ?> étoile<?= $i > 1 ? 's' : '' ?>"
+              aria-checked="<?= ($existing && $existing['note'] == $i) ? 'true' : 'false' ?>"
+              tabindex="<?= ($existing && $existing['note'] == $i) || (!$existing && $i == 1) ? '0' : '-1' ?>"
+              data-value="<?= $i ?>">★</span>
       <?php endfor; ?>
     </div>
     <input type="hidden" name="note" id="note-input" value="<?= $existing['note'] ?? 0 ?>">
 
-    <div style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;margin-top:24px;">
-      Ton commentaire (optionnel)
-    </div>
-    <textarea class="comment-box" name="commentaire" placeholder="Raconte-nous ta soirée..."><?= htmlspecialchars($existing['commentaire'] ?? '') ?></textarea>
+    <label for="commentaire" style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:8px;margin-top:24px;">
+      Ton commentaire <span style="font-weight:400;text-transform:none;">(optionnel)</span>
+    </label>
+    <textarea id="commentaire" class="comment-box" name="commentaire" placeholder="Raconte-nous ta soirée..." aria-describedby="commentaire-hint"><?= htmlspecialchars($existing['commentaire'] ?? '') ?></textarea>
+    <span id="commentaire-hint" class="sr-only">Maximum 1000 caractères</span>
 
     <button type="submit" class="btn btn-primary btn-full" style="margin-top:20px;font-size:15px;padding:16px;">
       <?= $existing ? 'Modifier mon avis' : 'Envoyer mon avis' ?>
@@ -125,11 +131,37 @@ $existing = $stmt->fetch();
 <script>
   const stars = document.querySelectorAll('.star');
   const input = document.getElementById('note-input');
+
+  function setRating(v) {
+    input.value = v;
+    stars.forEach(st => {
+      const sv = parseInt(st.dataset.value);
+      st.classList.toggle('filled', sv <= v);
+      st.setAttribute('aria-checked', sv === v ? 'true' : 'false');
+      st.setAttribute('tabindex', sv === v ? '0' : '-1');
+    });
+  }
+
   stars.forEach(s => {
-    s.addEventListener('click', () => {
+    // Clic souris
+    s.addEventListener('click', () => setRating(parseInt(s.dataset.value)));
+    // Navigation clavier (flèches + espace/entrée)
+    s.addEventListener('keydown', e => {
       const v = parseInt(s.dataset.value);
-      input.value = v;
-      stars.forEach(st => st.classList.toggle('filled', parseInt(st.dataset.value) <= v));
+      if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const next = Math.min(5, v + 1);
+        setRating(next);
+        document.querySelector(`.star[data-value="${next}"]`).focus();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        const prev = Math.max(1, v - 1);
+        setRating(prev);
+        document.querySelector(`.star[data-value="${prev}"]`).focus();
+      } else if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        setRating(v);
+      }
     });
   });
 </script>

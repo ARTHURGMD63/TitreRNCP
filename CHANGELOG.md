@@ -7,6 +7,25 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-05-18
+
+### Added
+- **Skip navigation** link "Aller au contenu principal" (visible au focus clavier)
+- `docs/ACCESSIBILITE.md` — audit WCAG 2.1 AA avec tableau de conformité complet
+- `prefers-reduced-motion` — toutes animations désactivées si souhaité
+- `.sr-only` — classe utilitaire screen-reader
+- Star widget clavier-accessible : `role="radiogroup"`, flèches, `aria-checked`
+
+### Changed
+- `<main id="main-content">` sur toutes les pages (explore, squads, wallet, profil)
+- `<nav aria-label="Navigation principale">` + `aria-current="page"` sur la bottom nav
+- `aria-hidden="true"` sur tous les SVG décoratifs
+- Filtres pills : `onclick="window.location"` → vrais liens `<a>` + `aria-current`
+- `role="alert" aria-live="assertive"` sur tous les messages d'erreur auth
+- `:focus-visible` remplace `outline: none` — focus visible uniquement au clavier
+- Inputs : outline bleu 2px en plus du border-color au focus
+- Label `<label for="commentaire">` sur textarea avis
+
 ## [1.4.0] - 2026-05-18
 
 ### Added

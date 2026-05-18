@@ -187,6 +187,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
 </style>
 </head>
 <body>
+<a href="#main-content" class="skip-nav">Aller au contenu principal</a>
 <div class="app-shell">
 
   <!-- Hub Header -->
@@ -214,19 +215,19 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
     <?php endif; ?>
   </div>
 
-  <div class="page-content" style="padding-top:20px;">
+  <main id="main-content" class="page-content" style="padding-top:20px;">
 
     <?php if ($view === 'events'): ?>
       <!-- Event Filters (Pills) -->
-      <div class="filter-scroll" style="margin: 0 -20px 24px; padding: 0 20px;">
-        <button class="pill <?= $filter==='all'?'active':'' ?>" onclick="window.location='?view=events&type=all'">Tout</button>
-        <button class="pill <?= $filter==='pour-moi'?'active':'' ?>" onclick="window.location='?view=events&type=pour-moi'" style="<?= $filter==='pour-moi'?'':'border-color:var(--rouge);color:var(--rouge);' ?>">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:text-bottom;margin-right:4px;"><path d="M12 3l1.912 5.813h6.111l-4.943 3.591 1.887 5.804-4.967-3.607-4.967 3.607 1.887-5.804-4.943-3.591h6.111z"></path></svg>
+      <div class="filter-scroll" role="group" aria-label="Filtrer les événements" style="margin: 0 -20px 24px; padding: 0 20px;">
+        <a href="?view=events&type=all" class="pill <?= $filter==='all'?'active':'' ?>" <?= $filter==='all'?'aria-current="true"':'' ?>>Tout</a>
+        <a href="?view=events&type=pour-moi" class="pill <?= $filter==='pour-moi'?'active':'' ?>" <?= $filter==='pour-moi'?'aria-current="true"':'' ?> style="<?= $filter==='pour-moi'?'':'border-color:var(--rouge);color:var(--rouge);' ?>">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:text-bottom;margin-right:4px;"><path d="M12 3l1.912 5.813h6.111l-4.943 3.591 1.887 5.804-4.967-3.607-4.967 3.607 1.887-5.804-4.943-3.591h6.111z"></path></svg>
           Pour moi
-        </button>
-        <button class="pill <?= $filter==='bar'?'active':'' ?>" onclick="window.location='?view=events&type=bar'">Bars</button>
-        <button class="pill <?= $filter==='boite'?'active':'' ?>" onclick="window.location='?view=events&type=boite'">Boîtes</button>
-        <button class="pill <?= $filter==='resto'?'active':'' ?>" onclick="window.location='?view=events&type=resto'">Restos</button>
+        </a>
+        <a href="?view=events&type=bar"   class="pill <?= $filter==='bar'?'active':'' ?>"   <?= $filter==='bar'?'aria-current="true"':'' ?>>Bars</a>
+        <a href="?view=events&type=boite" class="pill <?= $filter==='boite'?'active':'' ?>" <?= $filter==='boite'?'aria-current="true"':'' ?>>Boîtes</a>
+        <a href="?view=events&type=resto" class="pill <?= $filter==='resto'?'active':'' ?>" <?= $filter==='resto'?'aria-current="true"':'' ?>>Restos</a>
       </div>
 
       <!-- Rich Event Cards (Restored Original Design) -->
@@ -434,25 +435,25 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
       </div>
     <?php endif; ?>
 
-  </div>
+  </main>
 </div>
 
 <!-- Navigation -->
-<nav class="bottom-nav">
-  <a href="/explore.php" class="nav-item active">
-    <span class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
+<nav class="bottom-nav" aria-label="Navigation principale">
+  <a href="<?= baseUrl('/explore.php') ?>" class="nav-item active" aria-current="page">
+    <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
     <span>Explore</span>
   </a>
-  <a href="/squads.php" class="nav-item">
-    <span class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
+  <a href="<?= baseUrl('/squads.php') ?>" class="nav-item">
+    <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
     <span>Squads</span>
   </a>
-  <a href="/wallet.php" class="nav-item">
-    <span class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg></span>
+  <a href="<?= baseUrl('/wallet.php') ?>" class="nav-item">
+    <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg></span>
     <span>Wallet</span>
   </a>
-  <a href="/profil.php" class="nav-item">
-    <span class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
+  <a href="<?= baseUrl('/profil.php') ?>" class="nav-item">
+    <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
     <span>Moi</span>
   </a>
 </nav>
