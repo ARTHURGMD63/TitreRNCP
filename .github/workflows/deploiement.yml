@@ -1,0 +1,119 @@
+# ============================================================
+#  Déploiement automatique sur l'hébergement mutualisé (FTP).
+#
+#  Se déclenche à chaque push sur main, et à la demande depuis
+#  l'onglet Actions. Remplace l'envoi manuel par FileZilla.
+#
+#  Secrets à renseigner dans Settings → Secrets and variables →
+#  Actions → New repository secret :
+#
+#    FTP_SERVER     ftpupload.net
+#    FTP_USERNAME   if0_00000000
+#    FTP_PASSWORD   (mot de passe FTP du panneau)
+#    DB_HOST        sqlXXX.infinityfree.com
+#    DB_NAME        if0_00000000_studentlink
+#    DB_USER        if0_00000000
+#    DB_PASSWORD    (mot de passe de la base)
+#
+#  Le dépôt est public : ces valeurs ne doivent jamais aller dans
+#  le code. Les secrets d'Actions ne sont pas exposés aux pull
+#  requests venant d'un fork, et GitHub les masque dans les logs.
+# ============================================================
+
+name: Déploiement
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  # Deux déploiements simultanés sur le même compte FTP se marchent
+  # dessus et laissent le serveur dans un état mixte.
+  group: deploiement-ftp
+  cancel-in-progress: false
+
+jobs:
+  deployer:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Installer PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
+      - name: Vérifier la syntaxe PHP
+        # Un fichier au parenthésage cassé mettrait le site à terre.
+        # Deux secondes ici valent mieux qu'une page blanche en ligne.
+        # xargs renvoie un code non nul dès qu'un php -l échoue.
+        run: find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
+
+      - name: Préparer les fichiers à envoyer
+        # Même liste d'exclusions que le paquet préparé à la main :
+        # seul le code utile part, ni la documentation, ni les tests,
+        # ni les supports de communication.
+        run: |
+          mkdir -p dist
+          rsync -a ./ dist/ \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude 'dist' \
+            --exclude 'docs' \
+            --exclude 'tests' \
+            --exclude 'outils' \
+            --exclude 'vendor' \
+            --exclude 'node_modules' \
+            --exclude 'Dockerfile' \
+            --exclude 'nixpacks.toml' \
+            --exclude 'composer.json' \
+            --exclude 'composer.lock' \
+            --exclude 'phpunit.xml' \
+            --exclude 'phpstan.neon' \
+            --exclude '.gitignore' \
+            --exclude '.env.example' \
+            --exclude '__shot.php' \
+            --exclude 'install_mutualise.sql' \
+            --exclude 'db_setup.sql' \
+            --exclude 'db_migrations_v*.sql' \
+            --exclude 'includes/config.local.example.php' \
+            --exclude '*.md' \
+            --exclude '*.mp4' \
+            --exclude '*.pptx' \
+            --exclude '*.docx' \
+            --exclude '*.pdf'
+          echo "Fichiers prêts : $(find dist -type f | wc -l)"
+
+      - name: Écrire la configuration de la base
+        # config.local.php n'est pas versionné, et c'est voulu : le mot
+        # de passe n'a rien à faire dans un dépôt public. Il est fabriqué
+        # ici, à partir des secrets, juste avant l'envoi.
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          php .github/scripts/ecrire_config.php dist/includes/config.local.php
+          php -l dist/includes/config.local.php
+
+      - name: Envoyer par FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./dist/
+          server-dir: htdocs/
+          # Les photos envoyées par les utilisateurs vivent sur le
+          # serveur et n'existent pas dans le dépôt. Sans ces deux
+          # exclusions, la synchronisation les effacerait à chaque
+          # déploiement. uploads/.htaccess, lui, reste synchronisé.
+          exclude: |
+            **/.git*
+            **/.git*/**
+            uploads/avatars/**
+            uploads/etablissements/**
