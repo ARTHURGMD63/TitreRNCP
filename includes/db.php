@@ -1,13 +1,37 @@
 <?php
-// Configuration BDD — production (variables d'environnement) ou local (WAMP)
+// Configuration BDD, par ordre de priorité décroissant :
+//
+//   1. les variables d'environnement, là où l'hébergeur en fournit
+//      (Railway, Docker, conteneurs en général) ;
+//   2. includes/config.local.php, pour les hébergements mutualisés qui
+//      n'en proposent pas — InfinityFree, o2switch, OVH mutualisé. Ce
+//      fichier n'est pas versionné, le mot de passe reste sur le serveur.
+//      Voir config.local.example.php ;
+//   3. les valeurs WAMP par défaut, pour le poste de développement.
+//
+// Sans le point 2, un mutualisé retombait silencieusement sur « localhost »
+// et « root », et la connexion échouait sans indiquer pourquoi.
 require_once __DIR__ . '/log.php';
 installerGardesErreurs();
 
-define('DB_HOST', getenv('MYSQLHOST') ?: 'localhost');
-define('DB_NAME', getenv('MYSQLDATABASE') ?: 'studentlink');
-define('DB_USER', getenv('MYSQLUSER') ?: 'root');
-define('DB_PASS', getenv('MYSQLPASSWORD') ?: '');
-define('DB_PORT', getenv('MYSQLPORT') ?: '3306');
+$configLocale = is_file(__DIR__ . '/config.local.php')
+    ? require __DIR__ . '/config.local.php'
+    : [];
+if (!is_array($configLocale)) {
+    $configLocale = [];
+}
+
+$reglage = static fn(string $variable, string $cle, string $defaut): string
+    => (string) (getenv($variable) ?: ($configLocale[$cle] ?? $defaut));
+
+define('DB_HOST', $reglage('MYSQLHOST',     'host', 'localhost'));
+define('DB_NAME', $reglage('MYSQLDATABASE', 'name', 'studentlink'));
+define('DB_USER', $reglage('MYSQLUSER',     'user', 'root'));
+define('DB_PASS', $reglage('MYSQLPASSWORD', 'pass', ''));
+define('DB_PORT', $reglage('MYSQLPORT',     'port', '3306'));
+
+// Le mot de passe n'a pas à traîner dans une variable du contexte global.
+unset($configLocale, $reglage);
 
 try {
     $pdo = new PDO(

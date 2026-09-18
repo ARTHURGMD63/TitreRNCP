@@ -1,13 +1,14 @@
 {
   "name": "StudentLink",
   "short_name": "StudentLink",
-  "start_url": "/TitreRNCP/explore.php",
+  "start_url": "explore.php",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#F3EEE3",
   "theme_color": "#1C1916",
   "icons": [
     {
-      "src": "/TitreRNCP/Logo.png",
+      "src": "Logo.png",
       "sizes": "192x192",
       "type": "image/png"
     }

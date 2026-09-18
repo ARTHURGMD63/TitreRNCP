@@ -53,3 +53,7 @@ __pycache__/
 # (répertoires non listables) et doivent, eux, être versionnés.
 uploads/*/*
 !uploads/*/index.html
+
+# Identifiants de base de données d'un hébergement mutualisé.
+# Le modèle à recopier est includes/config.local.example.php.
+includes/config.local.php
