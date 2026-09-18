@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hors ligne — StudentLink</title>
+<meta name="theme-color" content="#F3EEE3">
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+  .hors-ligne {
+    min-height: 100dvh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center;
+    padding: 40px 28px; gap: 8px;
+  }
+  .hors-ligne svg { color: var(--gris); margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<div class="hors-ligne">
+  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+    <path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
+    <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/>
+    <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+    <line x1="12" y1="20" x2="12.01" y2="20"/>
+  </svg>
+  <div class="display" style="font-size:var(--fs-8);">Pas de réseau.</div>
+  <p class="t-body" style="color:var(--gris-fonce);max-width:34ch;margin-top:8px;">
+    Tes pages déjà consultées restent accessibles. Le reste revient dès que la connexion est de retour.
+  </p>
+  <button class="btn btn-primary" style="margin-top:22px;" onclick="location.reload()">Réessayer</button>
+</div>
+</body>
+</html>

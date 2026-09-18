@@ -26,7 +26,7 @@ $stmt = $pdo->prepare("
     JOIN evenements e ON e.id = i.evenement_id AND e.date_heure >= NOW()
     JOIN users u ON u.id = fu.followed_id
     JOIN etablissements et ON et.id = e.etablissement_id
-    WHERE fu.follower_id = ? AND i.statut = 'inscrit'
+    WHERE fu.follower_id = ? AND fu.statut = 'accepted' AND i.statut = 'inscrit'
     
     UNION ALL
     
@@ -43,12 +43,12 @@ $stmt = $pdo->prepare("
     JOIN squad_membres sm ON sm.user_id = fu.followed_id
     JOIN squads s ON s.id = sm.squad_id AND s.date_heure >= NOW()
     JOIN users u ON u.id = fu.followed_id
-    WHERE fu.follower_id = ?
+    WHERE fu.follower_id = ? AND fu.statut = 'accepted'
     
     ORDER BY action_date DESC
-    LIMIT ?
+    LIMIT $limit
 ");
-$stmt->execute([$uid, $uid, $limit]);
+$stmt->execute([$uid, $uid]);
 $feed = $stmt->fetchAll();
 
 echo json_encode(['success' => true, 'feed' => $feed]);

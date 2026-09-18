@@ -1,11 +1,9 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) session_start();
+require_once __DIR__ . '/includes/auth_check.php';
+
 if (!empty($_SESSION['user_id'])) {
-    $loc = $_SESSION['user_type'] === 'partenaire'
-        ? '/partenaire/dashboard.php'
-        : '/explore.php';
-    header('Location: ' . $loc);
+    header('Location: ' . accueilSelonType($_SESSION['user_type'] ?? null));
     exit;
 }
-header('Location: /auth/login.php');
+header('Location: ' . baseUrl('/auth/login.php'));
 exit;

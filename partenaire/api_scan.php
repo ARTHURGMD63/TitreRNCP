@@ -10,8 +10,21 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'partenaire') {
 }
 
 $input = json_decode(file_get_contents('php://input'), true);
-$qr_code = $input['qr_code'] ?? '';
+$qr_code = trim((string) ($input['qr_code'] ?? ''));
 $event_id = $input['event_id'] ?? 0;
+
+/*
+ * Le pass est encodé « studentlink:<code> » : le préfixe identifie
+ * l'application quand un lecteur généraliste tombe sur le code. La
+ * recherche, elle, se fait sur le code seul — c'est ce que contient la
+ * colonne qr_code. Sans ce retrait, la comparaison portait sur
+ * « studentlink:abc… » face à « abc… » : aucun scan ne pouvait aboutir,
+ * tous les pass valides étaient refusés.
+ * Le préfixe reste optionnel pour accepter un code saisi à la main.
+ */
+if (stripos($qr_code, 'studentlink:') === 0) {
+    $qr_code = substr($qr_code, strlen('studentlink:'));
+}
 
 if (!$qr_code || !$event_id) {
     echo json_encode(['success' => false, 'message' => 'Données manquantes']);

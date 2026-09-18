@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>StudentLink — Plaquette partenaires</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700..900;1,700..900&family=DM+Sans:opsz,wght@9..40,400..700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Plaquette partenaires StudentLink
+   Les couleurs et la typographie sont celles de la charte
+   graphique de l'application : un prospect qui ouvre l'app
+   apres avoir lu ce document doit reconnaitre la meme marque.
+   ============================================================ */
+:root{
+  --bg:#F3EEE3; --blanc:#FFFFFF; --surface-2:#FBF8F1;
+  --noir:#1C1916; --gris-fonce:#5B554C; --gris:#6E6860;
+  --gris-clair:#EAE3D6; --line-2:#DED6C6;
+  --rouge:#E0492B; --rouge-deep:#BB3619; --rouge-clair:#FBE7E1;
+  --bleu:#4A40C2; --bleu-deep:#332A92; --bleu-clair:#ECE9FA;
+  --lime:#EFB23A; --lime-deep:#8E6414; --lime-clair:#FBF0D6;
+  --orange:#EC8233;
+  --font-display:'Playfair Display',Georgia,'Times New Roman',serif;
+  --font-sans:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@page{ size:A4 landscape; margin:0; }
+*{ box-sizing:border-box; margin:0; padding:0; }
+html,body{ background:var(--bg); }
+body{
+  font-family:var(--font-sans); color:var(--noir);
+  font-size:10pt; line-height:1.55; -webkit-print-color-adjust:exact; print-color-adjust:exact;
+}
+
+.page{
+  position:relative; width:297mm; height:210mm; overflow:hidden;
+  background:var(--bg); page-break-after:always; break-after:page;
+  padding:18mm 20mm 14mm;
+}
+.page:last-child{ page-break-after:auto; }
+.page.sombre{ background:var(--noir); color:var(--bg); }
+
+/* ── Reperes de page ─────────────────────────────────────── */
+.folio{
+  position:absolute; left:20mm; right:20mm; bottom:8mm;
+  display:flex; justify-content:space-between;
+  font-size:6.5pt; letter-spacing:.14em; text-transform:uppercase; color:var(--gris);
+  border-top:1px solid var(--line-2); padding-top:3mm;
+}
+.sombre .folio{ color:rgba(243,238,227,.45); border-top-color:rgba(243,238,227,.18); }
+
+.kicker{
+  font-size:7pt; font-weight:700; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--rouge); margin-bottom:5mm;
+}
+.sombre .kicker{ color:var(--rouge); }
+
+h1{ font-family:var(--font-display); font-weight:900; font-size:42pt; line-height:.98;
+    letter-spacing:-.02em; }
+h1 em{ font-style:italic; color:var(--rouge); display:block; }
+h2{ font-family:var(--font-display); font-weight:900; font-size:26pt; line-height:1.02;
+    letter-spacing:-.018em; margin-bottom:5mm; }
+h2 em{ font-style:italic; color:var(--rouge); }
+h3{ font-family:var(--font-sans); font-weight:700; font-size:11pt; letter-spacing:-.01em;
+    margin-bottom:2mm; }
+.lede{ font-size:11.5pt; line-height:1.5; color:var(--gris-fonce); max-width:150mm; }
+.sombre .lede{ color:rgba(243,238,227,.82); }
+p{ color:var(--gris-fonce); }
+.sombre p{ color:rgba(243,238,227,.78); }
+strong{ color:var(--noir); font-weight:700; }
+.sombre strong{ color:var(--bg); }
+
+/* ── Logo ────────────────────────────────────────────────── */
+.logo{ display:flex; align-items:center; gap:3mm; font-weight:700; font-size:13pt;
+       letter-spacing:-.01em; }
+.logo svg{ width:9mm; height:9mm; flex:0 0 auto; }
+.logo em{ font-family:var(--font-display); font-style:italic; color:var(--rouge);
+          font-weight:800; }
+
+/* ── Cadre telephone ─────────────────────────────────────── */
+.phone{
+  position:relative; width:50mm; border:1.4mm solid var(--noir); border-radius:7mm;
+  background:var(--noir); overflow:hidden;
+  box-shadow:0 6mm 16mm rgba(28,25,22,.18);
+}
+.phone img{ display:block; width:100%; }
+.phone.court img{ margin-bottom:-1px; }
+
+.capture{ border-radius:3mm; overflow:hidden; box-shadow:0 3mm 10mm rgba(28,25,22,.14);
+          border:1px solid var(--line-2); background:var(--blanc); }
+.capture img{ display:block; width:100%; }
+.legende{ font-size:7.5pt; color:var(--gris); letter-spacing:.02em; margin-top:2.5mm;
+          text-align:center; }
+
+/* ── Grilles ─────────────────────────────────────────────── */
+.trois{ display:grid; grid-template-columns:repeat(3,1fr); gap:10mm; }
+.deux{ display:grid; grid-template-columns:1fr 1fr; gap:12mm; }
+
+.constat{ border-top:2px solid var(--noir); padding-top:4mm; }
+.constat .num{ font-family:var(--font-display); font-size:30pt; font-weight:900;
+               color:var(--rouge); line-height:1; margin-bottom:2mm; }
+.constat h3{ font-size:12pt; line-height:1.25; margin-bottom:3mm; }
+.constat p{ font-size:9pt; line-height:1.55; }
+
+.etape{ display:flex; gap:5mm; align-items:flex-start; margin-bottom:6mm; }
+.etape .rond{
+  flex:0 0 9mm; height:9mm; border-radius:50%; background:var(--noir); color:var(--bg);
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:10pt;
+}
+.etape h3{ margin-bottom:1mm; }
+.etape p{ font-size:9pt; }
+
+.encart{
+  background:var(--blanc); border:1px solid var(--line-2); border-radius:4.5mm;
+  padding:6mm 7mm;
+}
+.encart.rouge{ background:var(--rouge); border-color:var(--rouge); color:var(--blanc); }
+.encart.rouge p, .encart.rouge strong{ color:rgba(255,255,255,.92); }
+.encart.creme{ background:var(--surface-2); }
+.encart .chiffre{ font-family:var(--font-display); font-weight:900; font-size:34pt;
+                  line-height:1; letter-spacing:-.02em; }
+.encart .ch-label{ font-size:7pt; letter-spacing:.16em; text-transform:uppercase;
+                   color:var(--gris); margin-bottom:2mm; }
+.encart.rouge .ch-label{ color:rgba(255,255,255,.7); }
+
+.puces{ list-style:none; }
+.puces li{ position:relative; padding-left:6mm; margin-bottom:3mm; font-size:9.5pt;
+           color:var(--gris-fonce); }
+.puces li::before{
+  content:''; position:absolute; left:0; top:1.8mm;
+  width:2.4mm; height:2.4mm; border-radius:50%; background:var(--rouge);
+}
+.sombre .puces li{ color:rgba(243,238,227,.8); }
+
+.qr-faq{ display:grid; grid-template-columns:1fr 1fr; gap:6mm 10mm; }
+.qr-faq h3{ font-size:9.5pt; color:var(--noir); margin-bottom:1.5mm; }
+.qr-faq p{ font-size:8.7pt; line-height:1.5; }
+
+.a-completer{
+  display:inline-block; border:1.2px dashed var(--rouge); border-radius:2mm;
+  padding:.6mm 2.5mm; color:var(--rouge); font-weight:700; font-size:.92em;
+  background:var(--rouge-clair);
+}
+
+.etiquette{
+  display:inline-block; font-size:6.8pt; font-weight:700; letter-spacing:.16em;
+  text-transform:uppercase; padding:1.2mm 3mm; border-radius:99mm;
+}
+.et-rouge{ background:var(--rouge-clair); color:var(--rouge-deep); }
+.et-bleu{ background:var(--bleu-clair); color:var(--bleu-deep); }
+.et-lime{ background:var(--lime-clair); color:var(--lime-deep); }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ 1. COUVERTURE ══════════════ -->
+<section class="page sombre" style="padding:0;">
+  <div style="display:grid; grid-template-columns:1.25fr .75fr; height:100%;">
+    <div style="padding:20mm 0 14mm 20mm; display:flex; flex-direction:column;">
+      <div class="logo" style="color:var(--bg);">
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="15" y="20" width="50" height="30" rx="15" stroke="#F3EEE3" stroke-width="10"/>
+          <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
+          <circle cx="50" cy="50" r="6" fill="#F3EEE3"/>
+        </svg>
+        StudentLink <em>/ Partenaires</em>
+      </div>
+
+      <div style="margin-top:auto;">
+        <div class="kicker">Bars · Restaurants · Discothèques · Hôtels · BDE · Associations</div>
+        <h1>Vos soirées creuses<em>ont un public.</em></h1>
+        <p class="lede" style="margin-top:8mm; max-width:118mm;">
+          StudentLink amène des étudiants clermontois dans votre établissement
+          les soirs où votre salle est vide — et vous dit combien sont
+          <strong>réellement venus</strong>.
+        </p>
+      </div>
+
+      <div style="margin-top:12mm; display:flex; gap:14mm; font-size:7pt;
+                  letter-spacing:.14em; text-transform:uppercase;
+                  color:rgba(243,238,227,.5); border-top:1px solid rgba(243,238,227,.18);
+                  padding-top:5mm; width:118mm;">
+        <span>Clermont-Ferrand</span>
+        <span>Plaquette partenaires</span>
+        <span>Septembre 2026</span>
+      </div>
+    </div>
+
+    <div style="position:relative; overflow:hidden; background:
+         radial-gradient(120% 90% at 30% 10%, #3A322B 0%, #1C1916 60%);">
+      <div class="phone" style="position:absolute; top:24mm; left:12mm; width:64mm;
+                                border-color:#000; box-shadow:0 10mm 26mm rgba(0,0,0,.5);">
+        <img src="mockups/feed.png" alt="Le fil des soirées dans l'application StudentLink">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ 2. LE CONSTAT ══════════════ -->
+<section class="page">
+  <div class="kicker">Le constat</div>
+  <h2>Trois soirs sur sept,<br><em>la salle tourne à vide.</em></h2>
+
+  <div class="trois" style="margin-top:12mm;">
+    <div class="constat">
+      <div class="num">01</div>
+      <h3>Un mardi coûte aussi cher qu'un samedi.</h3>
+      <p>Le loyer, le personnel, la licence, l'électricité : rien de tout cela
+         ne baisse quand la salle se vide. Seule la recette baisse. Remplir un
+         soir creux ne coûte presque rien de plus — c'est de la marge, pas du
+         chiffre d'affaires en plus.</p>
+    </div>
+    <div class="constat">
+      <div class="num">02</div>
+      <h3>Une story ne remplit pas une salle.</h3>
+      <p>Vous publiez, quelques centaines de vues défilent, et personne ne vous
+         dit qu'il vient. Le soir venu, vous ouvrez sans savoir si vous
+         préparez pour vingt personnes ou pour deux.</p>
+    </div>
+    <div class="constat">
+      <div class="num">03</div>
+      <h3>Le « deal étudiant » ne se mesure pas.</h3>
+      <p>Une affiche à l'entrée, une remise accordée au jugé, aucune trace.
+         À la fin du mois, impossible de dire si l'opération a fonctionné,
+         ni qui elle a fait venir.</p>
+    </div>
+  </div>
+
+  <div class="encart rouge" style="margin-top:12mm; display:flex; align-items:center; gap:8mm;">
+    <div style="font-family:var(--font-display); font-style:italic; font-weight:900;
+                font-size:17pt; line-height:1.15; color:#fff; flex:1;">
+      Le problème n'est pas de trouver des étudiants.<br>
+      C'est de savoir lesquels viennent, et de le prouver.
+    </div>
+  </div>
+
+  <div class="folio"><span>StudentLink · Plaquette partenaires</span><span>2</span></div>
+</section>
+
+<!-- ══════════════ 3. CE QU'EST STUDENTLINK ══════════════ -->
+<section class="page">
+  <div class="kicker">La réponse</div>
+  <h2>L'application où les étudiants de Clermont<br>
+      cherchent <em>quoi faire ce soir.</em></h2>
+
+  <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10mm; margin-top:9mm;
+              align-items:start; justify-items:center;">
+    <div style="width:52mm;">
+      <div class="phone" style="width:52mm;">
+        <img src="mockups/feed.png" alt="Le fil des soirées">
+      </div>
+      <div class="legende"><strong>Ils voient vos soirées</strong><br>
+        classées par date, filtrées par type de lieu</div>
+    </div>
+    <div style="width:52mm;">
+      <div class="phone" style="width:52mm;">
+        <img src="mockups/evenement.png" alt="La fiche d'une soirée">
+      </div>
+      <div class="legende"><strong>Ils voient votre offre</strong><br>
+        votre remise, vos places restantes, qui y va déjà</div>
+    </div>
+    <div style="width:52mm;">
+      <div class="phone" style="width:52mm;">
+        <img src="mockups/pass.png" alt="Le pass et son QR code">
+      </div>
+      <div class="legende"><strong>Ils réservent une place</strong><br>
+        et repartent avec un pass à présenter à l'entrée</div>
+    </div>
+  </div>
+
+  <div class="folio"><span>StudentLink · Plaquette partenaires</span><span>3</span></div>
+</section>
+
+<!-- ══════════════ 4. COMMENT ÇA SE PASSE ══════════════ -->
+<section class="page">
+  <div class="kicker">Côté établissement</div>
+  <h2>Trois gestes, <em>et c'est tout.</em></h2>
+
+  <div style="display:grid; grid-template-columns:1.15fr .85fr; gap:14mm; margin-top:9mm;">
+    <div>
+      <div class="etape">
+        <div class="rond">1</div>
+        <div>
+          <h3>Vous publiez votre soirée</h3>
+          <p>Un titre, une date, le nombre de places que vous réservez et la
+             remise que vous accordez — ou aucune, c'est vous qui décidez.
+             Deux minutes depuis votre téléphone ou votre ordinateur.</p>
+        </div>
+      </div>
+      <div class="etape">
+        <div class="rond">2</div>
+        <div>
+          <h3>Les étudiants s'inscrivent</h3>
+          <p>Ils réservent une place, invitent leurs amis, et vous voyez le
+             compteur monter en direct. Un rappel automatique part la veille,
+             pour que l'inscription ne se transforme pas en oubli.</p>
+        </div>
+      </div>
+      <div class="etape">
+        <div class="rond">3</div>
+        <div>
+          <h3>Vous scannez à l'entrée</h3>
+          <p>Chaque étudiant présente son pass. Un QR, un scan depuis votre
+             téléphone, et l'inscription devient une présence vérifiée. Pas de
+             boîtier, pas de matériel à acheter.</p>
+        </div>
+      </div>
+
+      <div class="encart creme" style="margin-top:2mm;">
+        <p style="font-size:9pt;"><strong>Et si vous ne scannez pas ?</strong>
+           Rien ne casse. Vous gardez le nombre d'inscrits, vous perdez
+           seulement le taux de présence. Le scan est un outil, pas une
+           contrainte à l'entrée.</p>
+      </div>
+    </div>
+
+    <div>
+      <div class="phone" style="width:53mm; margin:0 auto;">
+        <img src="mockups/pro_creation.png" alt="Le formulaire de création d'une soirée">
+      </div>
+      <div class="legende">Créer une soirée depuis l'espace partenaire</div>
+    </div>
+  </div>
+
+  <div class="folio"><span>StudentLink · Plaquette partenaires</span><span>4</span></div>
+</section>
+
+<!-- ══════════════ 5. LE CHIFFRE ══════════════ -->
+<section class="page">
+  <div class="kicker">Ce que personne d'autre ne vous donne</div>
+  <h2>« Inscrits » n'est pas « venus ».<br><em>StudentLink compte les deux.</em></h2>
+
+  <div style="display:grid; grid-template-columns:.95fr 1.05fr; gap:14mm; margin-top:9mm;
+              align-items:start;">
+    <div>
+      <p style="font-size:10.5pt; line-height:1.6;">
+        Une affiche vous donne des passages. Une page d'événement vous donne des
+        « intéressés ». Ni l'une ni l'autre ne vous dit qui a franchi la porte.
+      </p>
+      <p style="margin-top:4mm; font-size:10.5pt; line-height:1.6;">
+        Le pass scanné à l'entrée, si : il transforme une intention en présence
+        vérifiée, soirée par soirée. C'est le seul chiffre qui permet de dire si
+        l'opération valait le coup — et de décider, le mois suivant, de
+        recommencer ou d'arrêter.
+      </p>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:6mm; margin-top:8mm;">
+        <div class="encart">
+          <div class="ch-label">Inscrits</div>
+          <div class="chiffre">18</div>
+        </div>
+        <div class="encart rouge">
+          <div class="ch-label">Scannés à l'entrée</div>
+          <div class="chiffre">14</div>
+        </div>
+      </div>
+      <p style="margin-top:4mm; font-size:9pt;">
+        <strong>78 % de présence</strong> sur cette soirée. Un chiffre qui vous
+        appartient, que vous pouvez comparer d'une semaine à l'autre, et opposer
+        à n'importe quelle promesse d'audience.
+      </p>
+    </div>
+
+    <div>
+      <div class="capture" style="width:72mm; margin-bottom:5mm;">
+        <img src="mockups/carte_checkin.png" alt="Fiche d'une soirée passée : 18 inscrits, 14 check-in">
+      </div>
+      <div style="display:flex; gap:6mm; align-items:flex-start; margin-left:4mm;">
+        <div class="capture" style="width:38mm;">
+          <img src="mockups/carte_pass.png" alt="Le pass étudiant et son QR code">
+        </div>
+        <p style="font-size:8.5pt; line-height:1.5; padding-top:3mm; max-width:32mm;">
+          Le pass que l'étudiant présente. Un scan, et la ligne « check-in »
+          s'incrémente.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="folio"><span>StudentLink · Plaquette partenaires</span><span>5</span></div>
+</section>
+
+<!-- ══════════════ 6. QUI VIENT ══════════════ -->
+<section class="page">
+  <div class="kicker">Avant même d'ouvrir</div>
+  <h2>Vous savez <em>qui vient ce soir.</em></h2>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:14mm; margin-top:8mm;
+              align-items:start;">
+    <div>
+      <div class="capture" style="width:88mm;">
+        <img src="mockups/carte_salle.png" alt="Répartition des inscrits par école">
+      </div>
+      <div class="legende" style="text-align:left; margin-left:2mm;">
+        La composition de votre salle, avant l'ouverture
+      </div>
+
+      <div class="capture" style="width:80mm; margin-top:7mm;">
+        <img src="mockups/carte_derniers.png" alt="Les dernières inscriptions, avec l'heure">
+      </div>
+      <div class="legende" style="text-align:left; margin-left:2mm;">
+        Les dernières inscriptions, à l'heure près
+      </div>
+    </div>
+
+    <div style="padding-top:4mm;">
+      <p style="font-size:10.5pt; line-height:1.6;">
+        Une soirée remplie à 56 % par des étudiants en droit ne se prépare pas
+        comme une soirée d'école d'ingénieurs. Ni la musique, ni la carte, ni
+        le nombre de personnes au bar.
+      </p>
+
+      <ul class="puces" style="margin-top:7mm;">
+        <li>De quelles écoles viennent vos inscrits, en pourcentage</li>
+        <li>À quelle heure ils se décident — pour savoir quand relancer</li>
+        <li>Combien de places il vous reste à vendre</li>
+        <li>L'historique de vos soirées précédentes, pour comparer</li>
+      </ul>
+
+      <div class="encart creme" style="margin-top:8mm;">
+        <p style="font-size:9pt;">
+          <strong>Vous ne récupérez pas un fichier d'étudiants.</strong>
+          Vous voyez qui s'est inscrit à vos soirées et des statistiques
+          agrégées sur votre salle. Les comptes, eux, restent chez StudentLink :
+          c'est ce qui permet aux étudiants de s'inscrire sans se méfier.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="folio"><span>StudentLink · Plaquette partenaires</span><span>6</span></div>
+</section>
+
+<!-- ══════════════ 7. LE GROUPE ══════════════ -->
+<section class="page">
+  <div class="kicker">Le vrai moteur</div>
+  <h2>Un étudiant seul <em>ne sort pas.</em></h2>
+
+  <div style="display:grid; grid-template-columns:.62fr 1.38fr; gap:14mm; margin-top:9mm;
+              align-items:start;">
+    <div>
+      <div class="phone" style="width:52mm;">
+        <img src="mockups/squads.png" alt="Les squads : sorties proposées entre étudiants">
+      </div>
+    </div>
+
+    <div style="padding-top:2mm;">
+      <p style="font-size:11pt; line-height:1.6;">
+        C'est la différence entre une application de bons plans et StudentLink :
+        personne ne décide seul de sortir un mardi. On y va parce qu'un ami y va.
+      </p>
+
+      <div class="trois" style="grid-template-columns:1fr 1fr; gap:8mm; margin-top:8mm;">
+        <div>
+          <span class="etiquette et-rouge">Inviter</span>
+          <h3 style="margin-top:3mm;">L'inscription entraîne les autres</h3>
+          <p style="font-size:9pt;">Chaque étudiant qui réserve peut inviter ses
+            amis depuis la fiche de la soirée. Une inscription en amène d'autres,
+            et ce qui arrive chez vous est une table, pas un tabouret.</p>
+        </div>
+        <div>
+          <span class="etiquette et-bleu">Suivre</span>
+          <h3 style="margin-top:3mm;">Ils voient où vont leurs amis</h3>
+          <p style="font-size:9pt;">Sur la fiche de votre soirée, un étudiant voit
+            lesquels de ses amis y vont déjà. C'est l'argument qui décide, bien
+            avant la remise.</p>
+        </div>
+        <div>
+          <span class="etiquette et-lime">Squads</span>
+          <h3 style="margin-top:3mm;">Les sorties se montent à l'avance</h3>
+          <p style="font-size:9pt;">Les étudiants forment des groupes de sortie
+            dans l'application. Quand le groupe existe déjà, il ne reste plus
+            qu'à lui proposer une destination.</p>
+        </div>
+        <div>
+          <span class="etiquette et-rouge">Rappel</span>
+          <h3 style="margin-top:3mm;">Le no-show est traité</h3>
+          <p style="font-size:9pt;">Un rappel part automatiquement la veille,
+            avec l'heure et le lieu. Celui qui ne peut plus venir annule son
+            pass — et sa place repart à quelqu'un d'autre.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:10mm; border-top:2px solid var(--noir); padding-top:5mm;
+              font-family:var(--font-display); font-style:italic; font-weight:900;
+              font-size:15pt; line-height:1.2; letter-spacing:-.01em; max-width:200mm;">
+    Vous ne remplissez pas une salle un étudiant à la fois.<br>
+    Vous la remplissez par tables de quatre.
+  </div>
+
+  <div class="folio"><span>StudentLink · Plaquette partenaires</span><span>7</span></div>
+</section>
+
+<!-- ══════════════ 8. L'ORDINATEUR ══════════════ -->
+<section class="page">
+  <div class="kicker">Votre espace</div>
+  <h2>Rien à installer. <em>Un navigateur suffit.</em></h2>
+
+  <div style="margin-top:7mm; display:grid; grid-template-columns:1.55fr .45fr; gap:12mm;
+              align-items:start;">
+    <div class="capture">
+      <img src="mockups/bureau_events.png" alt="L'espace partenaire sur ordinateur">
+    </div>
+    <div style="padding-top:2mm;">
+      <ul class="puces">
+        <li>Toutes vos soirées, passées et à venir, sur une page</li>
+        <li>Inscrits, présents, remise accordée, pour chacune</li>
+        <li>Modifier une soirée jusqu'à la dernière minute</li>
+        <li>Les photos de votre établissement, que les étudiants voient</li>
+      </ul>
+      <p style="margin-top:6mm; font-size:9pt;">
+        Le même espace fonctionne sur téléphone, derrière le bar, au moment du
+        coup de feu.
+      </p>
+    </div>
+  </div>
+
+  <div class="folio"><span>StudentLink · Plaquette partenaires</span><span>8</span></div>
+</section>
+
+<!-- ══════════════ 9. LE TERRAIN ══════════════ -->
+<section class="page sombre">
+  <div class="kicker">Le terrain</div>
+  <h2 style="color:var(--bg);">Clermont-Ferrand,<br><em>42 500 étudiants.</em></h2>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16mm; margin-top:10mm;">
+    <div>
+      <p class="lede" style="font-size:11pt;">
+        L'UCA, SIGMA Clermont, l'INP, l'IFSI, Hesias et les autres. Une ville
+        étudiante dense, où tout le monde se connaît — et où une soirée qui
+        marche se sait en deux jours.
+      </p>
+      <p style="margin-top:6mm; font-size:10pt;">
+        À l'échelle du pays, 3 012 800 étudiants. StudentLink commence par le
+        bassin clermontois, parce qu'un réseau ne se construit pas partout à
+        la fois.
+      </p>
+
+      <div style="margin-top:9mm; border-top:1px solid rgba(243,238,227,.2); padding-top:6mm;">
+        <p style="font-size:9pt; color:rgba(243,238,227,.6);">
+          Sources : effectifs étudiants de l'agglomération clermontoise et
+          effectifs nationaux de l'enseignement supérieur.
+        </p>
+      </div>
+    </div>
+
+    <div>
+      <div class="encart" style="background:rgba(243,238,227,.06); border-color:rgba(243,238,227,.18);">
+        <div class="ch-label" style="color:rgba(243,238,227,.55);">Ce qu'il faut savoir</div>
+        <h3 style="color:var(--bg); font-size:13pt; margin-top:2mm;">
+          StudentLink démarre.
+        </h3>
+        <p style="margin-top:3mm; font-size:9.5pt; color:rgba(243,238,227,.78);">
+          Nous ne vous vendons pas une audience déjà constituée : nous la
+          construisons, établissement par établissement, à Clermont-Ferrand.
+          Les premiers partenaires ne paient pas pour de la visibilité — ils
+          en obtiennent, parce qu'ils sont les seuls sur la carte.
+        </p>
+        <p style="margin-top:4mm; font-size:9.5pt; color:rgba(243,238,227,.78);">
+          C'est aussi pour ça que l'offre de lancement est ce qu'elle est, et
+          qu'elle ne durera pas.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="folio"><span>StudentLink · Plaquette partenaires</span><span>9</span></div>
+</section>
+
+<!-- ══════════════ 10. L'OFFRE ══════════════ -->
+<section class="page">
+  <div class="kicker">L'offre</div>
+  <h2>Partenaire <em>fondateur.</em></h2>
+
+  <div style="display:grid; grid-template-columns:1.1fr .9fr; gap:14mm; margin-top:8mm;">
+    <div>
+      <h3 style="font-size:10pt; letter-spacing:.14em; text-transform:uppercase;
+                 color:var(--gris); margin-bottom:5mm;">Ce que vous obtenez</h3>
+      <ul class="puces">
+        <li>Vos soirées publiées sans limite de nombre</li>
+        <li>Votre page établissement, avec vos photos</li>
+        <li>Le tableau de bord : inscrits, présents, composition de salle</li>
+        <li>Le scan des pass à l'entrée, depuis votre téléphone</li>
+        <li>Le rappel automatique de la veille à vos inscrits</li>
+        <li>Vos soirées mises en avant auprès des étudiants de leur école</li>
+      </ul>
+
+      <div class="encart creme" style="margin-top:7mm;">
+        <p style="font-size:9pt;">
+          <strong>Aucun engagement de durée.</strong> Vous publiez quand vous
+          voulez, vous arrêtez quand vous voulez. Aucune exclusivité :
+          StudentLink ne vous interdit rien.
+        </p>
+      </div>
+    </div>
+
+    <div>
+      <div class="encart rouge">
+        <div class="ch-label">Offre de lancement</div>
+        <div class="chiffre" style="color:#fff;">
+          <span class="a-completer" style="background:rgba(255,255,255,.14);
+                border-color:rgba(255,255,255,.55); color:#fff; font-family:var(--font-sans);
+                font-size:13pt; padding:2mm 4mm;">montant à compléter</span>
+        </div>
+        <p style="margin-top:4mm; font-size:9.5pt;">
+          pour les <span class="a-completer" style="background:rgba(255,255,255,.14);
+          border-color:rgba(255,255,255,.55); color:#fff;">N</span> premiers
+          établissements clermontois, pendant
+          <span class="a-completer" style="background:rgba(255,255,255,.14);
+          border-color:rgba(255,255,255,.55); color:#fff;">durée</span>.
+        </p>
+      </div>
+
+      <div class="encart" style="margin-top:6mm;">
+        <div class="ch-label">Ensuite</div>
+        <p style="font-size:9.5pt;">
+          <span class="a-completer">tarif courant à compléter</span> —
+          à définir avec les premiers partenaires, une fois qu'on saura
+          ce que la présence vérifiée leur rapporte réellement.
+        </p>
+      </div>
+
+      <p style="margin-top:6mm; font-size:8.5pt; color:var(--gris); line-height:1.5;">
+        Les encadrés en pointillés sont à compléter avant l'envoi : le tarif
+        n'est pas encore arrêté, et une plaquette qui annonce un prix qu'on
+        renégocie ensuite coûte plus cher qu'une plaquette sans prix.
+      </p>
+    </div>
+  </div>
+
+  <div class="folio"><span>StudentLink · Plaquette partenaires</span><span>10</span></div>
+</section>
+
+<!-- ══════════════ 11. LES QUESTIONS ══════════════ -->
+<section class="page">
+  <div class="kicker">Les questions qu'on nous pose</div>
+  <h2>Avant que vous ne <em>la posiez.</em></h2>
+
+  <div class="qr-faq" style="margin-top:9mm;">
+    <div>
+      <h3>Suis-je obligé d'accorder une remise ?</h3>
+      <p>Non. Vous fixez ce que vous voulez, y compris rien du tout. Certaines
+         soirées marchent sur l'événement seul — un blind test, un tournoi, un
+         concert — sans le moindre pourcentage.</p>
+    </div>
+    <div>
+      <h3>Et les mineurs ?</h3>
+      <p>La date de naissance est demandée à l'inscription et vérifiée par le
+         serveur : un compte ne peut pas être créé avant 18 ans. Cela ne
+         remplace pas votre contrôle à l'entrée, mais cela vous évite de voir
+         arriver des lycéens envoyés par une application.</p>
+    </div>
+    <div>
+      <h3>Combien de temps ça me prend ?</h3>
+      <p>Publier une soirée : deux minutes. Scanner les pass : le temps que les
+         étudiants entrent. Il n'y a rien d'autre à faire, aucun rapport à
+         remplir, aucun rendez-vous mensuel.</p>
+    </div>
+    <div>
+      <h3>Que deviennent les données des étudiants ?</h3>
+      <p>Elles restent chez StudentLink. Vous voyez la liste des inscrits à vos
+         soirées et des statistiques agrégées sur votre salle. Vous ne
+         récupérez pas de fichier d'adresses, et c'est justement ce qui fait
+         que les étudiants s'inscrivent.</p>
+    </div>
+    <div>
+      <h3>Est-ce que c'est exclusif ?</h3>
+      <p>Non. Vous continuez vos affiches, votre Instagram, vos partenariats
+         BDE. StudentLink s'ajoute, ne remplace rien et ne vous interdit rien.</p>
+    </div>
+    <div>
+      <h3>Et si personne ne vient ?</h3>
+      <p>Vous l'aurez su avant d'ouvrir : le compteur d'inscrits est visible en
+         direct. Une soirée qui ne prend pas peut être annulée ou modifiée
+         jusqu'à la dernière minute, plutôt que subie.</p>
+    </div>
+  </div>
+
+  <div class="encart creme" style="margin-top:9mm;">
+    <p style="font-size:9.5pt;">
+      <strong>Pour les BDE et les associations :</strong> le fonctionnement est
+      le même, mais l'objectif change. Vous ne cherchez pas de la marge, vous
+      cherchez du monde à vos événements et la preuve, auprès de vos adhérents
+      comme de vos partenaires, que vous l'avez amené. Les inscriptions et les
+      présences scannées servent exactement à cela.
+    </p>
+  </div>
+
+  <div class="folio"><span>StudentLink · Plaquette partenaires</span><span>11</span></div>
+</section>
+
+<!-- ══════════════ 12. CONTACT ══════════════ -->
+<section class="page sombre" style="display:flex; flex-direction:column;">
+  <div class="logo" style="color:var(--bg);">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="15" y="20" width="50" height="30" rx="15" stroke="#F3EEE3" stroke-width="10"/>
+      <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
+      <circle cx="50" cy="50" r="6" fill="#F3EEE3"/>
+    </svg>
+    StudentLink <em>/ Partenaires</em>
+  </div>
+
+  <div style="margin-top:12mm;">
+    <div class="kicker">La prochaine étape</div>
+    <p class="lede" style="max-width:150mm;">
+      Il n'y a rien à signer pour essayer. On choisit ensemble une de vos
+      soirées creuses — un mardi, un mercredi — et on la publie.
+    </p>
+  </div>
+
+  <div class="trois" style="margin-top:12mm; gap:12mm;">
+    <div style="border-top:1px solid rgba(243,238,227,.25); padding-top:4mm;">
+      <div style="font-family:var(--font-display); font-weight:900; font-size:15pt;
+                  color:var(--rouge);">Cette semaine</div>
+      <p style="font-size:9pt; margin-top:2mm;">Vingt minutes ensemble : on crée
+        votre établissement, vos photos, votre première soirée.</p>
+    </div>
+    <div style="border-top:1px solid rgba(243,238,227,.25); padding-top:4mm;">
+      <div style="font-family:var(--font-display); font-weight:900; font-size:15pt;
+                  color:var(--rouge);">La semaine suivante</div>
+      <p style="font-size:9pt; margin-top:2mm;">Vous regardez le compteur monter,
+        vous scannez les pass à l'entrée.</p>
+    </div>
+    <div style="border-top:1px solid rgba(243,238,227,.25); padding-top:4mm;">
+      <div style="font-family:var(--font-display); font-weight:900; font-size:15pt;
+                  color:var(--rouge);">Le lendemain</div>
+      <p style="font-size:9pt; margin-top:2mm;">Vous avez un taux de présence.
+        À vous de dire si ça valait le coup.</p>
+    </div>
+  </div>
+
+  <div style="margin-top:auto; display:grid; grid-template-columns:1.2fr .8fr; gap:16mm;
+              align-items:end;">
+    <div>
+      <h2 style="color:var(--bg); font-size:30pt;">
+        Une soirée test,<br><em>sans engagement.</em>
+      </h2>
+      <p class="lede" style="margin-top:6mm; max-width:120mm;">
+        On publie une de vos soirées ensemble, vous scannez les pass à
+        l'entrée, et vous regardez le chiffre. S'il ne vous convainc pas,
+        il n'y a rien à résilier.
+      </p>
+    </div>
+
+    <div style="border-left:1px solid rgba(243,238,227,.2); padding-left:12mm;">
+      <div class="ch-label" style="color:rgba(243,238,227,.55);">Votre contact</div>
+      <div style="font-family:var(--font-display); font-weight:900; font-size:17pt;
+                  color:var(--bg); margin-top:2mm;">Arthur Gramond</div>
+      <div style="margin-top:4mm; display:flex; flex-direction:column;
+                  align-items:flex-start; gap:2.5mm;">
+        <span class="a-completer">téléphone</span>
+        <span class="a-completer">adresse e-mail</span>
+        <span class="a-completer">adresse du site</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="folio"><span>StudentLink · Clermont-Ferrand · Septembre 2026</span><span>12</span></div>
+</section>
+
+</body>
+</html>

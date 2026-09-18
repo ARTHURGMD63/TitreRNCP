@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>StudentLink — Planche A4, 4 flyers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700..900;1,700..900&family=DM+Sans:opsz,wght@9..40,400..700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   FICHIER GENERE — ne pas modifier a la main.
+   Source : docs/Flyer_Bars_StudentLink.html
+   Regenerer : python docs/generate_planche.py
+   ============================================================ */
+/* ============================================================
+   Flyer StudentLink — A6 recto/verso, à déposer sur les tables
+   et les comptoirs des bars.
+
+   FORMAT — la page fait 111 × 154 mm : un A6 (105 × 148) plus
+   3 mm de fond perdu sur chaque bord. L'imprimeur rogne à la
+   ligne de coupe, qui passe donc à 3 mm du bord du fichier.
+   Les aplats et les images vont jusqu'au bord de la page ; le
+   texte, lui, reste dans .corps, qui s'arrête à 8 mm de la
+   coupe — rien d'important ne peut être rogné.
+
+   docs/Flyer_Bars_Planche_A4.html reprend ce même dessin à
+   quatre exemplaires sur une A4, pour une impression maison
+   sans imprimeur. Il est régénéré par docs/generate_planche.py
+   à partir de ce fichier : ne pas le modifier à la main.
+
+   LECTURE EN BAR — le recto est sombre : c'est le côté qui se
+   voit sous une lumière basse, et c'est celui qui porte le QR.
+   Le verso, sur fond papier, se lit une fois le flyer en main.
+   ============================================================ */
+:root{
+  --bg:#F3EEE3; --blanc:#FFFFFF; --surface-2:#FBF8F1;
+  --noir:#1C1916; --gris-fonce:#5B554C; --gris:#6E6860;
+  --line-2:#DED6C6;
+  --rouge:#E0492B; --rouge-deep:#BB3619; --rouge-clair:#FBE7E1;
+  --bleu-clair:#ECE9FA; --bleu-deep:#332A92;
+  --lime-clair:#FBF0D6; --lime-deep:#8E6414;
+  --font-display:'Playfair Display',Georgia,'Times New Roman',serif;
+  --font-sans:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+
+*{ box-sizing:border-box; margin:0; padding:0; }
+html,body{ background:#9A9288; }
+body{ font-family:var(--font-sans); color:var(--noir);
+      -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+.page{ position:relative; width:111mm; height:154mm; overflow:hidden;
+       page-break-after:always; break-after:page; background:var(--bg); }
+.page:last-child{ page-break-after:auto; }
+
+/* Le fond couvre la page entière, fond perdu compris. */
+.fond{ position:absolute; inset:0; }
+.f-sombre .fond{ background:radial-gradient(125% 70% at 50% 104%,
+                 #3A322B 0%, #1C1916 62%); }
+.f-clair  .fond{ background:var(--bg); }
+.f-sombre{ color:var(--bg); }
+
+/* .corps est calé sur le format de coupe (105 × 148) et garde
+   8 mm de marge intérieure : la zone sûre du texte. */
+.corps{ position:absolute; inset:3mm; padding:9mm 8mm 8mm;
+        display:flex; flex-direction:column; }
+/* Sans flex-shrink:0, un bloc trop haut se fait comprimer par le flex au
+   lieu de deborder : le titre se tasse, le texte sort de sa boite, et le
+   defaut passe inapercu a la relecture. On veut l'inverse. */
+.corps > *{ flex-shrink:0; }
+
+/* ── signature ───────────────────────────────────────────── */
+.logo{ display:flex; align-items:center; gap:2.2mm; font-weight:700;
+       font-size:9pt; letter-spacing:-.01em; }
+.logo svg{ width:6mm; height:6mm; flex:0 0 auto; }
+
+.kicker{ font-size:6pt; font-weight:700; letter-spacing:.2em;
+         text-transform:uppercase; color:var(--rouge); }
+
+h1{ font-family:var(--font-display); font-weight:900; font-size:25pt;
+    line-height:.97; letter-spacing:-.022em; }
+h1 em{ font-style:italic; color:var(--rouge); display:block; }
+h2{ font-family:var(--font-display); font-weight:900; font-size:14.5pt;
+    line-height:1.05; letter-spacing:-.018em; }
+h2 em{ font-style:italic; color:var(--rouge); }
+h3{ font-weight:700; font-size:8pt; letter-spacing:-.01em; }
+
+.lede{ font-size:8.4pt; line-height:1.48; color:rgba(243,238,227,.84); }
+p{ font-size:7.4pt; line-height:1.48; color:var(--gris-fonce); }
+strong{ color:var(--noir); font-weight:700; }
+
+/* ── bloc QR ─────────────────────────────────────────────── */
+.qr{ background:var(--blanc); border-radius:2.4mm; padding:1.8mm;
+     width:25mm; height:25mm; flex:0 0 auto; }
+.qr img{ display:block; width:100%; height:100%; }
+.qr-ligne{ display:flex; align-items:center; gap:4mm; }
+.qr-appel{ font-family:var(--font-display); font-style:italic; font-weight:900;
+           font-size:12.5pt; line-height:1.12; letter-spacing:-.01em; }
+.adresse{ font-weight:700; font-size:8.6pt; color:var(--rouge); }
+.f-sombre .adresse{ color:#F3A58F; }
+
+.bandeau{ display:flex; gap:3.5mm; font-size:5.6pt; font-weight:700;
+          letter-spacing:.14em; text-transform:uppercase;
+          color:rgba(243,238,227,.5); }
+.bandeau span{ white-space:nowrap; }
+
+/* ── téléphone ───────────────────────────────────────────── */
+/* Hauteur fixe + overflow:hidden : la capture est recadrée par le
+   haut au lieu d'imposer sa hauteur native au flyer. */
+.phone{ border:.9mm solid var(--noir); border-radius:3mm;
+        background:var(--noir); overflow:hidden;
+        box-shadow:0 3mm 9mm rgba(0,0,0,.35); }
+.phone img{ display:block; width:100%; }
+
+/* ── verso ───────────────────────────────────────────────── */
+.etape{ display:flex; gap:3mm; align-items:flex-start; }
+.etape .rond{ flex:0 0 5.4mm; height:5.4mm; border-radius:50%;
+              background:var(--noir); color:var(--bg); display:flex;
+              align-items:center; justify-content:center;
+              font-weight:700; font-size:6.8pt; }
+.encart{ background:var(--blanc); border:1px solid var(--line-2);
+         border-radius:3mm; padding:3mm 3.4mm; }
+.encart.rouge{ background:var(--rouge); border-color:var(--rouge); }
+.encart.rouge p{ color:rgba(255,255,255,.94); }
+.encart.rouge strong{ color:#fff; }
+.etiquette{ display:inline-block; font-size:5.4pt; font-weight:700;
+            letter-spacing:.14em; text-transform:uppercase;
+            padding:.9mm 2.2mm; border-radius:99mm; }
+.et-rouge{ background:var(--rouge-clair); color:var(--rouge-deep); }
+.et-bleu{ background:var(--bleu-clair); color:var(--bleu-deep); }
+.et-lime{ background:var(--lime-clair); color:var(--lime-deep); }
+.filet{ border-top:1px solid var(--line-2); }
+.a-completer{ display:inline-block; border:1px dashed var(--rouge);
+              border-radius:1.4mm; padding:.2mm 1.4mm; color:var(--rouge);
+              font-weight:700; background:var(--rouge-clair); }
+
+/* ── imposition ──────────────────────────────────────────── */
+@page{ size:A4 portrait; margin:0; }
+html,body{ background:#FFFFFF; }
+.planche{ position:relative; width:210mm; height:297mm; overflow:hidden;
+          background:#FFFFFF; page-break-after:always; break-after:page; }
+.planche:last-child{ page-break-after:auto; }
+
+.grille{ position:absolute; left:12.60mm; top:18.26mm;
+         display:grid; grid-template-columns:repeat(2, 92.40mm);
+         grid-template-rows:repeat(2, 130.24mm); }
+
+.cellule{ width:92.40mm; height:130.24mm; overflow:hidden; }
+.zoom{ transform:scale(0.88); transform-origin:top left; }
+/* La fenetre est au format de coupe : le fond perdu du flyer tombe
+   dehors, exactement comme sous le massicot de l'imprimeur. */
+.fenetre{ width:105mm; height:148mm; overflow:hidden;
+          position:relative; }
+.fenetre > .page{ position:absolute; left:-3mm; top:-3mm;
+                  page-break-after:auto !important; break-after:auto !important; }
+
+.repere{ position:absolute; background:#6E6860; display:block; }
+.repere.v{ width:.2mm; height:5mm; }
+.repere.h{ height:.2mm; width:5mm; }
+
+.note{ position:absolute; left:0; right:0; bottom:3.5mm; text-align:center;
+       font-family:'DM Sans',sans-serif; font-size:5.6pt; color:#6E6860;
+       letter-spacing:.04em; }
+</style>
+</head>
+<body>
+
+  <!-- PAGE 1 — RECTO x4 -->
+  <section class="planche">
+    <div class="grille">
+      <div class="cellule"><div class="zoom"><div class="fenetre">
+<section class="page f-sombre">
+  <div class="fond"></div>
+
+  <!-- Le téléphone est posé sur la page, pas dans .corps : il peut
+       donc déborder dans le fond perdu et être rogné sans dommage. -->
+  <div class="phone" style="position:absolute; right:-7mm; top:74mm;
+       width:42mm; height:68mm; transform:rotate(5deg);">
+    <img src="mockups/p_feed.png" alt="Le fil des soirées">
+  </div>
+
+  <div class="corps">
+    <div class="logo" style="color:var(--bg);">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="15" y="20" width="50" height="30" rx="15" stroke="#F3EEE3" stroke-width="10"/>
+        <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
+        <circle cx="50" cy="50" r="6" fill="#F3EEE3"/>
+      </svg>
+      StudentLink
+    </div>
+
+    <h1 style="margin-top:10mm;">Ce soir,<br>tu fais quoi&nbsp;?<em>Clermont a une réponse.</em></h1>
+
+    <p class="lede" style="margin-top:5.5mm; max-width:62mm;">
+      Toutes les soirées étudiantes de la ville. Une place gardée à ton nom.
+      Un prix étudiant à l'entrée.
+    </p>
+
+    <div class="qr-ligne" style="margin-top:auto; margin-bottom:5.5mm;">
+      <div class="qr"><img src="qr_studentlink.svg" alt="QR code vers studentlink.fr"></div>
+      <div>
+        <div class="qr-appel">Scanne.<br>C'est gratuit.</div>
+        <div class="adresse" style="margin-top:1.8mm;">studentlink.fr</div>
+      </div>
+    </div>
+
+    <div class="bandeau">
+      <span>Clermont-Ferrand</span>
+      <span>Gratuit</span>
+      <span>18 ans et +</span>
+    </div>
+  </div>
+</section>
+      </div></div></div>
+      <div class="cellule"><div class="zoom"><div class="fenetre">
+<section class="page f-sombre">
+  <div class="fond"></div>
+
+  <!-- Le téléphone est posé sur la page, pas dans .corps : il peut
+       donc déborder dans le fond perdu et être rogné sans dommage. -->
+  <div class="phone" style="position:absolute; right:-7mm; top:74mm;
+       width:42mm; height:68mm; transform:rotate(5deg);">
+    <img src="mockups/p_feed.png" alt="Le fil des soirées">
+  </div>
+
+  <div class="corps">
+    <div class="logo" style="color:var(--bg);">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="15" y="20" width="50" height="30" rx="15" stroke="#F3EEE3" stroke-width="10"/>
+        <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
+        <circle cx="50" cy="50" r="6" fill="#F3EEE3"/>
+      </svg>
+      StudentLink
+    </div>
+
+    <h1 style="margin-top:10mm;">Ce soir,<br>tu fais quoi&nbsp;?<em>Clermont a une réponse.</em></h1>
+
+    <p class="lede" style="margin-top:5.5mm; max-width:62mm;">
+      Toutes les soirées étudiantes de la ville. Une place gardée à ton nom.
+      Un prix étudiant à l'entrée.
+    </p>
+
+    <div class="qr-ligne" style="margin-top:auto; margin-bottom:5.5mm;">
+      <div class="qr"><img src="qr_studentlink.svg" alt="QR code vers studentlink.fr"></div>
+      <div>
+        <div class="qr-appel">Scanne.<br>C'est gratuit.</div>
+        <div class="adresse" style="margin-top:1.8mm;">studentlink.fr</div>
+      </div>
+    </div>
+
+    <div class="bandeau">
+      <span>Clermont-Ferrand</span>
+      <span>Gratuit</span>
+      <span>18 ans et +</span>
+    </div>
+  </div>
+</section>
+      </div></div></div>
+      <div class="cellule"><div class="zoom"><div class="fenetre">
+<section class="page f-sombre">
+  <div class="fond"></div>
+
+  <!-- Le téléphone est posé sur la page, pas dans .corps : il peut
+       donc déborder dans le fond perdu et être rogné sans dommage. -->
+  <div class="phone" style="position:absolute; right:-7mm; top:74mm;
+       width:42mm; height:68mm; transform:rotate(5deg);">
+    <img src="mockups/p_feed.png" alt="Le fil des soirées">
+  </div>
+
+  <div class="corps">
+    <div class="logo" style="color:var(--bg);">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="15" y="20" width="50" height="30" rx="15" stroke="#F3EEE3" stroke-width="10"/>
+        <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
+        <circle cx="50" cy="50" r="6" fill="#F3EEE3"/>
+      </svg>
+      StudentLink
+    </div>
+
+    <h1 style="margin-top:10mm;">Ce soir,<br>tu fais quoi&nbsp;?<em>Clermont a une réponse.</em></h1>
+
+    <p class="lede" style="margin-top:5.5mm; max-width:62mm;">
+      Toutes les soirées étudiantes de la ville. Une place gardée à ton nom.
+      Un prix étudiant à l'entrée.
+    </p>
+
+    <div class="qr-ligne" style="margin-top:auto; margin-bottom:5.5mm;">
+      <div class="qr"><img src="qr_studentlink.svg" alt="QR code vers studentlink.fr"></div>
+      <div>
+        <div class="qr-appel">Scanne.<br>C'est gratuit.</div>
+        <div class="adresse" style="margin-top:1.8mm;">studentlink.fr</div>
+      </div>
+    </div>
+
+    <div class="bandeau">
+      <span>Clermont-Ferrand</span>
+      <span>Gratuit</span>
+      <span>18 ans et +</span>
+    </div>
+  </div>
+</section>
+      </div></div></div>
+      <div class="cellule"><div class="zoom"><div class="fenetre">
+<section class="page f-sombre">
+  <div class="fond"></div>
+
+  <!-- Le téléphone est posé sur la page, pas dans .corps : il peut
+       donc déborder dans le fond perdu et être rogné sans dommage. -->
+  <div class="phone" style="position:absolute; right:-7mm; top:74mm;
+       width:42mm; height:68mm; transform:rotate(5deg);">
+    <img src="mockups/p_feed.png" alt="Le fil des soirées">
+  </div>
+
+  <div class="corps">
+    <div class="logo" style="color:var(--bg);">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="15" y="20" width="50" height="30" rx="15" stroke="#F3EEE3" stroke-width="10"/>
+        <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
+        <circle cx="50" cy="50" r="6" fill="#F3EEE3"/>
+      </svg>
+      StudentLink
+    </div>
+
+    <h1 style="margin-top:10mm;">Ce soir,<br>tu fais quoi&nbsp;?<em>Clermont a une réponse.</em></h1>
+
+    <p class="lede" style="margin-top:5.5mm; max-width:62mm;">
+      Toutes les soirées étudiantes de la ville. Une place gardée à ton nom.
+      Un prix étudiant à l'entrée.
+    </p>
+
+    <div class="qr-ligne" style="margin-top:auto; margin-bottom:5.5mm;">
+      <div class="qr"><img src="qr_studentlink.svg" alt="QR code vers studentlink.fr"></div>
+      <div>
+        <div class="qr-appel">Scanne.<br>C'est gratuit.</div>
+        <div class="adresse" style="margin-top:1.8mm;">studentlink.fr</div>
+      </div>
+    </div>
+
+    <div class="bandeau">
+      <span>Clermont-Ferrand</span>
+      <span>Gratuit</span>
+      <span>18 ans et +</span>
+    </div>
+  </div>
+</section>
+      </div></div></div>
+    </div>
+    <i class="repere v" style="left:12.60mm; top:12.26mm;"></i>
+    <i class="repere v" style="left:12.60mm; top:279.74mm;"></i>
+    <i class="repere v" style="left:105.00mm; top:12.26mm;"></i>
+    <i class="repere v" style="left:105.00mm; top:279.74mm;"></i>
+    <i class="repere v" style="left:197.40mm; top:12.26mm;"></i>
+    <i class="repere v" style="left:197.40mm; top:279.74mm;"></i>
+    <i class="repere h" style="top:18.26mm; left:6.60mm;"></i>
+    <i class="repere h" style="top:18.26mm; left:198.40mm;"></i>
+    <i class="repere h" style="top:148.50mm; left:6.60mm;"></i>
+    <i class="repere h" style="top:148.50mm; left:198.40mm;"></i>
+    <i class="repere h" style="top:278.74mm; left:6.60mm;"></i>
+    <i class="repere h" style="top:278.74mm; left:198.40mm;"></i>
+    <div class="note">StudentLink — flyer A6 réduit à 88 %. Couper sur les repères. Page 1 : recto — page 2 : verso. Impression recto-verso, reliure sur le grand côté.</div>
+  </section>
+
+  <!-- PAGE 2 — VERSO x4 -->
+  <section class="planche">
+    <div class="grille">
+      <div class="cellule"><div class="zoom"><div class="fenetre">
+<section class="page f-clair">
+  <div class="fond"></div>
+  <div class="corps">
+
+    <div class="kicker">En trois écrans</div>
+    <h2 style="margin-top:2.6mm;">Trouver, réserver,<br><em>y aller ensemble.</em></h2>
+
+    <div style="display:grid; gap:3.4mm; margin-top:5.5mm;">
+      <div class="etape">
+        <div class="rond">1</div>
+        <div>
+          <h3>Tu vois ce qui se passe</h3>
+          <p>Bars, boîtes, restos, afterworks : le fil des soirées de la semaine,
+             filtré par ce qui t'intéresse.</p>
+        </div>
+      </div>
+      <div class="etape">
+        <div class="rond">2</div>
+        <div>
+          <h3>Ta place est gardée</h3>
+          <p>Tu rejoins en un geste. Un pass avec QR code arrive dans ton wallet,
+             tu le montres à l'entrée.</p>
+        </div>
+      </div>
+      <div class="etape">
+        <div class="rond">3</div>
+        <div>
+          <h3>Tu sais qui y va</h3>
+          <p>Les amis déjà inscrits s'affichent sur chaque soirée. Plus besoin de
+             demander «&nbsp;qui vient&nbsp;?&nbsp;».</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:4mm; align-items:flex-end; margin-top:5mm;">
+      <div style="flex:1;">
+        <div style="display:flex; gap:1.6mm; flex-wrap:wrap; margin-bottom:2.2mm;">
+          <span class="etiquette et-rouge">Pour moi</span>
+          <span class="etiquette et-bleu">Places</span>
+          <span class="etiquette et-lime">Flash</span>
+        </div>
+        <div class="encart rouge">
+          <p><strong>Les remises s'additionnent.</strong> Douze soirées, trente-huit
+             euros que tu n'as pas payés — soit une sortie de plus dans le mois.</p>
+        </div>
+      </div>
+      <div class="phone" style="width:24mm; height:33mm; box-shadow:0 2mm 6mm rgba(28,25,22,.16);">
+        <img src="mockups/p_feed.png" alt="Le fil des soirées">
+      </div>
+    </div>
+
+    <div class="filet" style="margin-top:auto; padding-top:3.2mm;
+                              display:flex; align-items:flex-start; gap:3.5mm;">
+      <div class="qr" style="width:18mm; height:18mm; padding:1.1mm;
+                             border:1px solid var(--line-2);">
+        <img src="qr_studentlink.svg" alt="QR code vers studentlink.fr">
+      </div>
+      <div style="flex:1;">
+        <div class="logo" style="font-size:8pt;">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="15" y="20" width="50" height="30" rx="15" stroke="#1C1916" stroke-width="10"/>
+            <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
+            <circle cx="50" cy="50" r="6" fill="#1C1916"/>
+          </svg>
+          StudentLink
+        </div>
+        <p style="font-size:6.4pt; margin-top:1.2mm; line-height:1.4;">
+          <strong>studentlink.fr</strong> — depuis ton navigateur, puis
+          «&nbsp;ajouter à l'écran d'accueil&nbsp;». Gratuit, réservé aux étudiants majeurs.
+        </p>
+        <p style="font-size:6pt; margin-top:1.4mm; color:var(--gris); line-height:1.35;">
+          Vous tenez ce bar&nbsp;? Vos soirées peuvent y être aussi&nbsp;:
+          <span class="a-completer">contact à compléter</span>
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
+      </div></div></div>
+      <div class="cellule"><div class="zoom"><div class="fenetre">
+<section class="page f-clair">
+  <div class="fond"></div>
+  <div class="corps">
+
+    <div class="kicker">En trois écrans</div>
+    <h2 style="margin-top:2.6mm;">Trouver, réserver,<br><em>y aller ensemble.</em></h2>
+
+    <div style="display:grid; gap:3.4mm; margin-top:5.5mm;">
+      <div class="etape">
+        <div class="rond">1</div>
+        <div>
+          <h3>Tu vois ce qui se passe</h3>
+          <p>Bars, boîtes, restos, afterworks : le fil des soirées de la semaine,
+             filtré par ce qui t'intéresse.</p>
+        </div>
+      </div>
+      <div class="etape">
+        <div class="rond">2</div>
+        <div>
+          <h3>Ta place est gardée</h3>
+          <p>Tu rejoins en un geste. Un pass avec QR code arrive dans ton wallet,
+             tu le montres à l'entrée.</p>
+        </div>
+      </div>
+      <div class="etape">
+        <div class="rond">3</div>
+        <div>
+          <h3>Tu sais qui y va</h3>
+          <p>Les amis déjà inscrits s'affichent sur chaque soirée. Plus besoin de
+             demander «&nbsp;qui vient&nbsp;?&nbsp;».</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:4mm; align-items:flex-end; margin-top:5mm;">
+      <div style="flex:1;">
+        <div style="display:flex; gap:1.6mm; flex-wrap:wrap; margin-bottom:2.2mm;">
+          <span class="etiquette et-rouge">Pour moi</span>
+          <span class="etiquette et-bleu">Places</span>
+          <span class="etiquette et-lime">Flash</span>
+        </div>
+        <div class="encart rouge">
+          <p><strong>Les remises s'additionnent.</strong> Douze soirées, trente-huit
+             euros que tu n'as pas payés — soit une sortie de plus dans le mois.</p>
+        </div>
+      </div>
+      <div class="phone" style="width:24mm; height:33mm; box-shadow:0 2mm 6mm rgba(28,25,22,.16);">
+        <img src="mockups/p_feed.png" alt="Le fil des soirées">
+      </div>
+    </div>
+
+    <div class="filet" style="margin-top:auto; padding-top:3.2mm;
+                              display:flex; align-items:flex-start; gap:3.5mm;">
+      <div class="qr" style="width:18mm; height:18mm; padding:1.1mm;
+                             border:1px solid var(--line-2);">
+        <img src="qr_studentlink.svg" alt="QR code vers studentlink.fr">
+      </div>
+      <div style="flex:1;">
+        <div class="logo" style="font-size:8pt;">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="15" y="20" width="50" height="30" rx="15" stroke="#1C1916" stroke-width="10"/>
+            <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
+            <circle cx="50" cy="50" r="6" fill="#1C1916"/>
+          </svg>
+          StudentLink
+        </div>
+        <p style="font-size:6.4pt; margin-top:1.2mm; line-height:1.4;">
+          <strong>studentlink.fr</strong> — depuis ton navigateur, puis
+          «&nbsp;ajouter à l'écran d'accueil&nbsp;». Gratuit, réservé aux étudiants majeurs.
+        </p>
+        <p style="font-size:6pt; margin-top:1.4mm; color:var(--gris); line-height:1.35;">
+          Vous tenez ce bar&nbsp;? Vos soirées peuvent y être aussi&nbsp;:
+          <span class="a-completer">contact à compléter</span>
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
+      </div></div></div>
+      <div class="cellule"><div class="zoom"><div class="fenetre">
+<section class="page f-clair">
+  <div class="fond"></div>
+  <div class="corps">
+
+    <div class="kicker">En trois écrans</div>
+    <h2 style="margin-top:2.6mm;">Trouver, réserver,<br><em>y aller ensemble.</em></h2>
+
+    <div style="display:grid; gap:3.4mm; margin-top:5.5mm;">
+      <div class="etape">
+        <div class="rond">1</div>
+        <div>
+          <h3>Tu vois ce qui se passe</h3>
+          <p>Bars, boîtes, restos, afterworks : le fil des soirées de la semaine,
+             filtré par ce qui t'intéresse.</p>
+        </div>
+      </div>
+      <div class="etape">
+        <div class="rond">2</div>
+        <div>
+          <h3>Ta place est gardée</h3>
+          <p>Tu rejoins en un geste. Un pass avec QR code arrive dans ton wallet,
+             tu le montres à l'entrée.</p>
+        </div>
+      </div>
+      <div class="etape">
+        <div class="rond">3</div>
+        <div>
+          <h3>Tu sais qui y va</h3>
+          <p>Les amis déjà inscrits s'affichent sur chaque soirée. Plus besoin de
+             demander «&nbsp;qui vient&nbsp;?&nbsp;».</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:4mm; align-items:flex-end; margin-top:5mm;">
+      <div style="flex:1;">
+        <div style="display:flex; gap:1.6mm; flex-wrap:wrap; margin-bottom:2.2mm;">
+          <span class="etiquette et-rouge">Pour moi</span>
+          <span class="etiquette et-bleu">Places</span>
+          <span class="etiquette et-lime">Flash</span>
+        </div>
+        <div class="encart rouge">
+          <p><strong>Les remises s'additionnent.</strong> Douze soirées, trente-huit
+             euros que tu n'as pas payés — soit une sortie de plus dans le mois.</p>
+        </div>
+      </div>
+      <div class="phone" style="width:24mm; height:33mm; box-shadow:0 2mm 6mm rgba(28,25,22,.16);">
+        <img src="mockups/p_feed.png" alt="Le fil des soirées">
+      </div>
+    </div>
+
+    <div class="filet" style="margin-top:auto; padding-top:3.2mm;
+                              display:flex; align-items:flex-start; gap:3.5mm;">
+      <div class="qr" style="width:18mm; height:18mm; padding:1.1mm;
+                             border:1px solid var(--line-2);">
+        <img src="qr_studentlink.svg" alt="QR code vers studentlink.fr">
+      </div>
+      <div style="flex:1;">
+        <div class="logo" style="font-size:8pt;">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="15" y="20" width="50" height="30" rx="15" stroke="#1C1916" stroke-width="10"/>
+            <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
+            <circle cx="50" cy="50" r="6" fill="#1C1916"/>
+          </svg>
+          StudentLink
+        </div>
+        <p style="font-size:6.4pt; margin-top:1.2mm; line-height:1.4;">
+          <strong>studentlink.fr</strong> — depuis ton navigateur, puis
+          «&nbsp;ajouter à l'écran d'accueil&nbsp;». Gratuit, réservé aux étudiants majeurs.
+        </p>
+        <p style="font-size:6pt; margin-top:1.4mm; color:var(--gris); line-height:1.35;">
+          Vous tenez ce bar&nbsp;? Vos soirées peuvent y être aussi&nbsp;:
+          <span class="a-completer">contact à compléter</span>
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
+      </div></div></div>
+      <div class="cellule"><div class="zoom"><div class="fenetre">
+<section class="page f-clair">
+  <div class="fond"></div>
+  <div class="corps">
+
+    <div class="kicker">En trois écrans</div>
+    <h2 style="margin-top:2.6mm;">Trouver, réserver,<br><em>y aller ensemble.</em></h2>
+
+    <div style="display:grid; gap:3.4mm; margin-top:5.5mm;">
+      <div class="etape">
+        <div class="rond">1</div>
+        <div>
+          <h3>Tu vois ce qui se passe</h3>
+          <p>Bars, boîtes, restos, afterworks : le fil des soirées de la semaine,
+             filtré par ce qui t'intéresse.</p>
+        </div>
+      </div>
+      <div class="etape">
+        <div class="rond">2</div>
+        <div>
+          <h3>Ta place est gardée</h3>
+          <p>Tu rejoins en un geste. Un pass avec QR code arrive dans ton wallet,
+             tu le montres à l'entrée.</p>
+        </div>
+      </div>
+      <div class="etape">
+        <div class="rond">3</div>
+        <div>
+          <h3>Tu sais qui y va</h3>
+          <p>Les amis déjà inscrits s'affichent sur chaque soirée. Plus besoin de
+             demander «&nbsp;qui vient&nbsp;?&nbsp;».</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:4mm; align-items:flex-end; margin-top:5mm;">
+      <div style="flex:1;">
+        <div style="display:flex; gap:1.6mm; flex-wrap:wrap; margin-bottom:2.2mm;">
+          <span class="etiquette et-rouge">Pour moi</span>
+          <span class="etiquette et-bleu">Places</span>
+          <span class="etiquette et-lime">Flash</span>
+        </div>
+        <div class="encart rouge">
+          <p><strong>Les remises s'additionnent.</strong> Douze soirées, trente-huit
+             euros que tu n'as pas payés — soit une sortie de plus dans le mois.</p>
+        </div>
+      </div>
+      <div class="phone" style="width:24mm; height:33mm; box-shadow:0 2mm 6mm rgba(28,25,22,.16);">
+        <img src="mockups/p_feed.png" alt="Le fil des soirées">
+      </div>
+    </div>
+
+    <div class="filet" style="margin-top:auto; padding-top:3.2mm;
+                              display:flex; align-items:flex-start; gap:3.5mm;">
+      <div class="qr" style="width:18mm; height:18mm; padding:1.1mm;
+                             border:1px solid var(--line-2);">
+        <img src="qr_studentlink.svg" alt="QR code vers studentlink.fr">
+      </div>
+      <div style="flex:1;">
+        <div class="logo" style="font-size:8pt;">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="15" y="20" width="50" height="30" rx="15" stroke="#1C1916" stroke-width="10"/>
+            <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
+            <circle cx="50" cy="50" r="6" fill="#1C1916"/>
+          </svg>
+          StudentLink
+        </div>
+        <p style="font-size:6.4pt; margin-top:1.2mm; line-height:1.4;">
+          <strong>studentlink.fr</strong> — depuis ton navigateur, puis
+          «&nbsp;ajouter à l'écran d'accueil&nbsp;». Gratuit, réservé aux étudiants majeurs.
+        </p>
+        <p style="font-size:6pt; margin-top:1.4mm; color:var(--gris); line-height:1.35;">
+          Vous tenez ce bar&nbsp;? Vos soirées peuvent y être aussi&nbsp;:
+          <span class="a-completer">contact à compléter</span>
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
+      </div></div></div>
+    </div>
+    <i class="repere v" style="left:12.60mm; top:12.26mm;"></i>
+    <i class="repere v" style="left:12.60mm; top:279.74mm;"></i>
+    <i class="repere v" style="left:105.00mm; top:12.26mm;"></i>
+    <i class="repere v" style="left:105.00mm; top:279.74mm;"></i>
+    <i class="repere v" style="left:197.40mm; top:12.26mm;"></i>
+    <i class="repere v" style="left:197.40mm; top:279.74mm;"></i>
+    <i class="repere h" style="top:18.26mm; left:6.60mm;"></i>
+    <i class="repere h" style="top:18.26mm; left:198.40mm;"></i>
+    <i class="repere h" style="top:148.50mm; left:6.60mm;"></i>
+    <i class="repere h" style="top:148.50mm; left:198.40mm;"></i>
+    <i class="repere h" style="top:278.74mm; left:6.60mm;"></i>
+    <i class="repere h" style="top:278.74mm; left:198.40mm;"></i>
+    <div class="note">StudentLink — flyer A6 réduit à 88 %. Couper sur les repères. Page 1 : recto — page 2 : verso. Impression recto-verso, reliure sur le grand côté.</div>
+  </section>
+
+</body>
+</html>

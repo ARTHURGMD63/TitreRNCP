@@ -1,0 +1,9 @@
+# Ce dossier ne contient rien qu'un navigateur doive atteindre.
+# Les fichiers y sont inclus par PHP depuis le disque : le blocage HTTP
+# n'empêche donc rien de fonctionner, il retire seulement une porte.
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Deny from all
+</IfModule>

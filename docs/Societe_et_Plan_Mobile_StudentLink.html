@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>StudentLink — Structure de la société &amp; plan d'action mobile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700..900;1,700..900&family=DM+Sans:opsz,wght@9..40,400..700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   StudentLink — Document interne fondateurs (SL-16)
+   Couleurs et typographie : charte graphique de l'application.
+   Navigation par onglets à l'écran ; à l'impression, tous les
+   panneaux sont dépliés, chacun sur sa propre page.
+   ============================================================ */
+:root{
+  --bg:#F3EEE3; --blanc:#FFFFFF; --surface-2:#FBF8F1;
+  --noir:#1C1916; --gris-fonce:#5B554C; --gris:#6E6860;
+  --gris-clair:#EAE3D6; --line-2:#DED6C6;
+  --rouge:#E0492B; --rouge-deep:#BB3619; --rouge-clair:#FBE7E1;
+  --bleu:#4A40C2; --bleu-deep:#332A92; --bleu-clair:#ECE9FA;
+  --lime:#EFB23A; --lime-deep:#8E6414; --lime-clair:#FBF0D6;
+  --orange:#EC8233; --orange-deep:#A75517; --orange-clair:#FCEBDB;
+  --succes:#1F6B34; --succes-clair:#E3F2E6;
+  --font-display:'Playfair Display',Georgia,'Times New Roman',serif;
+  --font-sans:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+*{ box-sizing:border-box; margin:0; padding:0; }
+html{ scroll-behavior:smooth; scroll-padding-top:86px; }
+body{
+  background:var(--bg); color:var(--noir);
+  font-family:var(--font-sans); font-size:15px; line-height:1.62;
+  -webkit-print-color-adjust:exact; print-color-adjust:exact;
+}
+.wrap{ max-width:980px; margin:0 auto; padding:0 24px 96px; }
+[hidden]{ display:none !important; }
+
+/* ── Couverture ─────────────────────────────────────────── */
+.cover{ padding:64px 0 34px; }
+.kicker{ font-size:11px; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--rouge); margin-bottom:18px; }
+.cover h1{ font-family:var(--font-display); font-weight:900; font-size:52px; line-height:.98; letter-spacing:-.02em; }
+.cover h1 em{ font-style:italic; color:var(--rouge); display:block; }
+.cover .chapeau{ margin-top:20px; font-size:17px; color:var(--gris-fonce); max-width:62ch; }
+.meta{ display:flex; flex-wrap:wrap; gap:8px 28px; margin-top:24px; font-size:12px;
+       letter-spacing:.1em; text-transform:uppercase; color:var(--gris); font-weight:600; }
+
+/* ── Barre d'onglets ────────────────────────────────────── */
+.barre{
+  position:sticky; top:0; z-index:20; background:rgba(243,238,227,.94);
+  backdrop-filter:saturate(180%) blur(12px); -webkit-backdrop-filter:saturate(180%) blur(12px);
+  border-bottom:1px solid var(--line-2); margin-bottom:8px;
+}
+.barre-inner{ max-width:980px; margin:0 auto; padding:0 24px; display:flex; gap:4px; overflow-x:auto;
+              scrollbar-width:none; }
+.barre-inner::-webkit-scrollbar{ display:none; }
+.onglet{
+  flex:0 0 auto; appearance:none; background:none; border:none; cursor:pointer;
+  font-family:var(--font-sans); font-size:13.5px; font-weight:600; color:var(--gris);
+  padding:16px 16px 13px; border-bottom:3px solid transparent; white-space:nowrap;
+  display:flex; align-items:baseline; gap:8px; transition:color .15s;
+}
+.onglet .o-num{ font-family:var(--mono); font-size:10.5px; color:var(--line-2); }
+.onglet:hover{ color:var(--noir); }
+.onglet[aria-selected="true"]{ color:var(--noir); border-bottom-color:var(--rouge); font-weight:700; }
+.onglet[aria-selected="true"] .o-num{ color:var(--rouge); }
+.onglet:focus-visible{ outline:2px solid var(--bleu); outline-offset:-4px; border-radius:6px; }
+
+/* ── Panneaux ───────────────────────────────────────────── */
+.panneau{ padding-top:34px; }
+.panneau:focus{ outline:none; }
+.p-tete{ padding-bottom:26px; border-bottom:2px solid var(--noir); margin-bottom:8px; }
+.p-tete .p-num{ font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--rouge); }
+.p-tete h2{ font-family:var(--font-display); font-weight:900; font-size:36px; line-height:1.02; letter-spacing:-.02em; margin-top:6px; }
+.p-tete .p-intro{ margin-top:14px; color:var(--gris-fonce); max-width:68ch; }
+
+section{ margin-top:44px; }
+h3{ font-family:var(--font-display); font-weight:800; font-size:24px; letter-spacing:-.01em; margin-bottom:14px; }
+h3 .h-num{ font-family:var(--mono); font-size:13px; font-weight:600; color:var(--rouge); margin-right:10px; vertical-align:3px; }
+h4{ font-size:14px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--gris-fonce); margin:26px 0 10px; }
+p{ margin-bottom:14px; max-width:72ch; }
+p.lead{ font-size:16px; color:var(--gris-fonce); }
+code{ font-family:var(--mono); font-size:12.5px; background:var(--surface-2); border:1px solid var(--line-2);
+      border-radius:5px; padding:1px 5px; color:var(--gris-fonce); }
+
+ul.puces{ list-style:none; margin:0 0 16px; }
+ul.puces li{ position:relative; padding-left:22px; margin-bottom:8px; max-width:72ch; }
+ul.puces li:before{ content:""; position:absolute; left:4px; top:10px; width:6px; height:6px; border-radius:50%; background:var(--rouge); }
+
+/* ── Tableaux ───────────────────────────────────────────── */
+.t-wrap{ overflow-x:auto; margin-bottom:20px; }
+table{ width:100%; border-collapse:collapse; font-size:14px; background:var(--blanc);
+       border:1px solid var(--gris-clair); border-radius:12px; overflow:hidden; }
+th{ text-align:left; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--gris);
+    font-weight:700; padding:12px 14px; border-bottom:1px solid var(--line-2); background:var(--surface-2); vertical-align:bottom; }
+td{ padding:12px 14px; border-bottom:1px solid var(--gris-clair); vertical-align:top; }
+tr:last-child td{ border-bottom:none; }
+td.mono, th.mono{ font-family:var(--mono); font-size:12.5px; white-space:nowrap; }
+td.num{ font-family:var(--mono); font-size:13px; }
+
+/* ── Encadrés ───────────────────────────────────────────── */
+.encadre{ border-left:3px solid var(--rouge); background:var(--rouge-clair); border-radius:0 12px 12px 0;
+          padding:18px 22px; margin:22px 0; }
+.encadre.bleu{ border-left-color:var(--bleu); background:var(--bleu-clair); }
+.encadre.or{ border-left-color:var(--lime-deep); background:var(--lime-clair); }
+.encadre.vert{ border-left-color:var(--succes); background:var(--succes-clair); }
+.encadre h4{ margin:0 0 8px; color:inherit; }
+.encadre p:last-child{ margin-bottom:0; }
+
+.duo{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin:22px 0; }
+.carte{ background:var(--blanc); border:1px solid var(--gris-clair); border-radius:14px; padding:20px 22px; }
+.carte h4{ margin-top:0; }
+.carte p:last-child, .carte ul:last-child{ margin-bottom:0; }
+
+/* ── Pastilles ──────────────────────────────────────────── */
+.tag{ display:inline-block; font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+      padding:3px 9px; border-radius:99px; }
+.tag.rouge{ background:var(--rouge-clair); color:var(--rouge-deep); }
+.tag.orange{ background:var(--orange-clair); color:var(--orange-deep); }
+.tag.vert{ background:var(--succes-clair); color:var(--succes); }
+.tag.gris{ background:var(--surface-2); color:var(--gris); border:1px solid var(--line-2); }
+
+/* ── Paliers ────────────────────────────────────────────── */
+.paliers{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin:24px 0; }
+.palier{ background:var(--blanc); border:1px solid var(--gris-clair); border-top:4px solid var(--rouge); border-radius:14px; padding:20px; }
+.palier:nth-child(2){ border-top-color:var(--orange); }
+.palier:nth-child(3){ border-top-color:var(--bleu); }
+.palier .quand{ font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--gris); }
+.palier h4{ margin:8px 0 10px; font-size:17px; font-family:var(--font-display); font-weight:800;
+            text-transform:none; letter-spacing:-.01em; color:var(--noir); }
+.palier p{ font-size:13.5px; color:var(--gris-fonce); margin-bottom:0; }
+
+/* ── Journée ────────────────────────────────────────────── */
+.journee{ background:var(--noir); color:var(--bg); border-radius:18px; padding:32px 34px; margin:28px 0; }
+.journee h3{ color:var(--bg); }
+.journee h3 .h-num{ color:var(--lime); }
+.journee p{ color:#C9C1B2; }
+.journee table{ background:transparent; border-color:#322C24; }
+.journee th{ background:#211D18; color:#8E8576; border-bottom-color:#322C24; }
+.journee td{ color:var(--bg); border-bottom-color:#322C24; }
+.journee code{ background:#211D18; border-color:#322C24; color:#C9C1B2; }
+.case{ display:inline-block; width:13px; height:13px; border:1.5px solid #6E6860; border-radius:3px; }
+
+/* ── Bas de page ────────────────────────────────────────── */
+.pied{ margin-top:64px; padding-top:22px; border-top:1px solid var(--line-2); }
+.avertissement{ font-size:13px; color:var(--gris); max-width:78ch; }
+.signature{ margin-top:22px; font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--gris); }
+
+@media (max-width:760px){
+  .cover{ padding:40px 0 26px; }
+  .cover h1{ font-size:36px; } .p-tete h2{ font-size:27px; }
+  .duo, .paliers{ grid-template-columns:1fr; }
+  .wrap{ padding:0 16px 64px; } .barre-inner{ padding:0 16px; }
+  .journee{ padding:24px 20px; } .onglet{ padding:14px 12px 11px; font-size:13px; }
+}
+
+/* ── Impression : tout est déplié ───────────────────────── */
+@media print{
+  @page{ size:A4 portrait; margin:14mm 13mm; }
+  body{ font-size:10pt; background:#fff; }
+  .wrap{ max-width:none; padding:0; }
+  .barre, .imprimer{ display:none !important; }
+  .panneau[hidden]{ display:block !important; }
+  .panneau{ break-before:page; padding-top:0; }
+  .panneau:first-of-type{ break-before:auto; }
+  section, table, .carte, .palier, .encadre, .journee{ break-inside:avoid; }
+  .journee{ background:#fff; color:var(--noir); border:1.5px solid var(--noir); }
+  .journee h3, .journee td{ color:var(--noir); } .journee p{ color:var(--gris-fonce); }
+  a{ color:inherit; text-decoration:none; }
+}
+
+/* ── Bouton imprimer ────────────────────────────────────── */
+.imprimer{ margin-left:auto; flex:0 0 auto; align-self:center; appearance:none; cursor:pointer;
+  background:none; border:1px solid var(--line-2); border-radius:99px; color:var(--gris-fonce);
+  font-family:var(--font-sans); font-size:11.5px; font-weight:600; letter-spacing:.06em;
+  text-transform:uppercase; padding:7px 14px; white-space:nowrap; }
+.imprimer:hover{ border-color:var(--noir); color:var(--noir); }
+@media (max-width:900px){ .imprimer{ display:none; } }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ COUVERTURE ═══════════════════ -->
+<div class="wrap">
+  <header class="cover">
+    <div class="kicker">Document interne fondateurs · SL-16</div>
+    <h1>Structure de la société<em>&amp; passage à l'application mobile</em></h1>
+    <p class="chapeau">Ce que nous créons juridiquement, et ce que nous faisons à partir d'aujourd'hui pour que
+    StudentLink devienne une application qu'on télécharge et que les établissements clermontois paient.</p>
+    <div class="meta">
+      <span>Mercredi 16 septembre 2026</span>
+      <span>Arthur Gramond · Étienne Florentino</span>
+      <span>Suite de la réunion du 15/09</span>
+    </div>
+  </header>
+</div>
+
+<!-- ═══════════════════ ONGLETS ═══════════════════ -->
+<div class="barre">
+  <div class="barre-inner" role="tablist" aria-label="Sections du document">
+    <button class="onglet" role="tab" id="t-societe"  aria-controls="societe"  aria-selected="true"><span class="o-num">01</span>La société</button>
+    <button class="onglet" role="tab" id="t-statuts"  aria-controls="statuts"  aria-selected="false"><span class="o-num">02</span>Statuts &amp; pacte</button>
+    <button class="onglet" role="tab" id="t-produit"  aria-controls="produit"  aria-selected="false"><span class="o-num">03</span>Du web au mobile</button>
+    <button class="onglet" role="tab" id="t-marche"   aria-controls="marche"   aria-selected="false"><span class="o-num">04</span>Télécharger &amp; vendre</button>
+    <button class="onglet" role="tab" id="t-action"   aria-controls="action"   aria-selected="false"><span class="o-num">05</span>Plan d'action</button>
+    <button class="imprimer" type="button" onclick="window.print()">Tout imprimer</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ═════════════ 01 · LA SOCIÉTÉ ═════════════ -->
+<div class="panneau" id="societe" role="tabpanel" aria-labelledby="t-societe" tabindex="-1">
+  <div class="p-tete">
+    <div class="p-num">Onglet 01</div>
+    <h2>La société</h2>
+    <p class="p-intro">Décisions issues de SL-10 et SL-11, au format d'un document utilisable tel quel au
+    rendez-vous avec l'expert-comptable du 29 septembre. Rien ici n'a de valeur juridique tant que les statuts
+    ne sont pas signés et l'immatriculation obtenue.</p>
+  </div>
+
+  <section id="identite">
+    <h3><span class="h-num">1.1</span>Fiche d'identité de la société</h3>
+    <div class="t-wrap">
+    <table>
+      <tr><th style="width:30%">Élément</th><th>Décision</th><th style="width:24%">Statut</th></tr>
+      <tr><td><strong>Dénomination sociale</strong></td><td>StudentLink</td><td><span class="tag orange">Sous réserve d'antériorité</span></td></tr>
+      <tr><td><strong>Forme juridique</strong></td><td>SAS — société par actions simplifiée, deux associés</td><td><span class="tag vert">Acté</span></td></tr>
+      <tr><td><strong>Objet social</strong></td><td>Édition et exploitation d'une plateforme numérique de mise en relation entre étudiants et établissements ; services associés de statistiques de fréquentation, de communication et de billetterie</td><td><span class="tag orange">À faire relire</span></td></tr>
+      <tr><td><strong>Capital social</strong></td><td>1 000 €, intégralement libéré, divisé en 1 000 actions de 1 € — 500 € par associé</td><td><span class="tag vert">Acté</span></td></tr>
+      <tr><td><strong>Répartition</strong></td><td>Arthur Gramond 50 % · Étienne Florentino 50 %</td><td><span class="tag vert">Acté</span></td></tr>
+      <tr><td><strong>Siège social</strong></td><td>Clermont-Ferrand, au domicile de l'un des associés</td><td><span class="tag vert">Acté</span></td></tr>
+      <tr><td><strong>Président</strong></td><td>Représentant légal unique, désigné entre nous</td><td><span class="tag rouge">À trancher</span></td></tr>
+      <tr><td><strong>Durée</strong></td><td>99 ans à compter de l'immatriculation</td><td><span class="tag gris">Standard</span></td></tr>
+      <tr><td><strong>Exercice social</strong></td><td>Du 1<sup>er</sup> janvier au 31 décembre ; premier exercice clos le 31/12/2027</td><td><span class="tag orange">À confirmer</span></td></tr>
+      <tr><td><strong>Création effective</strong></td><td>Avant le 31/12/2026, et impérativement <strong>avant le premier encaissement</strong></td><td><span class="tag rouge">Échéance ferme</span></td></tr>
+      <tr><td><strong>Pacte d'associés</strong></td><td>Signé le jour de la création, jamais après</td><td><span class="tag rouge">Non négociable</span></td></tr>
+    </table>
+    </div>
+    <div class="encadre bleu">
+      <h4>La date qui commande tout</h4>
+      <p>La phase fondateur donne trois mois gratuits aux quinze premiers établissements. Le premier euro
+      encaissé tombe donc en janvier 2027, et la société doit exister avant — ce qui place le lancement des
+      formalités en octobre. Nous ne créons pas la société pour le plaisir de la créer : nous la créons parce
+      que le pacte, la cession du code et le dépôt de marque en dépendent, et que ces trois actes sont
+      urgents.</p>
+    </div>
+  </section>
+
+  <section id="forme">
+    <h3><span class="h-num">1.2</span>Pourquoi une SAS et pas autre chose</h3>
+    <div class="t-wrap">
+    <table>
+      <tr><th>Critère</th><th>SAS</th><th>SARL</th><th>Micro-entreprise</th></tr>
+      <tr><td>Deux associés à 50/50</td><td>Oui</td><td>Oui</td><td><strong>Impossible</strong> — la micro est individuelle</td></tr>
+      <tr><td>Liberté d'organisation dans les statuts</td><td>Grande : nos règles de gouvernance y entrent</td><td>Encadrée par la loi</td><td>Sans objet</td></tr>
+      <tr><td>Entrée d'un investisseur plus tard</td><td>Simple, standard du marché</td><td>Plus lourde</td><td>Impossible</td></tr>
+      <tr><td>Statut du dirigeant</td><td>Assimilé salarié — protection sociale, charges élevées s'il est rémunéré</td><td>Gérant majoritaire au régime des indépendants</td><td>Travailleur indépendant</td></tr>
+      <tr><td>Coût de fonctionnement</td><td>Comptabilité obligatoire</td><td>Comptabilité obligatoire</td><td>Très faible</td></tr>
+    </table>
+    </div>
+    <p>La micro-entreprise est mathématiquement exclue : deux associés ne peuvent pas partager une entreprise
+    individuelle. La SARL nous interdirait d'inscrire librement les mécanismes de SL-10 — vesting, agrément,
+    rachat croisé. Le surcoût de comptabilité de la SAS est réel et assumé : de l'ordre de 60 à 100 € par mois,
+    à engager à la création, pas avant.</p>
+  </section>
+
+  <section id="fiscal">
+    <h3><span class="h-num">1.3</span>Régime fiscal, social et assurances</h3>
+    <div class="t-wrap">
+    <table>
+      <tr><th style="width:22%">Sujet</th><th>Position retenue</th><th style="width:24%">À vérifier</th></tr>
+      <tr><td><strong>Impôt</strong></td><td>Impôt sur les sociétés. Taux réduit de 15 % sur les premiers 42 500 € de bénéfice, sous conditions.</td><td>Conditions du taux réduit</td></tr>
+      <tr><td><strong>TVA</strong></td><td>Franchise en base tant que le chiffre d'affaires reste sous le seuil applicable aux prestations de services, puis 20 % sur les abonnements. Mention « TVA non applicable » sur les premières factures.</td><td><span class="tag rouge">Seuil impérativement à confirmer — le régime a bougé</span></td></tr>
+      <tr><td><strong>Rémunération des fondateurs</strong></td><td>Aucune tant que le MRR est inférieur à 3 000 €. Ensuite, arbitrage salaire / dividendes.</td><td>Impact sur bourse, rattachement fiscal et couverture sociale d'Arthur, encore étudiant</td></tr>
+      <tr><td><strong>Comptabilité</strong></td><td>Expert-comptable en ligne, 60 à 100 € par mois, engagé à la création.</td><td>Devis ferme, pas une estimation</td></tr>
+      <tr><td><strong>Banque</strong></td><td>Néobanque professionnelle, 10 à 30 € par mois. Obligatoire pour le dépôt du capital.</td><td>Délai de dépôt et d'attestation</td></tr>
+      <tr><td><strong>Assurance RC pro</strong></td><td>150 à 300 € par an. <strong>Nécessaire</strong> : nous mettons en relation des étudiants et des débits de boissons. À souscrire avant la soirée de lancement.</td><td>Étendue de la garantie « mise en relation »</td></tr>
+      <tr><td><strong>Aides à instruire</strong></td><td>Statut national étudiant-entrepreneur via PEPITE, ACRE, dispositifs Région Auvergne-Rhône-Alpes et BPI, concours et incubateurs locaux.</td><td>Aucune n'est acquise — instruction par Étienne au 20/10</td></tr>
+    </table>
+    </div>
+  </section>
+
+  <section id="calendrier">
+    <h3><span class="h-num">1.4</span>Calendrier et coût de la création</h3>
+    <div class="t-wrap">
+    <table>
+      <tr><th>Étape</th><th class="num" style="width:18%">Coût</th><th class="mono" style="width:12%">Délai</th><th style="width:16%">Qui</th><th class="mono" style="width:12%">Cible</th></tr>
+      <tr><td>Recherche d'antériorité INPI et EUIPO, nom de repli</td><td class="num">0 €</td><td class="mono">1 sem.</td><td>Arthur</td><td class="mono">22/09</td></tr>
+      <tr><td>Rendez-vous expert-comptable : forme, TVA, rémunérations</td><td class="num">souvent offert</td><td class="mono">1 h</td><td>Les deux</td><td class="mono">29/09</td></tr>
+      <tr><td>Rédaction des statuts et du pacte</td><td class="num">200–400 € en ligne<br>800–1 500 € avocat</td><td class="mono">1–3 sem.</td><td>Arthur + relecture</td><td class="mono">06/10</td></tr>
+      <tr><td>Dépôt du capital en banque</td><td class="num">0 €</td><td class="mono">1 sem.</td><td>Les deux</td><td class="mono">nov.</td></tr>
+      <tr><td>Annonce légale</td><td class="num">≈ 200 €</td><td class="mono">1 jour</td><td>Étienne</td><td class="mono">déc.</td></tr>
+      <tr><td>Immatriculation via le guichet unique</td><td class="num">40–60 €</td><td class="mono">1–3 sem.</td><td>Étienne</td><td class="mono">déc.</td></tr>
+      <tr><td>Dépôt de marque INPI, deux classes</td><td class="num">≈ 270 €</td><td class="mono">5 mois</td><td>Arthur</td><td class="mono">oct.</td></tr>
+      <tr><td>Cession des droits sur le code</td><td class="num">inclus</td><td class="mono">jour J</td><td>Arthur</td><td class="mono">création</td></tr>
+      <tr><td>Assurance RC professionnelle</td><td class="num">150–300 €/an</td><td class="mono">1 sem.</td><td>Étienne</td><td class="mono">31/10</td></tr>
+    </table>
+    </div>
+    <div class="duo">
+      <div class="carte">
+        <h4>Budget de création</h4>
+        <p><strong>Version économe</strong> — statuts rédigés en ligne : environ <strong>1 825 €</strong>, marque
+        comprise.<br>
+        <strong>Version accompagnée</strong> — statuts et pacte confiés à un avocat : environ
+        <strong>3 025 €</strong>.</p>
+        <p>Recommandation : version accompagnée sur le pacte et la cession du code. C'est le seul poste où
+        économiser 1 000 € peut coûter le projet entier.</p>
+      </div>
+      <div class="carte">
+        <h4>Point mort</h4>
+        <p>Charges mensuelles de structure estimées à <strong>180 €</strong>, hors toute rémunération. Capital
+        disponible 1 000 €, soit <strong>5 à 6 mois d'autonomie</strong> sans aucun revenu.</p>
+        <p><strong>3 clients à 79 €</strong> ou <strong>5 clients à 39 €</strong> couvrent la totalité des
+        charges. Atteignable dès la fin de la phase fondateur, en janvier 2027.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ═════════════ 02 · STATUTS & PACTE ═════════════ -->
+<div class="panneau" id="statuts" role="tabpanel" aria-labelledby="t-statuts" tabindex="-1" hidden>
+  <div class="p-tete">
+    <div class="p-num">Onglet 02</div>
+    <h2>Statuts &amp; pacte d'associés</h2>
+    <p class="p-intro">Trame à remettre au rédacteur — plateforme juridique en ligne ou avocat. Chaque article
+    porte une décision déjà prise en réunion ; aucun n'est à improviser le jour de la signature.</p>
+  </div>
+
+  <section id="articles">
+    <h3><span class="h-num">2.1</span>Projet de statuts, article par article</h3>
+    <div class="t-wrap">
+    <table>
+      <tr><th style="width:7%" class="mono">Art.</th><th style="width:21%">Objet</th><th>Ce que nous y inscrivons</th></tr>
+      <tr><td class="mono">1</td><td><strong>Forme</strong></td><td>Société par actions simplifiée régie par les dispositions du Code de commerce applicables aux SAS et par les présents statuts.</td></tr>
+      <tr><td class="mono">2</td><td><strong>Objet</strong></td><td>Édition et exploitation d'une plateforme numérique de mise en relation entre étudiants et établissements ; services de statistiques de fréquentation, de communication et de billetterie ; toutes opérations s'y rattachant. Rédaction volontairement large : ajouter le paiement en ligne plus tard ne doit pas imposer une modification statutaire.</td></tr>
+      <tr><td class="mono">3</td><td><strong>Dénomination</strong></td><td>StudentLink. Article bloqué tant que la recherche d'antériorité INPI et EUIPO n'est pas rendue — un nom de repli est identifié en parallèle.</td></tr>
+      <tr><td class="mono">4</td><td><strong>Siège social</strong></td><td>Clermont-Ferrand, au domicile d'un associé. Transfert décidé par le président dans le même département, par décision collective au-delà.</td></tr>
+      <tr><td class="mono">5</td><td><strong>Durée</strong></td><td>99 ans à compter de l'immatriculation au registre du commerce et des sociétés.</td></tr>
+      <tr><td class="mono">6</td><td><strong>Apports</strong></td><td>Apports en numéraire de 500 € par associé, intégralement libérés et déposés sur un compte bloqué avant signature. <strong>Apport en nature écarté</strong> : le code existant est transféré par un acte de cession de droits distinct, pour éviter un commissaire aux apports et une valorisation contestable.</td></tr>
+      <tr><td class="mono">7</td><td><strong>Capital</strong></td><td>1 000 € divisé en 1 000 actions ordinaires de 1 € de valeur nominale, réparties à parts égales. Une seule catégorie d'actions : pas d'actions de préférence tant qu'aucun tiers n'entre au capital.</td></tr>
+      <tr><td class="mono">8</td><td><strong>Forme des actions</strong></td><td>Actions nominatives, inscrites en compte tenu par la société. Registre des mouvements de titres ouvert dès la création.</td></tr>
+      <tr><td class="mono">9</td><td><strong>Cession — agrément</strong></td><td>Toute cession, y compris entre associés, soumise à l'agrément préalable de la collectivité des associés. C'est l'article qui empêche l'arrivée d'un tiers non voulu.</td></tr>
+      <tr><td class="mono">10</td><td><strong>Préemption</strong></td><td>Droit de préemption au profit de l'associé restant, au prix offert par le tiers de bonne foi, dans un délai fixé.</td></tr>
+      <tr><td class="mono">11</td><td><strong>Inaliénabilité</strong></td><td>Inaliénabilité temporaire des titres, bornée dans le temps — c'est l'ancrage statutaire du vesting détaillé au pacte.</td></tr>
+      <tr><td class="mono">12</td><td><strong>Exclusion</strong></td><td>Clause d'exclusion pour motifs limitativement énumérés : cessation d'activité prolongée, faute grave, condamnation portant atteinte à la société. Prix de rachat déterminé par la formule du pacte, pas négocié à chaud.</td></tr>
+      <tr><td class="mono">13</td><td><strong>Président</strong></td><td>Un président, personne physique, représentant légal unique, nommé sans limitation de durée et révocable par décision collective. Rémunération fixée par décision collective — donc nulle aujourd'hui.</td></tr>
+      <tr><td class="mono">14</td><td><strong>Directeur général</strong></td><td>Faculté de nommer un directeur général disposant des mêmes pouvoirs de représentation. Les limitations internes s'appliquent à lui comme au président.</td></tr>
+      <tr><td class="mono">15</td><td><strong>Limitations de pouvoirs</strong></td><td>Inopposables aux tiers mais obligatoires entre associés : prix officiels, recrutement, dépense supérieure à 500 €, engagement de plus de 12 mois, ouverture d'une ville, levée de fonds, cession, toute modification touchant aux données personnelles des étudiants, communication publique engageant la société.</td></tr>
+      <tr><td class="mono">16</td><td><strong>Décisions collectives</strong></td><td>Unanimité de fait en 50/50. Formes admises très larges : assemblée, acte sous seing privé, visioconférence, consultation écrite, signature électronique. Un formalisme lourd serait ingérable à deux.</td></tr>
+      <tr><td class="mono">17</td><td><strong>Comptes et affectation</strong></td><td>Exercice du 1<sup>er</sup> janvier au 31 décembre. Approbation des comptes dans les six mois de la clôture. Dotation à la réserve légale, puis affectation par décision collective.</td></tr>
+      <tr><td class="mono">18</td><td><strong>Commissaire aux comptes</strong></td><td>Nomination facultative tant que les seuils légaux ne sont pas franchis — ils ne le seront pas avant longtemps.</td></tr>
+      <tr><td class="mono">19</td><td><strong>Dissolution</strong></td><td>Dissolution et liquidation dans les conditions légales, boni réparti à proportion des actions détenues.</td></tr>
+      <tr><td class="mono">20</td><td><strong>Contestations</strong></td><td>Recours préalable au tiers de confiance désigné au pacte avant toute action ; tribunal compétent celui du siège.</td></tr>
+    </table>
+    </div>
+    <div class="encadre">
+      <h4>L'acte qu'il ne faut surtout pas oublier</h4>
+      <p>La <strong>cession des droits d'auteur sur le code à la société</strong> est un acte séparé, signé le
+      jour de la création. Aujourd'hui, StudentLink appartient juridiquement à Arthur, pas au projet. C'est le
+      seul risque du dossier capable de tout détruire d'un coup : sans cet acte, la société vend l'accès à un
+      logiciel qu'elle ne possède pas. L'acte couvre le code, les bases de données, le design, la documentation
+      et la marque une fois déposée.</p>
+    </div>
+  </section>
+
+  <section id="pacte">
+    <h3><span class="h-num">2.2</span>Ce qui va aux statuts, ce qui va au pacte</h3>
+    <p>Les statuts sont publics et opposables à tous ; le pacte est privé et n'engage que les signataires. Les
+    règles qui protègent notre relation d'associés n'ont pas à être lisibles par un concurrent.</p>
+    <div class="duo">
+      <div class="carte">
+        <h4>Statuts — publics</h4>
+        <ul class="puces">
+          <li>Forme, dénomination, objet, siège, durée</li>
+          <li>Capital, apports, nature des actions</li>
+          <li>Agrément, préemption, inaliénabilité, exclusion</li>
+          <li>Président, directeur général, révocation</li>
+          <li>Décisions collectives et leurs formes</li>
+          <li>Exercice, comptes, dissolution</li>
+        </ul>
+      </div>
+      <div class="carte">
+        <h4>Pacte d'associés — privé</h4>
+        <ul class="puces">
+          <li><strong>Vesting</strong> : 4 ans, première année non acquise, puis acquisition mensuelle, sur les titres des <em>deux</em> associés</li>
+          <li><strong>Good leaver / bad leaver</strong> et formule de prix de rachat</li>
+          <li><strong>Implication minimale</strong> : volume de travail réel, constat écrit après deux relances, suspension du vesting</li>
+          <li><strong>Règle des 48 heures</strong> : chacun écrit sa position sur une page, décision sous 48 h</li>
+          <li><strong>Arbitrage par domaine</strong> : technique à Arthur, commercial à Étienne</li>
+          <li><strong>Blocage &gt; 30 jours</strong> : tiers de confiance, avis écrit versé au dossier</li>
+          <li><strong>Blocage &gt; 6 mois</strong> : rachat croisé — l'un fixe un prix, l'autre choisit d'acheter ou de vendre</li>
+          <li><strong>Plancher de trésorerie</strong> à 1 000 € et règles de dépense</li>
+          <li><strong>Offre de rachat</strong> : aucune discussion séparée, information de l'autre sous 48 h</li>
+        </ul>
+      </div>
+    </div>
+    <div class="encadre or">
+      <h4>Sur le 50/50</h4>
+      <p>Un 50/50 sans pacte est une bombe à retardement ; un 50/50 avec pacte est une structure saine. Le
+      défaut du 50/50 — un désaccord persistant paralyse la société — n'est pas corrigé par la répartition, il
+      est corrigé par les clauses ci-dessus. C'est pour cela que la signature du pacte le jour même de la
+      création n'est pas négociable, et que c'est le poste de dépense sur lequel nous n'économisons pas.</p>
+    </div>
+  </section>
+</div>
+
+<!-- ═════════════ 03 · DU WEB AU MOBILE ═════════════ -->
+<div class="panneau" id="produit" role="tabpanel" aria-labelledby="t-produit" tabindex="-1" hidden>
+  <div class="p-tete">
+    <div class="p-num">Onglet 03</div>
+    <h2>De l'application web à l'application mobile</h2>
+    <p class="p-intro">Objectif : une application qu'un étudiant installe en trente secondes, qui le relance le
+    soir même, et dont l'usage produit le chiffre de présence que nous vendons aux établissements. Ce qui ne
+    sert aucun de ces trois points ne se fait pas ce trimestre.</p>
+  </div>
+
+  <div class="encadre or">
+    <h4>Une réserve, dite une fois, puis on avance</h4>
+    <p>SL-04 avait écarté les applications natives du MVP, pour de bonnes raisons : les stores coûtent du temps,
+    de l'argent, et une présence en boutique sans rétention n'apporte rien. Cette réserve reste vraie et le plan
+    ci-dessous en tient compte — <strong>le palier 1 est une PWA durcie, pas un store</strong>, et la
+    publication en boutique n'est engagée qu'une fois l'installation et la rétention mesurées. Mais l'objectif
+    est assumé : un étudiant qui entend parler de StudentLink dans un bar cherche « StudentLink » sur son
+    téléphone, et doit trouver quelque chose à installer. Nous y allons, dans cet ordre.</p>
+  </div>
+
+  <section id="constat">
+    <h3><span class="h-num">3.1</span>Où en est réellement le produit</h3>
+    <p>État constaté dans le dépôt aujourd'hui, pas état déclaré. C'est la base du chantier technique.</p>
+    <div class="t-wrap">
+    <table>
+      <tr><th style="width:24%">Brique</th><th>État réel</th><th style="width:22%">Conséquence</th></tr>
+      <tr><td><strong>Service worker</strong></td><td><code>sw.js</code> en place : coquille en cache d'abord, pages en réseau d'abord avec repli hors-ligne. Propre.</td><td><span class="tag vert">Acquis</span></td></tr>
+      <tr><td><strong>Manifeste</strong></td><td><code>manifest.json</code> minimal : <strong>une seule icône 192 px</strong>, pas de 512, pas de <code>maskable</code>, pas de <code>description</code>, pas de captures, pas de <code>shortcuts</code>, pas d'<code>id</code> ni de <code>scope</code>.</td><td><span class="tag rouge">Bloque l'invite d'installation</span></td></tr>
+      <tr><td><strong><code>start_url</code></strong></td><td>Figé sur <code>/TitreRNCP/explore.php</code> — un chemin de poste de développement.</td><td><span class="tag rouge">Casse l'app installée en production</span></td></tr>
+      <tr><td><strong>Notifications</strong></td><td>Aucune notification push. Rappels par e-mail uniquement, via <code>mail()</code>, dont la délivrabilité est mauvaise — le fichier le documente lui-même.</td><td><span class="tag rouge">Aucun retour spontané</span></td></tr>
+      <tr><td><strong>Suppression de compte</strong></td><td>Introuvable dans le code.</td><td><span class="tag rouge">Refus garanti sur l'App Store</span></td></tr>
+      <tr><td><strong>Scan QR</strong></td><td>Fonctionnel côté partenaire, jamais éprouvé de nuit sur plusieurs téléphones.</td><td><span class="tag orange">Risque de démonstration</span></td></tr>
+      <tr><td><strong>Mesure de la viralité</strong></td><td>Les mécaniques d'invitation existent, les compteurs n'existent pas.</td><td><span class="tag orange">On pilote à l'aveugle</span></td></tr>
+    </table>
+    </div>
+  </section>
+
+  <section id="trajectoire">
+    <h3><span class="h-num">3.2</span>La trajectoire en trois paliers</h3>
+    <div class="paliers">
+      <div class="palier">
+        <div class="quand">Palier 1 · d'ici le 23/09</div>
+        <h4>La PWA devient installable pour de vrai</h4>
+        <p>Manifeste complet, icônes, <code>start_url</code> relatif, invite d'installation contextuelle, page
+        « Installer l'app » avec le geste iOS et Android. Coût : 0 €. C'est le palier qui rend la soirée de
+        lancement possible.</p>
+      </div>
+      <div class="palier">
+        <div class="quand">Palier 2 · d'ici le 21/10</div>
+        <h4>Le push et la preuve d'usage</h4>
+        <p>Web Push avec clés VAPID, rappel la veille et rappel « ça commence dans une heure », compteurs
+        d'invitation et d'origine des inscriptions. C'est le palier qui crée la rétention, donc la valeur
+        vendue aux bars.</p>
+      </div>
+      <div class="palier">
+        <div class="quand">Palier 3 · novembre</div>
+        <h4>Les boutiques</h4>
+        <p>Enveloppe Capacitor autour de la même base, scan natif, push natif iOS, suppression de compte,
+        fiches store. Google Play d'abord, App Store ensuite. De l'ordre de 120 € la première année.</p>
+      </div>
+    </div>
+    <div class="encadre bleu">
+      <h4>Pourquoi Capacitor et pas une réécriture</h4>
+      <p>Le produit est une application PHP rendue côté serveur. Une réécriture en React Native ou en Flutter,
+      c'est quatre à six mois de travail d'Arthur et l'arrêt de toute évolution fonctionnelle pendant ce
+      temps — au moment précis où Étienne a besoin de nouveautés pour vendre. Capacitor emballe la base
+      existante et ajoute par-dessus ce qui manque vraiment en natif : notifications, caméra, retour haptique,
+      pass hors-ligne. Attention toutefois : une simple enveloppe de site web se fait refuser à la revue
+      d'Apple. Ces quatre briques natives ne sont pas du confort, ce sont les conditions de la publication.</p>
+    </div>
+  </section>
+
+  <section id="technique">
+    <h3><span class="h-num">3.3</span>Chantier A — Installable, puis publiable</h3>
+    <p><strong>Responsable : Arthur.</strong> Les lignes rouges sont bloquantes pour la vente : aucune signature
+    n'est engagée tant qu'elles ne sont pas faites.</p>
+    <div class="t-wrap">
+    <table>
+      <tr><th style="width:32%">Tâche</th><th>Pourquoi</th><th class="mono" style="width:11%">Échéance</th><th style="width:11%">Priorité</th></tr>
+      <tr><td><code>start_url</code> et <code>scope</code> relatifs, calculés depuis la racine servie</td><td>En production, l'app installée ouvre aujourd'hui une URL qui n'existe pas</td><td class="mono">16/09</td><td><span class="tag rouge">Rouge</span></td></tr>
+      <tr><td>Icônes 192, 512 et 512 <code>maskable</code> ; <code>description</code>, <code>lang</code>, <code>id</code>, <code>orientation</code>, <code>categories</code></td><td>Sans cela, le navigateur ne propose jamais l'installation</td><td class="mono">17/09</td><td><span class="tag rouge">Rouge</span></td></tr>
+      <tr><td>Captures d'écran et <code>shortcuts</code> dans le manifeste</td><td>Invite d'installation enrichie sur Android, raccourcis « Ce soir » et « Mon pass »</td><td class="mono">19/09</td><td><span class="tag orange">Orange</span></td></tr>
+      <tr><td>Invite d'installation maison, déclenchée après la première inscription à un événement</td><td>On demande l'installation au moment où l'app vient de servir à quelque chose, jamais à l'arrivée</td><td class="mono">19/09</td><td><span class="tag rouge">Rouge</span></td></tr>
+      <tr><td>Page <code>/installer</code> : geste iOS (Partager → Sur l'écran d'accueil) et geste Android</td><td>Cible du QR code des tables ; iOS n'affiche aucune invite automatique</td><td class="mono">19/09</td><td><span class="tag rouge">Rouge</span></td></tr>
+      <tr><td>Pass QR consultable hors-ligne</td><td>Le réseau est mauvais dans un bar plein ; un pass illisible à l'entrée tue la démonstration</td><td class="mono">23/09</td><td><span class="tag orange">Orange</span></td></tr>
+      <tr><td>SMTP authentifié avec SPF et DKIM ; sauvegardes quotidiennes chiffrées</td><td>Bloquant déjà inscrit à SL-15 : sans rappels délivrés, pas de présence ; sans sauvegardes, pas de vente sérieuse</td><td class="mono">29/09</td><td><span class="tag rouge">Rouge</span></td></tr>
+      <tr><td>Test du scan de nuit, trois téléphones, lumière réelle</td><td>Le scan est notre argument numéro un en rendez-vous</td><td class="mono">29/09</td><td><span class="tag orange">Orange</span></td></tr>
+      <tr><td>Web Push : clés VAPID, abonnement, file d'envoi, rappel la veille et une heure avant</td><td>Seul levier de retour spontané ; conditionne la rétention à 3 mois de 35 %</td><td class="mono">13/10</td><td><span class="tag rouge">Rouge</span></td></tr>
+      <tr><td>Compteurs d'invitation et origine des inscriptions</td><td>Objectif de coefficient viral 0,4 à M6 — impossible à piloter sans mesure</td><td class="mono">13/10</td><td><span class="tag orange">Orange</span></td></tr>
+      <tr><td>Suppression de compte en autonomie, avec purge documentée</td><td>Exigence RGPD <em>et</em> condition de publication sur l'App Store</td><td class="mono">20/10</td><td><span class="tag rouge">Rouge</span></td></tr>
+      <tr><td>Tableau de bord KPI hebdomadaire dans l'administration</td><td>Le rituel du lundi sans chiffres automatiques ne tiendra pas trois semaines</td><td class="mono">13/10</td><td><span class="tag orange">Orange</span></td></tr>
+      <tr><td>Enveloppe Capacitor, comptes développeur, fiches store</td><td>Palier 3 — frais de compte Google une fois, Apple annuel, à budgéter en novembre</td><td class="mono">nov.</td><td><span class="tag vert">Vert</span></td></tr>
+    </table>
+    </div>
+  </section>
+</div>
+
+<!-- ═════════════ 04 · TÉLÉCHARGER & VENDRE ═════════════ -->
+<div class="panneau" id="marche" role="tabpanel" aria-labelledby="t-marche" tabindex="-1" hidden>
+  <div class="p-tete">
+    <div class="p-num">Onglet 04</div>
+    <h2>Faire télécharger, faire payer</h2>
+    <p class="p-intro">Les deux moitiés du même mouvement : sans étudiants installés, le bar n'a rien à acheter ;
+    sans bars partenaires, l'étudiant n'a rien à ouvrir. Acquisition à Étienne sur le terrain, mécaniques
+    produit à Arthur.</p>
+  </div>
+
+  <section id="telechargements">
+    <h3><span class="h-num">4.1</span>Chantier B — Faire télécharger</h3>
+    <p class="lead">Objectif de coût d'acquisition étudiant : <strong>moins de 1,50 €</strong> en moyenne sur
+    douze mois. Nous ne monétisons jamais l'étudiant directement — si nous devons l'acheter, le modèle ne tient
+    pas.</p>
+    <div class="t-wrap">
+    <table>
+      <tr><th style="width:26%">Canal</th><th class="mono" style="width:13%">Part visée</th><th>Ce qui change avec l'app installable</th><th style="width:13%">Qui</th></tr>
+      <tr><td><strong>BDE et événements associatifs</strong></td><td class="num">40 %</td><td>Deux à trois BDE partenaires apportent plusieurs centaines d'inscrits d'un coup. L'inscription se fait sur place, téléphone en main, avec installation guidée.</td><td>Étienne</td></tr>
+      <tr><td><strong>QR codes chez les partenaires</strong></td><td class="num">20 %</td><td>Le QR pointe désormais sur <code>/installer</code>, pas sur la page d'accueil. Un scan doit produire une icône sur l'écran d'accueil, pas un onglet oublié.</td><td>Arthur produit,<br>Étienne pose</td></tr>
+      <tr><td><strong>Ambassadeurs par école</strong></td><td class="num">15 %</td><td>Un ambassadeur identifié par école, avant toute action sur cette école. Avantages en nature.</td><td>Étienne</td></tr>
+      <tr><td><strong>Instagram et TikTok locaux</strong></td><td class="num">15 %</td><td>Comptes ouverts et premier contenu publié au 29/09. Boost ponctuel de 100 à 200 € maximum.</td><td>Étienne</td></tr>
+      <tr><td><strong>Invitations dans l'app</strong></td><td class="num">10 %, croissant</td><td>Mécaniques déjà en place ; ce qui manque, ce sont les compteurs. Objectif 0,4 à M6, alerte sous 0,2.</td><td>Arthur</td></tr>
+    </table>
+    </div>
+    <h4>La boucle d'installation que nous mettons en place</h4>
+    <ul class="puces">
+      <li><strong>Le QR de table mène à l'installation</strong>, pas à une page d'accueil. Affichette chevalet sur les tables des partenaires fondateurs, visuel prêt le 20/10.</li>
+      <li><strong>L'invite arrive après la première réservation</strong> — l'app vient de servir, c'est le seul moment où « ajouter à l'écran d'accueil » a du sens.</li>
+      <li><strong>Le pass n'est vraiment pratique qu'installé</strong> : accès hors-ligne, raccourci direct, rappel une heure avant. C'est l'argument, pas une bannière.</li>
+      <li><strong>La soirée de lancement passe par l'app</strong> : l'entrée se scanne, donc l'installation se fait dans la file, avec deux ambassadeurs pour aider.</li>
+      <li><strong>Aucune publicité, jamais</strong>, dans l'application étudiante. Notre actif est la confiance ; un fil pollué détruit la fréquence d'usage, qui est exactement ce que nous vendons aux bars.</li>
+    </ul>
+    <h4>Ce que nous mesurons — et le chiffre que nous ne communiquerons jamais</h4>
+    <div class="t-wrap">
+    <table>
+      <tr><th>Étape d'activation</th><th class="num" style="width:20%">Objectif</th><th>Lecture</th></tr>
+      <tr><td>Première réservation dans les 7 jours</td><td class="num">50 % des inscrits</td><td>Le compte créé ne vaut rien tant qu'elle n'a pas eu lieu</td></tr>
+      <tr><td>Premier pass scanné dans les 14 jours</td><td class="num">40 % des inscrits</td><td>C'est exactement le chiffre que le bar achète</td></tr>
+      <tr><td>Deuxième sortie dans les 30 jours</td><td class="num">25 % des inscrits</td><td>Le seul indicateur qui prédit la rétention</td></tr>
+      <tr><td>Rétention à 3 mois</td><td class="num">35 %</td><td>Exigeant pour une app de sortie ; dépend du nombre de soirées publiées par semaine</td></tr>
+      <tr><td><em>Nombre d'inscrits</em></td><td class="num">—</td><td><strong>Chiffre de vanité.</strong> Jamais communiqué comme un résultat, ni entre nous, ni à l'extérieur</td></tr>
+    </table>
+    </div>
+  </section>
+
+  <section id="vendre">
+    <h3><span class="h-num">4.2</span>Chantier C — Faire payer les bars</h3>
+    <p class="lead"><strong>Responsable : Étienne, seul, du premier contact à la signature.</strong> Arthur
+    n'intervient que sur l'onboarding technique — vingt minutes sur place — et sur la démonstration du scan. Un
+    fondateur technique qui vend mal coûte plus cher que le temps qu'il fait gagner.</p>
+
+    <h4>Le tunnel, en rythme hebdomadaire</h4>
+    <div class="t-wrap">
+    <table>
+      <tr><th>Étape</th><th class="num" style="width:22%">Volume / semaine</th><th class="num" style="width:22%">Taux de passage</th></tr>
+      <tr><td>Prospects identifiés et qualifiés</td><td class="num">25</td><td class="num">—</td></tr>
+      <tr><td>Contacts aboutis (visite ou message)</td><td class="num">15</td><td class="num">60 %</td></tr>
+      <tr><td>Rendez-vous ou démonstration sur place</td><td class="num">8</td><td class="num">50 %</td></tr>
+      <tr><td>Établissements activés (compte créé, soirée publiée)</td><td class="num">3</td><td class="num">35 %</td></tr>
+      <tr><td>Clients payants après la phase gratuite</td><td class="num">1 à 2</td><td class="num">50 %</td></tr>
+    </table>
+    </div>
+    <p>Conversion globale visée du prospect au client payant : <strong>6 à 8 %</strong> en phase 1, avec un
+    objectif de 12 % une fois que nous aurons des chiffres de présence à montrer. Coût d'acquisition : non
+    monétaire, 3 à 4 heures par client signé — chiffre à suivre réellement dès octobre, car il décide de tout
+    le plan d'expansion : si une signature coûte huit heures, une nouvelle ville coûte le double de ce que nous
+    prévoyons.</p>
+
+    <h4>La grille, figée</h4>
+    <div class="t-wrap">
+    <table>
+      <tr><th>Offre</th><th class="num" style="width:18%">Prix HT</th><th style="width:20%">Pour qui</th><th>Contenu</th></tr>
+      <tr><td><strong>Partenaire fondateur</strong></td><td class="num">0 € pendant 3 mois<br>puis 39 €/mois <em>gelés</em></td><td>Les 15 premiers établissements clermontois</td><td>Tout Essentiel, mention « partenaire fondateur » sur la fiche, tarif gelé tant que l'abonnement n'est pas interrompu</td></tr>
+      <tr><td><strong>Essentiel</strong></td><td class="num">79 €/mois</td><td>Bars, restaurants</td><td>Soirées illimitées, page établissement avec photos, tableau de bord inscrits / présents / composition de salle, scan des pass, rappel automatique de la veille</td></tr>
+      <tr><td><strong>Premium</strong></td><td class="num">149 €/mois</td><td>Discothèques, groupes, multi-établissements</td><td>Essentiel, plus une mise en avant par mois, offres flash illimitées, export des statistiques, plusieurs comptes et plusieurs lieux</td></tr>
+      <tr><td><strong>BDE et associations</strong></td><td class="num">0 €, définitivement</td><td>BDE, associations, clubs</td><td>Essentiel sans les statistiques avancées. Gratuité inscrite au contrat partenaire</td></tr>
+    </table>
+    </div>
+    <p>Sans engagement, facturation mensuelle, résiliation par simple message, aucune exclusivité, aucune remise
+    étudiante imposée — le partenaire fixe sa remise, y compris à zéro. Période d'essai : une soirée test
+    complète, publiée et scannée, avant toute facturation. <strong>Fin de l'offre fondateur : 31 décembre 2026,
+    date ferme et communiquée.</strong></p>
+
+    <h4>Le rendez-vous, en six minutes</h4>
+    <div class="t-wrap">
+    <table>
+      <tr><th class="mono" style="width:11%">Temps</th><th style="width:28%">Ce qu'Étienne fait</th><th>Ce qu'il dit, en substance</th></tr>
+      <tr><td class="mono">0–1 min</td><td>Il nomme leur problème, pas notre produit</td><td>« Votre mardi vous coûte le même personnel qu'un samedi. Vous faites quoi, aujourd'hui, pour le remplir ? »</td></tr>
+      <tr><td class="mono">1–3 min</td><td>Téléphone en main, il montre une vraie soirée</td><td>La fiche, l'inscription, le pass. Trois écrans, pas une présentation.</td></tr>
+      <tr><td class="mono">3–4 min</td><td>Il fait scanner le pass <em>par le patron lui-même</em></td><td>C'est le moment qui vend. Le compteur monte devant lui.</td></tr>
+      <tr><td class="mono">4–5 min</td><td>Il montre le tableau de bord du lendemain</td><td>« Voilà ce que vous aurez mercredi matin : inscrits, présents, de quelles écoles, à quelle heure ils sont arrivés. »</td></tr>
+      <tr><td class="mono">5–6 min</td><td>Il propose la seule chose à décider</td><td>« On publie ensemble une de vos soirées creuses. Vous scannez à l'entrée. Vous regardez le chiffre le lendemain. Rien à signer, rien à payer pendant trois mois. »</td></tr>
+    </table>
+    </div>
+
+    <h4>Les quatre objections, et la réponse</h4>
+    <div class="duo">
+      <div class="carte">
+        <h4>« J'ai déjà Instagram »</h4>
+        <p>Instagram vous dit combien de personnes ont vu. Il ne vous dit pas combien sont venues. Nous, nous
+        comptons ceux qui franchissent la porte. Gardez votre Instagram — nous ne demandons aucune
+        exclusivité.</p>
+      </div>
+      <div class="carte">
+        <h4>« C'est cher »</h4>
+        <p>39 € gelés, c'est moins qu'une seule soirée creuse récupérée dans le mois. Et vous ne payez rien
+        pendant trois mois : vous décidez en janvier, avec vos chiffres sous les yeux.</p>
+      </div>
+      <div class="carte">
+        <h4>« Vous n'avez pas d'étudiants »</h4>
+        <p>Vrai aujourd'hui. C'est exactement pour cela que vous êtes fondateur et pas client : vous prenez le
+        risque, vous avez le tarif gelé et la mention sur votre fiche. Il y a quinze places, pas plus.</p>
+      </div>
+      <div class="carte">
+        <h4>« Je vais devoir faire des remises »</h4>
+        <p>Non. Vous fixez votre remise, y compris à zéro. Ce que l'étudiant cherche d'abord, c'est savoir où
+        aller, et savoir que ses amis y vont.</p>
+      </div>
+    </div>
+
+    <div class="encadre">
+      <h4>Avant la première facture, trois choses doivent exister</h4>
+      <p>La société immatriculée — on n'encaisse pas au nom de personne. Le contrat partenaire et les CGV, relus
+      à l'extérieur. Un moyen de prélèvement mensuel en place, ouvert avec le compte bancaire professionnel.
+      Ces trois éléments doivent être prêts <strong>en décembre</strong>, pas en janvier sous la pression du
+      premier paiement.</p>
+    </div>
+  </section>
+</div>
+
+<!-- ═════════════ 05 · PLAN D'ACTION ═════════════ -->
+<div class="panneau" id="action" role="tabpanel" aria-labelledby="t-action" tabindex="-1" hidden>
+  <div class="p-tete">
+    <div class="p-num">Onglet 05</div>
+    <h2>Le plan d'action</h2>
+    <p class="p-intro">Ce qui se fait aujourd'hui, ce qui se fait dans les trois mois, et les chiffres qui nous
+    diront si ça marche. Règle de sortie de réunion : jamais « c'est une bonne idée, on verra » — une décision,
+    une question précise, ou un nom en face.</p>
+  </div>
+
+  <div class="journee" id="aujourdhui">
+    <h3><span class="h-num">5.1</span>Aujourd'hui — mercredi 16 septembre</h3>
+    <p>Sept actions, toutes terminables avant ce soir.</p>
+    <div class="t-wrap">
+    <table>
+      <tr><th style="width:5%"></th><th class="mono" style="width:13%">Créneau</th><th>Action</th><th style="width:13%">Qui</th><th style="width:17%">Fini quand</th></tr>
+      <tr><td><span class="case"></span></td><td class="mono">9 h – 10 h</td><td><strong>Recherche d'antériorité « StudentLink »</strong> sur les bases INPI et EUIPO, classes 42 et 35. Trois noms de repli notés dans le même fichier.</td><td>Arthur</td><td>Résultat écrit et partagé</td></tr>
+      <tr><td><span class="case"></span></td><td class="mono">10 h – 10 h 30</td><td><strong>Réserver le domaine</strong> en .fr, le .com en défensif, et <strong>les comptes Instagram et TikTok</strong>, même sans publier aujourd'hui.</td><td>Arthur</td><td>Accès consignés dans l'inventaire</td></tr>
+      <tr><td><span class="case"></span></td><td class="mono">10 h 30 – 12 h</td><td><strong>Corriger le manifeste</strong> : <code>start_url</code> et <code>scope</code> relatifs, icônes 192 / 512 / maskable, <code>description</code>, <code>id</code>, <code>lang</code>. Vérifier l'invite d'installation sur un Android réel.</td><td>Arthur</td><td>L'app s'installe depuis un téléphone</td></tr>
+      <tr><td><span class="case"></span></td><td class="mono">9 h – 12 h</td><td><strong>Liste nominative des 30 établissements cibles</strong> : nom, contact, soir creux, capacité, qui connaît qui. Les 5 premiers appelés dans la foulée.</td><td>Étienne</td><td>Tableau rempli, 5 contacts pris</td></tr>
+      <tr><td><span class="case"></span></td><td class="mono">14 h – 15 h</td><td><strong>Caler le rendez-vous expert-comptable</strong> du 29/09 et envoyer à l'avance les trois questions : forme et calendrier, seuil de TVA, impact d'une rémunération sur la situation étudiante d'Arthur.</td><td>Étienne</td><td>Rendez-vous confirmé par écrit</td></tr>
+      <tr><td><span class="case"></span></td><td class="mono">15 h – 16 h</td><td><strong>Figer la grille tarifaire dans la plaquette partenaires</strong> — les encadrés de prix sont encore vides — et regénérer le PDF.</td><td>Les deux,<br>puis Arthur</td><td>PDF à jour, envoyable ce soir</td></tr>
+      <tr><td><span class="case"></span></td><td class="mono">18 h – 18 h 30</td><td><strong>Trancher qui est président.</strong> Décision de représentation externe, pas de pouvoir : les limitations de SL-10 s'appliquent aux deux.</td><td>Les deux</td><td>Une ligne signée au compte rendu</td></tr>
+    </table>
+    </div>
+    <p style="margin-top:18px"><strong>Ce qui ne se fait pas aujourd'hui</strong> : ouvrir un compte
+    développeur, écrire une ligne de code natif, choisir un prestataire pour les statuts. Le palier 3 n'existe
+    qu'après le palier 1, et les statuts se rédigent après l'expert-comptable.</p>
+  </div>
+
+  <section id="trente">
+    <h3><span class="h-num">5.2</span>30, 60, 90 jours</h3>
+    <div class="t-wrap">
+    <table>
+      <tr><th style="width:15%">Horizon</th><th>Produit</th><th>Commercial</th><th>Juridique</th></tr>
+      <tr>
+        <td><strong>30 jours</strong><br><span class="tag gris">au 16/10</span></td>
+        <td>PWA réellement installable, SMTP authentifié, sauvegardes chiffrées, scan éprouvé de nuit, tableau de bord KPI</td>
+        <td><strong>5 établissements fondateurs signés et 2 BDE partenaires</strong> · une première soirée publiée et scannée</td>
+        <td>Antériorité rendue, expert-comptable vu, trame du pacte et cession du code envoyées en relecture</td>
+      </tr>
+      <tr>
+        <td><strong>60 jours</strong><br><span class="tag gris">au 15/11</span></td>
+        <td>Web Push en service, rappels la veille et une heure avant, compteurs de viralité, suppression de compte</td>
+        <td>Soirée de lancement tenue avec un bar et deux BDE · 10 établissements activés · QR codes posés</td>
+        <td>Statuts et pacte rédigés, capital déposé, marque déposée, RC pro souscrite</td>
+      </tr>
+      <tr>
+        <td><strong>90 jours</strong><br><span class="tag gris">au 15/12</span></td>
+        <td>Enveloppe Capacitor, fiches store prêtes, publication Google Play engagée</td>
+        <td>15 fondateurs · contrat partenaire et CGV en place · prélèvement mensuel opérationnel</td>
+        <td><strong>Société immatriculée et pacte signé le même jour</strong>, avant tout encaissement</td>
+      </tr>
+    </table>
+    </div>
+  </section>
+
+  <section id="kpi">
+    <h3><span class="h-num">5.3</span>Les chiffres que nous regardons le lundi</h3>
+    <p>Revue hebdomadaire, tous les lundis, trente minutes : les chiffres d'abord, le tableau commercial ensuite,
+    les actions en retard pour finir. Les lignes terminées sont barrées, pas supprimées.</p>
+    <div class="t-wrap">
+    <table>
+      <tr><th>Indicateur</th><th class="num" style="width:20%">Cible</th><th class="num" style="width:26%">Seuil d'alerte</th></tr>
+      <tr><td>Taux d'installation parmi les inscrits</td><td class="num">40 % à M3</td><td class="num">&lt; 20 %</td></tr>
+      <tr><td>Premier pass scanné sous 14 jours</td><td class="num">40 %</td><td class="num">&lt; 25 %</td></tr>
+      <tr><td>Rétention à 3 mois</td><td class="num">35 %</td><td class="num">&lt; 20 %</td></tr>
+      <tr><td>Coefficient viral</td><td class="num">0,4 à M6</td><td class="num">&lt; 0,2</td></tr>
+      <tr><td>Coût d'acquisition étudiant</td><td class="num">&lt; 1,50 €</td><td class="num">&gt; 3 €</td></tr>
+      <tr><td>Établissements activés par semaine</td><td class="num">3</td><td class="num">&lt; 1 pendant 3 semaines</td></tr>
+      <tr><td>Heures commerciales par signature</td><td class="num">3 à 4 h</td><td class="num">&gt; 8 h</td></tr>
+      <tr><td>Trésorerie</td><td class="num">&gt; 1 000 €</td><td class="num">sous le plancher : arrêt des dépenses non indispensables et décision commune sous 15 jours</td></tr>
+    </table>
+    </div>
+    <div class="encadre vert">
+      <h4>Le critère d'arrêt, fixé maintenant et pas plus tard</h4>
+      <p>Moins de 15 établissements payants et moins de 1 000 étudiants actifs mensuels à M12, malgré un travail
+      commercial réellement effectué, signifie que le modèle ne tient pas : arrêt ou pivot, décidé ensemble,
+      sans attendre l'épuisement. Le fixer aujourd'hui, à froid, est ce qui nous permettra de le lire
+      honnêtement le jour venu.</p>
+    </div>
+  </section>
+</div>
+
+<!-- ═══════════════════ PIED ═══════════════════ -->
+<div class="pied">
+  <p class="avertissement">
+    Document de travail interne, établi le 16 septembre 2026 à partir des décisions de la réunion fondateurs du
+    15 septembre (SL-01 à SL-15). <strong>Il n'a aucune valeur juridique.</strong> Les montants, seuils et
+    régimes cités sont des ordres de grandeur : la fiscalité des petites structures a été modifiée plusieurs
+    fois ces dernières années et chaque point doit être confirmé par l'expert-comptable avant exécution. La
+    trame de statuts de l'onglet 02 est destinée à être reprise et relue par un professionnel du droit ; la
+    signer en l'état serait une erreur.
+  </p>
+  <p class="signature">StudentLink · SL-16 · Arthur Gramond &amp; Étienne Florentino</p>
+</div>
+
+</div>
+
+<script>
+/* Onglets : sélection, lien profond par ancre, navigation au clavier.
+   Chaque panneau reste dans le document — l'impression les déplie tous. */
+(function () {
+  var onglets  = Array.prototype.slice.call(document.querySelectorAll('.onglet'));
+  var panneaux = onglets.map(function (o) { return document.getElementById(o.getAttribute('aria-controls')); });
+
+  function afficher(index, deplacerFocus, ecrireHash) {
+    onglets.forEach(function (onglet, i) {
+      var actif = (i === index);
+      onglet.setAttribute('aria-selected', actif ? 'true' : 'false');
+      onglet.tabIndex = actif ? 0 : -1;
+      panneaux[i].hidden = !actif;
+    });
+    if (deplacerFocus) { onglets[index].focus(); }
+    if (ecrireHash) {
+      history.replaceState(null, '', '#' + panneaux[index].id);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  onglets.forEach(function (onglet, i) {
+    onglet.addEventListener('click', function () { afficher(i, false, true); });
+    onglet.addEventListener('keydown', function (e) {
+      var suivant = null;
+      if (e.key === 'ArrowRight') { suivant = (i + 1) % onglets.length; }
+      else if (e.key === 'ArrowLeft') { suivant = (i - 1 + onglets.length) % onglets.length; }
+      else if (e.key === 'Home') { suivant = 0; }
+      else if (e.key === 'End') { suivant = onglets.length - 1; }
+      if (suivant !== null) { e.preventDefault(); afficher(suivant, true, true); }
+    });
+  });
+
+  /* Une ancre pointant vers un panneau — ou vers une section à l'intérieur —
+     ouvre le bon onglet avant de défiler. */
+  function ouvrirDepuisHash() {
+    var id = (location.hash || '').replace('#', '');
+    if (!id) { return; }
+    var cible = document.getElementById(id);
+    if (!cible) { return; }
+    var panneau = cible.closest ? cible.closest('.panneau') : null;
+    var index = panneaux.indexOf(panneau || cible);
+    if (index >= 0) {
+      afficher(index, false, false);
+      if (panneau && cible !== panneau) { cible.scrollIntoView(); }
+    }
+  }
+  window.addEventListener('hashchange', ouvrirDepuisHash);
+  ouvrirDepuisHash();
+})();
+</script>
+</body>
+</html>

@@ -37,3 +37,19 @@ coverage/
 # Misc
 .claude/
 .git/
+
+# Témoin local de __shot.php : ne doit jamais être déployé
+.shot-enabled
+
+# Documents internes fondateurs : budget, trésorerie, structure de la société,
+# pacte d'associés, gouvernance. Le dépôt est public, ces pièces restent locales.
+docs/fondateurs/
+
+# Caches Python des générateurs de documents (docs/generate_*.py)
+__pycache__/
+*.pyc
+
+# Contenus déposés par les utilisateurs. Les index.html sont des garde-fous
+# (répertoires non listables) et doivent, eux, être versionnés.
+uploads/*/*
+!uploads/*/index.html

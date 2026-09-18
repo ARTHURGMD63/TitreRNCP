@@ -391,7 +391,7 @@ StudentLink est une web app avec rendu serveur, pas une API REST publique. Les s
 
 En partant d'une observation personnelle — *"on veut tous se retrouver mais en payant moins cher"* — j'ai conçu et développé de A à Z une plateforme web complète, déployée en production, qui répond à ce besoin concret.
 
-J'ai couvert l'intégralité de la stack : modélisation de la base de données (15 tables, 3 migrations versionnées), développement backend PHP, intégration frontend mobile-first en JS vanilla, sécurisation OWASP Top 10, tests automatisés (40 tests PHPUnit), CI/CD GitHub Actions, accessibilité WCAG 2.1 AA et documentation exhaustive.
+J'ai couvert l'intégralité de la stack : modélisation de la base de données (16 tables relationnelles normalisées en 3NF), développement backend PHP, intégration frontend mobile-first en JS vanilla, sécurisation OWASP Top 10, tests automatisés (40 tests PHPUnit), CI/CD GitHub Actions, accessibilité WCAG 2.1 AA et documentation exhaustive.
 
 ## Difficultés rencontrées
 

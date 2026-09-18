@@ -10,8 +10,8 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Bienvenue — StudentLink</title>
 <?= themeBootScript() ?>
-<link rel="stylesheet" href="<?= baseUrl() ?>/assets/css/style.css">
-<link rel="icon" type="image/png" href="/Logo.png">
+<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
+<link rel="icon" type="image/png" href="<?= baseUrl('/Logo.png') ?>">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <style>
   body { background: var(--bg); overflow: hidden; height: 100dvh; }
@@ -25,11 +25,11 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
     z-index: 10;
     background: none;
     border: none;
-    font-size: 11px;
-    font-weight: 800;
+    font-size: var(--fs-1);
+    font-weight: var(--fw-display);
     color: var(--gris);
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: var(--ls-label);
     cursor: pointer;
     padding: 8px;
   }
@@ -78,8 +78,9 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
   .onb-big-icon {
     width: 96px;
     height: 96px;
+    border-radius: 50%;
     background: rgba(255,255,255,0.15);
-    border: 3px solid rgba(255,255,255,0.4);
+    border: 1px solid rgba(255,255,255,0.4);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -91,8 +92,9 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
   /* Floating stat pills */
   .onb-stat {
     background: var(--blanc);
-    border: 2px solid var(--noir);
-    box-shadow: 3px 3px 0 var(--noir);
+    border-radius: var(--radius);
+    border: 1px solid var(--gris-clair);
+    box-shadow: var(--shadow-sm);
     padding: 10px 16px;
     display: flex;
     align-items: center;
@@ -101,20 +103,20 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
   }
 
   .onb-stat-num {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.6rem;
-    font-weight: 900;
+    font-family: var(--font-display);
+    font-size: var(--fs-7);
+    font-weight: var(--fw-black);
     color: var(--noir);
-    line-height: 1;
+    line-height: var(--lh-display);
   }
 
   .onb-stat-label {
-    font-size: 10px;
-    font-weight: 700;
+    font-size: var(--fs-1);
+    font-weight: var(--fw-bold);
     color: var(--gris-fonce);
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    line-height: 1.3;
+    letter-spacing: var(--ls-wide);
+    line-height: var(--lh-snug);
   }
 
   .stat-tl { top: 20px; left: 20px; }
@@ -123,44 +125,46 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
   /* Mockup cards inside visual */
   .onb-mock-card {
     background: var(--blanc);
-    border: 2px solid var(--noir);
-    box-shadow: 4px 4px 0 rgba(0,0,0,0.3);
+    border-radius: var(--radius);
+    border: 1px solid var(--gris-clair);
+    box-shadow: var(--shadow);
     padding: 12px 16px;
     width: 200px;
   }
 
   .onb-mock-card .mc-tag {
-    font-size: 9px;
-    font-weight: 800;
+    font-size: var(--fs-1);
+    font-weight: var(--fw-display);
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: var(--ls-label);
     color: var(--rouge);
     margin-bottom: 4px;
   }
 
   .onb-mock-card .mc-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.1rem;
-    font-weight: 900;
+    font-family: var(--font-display);
+    font-size: var(--fs-6);
+    font-weight: var(--fw-black);
     color: var(--noir);
     margin-bottom: 6px;
   }
 
   .onb-mock-card .mc-meta {
-    font-size: 10px;
+    font-size: var(--fs-1);
     color: var(--gris);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
 
   .onb-mock-badge {
     display: inline-block;
+    border-radius: var(--radius-pill);
     background: var(--rouge);
-    color: var(--blanc);
-    font-size: 9px;
-    font-weight: 800;
+    color: var(--sur-media);
+    font-size: var(--fs-1);
+    font-weight: var(--fw-display);
     padding: 3px 8px;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: var(--ls-wide);
     margin-top: 8px;
   }
 
@@ -174,9 +178,9 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
   }
 
   .onb-tag {
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.14em;
+    font-size: var(--fs-1);
+    font-weight: var(--fw-display);
+    letter-spacing: var(--ls-label);
     text-transform: uppercase;
     color: var(--rouge);
     margin-bottom: 8px;
@@ -186,11 +190,11 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
   .slide-4 .onb-tag { color: var(--noir); }
 
   .onb-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 2.2rem;
-    font-weight: 900;
+    font-family: var(--font-display);
+    font-size: var(--fs-8);
+    font-weight: var(--fw-black);
     color: var(--noir);
-    line-height: 1.05;
+    line-height: var(--lh-display);
     margin-bottom: 14px;
   }
 
@@ -198,9 +202,9 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
   .slide-3 .onb-title em { color: var(--bleu); }
 
   .onb-desc {
-    font-size: 14px;
+    font-size: var(--fs-4);
     color: var(--gris-fonce);
-    line-height: 1.6;
+    line-height: var(--lh-relaxed);
   }
 
   /* ── Footer ── */
@@ -209,7 +213,7 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-top: 2px solid var(--noir);
+    border-top: 1px solid var(--gris-clair);
     background: var(--bg);
     flex-shrink: 0;
   }
@@ -217,7 +221,7 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
   .onb-dots { display: flex; gap: 6px; align-items: center; }
 
   .onb-dot {
-    width: 8px; height: 8px;
+    width: 8px; height: 8px; border-radius: var(--radius-pill);
     background: var(--gris-clair);
     border: 1.5px solid var(--gris);
     transition: all 280ms ease;
@@ -228,13 +232,14 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
   .onb-btn {
     background: var(--noir);
     color: var(--blanc);
-    border: 2px solid var(--noir);
-    box-shadow: 3px 3px 0 var(--rouge);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--gris-clair);
+    box-shadow: var(--shadow-sm);
     padding: 13px 22px;
-    font-size: 12px;
-    font-weight: 800;
+    font-size: var(--fs-2);
+    font-weight: var(--fw-display);
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: var(--ls-wide);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -278,7 +283,7 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
       </div>
       <div class="onb-text">
         <div class="onb-tag">StudentLink</div>
-        <div class="onb-title">La vie étudiante<br>à prix <em>réduit.</em></div>
+        <h1 class="onb-title titre-page">La vie étudiante<br>à prix <em>réduit.</em></h1>
         <div class="onb-desc">Bars, boîtes, restos — accède aux meilleures sorties de ta ville avec des réductions exclusives réservées aux étudiants.</div>
       </div>
     </div>
@@ -303,7 +308,7 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
       </div>
       <div class="onb-text">
         <div class="onb-tag">Explore</div>
-        <div class="onb-title">Les bons plans<br>du <em>moment.</em></div>
+        <h1 class="onb-title titre-page">Les bons plans<br>du <em>moment.</em></h1>
         <div class="onb-desc">Découvre les événements près de chez toi, inscris-toi en un tap et reçois ton pass numérique directement dans l'app.</div>
       </div>
     </div>
@@ -332,46 +337,46 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
       </div>
       <div class="onb-text">
         <div class="onb-tag">Squads</div>
-        <div class="onb-title">Bouge avec<br>les <em>bons.</em></div>
+        <h1 class="onb-title titre-page">Bouge avec<br>les <em>bons.</em></h1>
         <div class="onb-desc">Running, vélo, muscu… Rejoins un groupe d'étudiants qui partagent tes passions. Ou crée le tien en 30 secondes.</div>
       </div>
     </div>
 
     <!-- SLIDE 4 : Rencontres -->
-    <div class="onb-slide slide-4-meet" style="--meet-color: #F07820;">
+    <div class="onb-slide slide-4-meet" style="--meet-color: var(--orange);">
       <div class="onb-visual" style="background: var(--orange);">
         <div class="onb-visual-inner" style="gap:12px;width:100%;padding:24px 28px;">
           <div class="onb-mock-card" style="width:100%;">
             <div style="display:flex;align-items:center;justify-content:space-between;">
               <div style="display:flex;align-items:center;gap:10px;">
-                <div style="width:36px;height:36px;background:var(--bleu);border:2px solid var(--noir);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:var(--blanc);flex-shrink:0;">L</div>
-                <div><div style="font-weight:800;font-size:14px;color:var(--noir);">Léa M.</div><div style="font-size:10px;color:var(--gris);">SIGMA · M1</div></div>
+                <div style="width:36px;height:36px;background:var(--bleu);border:1px solid var(--gris-clair);display:flex;align-items:center;justify-content:center;font-weight:var(--fw-bold);font-size:var(--fs-4);color:var(--sur-media);flex-shrink:0;">L</div>
+                <div><div style="font-weight:var(--fw-bold);font-size:var(--fs-4);color:var(--noir);">Léa M.</div><div style="font-size:var(--fs-1);color:var(--gris);">SIGMA · M1</div></div>
               </div>
-              <span style="font-size:9px;background:var(--noir);color:var(--blanc);padding:4px 8px;font-weight:800;">+ SUIVRE</span>
+              <span style="font-size:var(--fs-1);background:var(--noir);color:var(--blanc);padding:4px 8px;font-weight:var(--fw-bold);">+ SUIVRE</span>
             </div>
             <div style="margin-top:8px;display:flex;gap:4px;">\
-              <span style="font-size:9px;background:var(--bleu-clair);color:var(--bleu);border:1px solid var(--bleu);padding:2px 6px;font-weight:700;">#muscu</span>
-              <span style="font-size:9px;background:var(--bleu-clair);color:var(--bleu);border:1px solid var(--bleu);padding:2px 6px;font-weight:700;">#boites</span>
+              <span style="font-size:var(--fs-1);background:var(--bleu-clair);color:var(--bleu);border:1px solid var(--bleu);padding:2px 6px;font-weight:var(--fw-bold);">#muscu</span>
+              <span style="font-size:var(--fs-1);background:var(--bleu-clair);color:var(--bleu);border:1px solid var(--bleu);padding:2px 6px;font-weight:var(--fw-bold);">#boites</span>
             </div>
           </div>
           <div class="onb-mock-card" style="width:100%;">
             <div style="display:flex;align-items:center;justify-content:space-between;">
               <div style="display:flex;align-items:center;gap:10px;">
-                <div style="width:36px;height:36px;background:var(--rouge);border:2px solid var(--noir);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:var(--blanc);flex-shrink:0;">A</div>
-                <div><div style="font-weight:800;font-size:14px;color:var(--noir);">Arthur M.</div><div style="font-size:10px;color:var(--gris);">UCA · L2</div></div>
+                <div style="width:36px;height:36px;background:var(--rouge);border:1px solid var(--gris-clair);display:flex;align-items:center;justify-content:center;font-weight:var(--fw-bold);font-size:var(--fs-4);color:var(--sur-media);flex-shrink:0;">A</div>
+                <div><div style="font-weight:var(--fw-bold);font-size:var(--fs-4);color:var(--noir);">Arthur M.</div><div style="font-size:var(--fs-1);color:var(--gris);">UCA · L2</div></div>
               </div>
-              <span style="font-size:9px;background:var(--noir);color:var(--blanc);padding:4px 8px;font-weight:800;">+ SUIVRE</span>
+              <span style="font-size:var(--fs-1);background:var(--noir);color:var(--blanc);padding:4px 8px;font-weight:var(--fw-bold);">+ SUIVRE</span>
             </div>
             <div style="margin-top:8px;display:flex;gap:4px;">
-              <span style="font-size:9px;background:var(--bleu-clair);color:var(--bleu);border:1px solid var(--bleu);padding:2px 6px;font-weight:700;">#running</span>
-              <span style="font-size:9px;background:var(--bleu-clair);color:var(--bleu);border:1px solid var(--bleu);padding:2px 6px;font-weight:700;">#bars</span>
+              <span style="font-size:var(--fs-1);background:var(--bleu-clair);color:var(--bleu);border:1px solid var(--bleu);padding:2px 6px;font-weight:var(--fw-bold);">#running</span>
+              <span style="font-size:var(--fs-1);background:var(--bleu-clair);color:var(--bleu);border:1px solid var(--bleu);padding:2px 6px;font-weight:var(--fw-bold);">#bars</span>
             </div>
           </div>
         </div>
       </div>
       <div class="onb-text">
         <div class="onb-tag" style="color:var(--orange);">Rencontres</div>
-        <div class="onb-title">Trouve tes<br>futurs <em style="color:var(--orange);">potes.</em></div>
+        <h1 class="onb-title titre-page">Trouve tes<br>futurs <em style="color:var(--orange);">potes.</em></h1>
         <div class="onb-desc">Découvre des étudiants qui partagent tes intérêts, vont aux mêmes événements que toi — et abonne-toi pour rester connecté.</div>
       </div>
     </div>
@@ -401,7 +406,7 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
       </div>
       <div class="onb-text">
         <div class="onb-tag">C'est parti</div>
-        <div class="onb-title">Prêt à<br><em>kiffer</em> ?</div>
+        <h1 class="onb-title titre-page">Prêt à<br><em>kiffer</em> ?</h1>
         <div class="onb-desc">Ton pass numérique, tes événements, tes amis. Tout est là. Il ne reste plus qu'à sortir.</div>
       </div>
     </div>
@@ -440,7 +445,7 @@ function updateUI() {
     btn.innerHTML = `Explorer <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>`;
     btn.style.background = 'var(--rouge)';
     btn.style.borderColor = 'var(--rouge)';
-    btn.style.boxShadow = '3px 3px 0 var(--noir)';
+    btn.style.boxShadow = 'var(--shadow-sm)';
   }
 }
 
@@ -449,7 +454,7 @@ function next() {
   else finish();
 }
 
-function finish() { window.location.href = '/explore.php'; }
+function finish() { window.location.href = <?= json_encode(baseUrl('/explore.php')) ?>; }
 
 let startX = 0;
 slides.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });

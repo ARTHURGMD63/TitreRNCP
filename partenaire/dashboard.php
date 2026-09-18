@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/crm.php';
 requirePartner();
 $user = currentUser();
 $uid = $user['id'];
@@ -10,8 +11,10 @@ $stmt = $pdo->prepare("SELECT * FROM etablissements WHERE user_id=? LIMIT 1");
 $stmt->execute([$uid]);
 $etab = $stmt->fetch();
 
+exigerAbonnement($pdo, $etab);
+
 if (!$etab) {
-    header('Location: /partenaire/evenements.php');
+    header('Location: ' . baseUrl('/partenaire/evenements.php'));
     exit;
 }
 
@@ -61,7 +64,7 @@ if ($event) {
     $stmt->execute([$eid]);
     $schools = $stmt->fetchAll();
     $totalSchool = array_sum(array_column($schools, 'cnt')) ?: 1;
-    $schoolColors = ['#E5331A','#2929E8','#C8E52A','#F07820','#888888'];
+    $schoolColors = ['var(--rouge)','var(--bleu)','var(--lime)','var(--orange)','var(--gris)'];
     foreach ($schools as $i => $s) {
         $schoolStats[] = [
             'nom' => $s['ecole'],
@@ -71,10 +74,10 @@ if ($event) {
     }
     if (empty($schoolStats)) {
         $schoolStats = [
-            ['nom'=>'UCA — Droit & Éco','pct'=>42,'color'=>'#E5331A'],
-            ['nom'=>'SIGMA Clermont','pct'=>28,'color'=>'#2929E8'],
-            ['nom'=>'INP Ingénieurs','pct'=>18,'color'=>'#C8E52A'],
-            ['nom'=>'Autres','pct'=>12,'color'=>'#F07820'],
+            ['nom'=>'UCA — Droit & Éco','pct'=>42,'color'=>'var(--rouge)'],
+            ['nom'=>'SIGMA Clermont','pct'=>28,'color'=>'var(--bleu)'],
+            ['nom'=>'INP Ingénieurs','pct'=>18,'color'=>'var(--lime)'],
+            ['nom'=>'Autres','pct'=>12,'color'=>'var(--orange)'],
         ];
     }
 
@@ -97,11 +100,9 @@ if ($event) {
     $conseil = "68% des inscrits ont déjà utilisé un deal similaire. Prépare 2 bartenders en plus entre 21h et 22h30.";
 }
 
-$dayFr = ['Sunday'=>'Dimanche','Monday'=>'Lundi','Tuesday'=>'Mardi','Wednesday'=>'Mercredi',
-          'Thursday'=>'Jeudi','Friday'=>'Vendredi','Saturday'=>'Samedi'];
-$eventDay = $event ? strtoupper($dayFr[date('l', strtotime($event['date_heure']))]) : strtoupper($dayFr[date('l')]);
+$eventDay = mb_strtoupper(dateFr($event['date_heure'] ?? 'now', 'l'));
 $eventDayNum = $event ? date('j', strtotime($event['date_heure'])) : date('j');
-$eventType = $event ? strtoupper($event['titre']) : 'HAPPY HOUR';
+$eventType = $event ? mb_strtoupper($event['titre']) : 'HAPPY HOUR';
 $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
 ?>
 <!DOCTYPE html>
@@ -111,9 +112,9 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Dashboard Partenaire</title>
 <?= themeBootScript() ?>
-<link rel="stylesheet" href="<?= baseUrl() ?>/assets/css/style.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
-<script src="https://unpkg.com/html5-qrcode"></script>
+<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
+<script src="<?= asset('/assets/vendor/chart.umd.min.js') ?>"></script>
+<script src="<?= asset('/assets/vendor/html5-qrcode.min.js') ?>"></script>
 </head>
 <body>
 <div class="partner-shell">
@@ -121,27 +122,33 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
   <!-- Sidebar -->
   <aside class="partner-sidebar">
     <div class="sidebar-brand">
-      <div style="font-family:'DM Sans',sans-serif;font-weight:700;font-size:15px;color:#fff;">
-        StudentLink <em style="font-style:italic;color:#E5331A;">/ Partenaires</em>
+      <div style="font-family:var(--font-sans);font-weight:var(--fw-bold);font-size:var(--fs-5);color:#fff;">
+        StudentLink <em style="font-style:italic;color:var(--rouge);">/ Partenaires</em>
       </div>
     </div>
 
     <nav class="sidebar-nav">
       <a href="<?= baseUrl('/partenaire/dashboard.php') ?>" class="sidebar-link active">
-        <span class="icon">📊</span> Dashboard
+        <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg> Dashboard
       </a>
       <a href="<?= baseUrl('/partenaire/evenements.php') ?>" class="sidebar-link">
-        <span class="icon">🎉</span> Événements
+        <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Événements
       </a>
       <a href="<?= baseUrl('/partenaire/create_event.php') ?>" class="sidebar-link">
-        <span class="icon">➕</span> Créer un event
+        <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> Créer un event
+      </a>
+      <a href="<?= baseUrl('/partenaire/photos.php') ?>" class="sidebar-link">
+        <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Photos
+      </a>
+      <a href="<?= baseUrl('/partenaire/abonnement.php') ?>" class="sidebar-link">
+        <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Abonnement
       </a>
     </nav>
 
     <div class="sidebar-venue" style="margin-top:48px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.1);">
-      <div class="sidebar-venue-name"><?= htmlspecialchars(strtoupper($etab['nom'] ?? '')) ?></div>
+      <div class="sidebar-venue-name"><?= htmlspecialchars(mb_strtoupper($etab['nom'] ?? '')) ?></div>
       <div class="sidebar-venue-city"><?= htmlspecialchars($etab['ville'] ?? 'Clermont-Ferrand') ?></div>
-      <a href="<?= baseUrl('/auth/logout.php') ?>" style="display:block;margin-top:12px;font-size:12px;color:rgba(255,255,255,0.4);text-decoration:none;">
+      <a href="<?= baseUrl('/auth/logout.php') ?>" class="lien-action" style="margin-top:12px;font-size:var(--fs-2);color:rgba(255,255,255,0.4);text-decoration:none;">
         → Déconnexion
       </a>
     </div>
@@ -155,14 +162,14 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
       <div style="display:flex;align-items:flex-start;justify-content:space-between;">
         <div>
           <div class="event-label"><?= $eventDay ?> <?= $eventDayNum ?> · <?= $eventType ?></div>
-          <div class="partner-headline">
+          <h1 class="partner-headline titre-page">
             <?= $nbTotal ?> étudiant<?= $nbTotal > 1 ? 's' : '' ?>,
             <em>en route.</em>
-          </div>
+          </h1>
         </div>
-        <div style="text-align:right;font-size:12px;color:var(--gris);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding-top:8px;">
-          <?= htmlspecialchars(strtoupper($etab['nom'])) ?><br>
-          <span style="font-weight:400;">· <?= htmlspecialchars(strtoupper($etab['ville'])) ?></span>
+        <div style="text-align:right;font-size:var(--fs-2);color:var(--gris);font-weight:var(--fw-semibold);letter-spacing:var(--ls-wide);text-transform:uppercase;padding-top:8px;">
+          <?= htmlspecialchars(mb_strtoupper($etab['nom'])) ?><br>
+          <span style="font-weight:var(--fw-regular);">· <?= htmlspecialchars(mb_strtoupper($etab['ville'])) ?></span>
         </div>
       </div>
     </div>
@@ -182,7 +189,7 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
             <div class="ps-value"><?= $nbCheckin ?></div>
             <div class="ps-sub" style="color:var(--gris);">Ouvre <?= $ouverture ?></div>
           </div>
-          <div class="partner-stat-card card-lime">
+          <div class="partner-stat-card card-neutre">
             <div class="ps-label">Âge moy.</div>
             <div class="ps-value"><?= $ageMoy ?></div>
             <div class="ps-sub">68% L2-L3</div>
@@ -216,18 +223,18 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
         <div class="chart-card">
           <div class="chart-header">
             <span class="chart-label">Dernières inscriptions</span>
-            <span style="font-size:12px;color:var(--gris);"><?= $nbTotal ?> total</span>
+            <span style="font-size:var(--fs-2);color:var(--gris);"><?= $nbTotal ?> total</span>
           </div>
           <?php foreach ($recents as $r): ?>
           <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--gris-clair);">
-            <div style="width:32px;height:32px;border-radius:50%;background:var(--bleu);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;">
-              <?= strtoupper(mb_substr($r['prenom'],0,1).mb_substr($r['nom'],0,1)) ?>
+            <div style="width:32px;height:32px;border-radius:50%;background:var(--bleu);display:flex;align-items:center;justify-content:center;font-size:var(--fs-2);font-weight:var(--fw-bold);color:#fff;flex-shrink:0;">
+              <?= mb_strtoupper(mb_substr($r['prenom'],0,1).mb_substr($r['nom'],0,1)) ?>
             </div>
             <div style="flex:1;">
-              <div style="font-size:14px;font-weight:600;"><?= htmlspecialchars($r['prenom'].' '.$r['nom']) ?></div>
-              <div style="font-size:11px;color:var(--gris);"><?= htmlspecialchars($r['ecole'] ?? '—') ?> · <?= htmlspecialchars($r['promo'] ?? '—') ?></div>
+              <div style="font-size:var(--fs-4);font-weight:var(--fw-semibold);"><?= htmlspecialchars($r['prenom'].' '.$r['nom']) ?></div>
+              <div style="font-size:var(--fs-1);color:var(--gris);"><?= htmlspecialchars($r['ecole'] ?? '—') ?> · <?= htmlspecialchars($r['promo'] ?? '—') ?></div>
             </div>
-            <div style="font-size:11px;color:var(--gris);"><?= date('H\hi', strtotime($r['created_at'])) ?></div>
+            <div style="font-size:var(--fs-1);color:var(--gris);"><?= date('H\hi', strtotime($r['created_at'])) ?></div>
           </div>
           <?php endforeach; ?>
         </div>
@@ -265,8 +272,8 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
         <!-- Quick actions -->
         <div style="display:flex;flex-direction:column;gap:8px;">
           <?php if ($event): ?>
-          <button class="btn btn-rouge btn-full" id="btn-start-scan" style="margin-bottom:8px;font-size:14px;padding:16px;">
-            📷 Scanner un Pass
+          <button class="btn btn-rouge btn-full" id="btn-start-scan" style="margin-bottom:8px;font-size:var(--fs-4);padding:16px;">
+            <?= icon('appareil', 'icon-sm') ?> Scanner un Pass
           </button>
           <?php endif; ?>
           <a href="<?= baseUrl('/partenaire/evenements.php') ?>" class="btn btn-outline btn-full">
@@ -287,19 +294,19 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
 <div class="modal-overlay" id="modal-scanner">
   <div class="modal-sheet" style="background:var(--noir);color:var(--blanc);">
     <div class="modal-handle" style="background:var(--gris-fonce);"></div>
-    <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;margin-bottom:20px;text-align:center;">
+    <div style="font-family:var(--font-display);font-size:var(--fs-7);font-weight:var(--fw-black);margin-bottom:20px;text-align:center;">
       Scanner un Pass
     </div>
     
     <div id="reader" style="width:100%; border-radius:var(--radius); overflow:hidden; border:var(--border); box-shadow:var(--shadow); margin-bottom: 20px; background:var(--blanc);"></div>
     
-    <div id="scan-result" style="text-align:center;font-weight:700;font-size:16px;min-height:24px;margin-bottom:20px;"></div>
+    <div id="scan-result" style="text-align:center;font-weight:var(--fw-bold);font-size:var(--fs-5);min-height:24px;margin-bottom:20px;"></div>
     
     <button type="button" class="btn btn-outline-blanc btn-full" id="btn-close-scan">Fermer</button>
   </div>
 </div>
 
-<script src="<?= baseUrl() ?>/assets/js/app.js"></script>
+<script src="<?= asset('/assets/js/app.js') ?>"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const btnStart = document.getElementById('btn-start-scan');
@@ -331,7 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isScanning = false;
 
     btnStart.addEventListener('click', () => {
-        modalScanner.classList.add('open');
+        window.ouvrirModale ? window.ouvrirModale(modalScanner) : modalScanner.classList.add('open');
         resultDiv.textContent = "En attente de scan...";
         resultDiv.style.color = 'var(--blanc)';
         
@@ -353,7 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 html5QrcodeScanner.clear();
             }).catch(console.error);
         }
-        modalScanner.classList.remove('open');
+        window.fermerModale ? window.fermerModale(modalScanner) : modalScanner.classList.remove('open');
     });
 
     function onScanSuccess(decodedText, decodedResult) {
@@ -371,11 +378,13 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             if (data.success) {
                 playBeep();
-                resultDiv.textContent = "✅ " + data.message;
+                resultDiv.textContent = data.message;
+                resultDiv.style.color = "var(--succes)";
                 resultDiv.style.color = 'var(--lime)';
                 setTimeout(() => location.reload(), 1500);
             } else {
-                resultDiv.textContent = "❌ " + data.message;
+                resultDiv.textContent = data.message;
+                resultDiv.style.color = "var(--danger)";
                 resultDiv.style.color = 'var(--rouge)';
                 setTimeout(() => {
                     isScanning = false;

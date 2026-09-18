@@ -1,0 +1,68 @@
+# ============================================================
+#  StudentLink — ce qu'Apache ne doit jamais servir
+#
+#  Le serveur livrait le dépôt Git entier (`/.git/config` répondait 200
+#  avec son contenu), listait le contenu de `/includes/`, `/vendor/`,
+#  `/tests/`, et laissait télécharger les migrations SQL et
+#  `composer.json`. Aucune de ces ressources n'a de raison d'être
+#  atteignable depuis un navigateur ; ensemble, elles donnent le code
+#  source, le schéma de la base et la liste des dépendances avec leurs
+#  versions — de quoi préparer une attaque sans jamais toucher à
+#  l'application.
+#
+#  `AllowOverride all` est bien actif sur la racine WAMP : ces règles
+#  s'appliquent. Vérifier qu'il en va de même sur l'hébergement de
+#  production, sinon les reporter dans la configuration du serveur.
+# ============================================================
+
+# Pas d'index automatique : le contenu d'un dossier sans page d'accueil
+# ne se lit pas comme une cartographie du projet.
+Options -Indexes
+
+# ─── Fichiers cachés : .git, .env, .htaccess, .gitignore… ───────────────────
+<FilesMatch "^\.">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# FilesMatch ne couvre que le nom du fichier : le dossier .git et tout ce
+# qu'il contient se bloque sur le chemin.
+RedirectMatch 404 (?i)/\.(git|svn|hg|env|idea|vscode)(/|$)
+
+# ─── Fichiers de projet ─────────────────────────────────────────────────────
+# Les migrations décrivent le schéma complet, les fichiers de configuration
+# annoncent les outils et leurs versions. Rien de secret pris isolément,
+# mais rien qui doive être servi non plus.
+<FilesMatch "(?i)\.(sql|md|neon|lock|dist|log|bak|old|swp|toml|phar|sh|bat|ps1|ini)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+<FilesMatch "(?i)^(composer\.(json|lock)|package(-lock)?\.json|phpunit\.xml|phpstan\.neon|Dockerfile|nixpacks\.toml|__shot\.php)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# ─── En-têtes ───────────────────────────────────────────────────────────────
+# Ceux de l'application sont posés par setSecurityHeaders() en PHP ; ceux-ci
+# couvrent aussi les fichiers statiques, que PHP ne voit jamais.
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    # La signature du serveur annonce Apache, sa version et celle de PHP.
+    Header always unset X-Powered-By
+</IfModule>
+ServerSignature Off

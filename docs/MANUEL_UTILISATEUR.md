@@ -95,7 +95,10 @@ Sur une squad ou un event, clique **"Inviter"** pour envoyer une invitation à t
 2. Clique **"Suivre"** → tu vois ses activités dans ton feed
 
 ### Rechercher des étudiants
-Utilise **Rechercher** (`/search_students.php`) pour trouver des camarades par nom ou école.
+Ouvre **Explore → Personnes** (`/explore.php?view=people`) : recherche par nom, par
+passion ou par école, avec quatre suggestions en tête de page. Les comptes que tu
+suis déjà n'y figurent pas ; tu les retrouves depuis les compteurs de ton profil
+(`/abonnements.php`).
 
 ---
 

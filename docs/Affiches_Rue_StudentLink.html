@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>StudentLink — Affiches rue A3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700..900;1,700..900&family=DM+Sans:opsz,wght@9..40,400..700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Affiches StudentLink — A3, trois versions.
+
+   FORMAT — 303 × 426 mm : A3 (297 × 420) plus 3 mm de fond perdu
+   par bord. Le fichier s'agrandit tel quel en A2 ou A1 (même
+   proportion) : demander « mise à l'échelle » à l'imprimeur, la
+   typographie est vectorielle, rien ne se dégrade.
+
+   TROIS VERSIONS, PAS TROIS DÉCLINAISONS — sur un même trajet, la
+   même affiche répétée devient invisible au bout de deux passages.
+   Chacune attaque un angle différent : la soirée (1), le prix (2),
+   l'arrivée dans une ville qu'on ne connaît pas (3). Les alterner
+   sur un panneau, c'est trois chances de toucher la même personne.
+
+   LISIBILITÉ — les titres sont calibrés pour se lire à cinq mètres,
+   le QR (80 mm) se scanne à environ un mètre, et l'adresse est
+   écrite en toutes lettres pour ceux qui ne scannent jamais rien.
+
+   AVANT DE COLLER — l'affichage libre est réglementé (art. L.581-1
+   et suivants du code de l'environnement). Voir docs/AVANT_IMPRESSION.md
+   pour les emplacements autorisés à Clermont-Ferrand.
+   ============================================================ */
+:root{
+  --bg:#F3EEE3; --blanc:#FFFFFF; --surface-2:#FBF8F1;
+  --noir:#1C1916; --gris-fonce:#5B554C; --gris:#6E6860;
+  --line-2:#DED6C6;
+  --rouge:#E0492B; --rouge-deep:#BB3619; --rouge-clair:#FBE7E1;
+  --bleu:#4A40C2; --bleu-clair:#ECE9FA; --bleu-deep:#332A92;
+  --lime:#EFB23A; --lime-clair:#FBF0D6; --lime-deep:#8E6414;
+  --font-display:'Playfair Display',Georgia,'Times New Roman',serif;
+  --font-sans:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@page{ size:303mm 426mm; margin:0; }
+*{ box-sizing:border-box; margin:0; padding:0; }
+html,body{ background:#9A9288; }
+body{ font-family:var(--font-sans); color:var(--noir);
+      -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+.page{ position:relative; width:303mm; height:426mm; overflow:hidden;
+       page-break-after:always; break-after:page; background:var(--bg); }
+.page:last-child{ page-break-after:auto; }
+
+.fond{ position:absolute; inset:0; }
+.f-sombre .fond{ background:radial-gradient(120% 62% at 50% 103%,
+                 #3A322B 0%, #1C1916 60%); }
+.f-rouge .fond{ background:linear-gradient(168deg, #E0492B 0%, #BB3619 100%); }
+.f-clair .fond{ background:var(--bg); }
+.f-sombre{ color:var(--bg); }
+.f-rouge{ color:var(--blanc); }
+
+/* Zone sûre : 3 mm de fond perdu + 18 mm de marge. Sur un mur, les
+   bords d'une affiche sont toujours un peu abîmés ou recouverts par
+   la suivante — rien d'utile ne doit s'y trouver. */
+.corps{ position:absolute; inset:3mm; padding:22mm 20mm 18mm;
+        display:flex; flex-direction:column; }
+/* Sans flex-shrink:0, un bloc trop haut se fait comprimer par le flex au
+   lieu de deborder : le titre se tasse, le texte sort de sa boite, et le
+   defaut passe inapercu a la relecture. On veut l'inverse. */
+.corps > *{ flex-shrink:0; }
+
+/* ── signature ───────────────────────────────────────────── */
+.logo{ display:flex; align-items:center; gap:5mm; font-weight:700;
+       font-size:20pt; letter-spacing:-.012em; }
+.logo svg{ width:14mm; height:14mm; flex:0 0 auto; }
+
+.kicker{ font-size:11pt; font-weight:700; letter-spacing:.22em;
+         text-transform:uppercase; color:var(--rouge); }
+.f-sombre .kicker{ color:#F3A58F; }
+.f-rouge .kicker{ color:rgba(255,255,255,.72); }
+
+h1{ font-family:var(--font-display); font-weight:900; font-size:86pt;
+    line-height:.93; letter-spacing:-.028em; }
+h1 em{ font-style:italic; color:var(--rouge); display:block; }
+.f-sombre h1 em{ color:#E0492B; }
+.f-rouge h1 em{ color:#1C1916; }
+.f-clair h1 em{ color:var(--rouge); }
+
+.lede{ font-size:20pt; line-height:1.38; font-weight:400; }
+.f-sombre .lede{ color:rgba(243,238,227,.86); }
+.f-rouge .lede{ color:rgba(255,255,255,.92); }
+.f-clair .lede{ color:var(--gris-fonce); }
+
+/* ── bloc d'appel : QR + adresse ─────────────────────────── */
+.appel{ display:flex; align-items:center; gap:12mm; }
+.qr{ background:var(--blanc); border-radius:6mm; padding:5mm;
+     width:80mm; height:80mm; flex:0 0 auto;
+     box-shadow:0 6mm 18mm rgba(0,0,0,.22); }
+.qr img{ display:block; width:100%; height:100%; }
+.qr-appel{ font-family:var(--font-display); font-style:italic; font-weight:900;
+           font-size:30pt; line-height:1.08; letter-spacing:-.015em; }
+.adresse{ font-weight:700; font-size:26pt; letter-spacing:-.005em;
+          color:var(--rouge); }
+.f-sombre .adresse{ color:#F3A58F; }
+.f-rouge .adresse{ color:var(--noir); }
+
+.bandeau{ display:flex; gap:9mm; font-size:11pt; font-weight:700;
+          letter-spacing:.16em; text-transform:uppercase; }
+.f-sombre .bandeau{ color:rgba(243,238,227,.5); }
+.f-rouge .bandeau{ color:rgba(255,255,255,.66); }
+.f-clair .bandeau{ color:var(--gris); }
+.bandeau span{ white-space:nowrap; }
+
+/* ── divers ──────────────────────────────────────────────── */
+.phone{ border:2.6mm solid var(--noir); border-radius:9mm;
+        background:var(--noir); overflow:hidden;
+        box-shadow:0 10mm 28mm rgba(0,0,0,.38); }
+.phone img{ display:block; width:100%; }
+
+.puces{ list-style:none; }
+.puces li{ position:relative; padding-left:12mm; margin-bottom:5mm;
+           font-size:17pt; line-height:1.34; }
+.puces li::before{ content:''; position:absolute; left:0; top:4.4mm;
+                   width:5mm; height:5mm; border-radius:50%;
+                   background:var(--rouge); }
+.f-rouge .puces li::before{ background:var(--noir); }
+
+.etiquette{ display:inline-block; font-size:11pt; font-weight:700;
+            letter-spacing:.14em; text-transform:uppercase;
+            padding:2.4mm 5mm; border-radius:99mm; }
+.et-rouge{ background:var(--rouge-clair); color:var(--rouge-deep); }
+.et-bleu{ background:var(--bleu-clair); color:var(--bleu-deep); }
+.et-lime{ background:var(--lime-clair); color:var(--lime-deep); }
+.et-creme{ background:rgba(255,255,255,.2); color:#fff; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════ AFFICHE 1 — LA SOIRÉE ════════════════ -->
+<!-- L'affiche de base : celle qu'on colle le jeudi et le vendredi,
+     près des bars et des arrêts de tram du centre. -->
+<section class="page f-sombre">
+  <div class="fond"></div>
+
+  <div class="corps">
+    <div class="logo" style="color:var(--bg);">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="15" y="20" width="50" height="30" rx="15" stroke="#F3EEE3" stroke-width="10"/>
+        <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
+        <circle cx="50" cy="50" r="6" fill="#F3EEE3"/>
+      </svg>
+      StudentLink
+    </div>
+
+    <h1 style="margin-top:26mm;">Ce soir,<br>tu fais quoi&nbsp;?<em>Clermont a une réponse.</em></h1>
+
+    <p class="lede" style="margin-top:14mm; max-width:140mm;">
+      Toutes les soirées étudiantes de la ville. Une place gardée à ton nom.
+      Un prix étudiant à l'entrée.
+    </p>
+
+    <!-- Le téléphone vit dans la même rangée que le QR plutôt qu'en
+         position absolue : il ne peut donc pas passer par-dessus le
+         titre, et ses marges négatives le font déborder proprement
+         dans le coin bas-droit. -->
+    <div style="margin-top:auto; margin-bottom:14mm; display:flex;
+                align-items:flex-end; gap:10mm;">
+      <div class="appel">
+        <div class="qr"><img src="qr_studentlink.svg" alt="QR code vers studentlink.fr"></div>
+        <div>
+          <div class="qr-appel">Scanne.<br>C'est gratuit.</div>
+          <div class="adresse" style="margin-top:6mm;">studentlink.fr</div>
+        </div>
+      </div>
+      <div class="phone" style="width:104mm; height:152mm; flex:0 0 auto;
+           margin-right:-28mm; margin-bottom:-26mm;">
+        <img src="mockups/p_feed.png" alt="Le fil des soirées">
+      </div>
+    </div>
+
+    <div class="bandeau">
+      <span>Clermont-Ferrand</span>
+      <span>Gratuit</span>
+      <span>18 ans et +</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ AFFICHE 2 — LE PRIX ════════════════ -->
+<!-- Celle de la fin du mois. L'argument n'est pas « c'est moins
+     cher » mais « tu sors une fois de plus » : c'est la sortie
+     qu'on s'interdit qui fait mal, pas les trois euros. -->
+<section class="page f-rouge">
+  <div class="fond"></div>
+
+  <div class="corps">
+    <div class="logo" style="color:var(--blanc);">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="15" y="20" width="50" height="30" rx="15" stroke="#FFFFFF" stroke-width="10"/>
+        <rect x="35" y="50" width="50" height="30" rx="15" stroke="#1C1916" stroke-width="10"/>
+        <circle cx="50" cy="50" r="6" fill="#FFFFFF"/>
+      </svg>
+      StudentLink
+    </div>
+
+    <div class="kicker" style="margin-top:24mm;">Fin du mois</div>
+    <!-- Pas de chiffre en titre : l'application n'est pas encore lancée,
+         aucune moyenne n'est mesurée, et une accroche chiffrée sur une
+         affiche se lit comme une promesse. Le montant reste plus bas,
+         explicitement donné comme un exemple. -->
+    <h1 style="margin-top:8mm; max-width:230mm;">Sortir moins cher,<em>c'est sortir plus souvent.</em></h1>
+
+    <p class="lede" style="margin-top:14mm; max-width:200mm;">
+      Les bars et les clubs partenaires réservent un prix étudiant à ceux qui
+      arrivent par StudentLink, et chaque remise s'ajoute dans ton wallet.
+      Douze soirées, trente-huit euros que tu n'as pas payés&nbsp;: c'est une
+      sortie de plus dans le mois.
+    </p>
+
+    <ul class="puces" style="margin-top:14mm; max-width:190mm;">
+      <li>Tu réserves ta place à l'avance, elle t'attend.</li>
+      <li>Tu montres ton pass à l'entrée, sans rien avancer.</li>
+      <li>Tu vois lesquels de tes potes y vont déjà.</li>
+    </ul>
+
+    <div class="appel" style="margin-top:auto; margin-bottom:14mm;">
+      <div class="qr"><img src="qr_studentlink.svg" alt="QR code vers studentlink.fr"></div>
+      <div>
+        <div class="qr-appel">Scanne.<br>C'est gratuit.</div>
+        <div class="adresse" style="margin-top:6mm;">studentlink.fr</div>
+      </div>
+    </div>
+
+    <div class="bandeau">
+      <span>Clermont-Ferrand</span>
+      <span>Gratuit pour les étudiants</span>
+      <span>18 ans et +</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ AFFICHE 3 — L'ARRIVÉE ════════════════ -->
+<!-- Celle de septembre, à coller près des campus, des résidences
+     et du CROUS. Elle ne parle pas de soirées mais d'isolement :
+     c'est le sujet réel des trois premières semaines. -->
+<section class="page f-clair">
+  <div class="fond"></div>
+
+  <div class="corps">
+    <div class="logo">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="15" y="20" width="50" height="30" rx="15" stroke="#1C1916" stroke-width="10"/>
+        <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
+        <circle cx="50" cy="50" r="6" fill="#1C1916"/>
+      </svg>
+      StudentLink
+    </div>
+
+    <!-- Le téléphone est en position absolue : il illustre sans peser sur
+         la hauteur de la colonne de texte, qui est la contrainte serrée
+         de cette version (elle porte un titre, un chapô et trois points). -->
+    <div class="phone" style="position:absolute; right:-22mm; top:158mm;
+         width:88mm; height:166mm;">
+      <img src="mockups/p_squads.png" alt="Les squads">
+    </div>
+
+    <div class="kicker" style="margin-top:18mm;">Rentrée</div>
+    <h1 style="margin-top:8mm; max-width:190mm; font-size:76pt;">Nouveau<br>à Clermont&nbsp;?<em>Commence par ce soir.</em></h1>
+
+    <p class="lede" style="margin-top:12mm; max-width:170mm;">
+      Première année, réorientation, Erasmus : arriver dans une ville sans
+      connaître personne est la situation la plus courante — et la moins
+      bien outillée.
+    </p>
+
+    <ul class="puces" style="margin-top:12mm; max-width:165mm;">
+      <li>Des étudiants de ton école et de ta promo.</li>
+      <li>Des squads running, vélo, muscu — ou juste un verre.</li>
+      <li>Les sorties auxquelles ils vont, pour s'y greffer.</li>
+    </ul>
+
+    <div style="display:flex; gap:3mm; flex-wrap:wrap; margin-top:10mm;">
+      <span class="etiquette et-rouge">Pour moi</span>
+      <span class="etiquette et-bleu">Squads</span>
+      <span class="etiquette et-lime">Flash</span>
+    </div>
+
+    <div class="appel" style="margin-top:auto; margin-bottom:14mm;">
+      <div class="qr" style="border:1px solid var(--line-2); box-shadow:0 5mm 14mm rgba(28,25,22,.14);">
+        <img src="qr_studentlink.svg" alt="QR code vers studentlink.fr">
+      </div>
+      <div>
+        <div class="qr-appel">Scanne.<br>C'est gratuit.</div>
+        <div class="adresse" style="margin-top:6mm;">studentlink.fr</div>
+      </div>
+    </div>
+
+    <div class="bandeau">
+      <span>Clermont-Ferrand</span>
+      <span>Gratuit</span>
+      <span>18 ans et +</span>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

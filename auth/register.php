@@ -1,12 +1,12 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) session_start();
+require_once __DIR__ . '/../includes/auth_check.php';
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/interets.php';
 if (!empty($_SESSION['user_id'])) {
-    header('Location: /index.php');
+    header('Location: ' . baseUrl('/index.php'));
     exit;
 }
 
-require_once __DIR__ . '/../includes/auth_check.php';
-require_once __DIR__ . '/../includes/db.php';
 $error   = '';
 $success = '';
 
@@ -26,18 +26,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $etablType = in_array($_POST['etablissement_type'] ?? '', ['bar','boite','resto','afterwork'])
         ? $_POST['etablissement_type'] : 'bar';
     $etablVille = trim($_POST['ville'] ?? 'Clermont-Ferrand');
+    $naissance  = trim($_POST['date_naissance'] ?? '');
+    $cgu        = !empty($_POST['cgu']);
+
+    // Les centres d'intérêt ne concernent que les comptes étudiants, et ne
+    // passent que par le catalogue : ce qui arrive du formulaire n'est jamais
+    // écrit tel quel en base.
+    $interets = $type === 'etudiant' ? filtrerInterets($_POST['interests'] ?? []) : [];
+
+    /*
+     * L'âge se calcule à partir de la date, il ne se déclare pas : une case
+     * « je certifie être majeur » ne vaut rien, ni pour la revue de l'App
+     * Store, ni devant un établissement qui sert de l'alcool.
+     */
+    $age = ageEnAnnees($naissance);
 
     if (!$prenom || !$nom || !$email || !$pass) {
         $error = 'Merci de remplir tous les champs obligatoires.';
     } elseif (strlen($pass) < 6) {
         $error = 'Le mot de passe doit faire au moins 6 caractères.';
+    } elseif ($age === null) {
+        $error = 'Merci d’indiquer une date de naissance valide.';
+    } elseif ($age < 18) {
+        $error = 'StudentLink est réservée aux personnes majeures : '
+               . 'l’inscription n’est pas possible avant 18 ans.';
+    } elseif ($age > 120) {
+        $error = 'Cette date de naissance ne semble pas correcte.';
+    } elseif (!$cgu) {
+        $error = 'Merci d’accepter les conditions générales pour continuer.';
     } else {
         try {
             $hash = password_hash($pass, PASSWORD_DEFAULT);
             $stmt = $pdo->prepare(
-                "INSERT INTO users (nom, prenom, email, password, ecole, promo, type) VALUES (?,?,?,?,?,?,?)"
+                "INSERT INTO users (nom, prenom, email, password, ecole, promo,
+                                    date_naissance, cgu_acceptees_le, type, interests)
+                 VALUES (?,?,?,?,?,?,?,NOW(),?,?)"
             );
-            $stmt->execute([$nom, $prenom, $email, $hash, $ecole ?: null, $promo ?: null, $type]);
+            $stmt->execute([$nom, $prenom, $email, $hash, $ecole ?: null, $promo ?: null,
+                            $naissance, $type, interetsVersTexte($interets)]);
             $userId = $pdo->lastInsertId();
 
             if ($type === 'partenaire' && $etablNom) {
@@ -67,6 +93,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 $selectedType = $_POST['type'] ?? 'etudiant';
+// Une erreur de formulaire ne doit pas effacer les étiquettes déjà choisies.
+$interetsChoisis = filtrerInterets($_POST['interests'] ?? []);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -75,7 +103,7 @@ $selectedType = $_POST['type'] ?? 'etudiant';
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Inscription</title>
 <?= themeBootScript() ?>
-<link rel="stylesheet" href="<?= baseUrl() ?>/assets/css/style.css">
+<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
 </head>
 <body>
 <div class="auth-page" style="padding-top:24px;">
@@ -83,10 +111,10 @@ $selectedType = $_POST['type'] ?? 'etudiant';
     <div class="brand">StudentLink <em>/ Inscription</em></div>
   </div>
 
-  <div class="auth-headline">
-    <div class="display" style="font-size:2rem;">Rejoins</div>
-    <div class="display-italic" style="font-size:2rem;">la communauté.</div>
-  </div>
+  <h1 class="auth-headline titre-page">
+    <div class="display" style="font-size:var(--fs-8);">Rejoins</div>
+    <div class="display-italic" style="font-size:var(--fs-8);">la communauté.</div>
+  </h1>
 
   <div class="type-toggle" style="margin-bottom:24px;">
     <button type="button" class="type-toggle-btn <?= $selectedType === 'etudiant' ? 'active' : '' ?>" data-type="etudiant">
@@ -107,31 +135,50 @@ $selectedType = $_POST['type'] ?? 'etudiant';
 
     <div class="form-row">
       <div class="form-group">
-        <label>Prénom</label>
-        <input type="text" name="prenom" value="<?= htmlspecialchars($_POST['prenom'] ?? '') ?>" placeholder="Arthur" required>
+        <label for="inscription-prenom">Prénom</label>
+        <input id="inscription-prenom" type="text" name="prenom" autocomplete="given-name" value="<?= htmlspecialchars($_POST['prenom'] ?? '') ?>" placeholder="Arthur" required>
       </div>
       <div class="form-group">
-        <label>Nom</label>
-        <input type="text" name="nom" value="<?= htmlspecialchars($_POST['nom'] ?? '') ?>" placeholder="Martin" required>
+        <label for="inscription-nom">Nom</label>
+        <input id="inscription-nom" type="text" name="nom" autocomplete="family-name" value="<?= htmlspecialchars($_POST['nom'] ?? '') ?>" placeholder="Martin" required>
       </div>
     </div>
 
     <div class="form-group">
-      <label>Email</label>
-      <input type="email" name="email" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" placeholder="arthur@uca.fr" required>
+      <label for="inscription-email">Email</label>
+      <input id="inscription-email" type="email" name="email" autocomplete="username" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" placeholder="arthur@uca.fr" required>
     </div>
 
     <div class="form-group">
-      <label>Mot de passe</label>
-      <input type="password" name="password" placeholder="••••••••" required>
+      <label for="inscription-password">Mot de passe</label>
+      <input type="password" id="inscription-password" name="password" autocomplete="new-password" placeholder="••••••••" required>
+    </div>
+
+    <div class="form-group">
+      <label for="inscription-naissance">Date de naissance</label>
+      <?php
+        // Le champ natif propose d'emblée une borne cohérente ; le vrai
+        // contrôle reste celui du serveur, juste au-dessus.
+        $borneMajeur = (new DateTimeImmutable('today'))->modify('-18 years')->format('Y-m-d');
+        $bornePlancher = (new DateTimeImmutable('today'))->modify('-120 years')->format('Y-m-d');
+      ?>
+      <input type="date" id="inscription-naissance" name="date_naissance"
+             autocomplete="bday"
+             min="<?= $bornePlancher ?>" max="<?= $borneMajeur ?>"
+             value="<?= htmlspecialchars($_POST['date_naissance'] ?? '') ?>"
+             aria-describedby="aide-naissance" required>
+      <p class="aide-champ" id="aide-naissance">
+        StudentLink donne accès à des soirées en bar et en discothèque :
+        l’inscription est réservée aux personnes majeures.
+      </p>
     </div>
 
     <!-- Student fields -->
     <div id="student-fields" <?= $selectedType === 'partenaire' ? 'class="hidden"' : '' ?>>
       <div class="form-row">
         <div class="form-group">
-          <label>École</label>
-          <select name="ecole">
+          <label for="inscription-ecole">École</label>
+          <select id="inscription-ecole" name="ecole">
             <option value="">— Choisir —</option>
             <?php foreach ($ecoles as $e): ?>
               <option value="<?= $e ?>" <?= ($_POST['ecole'] ?? '') === $e ? 'selected' : '' ?>><?= $e ?></option>
@@ -139,8 +186,8 @@ $selectedType = $_POST['type'] ?? 'etudiant';
           </select>
         </div>
         <div class="form-group">
-          <label>Promo</label>
-          <select name="promo">
+          <label for="inscription-promo">Promo</label>
+          <select id="inscription-promo" name="promo">
             <option value="">—</option>
             <?php foreach ($promos as $p): ?>
               <option value="<?= $p ?>" <?= ($_POST['promo'] ?? '') === $p ? 'selected' : '' ?>><?= $p ?></option>
@@ -148,18 +195,27 @@ $selectedType = $_POST['type'] ?? 'etudiant';
           </select>
         </div>
       </div>
+
+      <div class="form-group">
+        <label id="label-interets">Centres d'intérêt</label>
+        <p class="aide-champ" style="margin-bottom:10px;">
+          Ils servent à te proposer des étudiants qui aiment les mêmes choses que toi.
+          Tu pourras les changer quand tu veux depuis ton profil.
+        </p>
+        <?= selecteurInteretsHtml($interetsChoisis) ?>
+      </div>
     </div>
 
     <!-- Partner fields -->
     <div id="partner-fields" <?= $selectedType !== 'partenaire' ? 'class="hidden"' : '' ?>>
       <div class="form-group">
-        <label>Nom de l'établissement</label>
-        <input type="text" name="etablissement_nom" value="<?= htmlspecialchars($_POST['etablissement_nom'] ?? '') ?>" placeholder="Le Bec qui Pique">
+        <label for="inscription-etablissement-nom">Nom de l'établissement</label>
+        <input id="inscription-etablissement-nom" type="text" name="etablissement_nom" value="<?= htmlspecialchars($_POST['etablissement_nom'] ?? '') ?>" placeholder="Le Bec qui Pique">
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Type</label>
-          <select name="etablissement_type">
+          <label for="inscription-etablissement-type">Type</label>
+          <select id="inscription-etablissement-type" name="etablissement_type">
             <option value="bar">Bar</option>
             <option value="boite">Boîte</option>
             <option value="resto">Restaurant</option>
@@ -167,22 +223,33 @@ $selectedType = $_POST['type'] ?? 'etudiant';
           </select>
         </div>
         <div class="form-group">
-          <label>Ville</label>
-          <input type="text" name="ville" value="<?= htmlspecialchars($_POST['ville'] ?? 'Clermont-Ferrand') ?>">
+          <label for="inscription-ville">Ville</label>
+          <input id="inscription-ville" type="text" name="ville" value="<?= htmlspecialchars($_POST['ville'] ?? 'Clermont-Ferrand') ?>">
         </div>
       </div>
     </div>
 
-    <button type="submit" class="btn btn-primary btn-full" style="margin-top:8px;">
+    <label class="case" style="margin-top:10px; align-items:flex-start; line-height:var(--lh-normal);">
+      <input type="checkbox" name="cgu" value="1" style="margin-top:2px;"
+             <?= !empty($_POST['cgu']) ? 'checked' : '' ?> required>
+      <span>
+        J’accepte les
+        <a href="<?= baseUrl('/cgu.php') ?>" target="_blank" rel="noopener">conditions générales</a>
+        et la
+        <a href="<?= baseUrl('/confidentialite.php') ?>" target="_blank" rel="noopener">politique de confidentialité</a>.
+      </span>
+    </label>
+
+    <button type="submit" class="btn btn-primary btn-full" style="margin-top:14px;">
       → Créer mon compte
     </button>
   </form>
 
   <div class="auth-link">
-    Déjà un compte ? <a href="/auth/login.php">Se connecter</a>
+    Déjà un compte ? <a href="<?= baseUrl('/auth/login.php') ?>">Se connecter</a>
   </div>
 </div>
 
-<script src="<?= baseUrl() ?>/assets/js/app.js"></script>
+<script src="<?= asset('/assets/js/app.js') ?>"></script>
 </body>
 </html>

@@ -1,9 +1,25 @@
 parameters:
     level: 5
+    # Les pages racine et l'espace partenaire sont analysés aussi : c'est là
+    # que vit l'essentiel de la logique, et les exclure laissait passer des
+    # appels à des fonctions qui n'existent pas.
     paths:
         - includes
         - api
         - auth
+        - admin
+        - outils
+        - partenaire
+        - explore.php
+        - profil.php
+        - abonnements.php
+        - squads.php
+        - wallet.php
+        - view_event.php
+        - view_profile.php
+        - avis.php
+        - onboarding.php
+        - index.php
     excludePaths:
         - vendor
         - tests
@@ -14,5 +30,7 @@ parameters:
         - '#Variable \$_POST#'
         - '#Variable \$_GET#'
         - '#Variable \$_SERVER#'
+        # $pdo est fourni par require includes/db.php (non suivi par l'analyse statique)
+        - '#Variable \$pdo might not be defined#'
     treatPhpDocTypesAsCertain: false
     reportUnmatchedIgnoredErrors: false

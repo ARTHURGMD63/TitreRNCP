@@ -22,16 +22,21 @@ $stmt = $pdo->prepare("
 $stmt->execute([$user['id']]);
 $squads = $stmt->fetchAll();
 
-$typeColors = [
-    'running' => ['bg'=>'#FFFFFF','text'=>'#1A1A1A','btn_bg'=>'#1A1A1A','btn_text'=>'#FFFFFF'],
-    'velo'    => ['bg'=>'#2929E8','text'=>'#FFFFFF','btn_bg'=>'#FFFFFF','btn_text'=>'#2929E8'],
-    'muscu'   => ['bg'=>'#C8E52A','text'=>'#1A1A1A','btn_bg'=>'#1A1A1A','btn_text'=>'#FFFFFF'],
-    'autre'   => ['bg'=>'#F07820','text'=>'#FFFFFF','btn_bg'=>'#FFFFFF','btn_text'=>'#F07820'],
+// Le type colore un rail, l'etiquette et le bouton — jamais le fond de la
+// carte. Un aplat de marque derriere le gris des metadonnees tombait entre
+// 1.6:1 et 2.4:1 (le blanc sur --orange ne donne que 2.42:1) : la carte reste
+// donc sur la surface de l'app, ou --noir et --gris-fonce gardent leur
+// contraste dans les deux themes. La couleur ne porte plus l'information
+// seule non plus : le libelle du type reste ecrit en toutes lettres.
+$typeClasses = [
+    'running' => 'squad-running',
+    'velo'    => 'squad-velo',
+    'muscu'   => 'squad-muscu',
+    'autre'   => 'squad-autre',
 ];
 $typeLabels = ['running'=>'Running','velo'=>'Vélo','muscu'=>'Muscu','autre'=>'Autre'];
 $niveauLabels = ['tous'=>'Tous niveaux','debutant'=>'Débutant','inter'=>'Inter.','avance'=>'Avancé'];
 
-$dayFr = ['Sun'=>'Dim','Mon'=>'Lun','Tue'=>'Mar','Wed'=>'Mer','Thu'=>'Jeu','Fri'=>'Ven','Sat'=>'Sam'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -40,10 +45,10 @@ $dayFr = ['Sun'=>'Dim','Mon'=>'Lun','Tue'=>'Mar','Wed'=>'Mer','Thu'=>'Jeu','Fri'
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Squads</title>
 <?= themeBootScript() ?>
-<link rel="stylesheet" href="<?= baseUrl() ?>/assets/css/style.css">
-<link rel="icon" type="image/png" href="/Logo.png">
-<link rel="apple-touch-icon" href="/Logo.png">
-<link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
+<link rel="icon" type="image/png" href="<?= baseUrl('/Logo.png') ?>">
+<link rel="apple-touch-icon" href="<?= baseUrl('/Logo.png') ?>">
+<link rel="manifest" href="<?= baseUrl('/manifest.json') ?>">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="StudentLink">
@@ -62,29 +67,31 @@ $dayFr = ['Sun'=>'Dim','Mon'=>'Lun','Tue'=>'Mar','Wed'=>'Mer','Thu'=>'Jeu','Fri'
       </svg>
       StudentLink <em>/ Squads</em>
     </div>
-    <div class="display" style="font-size:2.6rem;">Ne cours</div>
-    <div class="display" style="font-size:2.6rem;">plus</div>
-    <div class="display-italic" style="font-size:2.6rem;">seul·e.</div>
+    <h1 class="titre-page">
+      <div class="display" style="font-size:var(--fs-9);">Ne cours</div>
+      <div class="display" style="font-size:var(--fs-9);">plus</div>
+      <div class="display-italic" style="font-size:var(--fs-9);">seul·e.</div>
+    </h1>
   </div>
 
   <!-- Filters -->
-  <div class="filter-scroll">
-    <button class="pill active" data-filter="all">Tout</button>
-    <button class="pill" data-filter="running">Running</button>
-    <button class="pill" data-filter="velo">Vélo</button>
-    <button class="pill" data-filter="muscu">Muscu</button>
-    <button class="pill" data-filter="autre">Autre</button>
+  <div class="filter-scroll" role="group" aria-label="Filtrer les squads par sport">
+    <button type="button" class="pill active" data-filter="all" aria-pressed="true">Tout</button>
+    <button type="button" class="pill" data-filter="running" aria-pressed="false">Running</button>
+    <button type="button" class="pill" data-filter="velo" aria-pressed="false">Vélo</button>
+    <button type="button" class="pill" data-filter="muscu" aria-pressed="false">Muscu</button>
+    <button type="button" class="pill" data-filter="autre" aria-pressed="false">Autre</button>
   </div>
 
-  <main id="main-content" class="page-content">
+  <main id="main-content" class="page-content page-grid">
     <!-- Suggestion banner -->
-    <div class="banner-card" style="background:var(--lime);margin-bottom:16px;">
+    <div class="banner-card" style="background:var(--lime);color:var(--sur-media-encre);margin-bottom:16px;">
       <div class="banner-icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
       </div>
       <div class="banner-text">
         <strong>3 squads pour ton niveau</strong><br>
-        <span style="font-size:12px;opacity:0.7;">Running inter. · &lt; 5 min à pied</span>
+        <span style="font-size:var(--fs-2);opacity:0.7;">Running inter. · &lt; 5 min à pied</span>
       </div>
     </div>
 
@@ -95,31 +102,31 @@ $dayFr = ['Sun'=>'Dim','Mon'=>'Lun','Tue'=>'Mar','Wed'=>'Mer','Thu'=>'Jeu','Fri'
 
     <?php if (empty($squads)): ?>
       <div style="text-align:center;padding:48px 0;color:var(--gris);">
-        <div style="font-size:2rem;margin-bottom:12px;display:flex;justify-content:center;">
+        <div style="font-size:var(--fs-8);margin-bottom:12px;display:flex;justify-content:center;">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
         </div>
-        <div style="font-weight:600;">Pas encore de squads.</div>
-        <div style="font-size:13px;margin-top:6px;">Crée le premier !</div>
+        <div style="font-weight:var(--fw-semibold);">Pas encore de squads.</div>
+        <div style="font-size:var(--fs-3);margin-top:6px;">Crée le premier !</div>
       </div>
     <?php endif; ?>
 
     <?php foreach ($squads as $s):
-      $colors  = $typeColors[$s['type']] ?? $typeColors['autre'];
+      $classeType = $typeClasses[$s['type']] ?? $typeClasses['autre'];
       $isFull  = $s['nb_membres'] >= $s['quota'];
-      $dateStr = ($dayFr[date('D', strtotime($s['date_heure']))] ?? '') . ' ' . date('H\hi', strtotime($s['date_heure']));
+      $dateStr = dateFr($s['date_heure'], 'D H\hi');
     ?>
-    <div class="squad-card" style="background:<?= $colors['bg'] ?>;color:<?= $colors['text'] ?>;" data-type="<?= $s['type'] ?>">
-      <div class="squad-badge" style="color:<?= $colors['text'] ?>;">
+    <div class="squad-card <?= $classeType ?>" data-type="<?= $s['type'] ?>">
+      <div class="squad-badge">
         <?= htmlspecialchars($niveauLabels[$s['niveau']] ?? $s['niveau']) ?>
       </div>
 
-      <div class="squad-type-label"><?= strtoupper($typeLabels[$s['type']] ?? $s['type']) ?> · <?= $dateStr ?></div>
+      <div class="squad-type-label"><?= mb_strtoupper($typeLabels[$s['type']] ?? $s['type']) ?> &middot; <?= $dateStr ?></div>
       <div class="squad-title"><?= htmlspecialchars($s['titre']) ?></div>
       <?php if ($s['lieu']): ?>
       <div class="squad-details"><?= htmlspecialchars($s['lieu']) ?></div>
       <?php endif; ?>
       <?php if ($s['description']): ?>
-      <div class="squad-details" style="margin-bottom:12px;"><?= htmlspecialchars(mb_substr($s['description'], 0, 80)) ?>…</div>
+      <div class="squad-details" style="margin-bottom:12px;"><?= htmlspecialchars(mb_substr($s['description'], 0, 80)) ?>&hellip;</div>
       <?php endif; ?>
 
       <div class="squad-footer">
@@ -130,8 +137,8 @@ $dayFr = ['Sun'=>'Dim','Mon'=>'Lun','Tue'=>'Mar','Wed'=>'Mer','Thu'=>'Jeu','Fri'
             $displayCount = min(mb_strlen($initials), 3);
             for ($i = 0; $i < $displayCount; $i++): 
             ?>
-              <div class="avatar" style="color:<?= $colors['text'] ?>;border-color:<?= $colors['text'] ?>;">
-                <?= strtoupper(mb_substr($initials, $i, 1)) ?>
+              <div class="avatar avatar-accent">
+                <?= mb_strtoupper(mb_substr($initials, $i, 1)) ?>
               </div>
             <?php endfor; ?>
           </div>
@@ -139,17 +146,16 @@ $dayFr = ['Sun'=>'Dim','Mon'=>'Lun','Tue'=>'Mar','Wed'=>'Mer','Thu'=>'Jeu','Fri'
         </div>
 
         <?php if ($s['createur_id'] == $user['id']): ?>
-          <button class="squad-cta btn-manage-squad" style="background:#F07820;color:var(--blanc);display:flex;align-items:center;gap:4px;" data-id="<?= $s['id'] ?>">
+          <button class="squad-cta squad-cta-gerer btn-manage-squad" data-id="<?= $s['id'] ?>">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            Gérer
+            G&eacute;rer
           </button>
         <?php elseif ($s['deja_membre']): ?>
-          <button class="squad-cta" style="background:<?= $colors['btn_bg'] ?>;color:<?= $colors['btn_text'] ?>;" disabled>✓ Rejoint</button>
+          <button class="squad-cta squad-cta-etat" disabled><?= icon('check','icon-sm') ?> Rejoint</button>
         <?php elseif ($isFull): ?>
-          <button class="squad-cta" style="background:rgba(0,0,0,0.15);color:<?= $colors['text'] ?>;" disabled>Complet</button>
+          <button class="squad-cta squad-cta-etat" disabled>Complet</button>
         <?php else: ?>
-          <button class="squad-cta btn-join-squad"
-                  style="background:<?= $colors['btn_bg'] ?>;color:<?= $colors['btn_text'] ?>;"
+          <button class="squad-cta squad-cta-accent btn-join-squad"
                   data-squad-id="<?= $s['id'] ?>"
                   data-quota="<?= $s['quota'] ?>">
             JE REJOINS
@@ -158,28 +164,33 @@ $dayFr = ['Sun'=>'Dim','Mon'=>'Lun','Tue'=>'Mar','Wed'=>'Mer','Thu'=>'Jeu','Fri'
       </div>
     </div>
     <?php endforeach; ?>
-  </div>
 
-</div><!-- .app-shell -->
+    <!-- Etat vide du filtre : sans lui, filtrer sur un sport sans squad
+         laissait la page muette, ce qui se lit comme un bouton casse. -->
+    <div id="filtre-vide" hidden style="text-align:center;padding:40px 0;color:var(--gris);">
+      <div style="font-weight:var(--fw-semibold);">Aucun squad dans cette cat&eacute;gorie.</div>
+      <div style="font-size:var(--fs-3);margin-top:6px;">Cr&eacute;e le premier, ou reviens &agrave; &laquo;&nbsp;Tout&nbsp;&raquo;.</div>
+    </div>
+  </main>
 
 <!-- Manage Squad Modal -->
 <div class="modal-overlay" id="modal-manage-squad">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;margin-bottom:20px;">
+    <div style="font-family:var(--font-display);font-size:var(--fs-7);font-weight:var(--fw-black);margin-bottom:20px;">
       Gérer mon Squad
     </div>
     
     <div id="manage-squad-loading" style="text-align:center;padding:20px;">Chargement...</div>
     
     <div id="manage-squad-content" style="display:none;">
-      <h4 style="margin-bottom:12px;">Participants inscrits :</h4>
+      <h2 style="margin-bottom:12px;font-size:var(--fs-5);">Participants inscrits :</h2>
       <div id="squad-members-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px;">
         <!-- Injected via JS -->
       </div>
       
       <div class="section-divider"></div>
-      <button class="btn btn-primary btn-full mt-16 btn-delete-squad-from-modal" style="background:var(--rouge);color:var(--blanc);" data-id="">Supprimer définitivement le Squad</button>
+      <button class="btn btn-primary btn-full mt-16 btn-delete-squad-from-modal" style="background:var(--rouge);color:var(--sur-media);" data-id="">Supprimer définitivement le Squad</button>
       <button type="button" class="btn btn-outline btn-full mt-8" data-modal-close>Fermer</button>
     </div>
   </div>
@@ -189,19 +200,19 @@ $dayFr = ['Sun'=>'Dim','Mon'=>'Lun','Tue'=>'Mar','Wed'=>'Mer','Thu'=>'Jeu','Fri'
 <div class="modal-overlay" id="modal-create-squad">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;margin-bottom:20px;">
+    <div style="font-family:var(--font-display);font-size:var(--fs-7);font-weight:var(--fw-black);margin-bottom:20px;">
       Créer un squad
     </div>
 
     <form id="create-squad-form">
       <div class="form-group">
-        <label>Titre</label>
-        <input type="text" name="titre" placeholder="Sortie Puy-de-Dôme" required>
+        <label for="sq-titre">Titre</label>
+        <input id="sq-titre" type="text" name="titre" placeholder="Sortie Puy-de-Dôme" required>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Sport</label>
-          <select name="type">
+          <label for="sq-type">Sport</label>
+          <select id="sq-type" name="type">
             <option value="running">Running</option>
             <option value="velo">Vélo</option>
             <option value="muscu">Muscu</option>
@@ -209,8 +220,8 @@ $dayFr = ['Sun'=>'Dim','Mon'=>'Lun','Tue'=>'Mar','Wed'=>'Mer','Thu'=>'Jeu','Fri'
           </select>
         </div>
         <div class="form-group">
-          <label>Niveau</label>
-          <select name="niveau">
+          <label for="sq-niveau">Niveau</label>
+          <select id="sq-niveau" name="niveau">
             <option value="tous">Tous</option>
             <option value="debutant">Débutant</option>
             <option value="inter">Inter.</option>
@@ -220,27 +231,29 @@ $dayFr = ['Sun'=>'Dim','Mon'=>'Lun','Tue'=>'Mar','Wed'=>'Mer','Thu'=>'Jeu','Fri'
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Date & heure</label>
-          <input type="datetime-local" name="date_heure" required>
+          <label for="sq-date">Date & heure</label>
+          <input id="sq-date" type="datetime-local" name="date_heure" required>
         </div>
         <div class="form-group">
-          <label>Max participants</label>
-          <input type="number" name="quota" value="10" min="2" max="50">
+          <label for="sq-quota">Max participants</label>
+          <input id="sq-quota" type="number" name="quota" value="10" min="2" max="50">
         </div>
       </div>
       <div class="form-group">
-        <label>Lieu de rendez-vous</label>
-        <input type="text" name="lieu" placeholder="Parking Royat">
+        <label for="sq-lieu">Lieu de rendez-vous</label>
+        <input id="sq-lieu" type="text" name="lieu" placeholder="Parking Royat">
       </div>
       <div class="form-group">
-        <label>Description</label>
-        <textarea name="description" placeholder="Détails sur la sortie..."></textarea>
+        <label for="sq-desc">Description</label>
+        <textarea id="sq-desc" name="description" placeholder="Détails sur la sortie..."></textarea>
       </div>
       <button type="submit" class="btn btn-primary btn-full">Créer le squad</button>
       <button type="button" class="btn btn-outline btn-full mt-8" data-modal-close>Annuler</button>
     </form>
   </div>
 </div>
+
+</div><!-- .app-shell -->
 
 <!-- Bottom Nav -->
 <nav class="bottom-nav" aria-label="Navigation principale">
@@ -262,8 +275,8 @@ $dayFr = ['Sun'=>'Dim','Mon'=>'Lun','Tue'=>'Mar','Wed'=>'Mer','Thu'=>'Jeu','Fri'
   </a>
 </nav>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="<?= baseUrl() ?>/assets/js/app.js"></script>
+<script src="<?= asset('/assets/js/app.js') ?>"></script>
 </body>
 </html>

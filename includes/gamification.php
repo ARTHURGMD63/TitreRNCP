@@ -14,7 +14,7 @@ function getUserStats(PDO $pdo, int $uid): array {
     $stmt->execute([$uid]);
     $stats['squads'] = (int)$stmt->fetchColumn();
 
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM follows_users WHERE follower_id=?");
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM follows_users WHERE follower_id=? AND statut='accepted'");
     $stmt->execute([$uid]);
     $stats['follows'] = (int)$stmt->fetchColumn();
 

@@ -1,1275 +1,1687 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+/* ============================================================
+   StudentLink — Design System (Refonte « Refined Brutalism »)
+   Garde le vocabulaire de classes existant (--noir, --rouge, .card,
+   .btn, .pill, .event-card…) mais remappé vers une esthétique premium :
+   palette chaude harmonisée (coral / indigo / or), élévation douce
+   et stratifiée, radii arrondis, typographie éditoriale Playfair.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700..900;1,700..900&family=DM+Sans:opsz,wght@9..40,400..700&display=swap');
 
 :root {
-  --bg: #F2EDE3;
-  --noir: #1A1A1A;
-  --rouge: #E5331A;
-  --bleu: #2929E8;
-  --lime: #C8E52A;
-  --orange: #F07820;
-  --blanc: #FFFFFF;
-  --gris-clair: #E8E2D8;
-  --gris: #888888;
-  --gris-fonce: #444444;
-  --radius: 0px;
-  --border: 2px solid var(--noir);
-  --shadow: 4px 4px 0px var(--noir);
-  --shadow-sm: 2px 2px 0px var(--noir);
-  --bleu-clair: #E8E8FF;
-  --rouge-clair: #FFE8E8;
-  --lime-clair: #F5FFE8;
-  --nav-h: 64px;
+  /* Papier & encre */
+  --bg:          #F3EEE3;   /* papier chaud */
+  --blanc:       #FFFFFF;   /* surface principale — BASCULE en sombre, ce n'est pas « du blanc » */
+  --sur-media:   #FFFFFF;   /* texte CLAIR posé sur une photo ou un aplat de marque */
+  --sur-media-encre: #1C1916;   /* texte SOMBRE posé sur un aplat clair de marque (l'or) */
+  --surface-2:   #FBF8F1;   /* surface légèrement surélevée */
+  --noir:        #1C1916;   /* encre quasi-noire chaude */
+  --gris-fonce:  #5B554C;   /* texte secondaire */
+  --gris:        #6E6860;   /* texte tertiaire / légendes — 4.76:1 sur le papier */
+  --gris-clair:  #EAE3D6;   /* filet fin */
+  --line-2:      #DED6C6;   /* filet plus marqué */
+
+  /* Marque — trio analogue chaud (coral → ambre → or), ancré par un indigo froid */
+  --rouge:       #E0492B;   /* héros — coral chaud */
+  --rouge-deep:  #BB3619;
+  --bleu:        #4A40C2;   /* ancre froide — indigo-violet */
+  --bleu-deep:   #332A92;
+  --lime:        #EFB23A;   /* or chaud (remplace le citron) */
+  --lime-deep:   #8E6414;   /* 4.56:1 sur le papier */
+  --orange:      #EC8233;   /* orange chaud — pont coral/or */
+  --orange-deep: #A75517;   /* 4.56:1 sur sa teinte claire */
+
+  /* ── Couleurs de sens ───────────────────────────────────────────────────
+     Volontairement hors de la palette de marque. Le coral signe StudentLink :
+     il ne doit pas dire « erreur », sinon un message d'échec a exactement la
+     couleur du bouton d'action principal. Toutes les paires sont à 5.3:1 ou
+     plus, en thème clair comme en thème sombre.                          */
+  --succes:        #1F6B34;
+  --succes-clair:  #E3F2E6;
+  --danger:        #B3261E;
+  --danger-clair:  #FBE9E7;
+  --alerte:        #8A5A00;
+  --alerte-clair:  #FFF3DC;
+
+  /* Texte posé sur une teinte claire — chaque paire vérifiée à 4.5:1 minimum.
+     Sans ces jetons, les badges empruntaient la couleur pure de la marque et
+     tombaient entre 2.2 et 3.4:1, bien en dessous du seuil.               */
+  --sur-rouge-clair:  var(--rouge-deep);
+  --sur-bleu-clair:   var(--bleu-deep);
+  --sur-lime-clair:   var(--lime-deep);
+  --sur-orange-clair: var(--orange-deep);
+
+  /* Teintes (fonds doux) */
+  --rouge-clair: #FBE7E1;
+  --bleu-clair:  #ECE9FA;
+  --lime-clair:  #FBF0D6;
+  --orange-clair:#FCEBDB;
+
+  /* ── Typographie : familles ──────────────────────────────────────────
+     --font-display : titres, chiffres clés, signature de marque (700/800/900)
+     --font-sans    : tout le reste — UI, corps, labels (400/500/600/700)    */
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-sans:    'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* ── Échelle typographique — base 16px, 10 crans, aucune valeur hors liste ── */
+  --fs-1:  0.6875rem;  /* 11px — micro-label capitales, badge, légende */
+  --fs-2:  0.75rem;    /* 12px — méta, sous-titre de liste */
+  --fs-3:  0.8125rem;  /* 13px — texte secondaire */
+  --fs-4:  0.875rem;   /* 14px — texte courant, bouton */
+  --fs-5:  1rem;       /* 16px — texte d'accent, champ de saisie (anti-zoom iOS) */
+  --fs-6:  1.25rem;    /* 20px — titre de carte */
+  --fs-7:  1.5rem;     /* 24px — titre de section */
+  --fs-8:  2rem;       /* 32px — chiffre clé, titre d'écran */
+  --fs-9:  2.5rem;     /* 40px — hero mobile */
+  --fs-10: 3rem;       /* 48px — hero desktop */
+
+  /* ── Graisses ── (DM Sans chargé 400→700 : ne jamais demander 800/900 en sans) */
+  --fw-regular:  400;
+  --fw-medium:   500;
+  --fw-semibold: 600;
+  --fw-bold:     700;
+  --fw-display:  800;  /* Playfair uniquement */
+  --fw-black:    900;  /* Playfair uniquement */
+
+  /* ── Interlignes ── */
+  --lh-display: 1;
+  --lh-tight:   1.15;
+  --lh-snug:    1.3;
+  --lh-normal:  1.5;
+  --lh-relaxed: 1.6;
+
+  /* ── Interlettrages ── */
+  --ls-display: -0.02em;
+  --ls-tight:   -0.01em;
+  --ls-normal:  0;
+  --ls-wide:    0.06em;
+  --ls-label:   0.14em;  /* capitales espacées */
+
+  /* Radii */
+  /* Un rayon pour les surfaces (--radius), un pour les contrôles
+     (--radius-bouton) : les deux sont courts et de la même famille, pour que
+     rien ne paraisse arbitraire. --radius-sm est réservé aux champs de saisie,
+     --radius-xl aux grandes surfaces pleine largeur (feuille modale, en-tête).
+     --radius-pill ne sert plus qu'à deux choses : les micro-étiquettes qu'on
+     ne clique pas (statut, type de lieu), trop petites pour qu'un rayon se
+     lise, et la barre de navigation flottante, qui est une forme.
+     Pour retrouver les boutons en gélule : --radius-bouton: 999px.
+     Pour retrouver les cartes très arrondies : --radius: 18px.
+     Ne pas introduire de valeur intermédiaire : c'est ce qui avait produit
+     quatre rayons de carte différents, dont des cartes carrées.            */
+  --radius:    12px;
+  --radius-sm: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-bouton: 10px;
+  --radius-pill: 999px;
+
+  /* Élévation douce stratifiée */
+  --shadow-xs: 0 1px 2px rgba(28,25,22,.05);
+  --shadow-sm: 0 1px 2px rgba(28,25,22,.05), 0 3px 8px rgba(28,25,22,.05);
+  --shadow:    0 2px 4px rgba(28,25,22,.04), 0 10px 24px rgba(28,25,22,.08);
+  --shadow-lg: 0 6px 16px rgba(28,25,22,.07), 0 22px 48px rgba(28,25,22,.12);
+
+  /* Compat : ancienne variable bordure */
+  --border: 1px solid var(--gris-clair);
+
+  --nav-h: 78px;
+
+  /* ── Gouttiere horizontale ──────────────────────────────────────────────
+     Un seul jeton pour le retrait lateral du contenu. Tout ce qui doit
+     toucher le bord de l'ecran utilise .bleed, jamais une marge negative
+     ecrite a la main (c'est ce qui laissait un liseré de 2px).           */
+  --gutter: 22px;
+
+  /* ── Icônes ─────────────────────────────────────────────────────────────
+     Principe emprunté aux SF Symbols : une icône se règle sur le texte
+     qu'elle accompagne — même taille optique, même couleur, même trait.
+     Une seule épaisseur pour toute l'application, trois tailles.        */
+  /* Cible tactile minimale : 44px (Apple HIG) / 48dp (Material).
+     Les commandes compactes gardent leur taille visuelle mais voient leur
+     zone cliquable étendue par un pseudo-élément — c'est la zone qui compte,
+     pas le dessin. Les boutons isolés, eux, font vraiment 44px.          */
+  --touch-min: 44px;
+
+  --icon-stroke: 1.75;
+  --icon-sm: 16px;   /* accompagne --fs-1 / --fs-2 */
+  --icon-md: 20px;   /* accompagne --fs-3 / --fs-4 */
+  --icon-lg: 24px;   /* accompagne --fs-5 / --fs-6 */
 }
 
 /* ── Dark mode ──────────────────────────────────────────────────────────── */
 [data-theme="dark"] {
-  --bg: #121212;
-  --noir: #F2EDE3;
-  --blanc: #1E1E1E;
-  --gris-clair: #2A2A2A;
-  --gris: #9A9A9A;
-  --gris-fonce: #CCCCCC;
-  --bleu-clair: #1A1A3E;
-  --rouge-clair: #3E1A1A;
-  --lime-clair: #1E3E1A;
-  --shadow: 4px 4px 0px #000;
-  --shadow-sm: 2px 2px 0px #000;
+  /* --sur-media n'est volontairement PAS redéfini : il doit rester blanc. */
+  --bg: #16130F;
+  --blanc: #211D18;
+  --surface-2: #1B1813;
+  --noir: #F3EEE3;
+  --gris-fonce: #C9C1B2;
+  --gris: #8E8576;
+  --gris-clair: #322C24;
+  --line-2: #3D362C;
+  --rouge-clair: #3A201A;
+  --bleu-clair: #1E1B36;
+  --lime-clair: #322A18;
+  --orange-clair: #33220F;
+  /* Sur fond sombre la teinte s'assombrit : le texte doit s'éclaircir,
+     sinon les badges retombent à 2.2:1. */
+  --succes:        #7FC99A;
+  --succes-clair:  #14261A;
+  --danger:        #F29384;
+  --danger-clair:  #2E1512;
+  --alerte:        #E0B25C;
+  --alerte-clair:  #2B2008;
+  --sur-rouge-clair:  #E5674F;
+  --sur-bleu-clair:   #827BD4;
+  --sur-lime-clair:   #BC8825;
+  --sur-orange-clair: #D98A45;
+  --shadow-xs: 0 1px 2px rgba(0,0,0,.4);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.4), 0 3px 8px rgba(0,0,0,.3);
+  --shadow:    0 2px 4px rgba(0,0,0,.4), 0 10px 24px rgba(0,0,0,.4);
+  --shadow-lg: 0 6px 16px rgba(0,0,0,.5), 0 22px 48px rgba(0,0,0,.5);
 }
-[data-theme="dark"] body { color: #F2EDE3; }
+[data-theme="dark"] body { color: var(--noir); }
 [data-theme="dark"] img.logo-dark-invert { filter: invert(1); }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { font-size: 16px; scroll-behavior: smooth; }
+/* La feuille de l'auteur passe devant celle du navigateur : sans ce filet,
+   tout élément à qui on donne un display explicite (.interest-chip,
+   .interest-tag, .squad-card…) ignore purement et simplement l'attribut
+   hidden, et « masquer » ne masque rien. */
+[hidden] { display: none !important; }
+
+html { font-size: var(--fs-5); scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 
 /* ── Accessibilité ───────────────────────────────────────────────────────── */
-
-/* Skip navigation — visible uniquement au focus clavier */
 .skip-nav {
-  position: absolute;
-  top: -100px;
-  left: 8px;
-  z-index: 9999;
-  background: var(--bleu);
-  color: #fff;
-  padding: 10px 18px;
-  font-weight: 700;
-  font-size: 14px;
-  text-decoration: none;
-  border: 2px solid #fff;
-  transition: top 0.15s;
+  position: absolute; top: -100px; left: 8px; z-index: 9999;
+  background: var(--bleu); color: #fff; padding: 10px 18px;
+  font-weight: var(--fw-bold); font-size: var(--fs-4); text-decoration: none;
+  border-radius: var(--radius-sm); transition: top 0.15s;
 }
 .skip-nav:focus { top: 8px; }
 
-/* Classe utilitaire screen-reader only */
 .sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
 
-/* Focus visible — clavier uniquement, pas souris */
-:focus-visible {
-  outline: 3px solid var(--bleu);
-  outline-offset: 3px;
-  border-radius: 2px;
-}
-/* Annule l'outline natif (remplacé par :focus-visible) */
+:focus-visible { outline: 2px solid var(--bleu); outline-offset: 2px; border-radius: 4px; }
 :focus:not(:focus-visible) { outline: none; }
-
-/* Boutons et nav items : focus explicite */
-.btn:focus-visible,
-.nav-item:focus-visible,
-.pill:focus-visible,
-a:focus-visible {
-  outline: 3px solid var(--bleu);
-  outline-offset: 3px;
+.btn:focus-visible, .nav-item:focus-visible, .pill:focus-visible, a:focus-visible {
+  outline: 2px solid var(--bleu); outline-offset: 2px;
 }
 
-/* ── Préférence mouvement réduit ─────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important; scroll-behavior: auto !important;
   }
 }
 
 /* ── SPA Transitions ─────────────────────────────────────────────────────── */
-.app-shell {
-  will-change: transform, opacity;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
+/* will-change: transform faisait de .app-shell le bloc conteneur de ses
+   descendants en position: fixed — une fenêtre modale placée dans la
+   coquille se retrouvait cadrée sur la colonne, décalée de plusieurs
+   centaines de pixels au lieu de couvrir l'écran. Rien ne transforme jamais
+   .app-shell : seule son opacité varie pendant une navigation, et
+   will-change: opacity ne crée pas ce bloc conteneur. */
+.app-shell { will-change: opacity; }
 body { overflow-x: hidden; }
-
-/* Prevent flash on tap (mobile) */
 * { -webkit-tap-highlight-color: transparent; }
-
-/* Bottom nav tap feedback */
-.nav-item { transition: opacity 120ms ease; }
-.nav-item:active { opacity: 0.6; }
+.nav-item { transition: color 120ms ease; }
 
 body {
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   background: var(--bg);
   color: var(--noir);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01" on, "cv01" on;
 }
 
-/* ─── Typography ─── */
+/* ─── Typographie ─── */
 .display {
-  font-family: 'Playfair Display', serif;
-  font-weight: 900;
-  line-height: 1.0;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+  font-weight: var(--fw-black); line-height: var(--lh-display); letter-spacing: var(--ls-display);
 }
+/* La couleur est héritée : sur fond clair le titre reste à l'encre, sur une
+   photo ou un aplat de marque il suit la couleur posée par le parent. Le rouge
+   ne sert plus qu'à ce qui se clique. */
 .display-italic {
-  font-family: 'Playfair Display', serif;
-  font-weight: 700;
-  font-style: italic;
-  color: var(--rouge);
-  line-height: 1.0;
+  font-family: var(--font-display);
+  font-weight: var(--fw-display); font-style: italic; color: inherit; line-height: var(--lh-display); letter-spacing: var(--ls-tight);
 }
 .label {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-label); text-transform: uppercase;
 }
+
+/* Un titre de page est un <h1>, pas une suite de <div> : sans lui il n'existe
+   aucun plan de page pour un lecteur d'ecran, et la navigation par titres — le
+   principal mode de deplacement — ne fonctionne pas. Le <h1> ne porte aucun
+   style propre : ce sont ses lignes (.display, .display-italic) qui dessinent,
+   exactement comme avant. */
+h1.titre-page {
+  margin: 0; font: inherit; font-weight: inherit; letter-spacing: inherit;
+}
+
+/* ── Roles typographiques ────────────────────────────────────────────────
+   Toute nouvelle page doit piocher ici plutot que de redeclarer une taille.
+   Regle du systeme : la serif (--font-display) ne sert QUE aux titres et aux
+   chiffres cles ; tout le reste est en --font-sans, plafonne a 700.        */
+.t-hero {
+  font-family: var(--font-display); font-weight: var(--fw-black);
+  font-size: var(--fs-9); line-height: var(--lh-display); letter-spacing: var(--ls-display);
+}
+.t-title {
+  font-family: var(--font-display); font-weight: var(--fw-black);
+  font-size: var(--fs-8); line-height: var(--lh-display); letter-spacing: var(--ls-display);
+}
+.t-section {
+  font-family: var(--font-display); font-weight: var(--fw-display);
+  font-size: var(--fs-7); line-height: var(--lh-tight); letter-spacing: var(--ls-tight);
+}
+.t-card-title {
+  font-family: var(--font-display); font-weight: var(--fw-black);
+  font-size: var(--fs-6); line-height: var(--lh-tight); letter-spacing: var(--ls-tight);
+}
+.t-metric {
+  font-family: var(--font-display); font-weight: var(--fw-black);
+  font-size: var(--fs-8); line-height: var(--lh-display); letter-spacing: var(--ls-display);
+  font-variant-numeric: tabular-nums;
+}
+.t-body {
+  font-family: var(--font-sans); font-weight: var(--fw-regular);
+  font-size: var(--fs-4); line-height: var(--lh-normal); letter-spacing: var(--ls-normal);
+}
+.t-body-lg {
+  font-family: var(--font-sans); font-weight: var(--fw-regular);
+  font-size: var(--fs-5); line-height: var(--lh-relaxed); letter-spacing: var(--ls-normal);
+}
+.t-meta {
+  font-family: var(--font-sans); font-weight: var(--fw-semibold);
+  font-size: var(--fs-2); line-height: var(--lh-snug); letter-spacing: var(--ls-normal);
+  color: var(--gris-fonce);
+}
+.t-caption {
+  font-family: var(--font-sans); font-weight: var(--fw-medium);
+  font-size: var(--fs-3); line-height: var(--lh-snug); color: var(--gris-fonce);
+}
+.t-overline {
+  font-family: var(--font-sans); font-weight: var(--fw-bold);
+  font-size: var(--fs-1); letter-spacing: var(--ls-label); text-transform: uppercase;
+  color: var(--gris-fonce);
+}
+/* Les chiffres qui defilent ou s'alignent en colonne ne doivent pas danser */
+.t-metric, .value, .amount-value, .ps-value, .event-reduction,
+.school-pct, .squad-count { font-variant-numeric: tabular-nums; }
+
+/* ─── Icônes ─── */
+/* Toutes les icônes de l'app sont dessinées sur la grille 24×24 (style
+   Feather/Lucide). Normaliser ici évite de reprendre 61 balises une par une :
+   l'attribut stroke-width du SVG perd toujours face à la règle CSS.        */
+svg[viewBox="0 0 24 24"] {
+  stroke-width: var(--icon-stroke);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.icon {
+  width: var(--icon-md); height: var(--icon-md);
+  flex-shrink: 0; fill: none; stroke: currentColor;
+  vertical-align: -0.15em;
+}
+.icon-sm { width: var(--icon-sm); height: var(--icon-sm); }
+.icon-lg { width: var(--icon-lg); height: var(--icon-lg); }
+/* Libellé + icône : l'icône s'aligne sur la ligne de base, pas sur la boîte. */
+.with-icon { display: inline-flex; align-items: center; gap: 8px; }
 
 /* ─── Layout ─── */
 .app-shell {
-  max-width: 430px;
-  margin: 0 auto;
-  min-height: 100vh;
-  position: relative;
-  padding-bottom: var(--nav-h);
-  background: var(--bg);
+  max-width: 440px; margin: 0 auto; min-height: 100vh; position: relative;
+  padding-bottom: calc(var(--nav-h) + 16px); background: var(--bg);
+}
+.page-header  { padding: 24px var(--gutter) 12px; }
+.page-content { padding: 0 var(--gutter) 24px; }
+
+/* Plein-bord : annule exactement la gouttiere, quelle que soit sa valeur */
+.bleed {
+  margin-left: calc(var(--gutter) * -1); margin-right: calc(var(--gutter) * -1);
+  padding-left: var(--gutter); padding-right: var(--gutter);
 }
 
-.page-header {
-  padding: 24px 20px 16px;
-}
-
-.page-content {
-  padding: 0 20px 24px;
-}
-
-/* ─── Bottom Nav ─── */
+/* ─── Bottom Nav (flottante) ─── */
 .bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 430px;
-  height: var(--nav-h);
-  background: var(--noir);
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  z-index: 100;
-  border-top: 1px solid #333;
+  position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+  width: calc(100% - 28px); max-width: 412px; height: 62px;
+  background: rgba(28,25,22,.92); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  display: flex; align-items: center; justify-content: space-around;
+  z-index: 100; border-radius: var(--radius-pill); box-shadow: var(--shadow-lg);
+  padding: 0 8px;
 }
-
 .nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  text-decoration: none;
-  color: var(--gris);
-  transition: color 0.15s;
-  padding: 8px 12px;
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  text-decoration: none; color: rgba(243,238,227,.5); transition: color 0.15s;
+  padding: 8px 0; min-height: var(--touch-min); justify-content: center; position: relative;
 }
-.nav-item.active, .nav-item:hover { color: var(--blanc); }
+.nav-item.active, .nav-item:hover { color: #fff; }
+.nav-item.active::before {
+  content: ''; position: absolute; top: -1px; width: 5px; height: 5px;
+  border-radius: 50%; background: var(--lime);
+}
 .nav-item span {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-wide); text-transform: uppercase;
 }
-.nav-icon { font-size: 18px; line-height: 1; }
+.nav-icon { font-size: var(--fs-6); line-height: var(--lh-display); }
+.nav-item svg { width: 21px; height: 21px; }
+
+/* Les pages de detail portent le rail uniquement sur ordinateur : sur
+   telephone elles gardent leur fleche retour, sans barre d'onglets. */
+.nav-ordinateur { display: none; }
 
 /* ─── Cards ─── */
 .card {
-  background: var(--blanc);
-  border-radius: var(--radius);
-  overflow: hidden;
-  margin-bottom: 12px;
-  border: var(--border);
-  box-shadow: var(--shadow);
+  background: var(--blanc); border-radius: var(--radius); overflow: hidden;
+  margin-bottom: 14px; border: 1px solid var(--gris-clair); box-shadow: var(--shadow-sm);
 }
-
-.card-rouge { background: var(--rouge); color: var(--blanc); }
-.card-bleu  { background: var(--bleu);  color: var(--blanc); }
-.card-lime  { background: var(--lime);  color: var(--noir);  }
-.card-noir  { background: var(--noir);  color: var(--blanc); }
-.card-orange { background: var(--orange); color: var(--blanc); }
+.card-rouge  { background: linear-gradient(155deg,#E85838,#C5371C); color: #fff; border: none; }
+/* Conservées pour les usages ponctuels, mais plus employées en grandes tuiles
+   côte à côte : une page n'a qu'un seul accent, et c'est le rouge. */
+.card-bleu   { background: linear-gradient(155deg,#5A50D2,#392FA0); color: #fff; border: none; }
+.card-lime   { background: linear-gradient(155deg,#F2BE55,#DA9C2C); color: var(--sur-media-encre); border: none; }
+/* Tuile chiffrée sobre : fond de surface, chiffre à l'encre, intitulé en gris. */
+.card-neutre {
+  background: var(--blanc); color: var(--noir);
+  border: 1px solid var(--line-2); box-shadow: var(--shadow-xs);
+}
+.card-neutre .ps-label, .card-neutre .label { color: var(--gris); }
+.card-noir   { background: linear-gradient(160deg,#26221E,#161310); color: #F3EEE3; border: none; }
+.card-orange { background: linear-gradient(155deg,#F0913E,#D86C1E); color: #fff; border: none; }
 
 /* ─── Stat Cards ─── */
-.stat-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 9px; margin-bottom: 14px; }
 .stat-card {
-  border-radius: var(--radius);
-  padding: 14px 12px;
-  border: var(--border);
-  box-shadow: var(--shadow);
+  border-radius: var(--radius); padding: 14px 12px;
+  border: 1px solid var(--gris-clair); box-shadow: var(--shadow-sm); background: var(--blanc);
 }
-
 .stat-card .label { opacity: 0.7; margin-bottom: 6px; }
-
-.stat-card .value {
-  font-family: 'Playfair Display', serif;
-  font-weight: 900;
-  font-size: 2rem;
-  line-height: 1;
-}
-
-.stat-card .sub {
-  font-size: 11px;
-  margin-top: 4px;
-  opacity: 0.7;
-}
+.stat-card .value { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-8); line-height: var(--lh-display); }
+.stat-card .sub { font-size: var(--fs-1); margin-top: 4px; opacity: 0.7; }
 
 /* ─── Event Cards ─── */
 .event-card {
-  border-radius: var(--radius);
-  overflow: hidden;
-  margin-bottom: 12px;
-  position: relative;
-  border: var(--border);
-  box-shadow: var(--shadow);
+  border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; position: relative;
+  border: 1px solid var(--gris-clair); box-shadow: var(--shadow);
 }
-
 .event-card-flash {
-  background: var(--rouge);
-  color: var(--blanc);
-  padding: 20px;
+  background: linear-gradient(155deg,#E85838,#C5371C); color: #fff; padding: 22px;
+  border: none; box-shadow: 0 12px 34px -10px rgba(200,51,28,.55);
 }
-
 .event-card-flash .flash-badge {
-  display: inline-block;
-  background: var(--blanc);
-  color: var(--rouge);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  padding: 3px 8px;
-  border-radius: 2px;
-  margin-bottom: 12px;
+  display: inline-block; background: rgba(255,255,255,.2); color: #fff;
+  font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-wide); text-transform: uppercase;
+  padding: 4px 10px; border-radius: var(--radius-pill); margin-bottom: 0;
 }
-
-.event-card-regular {
-  background: var(--blanc);
-  padding: 16px;
-}
-
+.event-card-regular { background: var(--blanc); padding: 18px; }
 .event-meta {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  opacity: 0.6;
-  margin-bottom: 6px;
+  font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-wide); text-transform: uppercase;
+  color: var(--gris); margin-bottom: 6px;
 }
-
 .event-title {
-  font-family: 'Playfair Display', serif;
-  font-weight: 700;
-  font-size: 1.4rem;
-  line-height: 1.1;
-  margin-bottom: 6px;
+  font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-7);
+  line-height: var(--lh-display); letter-spacing: var(--ls-display); margin-bottom: 6px;
 }
-
-.event-lieu {
-  font-size: 12px;
-  opacity: 0.65;
-  margin-bottom: 12px;
-}
-
-.event-reduction {
-  font-size: 2rem;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.event-places {
-  font-size: 12px;
-  margin-top: 6px;
-  opacity: 0.8;
-}
+.event-lieu { font-size: var(--fs-2); color: var(--gris-fonce); margin-bottom: 12px; }
+.event-reduction { font-family: var(--font-display); font-size: var(--fs-8); font-weight: var(--fw-black); line-height: var(--lh-display); }
+.event-places { font-size: var(--fs-2); margin-top: 6px; opacity: 0.8; }
 
 .progress-bar {
-  height: 3px;
-  background: rgba(255,255,255,0.3);
-  border-radius: 2px;
-  margin-top: 8px;
-  overflow: hidden;
+  height: 6px; background: rgba(255,255,255,0.25); border-radius: var(--radius-pill);
+  margin-top: 8px; overflow: hidden;
 }
-.progress-bar-fill {
-  height: 100%;
-  background: var(--blanc);
-  border-radius: 2px;
-  transition: width 0.3s;
-}
-.progress-bar-fill.dark { background: var(--noir); }
+.progress-bar-fill { height: 100%; background: #fff; border-radius: var(--radius-pill); transition: width 0.5s cubic-bezier(.2,.8,.2,1); }
+.progress-bar-fill.dark { background: var(--sur-media-encre); }
+.event-card-regular .progress-bar { background: var(--gris-clair); }
 
-/* ─── Buttons ─── */
+/* ─── Type d'établissement : codage couleur ─────────────────────────────
+   Le marqueur .type-<type> est posé sur les cartes depuis l'origine mais
+   ne produisait rien. Registre volontairement discret : la couleur teinte
+   la ligne de méta et une pastille, jamais le fond de la carte.          */
+.type-bar       { --accent: var(--bleu);        --accent-tint: var(--bleu-clair); }
+.type-boite     { --accent: var(--rouge);       --accent-tint: var(--rouge-clair); }
+.type-resto     { --accent: var(--orange-deep); --accent-tint: var(--orange-clair); }
+.type-afterwork { --accent: var(--lime-deep);   --accent-tint: var(--lime-clair); }
+
+[data-theme="dark"] .type-bar       { --accent: var(--sur-bleu-clair); }
+[data-theme="dark"] .type-boite     { --accent: var(--sur-rouge-clair); }
+[data-theme="dark"] .type-resto     { --accent: var(--sur-orange-clair); }
+[data-theme="dark"] .type-afterwork { --accent: var(--sur-lime-clair); }
+
+.event-card-regular[class*="type-"] .event-meta { color: var(--accent); }
+.event-card-regular[class*="type-"] .event-meta::before {
+  content: ''; display: inline-block; width: 6px; height: 6px;
+  border-radius: 50%; background: var(--accent);
+  margin-right: 7px; vertical-align: 0.1em;
+}
+
+/* ─── Boutons ─── */
+/* Filet de sécurité : dans cette application un contrôle interactif est une
+   pilule. Sans cette règle, tout bouton écrit à la main sans border-radius
+   réapparaît en angles vifs — c'est ce qui avait produit 15 boutons carrés
+   au milieu d'une interface entièrement arrondie.                        */
+/* Meme raison que pour les boutons : un champ ecrit hors de .form-group
+   n'heritait d'aucun rayon et repartait en angles vifs. */
+input:not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]),
+select, textarea {
+  border-radius: var(--radius-sm);
+}
+
+button, input[type="submit"], input[type="button"] {
+  border-radius: var(--radius-bouton);
+  /* Sans cela, un bouton sans couleur explicite prend le noir par défaut du
+     navigateur : illisible en thème sombre, et le defaut se repete a chaque
+     nouveau bouton ecrit a la main. */
+  color: inherit;
+  font-family: inherit;
+}
 .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-family: 'DM Sans', sans-serif;
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.05em;
-  padding: 12px 20px;
-  border-radius: var(--radius);
-  border: var(--border);
-  box-shadow: var(--shadow-sm);
-  cursor: pointer;
-  text-decoration: none;
-  transition: transform 0.1s, box-shadow 0.1s;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: var(--font-sans); font-weight: var(--fw-bold); font-size: var(--fs-4); letter-spacing: var(--ls-normal);
+  padding: 13px 22px; min-height: var(--touch-min); border-radius: var(--radius-bouton); border: 1px solid transparent;
+  cursor: pointer; text-decoration: none;
+  transition: transform 0.12s ease, box-shadow 0.18s ease, background 0.18s ease, opacity 0.18s;
   white-space: nowrap;
 }
-.btn:active { transform: translate(2px, 2px); box-shadow: none; }
-.btn-primary { background: var(--noir); color: var(--blanc); }
-.btn-rouge   { background: var(--rouge); color: var(--blanc); }
-.btn-bleu    { background: var(--bleu);  color: var(--blanc); }
-.btn-lime    { background: var(--lime);  color: var(--noir);  }
-.btn-outline { background: transparent; color: var(--noir); border: 2px solid var(--noir); }
-.btn-outline-blanc { background: transparent; color: var(--blanc); border: 2px solid var(--blanc); }
+.btn svg { width: 17px; height: 17px; }
+.btn:active { transform: translateY(1px) scale(0.99); }
+.btn-primary { background: var(--noir); color: var(--blanc); box-shadow: var(--shadow-sm); }
+.btn-primary:hover { box-shadow: var(--shadow); }
+/* Le coral pur ne donne que 4.07:1 avec du blanc : sous le seuil pour un
+   libellé de 14px. Le bouton prend donc la variante profonde (5.75:1) ;
+   --rouge reste la couleur de marque partout ailleurs. */
+.btn-rouge   { background: var(--rouge-deep); color: #fff; box-shadow: 0 6px 18px -6px rgba(187,54,25,.55); }
+.btn-bleu    { background: var(--bleu);  color: #fff; box-shadow: 0 6px 18px -6px rgba(74,64,194,.55); }
+.btn-lime    { background: var(--lime);  color: var(--sur-media-encre); box-shadow: 0 6px 18px -6px rgba(239,178,58,.5); }
+.btn-outline { background: var(--blanc); color: var(--noir); border: 1px solid var(--line-2); box-shadow: var(--shadow-xs); }
+.btn-outline:hover { border-color: var(--noir); }
+.btn-outline-blanc { background: rgba(255,255,255,.16); color: #fff; border: 1px solid rgba(255,255,255,.32); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 .btn-full    { width: 100%; }
-.btn:hover   { opacity: 0.88; }
-.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn:hover   { opacity: 0.95; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ─── Zone tactile étendue ───────────────────────────────────────────────
+   Une pilule de 36px reste visuellement juste, mais doit se laisser toucher
+   sur 44px. Le pseudo-élément déborde sans déplacer quoi que ce soit ; les
+   gouttières (8px et plus) évitent tout chevauchement entre voisins.     */
+.pill, .interest-tag, .squad-cta, .btn-follow-user, .btn-follow-etab, .type-toggle-btn {
+  position: relative;
+}
+.pill::after, .interest-tag::after, .squad-cta::after,
+.btn-follow-user::after, .btn-follow-etab::after, .type-toggle-btn::after {
+  content: ''; position: absolute; left: 0; right: 0;
+  top: 50%; transform: translateY(-50%);
+  height: var(--touch-min);
+}
+
+/* Liens d'action isolés : l'aspect reste celui d'un lien, la zone atteint 44px.
+   Ne concerne pas les liens au fil du texte, qui ne sont pas des cibles isolées. */
+.back, .auth-link a, .legal-links a, .lien-action,
+.hub-toggle a, .sidebar-link, .sidebar-venue a,
+.btn-report-user, .btn-block-user {
+  display: inline-flex; align-items: center;
+  min-height: var(--touch-min);
+}
+.legal-links { display: flex; gap: 16px; flex-wrap: wrap; }
+
+/* Bouton à icône seule : cible isolée, il fait réellement 44px. */
+.btn-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--touch-min); height: var(--touch-min);
+  border-radius: var(--radius-bouton); border: 1px solid var(--gris-clair);
+  background: var(--blanc); color: var(--gris-fonce);
+  cursor: pointer; padding: 0; flex-shrink: 0;
+  transition: background .16s ease, color .16s ease, border-color .16s ease;
+}
+.btn-icon:hover { border-color: var(--gris); color: var(--noir); }
+.btn-icon.danger { border-color: var(--rouge); color: var(--rouge); }
+.btn-icon.danger:hover { background: var(--rouge-clair); }
 
 /* ─── Filter Pills ─── */
 .filter-scroll {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding: 0 20px 16px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  display: flex; gap: 8px; overflow-x: auto; padding: 0 var(--gutter) 16px;
+  scrollbar-width: none; -ms-overflow-style: none;
 }
 .filter-scroll::-webkit-scrollbar { display: none; }
-
 .pill {
-  flex-shrink: 0;
-  padding: 8px 16px;
-  border-radius: var(--radius);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  border: var(--border);
-  box-shadow: var(--shadow-sm);
-  background: var(--blanc);
-  color: var(--noir);
-  cursor: pointer;
-  transition: transform 0.1s, box-shadow 0.1s, background 0.1s;
-  white-space: nowrap;
+  flex-shrink: 0; padding: 11px 17px; border-radius: var(--radius-bouton);
+  font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-normal); text-transform: none;
+  border: 1px solid var(--line-2); box-shadow: none; background: var(--blanc); color: var(--gris-fonce);
+  cursor: pointer; transition: all 0.16s ease; white-space: nowrap; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px;
 }
-.pill.active, .pill:hover {
-  background: var(--noir);
-  color: var(--blanc);
-}
-.pill:active {
-  transform: translate(2px, 2px);
-  box-shadow: none;
-}
+.pill:hover { border-color: var(--gris); color: var(--noir); }
+.pill.active { background: var(--noir); color: var(--blanc); border-color: var(--noir); }
+.pill:active { transform: scale(0.98); }
 
-/* ─── Squad Cards ─── */
+/* ─── Squad Cards ───────────────────────────────────────────
+   Le fond de la carte etait un aplat de marque pose en style en ligne, mais
+   les metadonnees gardaient leur gris de surface : --gris sur l'indigo, c'est
+   1.6:1, et le blanc sur --orange 2.42:1. Le type colore donc un rail, une
+   pastille, les initiales et le bouton — jamais le fond. La carte reste sur
+   --blanc, ou --noir et --gris-fonce gardent leur contraste dans les deux
+   themes, et --accent ne sert que la ou il est verifie a 4.5:1 minimum.   */
 .squad-card {
-  border-radius: var(--radius);
-  padding: 16px;
-  margin-bottom: 10px;
-  position: relative;
-  border: var(--border);
-  box-shadow: var(--shadow);
+  border-radius: var(--radius); padding: 18px 18px 18px 22px; margin-bottom: 14px; position: relative;
+  border: 1px solid var(--gris-clair); box-shadow: var(--shadow); background: var(--blanc);
+  color: var(--noir);
+  overflow: hidden;
+  --accent: var(--noir);
+  --accent-contraste: var(--blanc);
 }
+/* Le rail : la seule surface qui porte encore la couleur pleine. */
+.squad-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  background: var(--accent);
+}
+.squad-running { --accent: var(--noir);        --accent-contraste: var(--blanc); }
+.squad-velo    { --accent: var(--bleu);        --accent-contraste: #fff; }         /* 7.5:1  */
+.squad-muscu   { --accent: var(--lime-deep);   --accent-contraste: #fff; }         /* 5.27:1 */
+.squad-autre   { --accent: var(--orange-deep); --accent-contraste: #fff; }         /* 5.25:1 */
+/* En theme sombre la teinte doit s'eclaircir, et son texte s'assombrir :
+   --sur-media-encre ne bascule pas, c'est exactement ce qu'il faut ici. */
+[data-theme="dark"] .squad-velo  { --accent: var(--sur-bleu-clair);   --accent-contraste: var(--sur-media-encre); }
+[data-theme="dark"] .squad-muscu { --accent: var(--sur-lime-clair);   --accent-contraste: var(--sur-media-encre); }
+[data-theme="dark"] .squad-autre { --accent: var(--sur-orange-clair); --accent-contraste: var(--sur-media-encre); }
 
 .squad-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: rgba(0,0,0,0.15);
-  font-size: 10px;
-  font-weight: 700;
-  padding: 4px 8px;
-  border-radius: 100px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  position: absolute; top: 14px; right: 14px; background: var(--surface-2);
+  color: var(--gris-fonce); border: 1px solid var(--line-2);
+  font-size: var(--fs-1); font-weight: var(--fw-bold); padding: 4px 10px; border-radius: var(--radius-pill);
+  letter-spacing: var(--ls-wide); text-transform: uppercase;
 }
-
 .squad-type-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  opacity: 0.7;
-  margin-bottom: 4px;
+  font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-label); text-transform: uppercase;
+  color: var(--accent); margin-bottom: 4px; padding-right: 96px;
 }
-
+/* Meme pastille que sur les cartes evenement : la couleur se repete,
+   elle ne s'invente pas une seconde grammaire ici. */
+.squad-type-label::before {
+  content: ''; display: inline-block; width: 6px; height: 6px;
+  border-radius: 50%; background: var(--accent);
+  margin-right: 7px; vertical-align: 0.1em;
+}
 .squad-title {
-  font-family: 'Playfair Display', serif;
-  font-weight: 700;
-  font-size: 1.2rem;
-  margin-bottom: 4px;
-  padding-right: 70px;
+  font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-6);
+  letter-spacing: var(--ls-tight); margin-bottom: 4px; padding-right: 70px; color: var(--noir);
 }
-
-.squad-details {
-  font-size: 12px;
-  opacity: 0.7;
-  margin-bottom: 12px;
-}
-
-.squad-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.avatar-stack {
-  display: flex;
-}
+.squad-details { font-size: var(--fs-2); color: var(--gris-fonce); margin-bottom: 12px; }
+.squad-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 15px; border-top: 1px solid var(--gris-clair); }
+.avatar-stack { display: flex; }
 .avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 2px solid currentColor;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 700;
-  margin-left: -6px;
-  background: rgba(0,0,0,0.15);
+  width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: var(--fs-1); font-weight: var(--fw-display);
+  margin-left: -10px; background: var(--bleu); color: var(--sur-media); box-shadow: 0 0 0 2.5px var(--blanc);
 }
 .avatar:first-child { margin-left: 0; }
-.squad-count {
-  font-size: 12px;
-  font-weight: 700;
-  margin-left: 8px;
-}
-
+.avatar-accent { background: var(--accent); color: var(--accent-contraste); }
+.squad-count { font-size: var(--fs-3); font-weight: var(--fw-bold); margin-left: 9px; color: var(--gris-fonce); }
 .squad-cta {
-  font-size: 12px;
-  font-weight: 700;
-  padding: 8px 14px;
-  border-radius: var(--radius);
-  cursor: pointer;
-  border: var(--border);
-  box-shadow: var(--shadow-sm);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  transition: transform 0.1s, box-shadow 0.1s;
+  font-size: var(--fs-2); font-weight: var(--fw-bold); padding: 11px 17px; border-radius: var(--radius-pill);
+  cursor: pointer; border: 1px solid transparent; letter-spacing: var(--ls-normal); text-transform: none;
+  background: var(--noir); color: var(--blanc); transition: all 0.16s;
+  display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
 }
-.squad-cta:hover { opacity: 0.9; }
-.squad-cta:active { transform: translate(2px, 2px); box-shadow: none; }
+.squad-cta-accent { background: var(--accent); color: var(--accent-contraste); }
+.squad-cta-gerer  { background: var(--orange-deep); color: #fff; }
+/* Rejoint / Complet : un etat, pas une action. Il sort de la couleur au lieu
+   de garder un aplat de marque a demi efface par l'opacite du :disabled. */
+.squad-cta-etat {
+  background: var(--surface-2); color: var(--gris-fonce); border-color: var(--line-2);
+}
+.squad-cta:disabled { cursor: not-allowed; }
+.squad-cta-etat:disabled { opacity: 1; }
+.squad-cta:hover:not(:disabled) { opacity: 0.92; }
+.squad-cta:active:not(:disabled) { transform: scale(0.98); }
 
 /* ─── Wallet ─── */
-.wallet-amounts {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.amount-card {
-  border-radius: var(--radius);
-  padding: 16px;
-  border: var(--border);
-  box-shadow: var(--shadow);
-}
-
-.amount-card .label { margin-bottom: 6px; opacity: 0.7; }
-
-.amount-value {
-  font-family: 'Playfair Display', serif;
-  font-weight: 900;
-  font-size: 2.2rem;
-  line-height: 1;
-}
-
-.amount-sub {
-  font-size: 11px;
-  margin-top: 4px;
-  opacity: 0.6;
-}
+.wallet-amounts { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-bottom: 16px; }
+.amount-card { border-radius: var(--radius); padding: 17px; border: none; box-shadow: var(--shadow); }
+.amount-card .label { margin-bottom: 6px; opacity: 0.85; }
+.amount-value { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-8); line-height: var(--lh-display); }
+.amount-sub { font-size: var(--fs-2); margin-top: 4px; opacity: 0.85; }
 
 .qr-wrapper {
-  background: var(--blanc);
-  border-radius: var(--radius);
-  overflow: hidden;
-  margin-bottom: 12px;
-  border: var(--border);
-  box-shadow: var(--shadow);
+  background: var(--blanc); border-radius: var(--radius); overflow: hidden;
+  margin-bottom: 14px; border: 1px solid var(--gris-clair); box-shadow: var(--shadow);
 }
-
 .qr-header {
-  padding: 14px 16px 12px;
-  border-bottom: 1px solid var(--gris-clair);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  padding: 15px 17px; border-bottom: 1px dashed var(--line-2);
+  display: flex; align-items: center; justify-content: space-between;
 }
-
-.qr-name {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
+.qr-name { font-size: var(--fs-3); font-weight: var(--fw-bold); letter-spacing: var(--ls-normal); }
 .qr-body {
-  background: var(--rouge);
-  padding: 32px;
-  text-align: center;
-  cursor: pointer;
-  user-select: none;
+  background: var(--rouge); padding: 34px 20px; text-align: center; cursor: pointer; user-select: none;
+  min-height: 188px; display: grid; place-items: center;
 }
-
-.qr-body.revealed {
-  background: var(--blanc);
-  padding: 24px;
-}
-
-.qr-reveal-text {
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-size: 2rem;
-  color: var(--blanc);
-  line-height: 1.2;
-}
-
+.qr-body.revealed { background: var(--blanc); padding: 20px; }
+.qr-reveal-text { font-family: var(--font-display); font-style: italic; font-size: var(--fs-7); color: #fff; line-height: var(--lh-tight); }
 #qr-canvas { display: block; margin: 0 auto; }
 
 .pass-list-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 0;
-  border-top: 1px solid var(--gris-clair);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  display: flex; align-items: center; justify-content: space-between; padding: 14px 0;
+  border-top: 1px solid var(--gris-clair); font-size: var(--fs-1); font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-label); text-transform: uppercase; color: var(--gris);
 }
-
-.pass-item {
-  padding: 12px 0;
-  border-bottom: 1px solid var(--gris-clair);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.pass-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
+.pass-item { padding: 13px 0; border-bottom: 1px solid var(--gris-clair); display: flex; align-items: center; gap: 13px; }
+.pass-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 .pass-item-info { flex: 1; }
-.pass-item-name { font-size: 14px; font-weight: 600; }
-.pass-item-sub  { font-size: 11px; color: var(--gris); margin-top: 2px; }
-.pass-item-eco  { font-size: 14px; font-weight: 700; color: var(--rouge); }
+.pass-item-name { font-size: var(--fs-4); font-weight: var(--fw-semibold); }
+.pass-item-sub  { font-size: var(--fs-2); color: var(--gris); margin-top: 2px; }
+.pass-item-eco  { font-size: var(--fs-4); font-weight: var(--fw-bold); color: var(--rouge); }
 
-/* ─── Forms ─── */
-.form-group {
-  margin-bottom: 16px;
-}
+/* ─── Formulaires ─── */
+.form-group { margin-bottom: 16px; }
 .form-group label {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin-bottom: 6px;
-  color: var(--gris-fonce);
+  display: block; font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-label);
+  text-transform: uppercase; margin-bottom: 8px; color: var(--gris);
 }
-.form-group input,
-.form-group select,
-.form-group textarea {
-  width: 100%;
-  padding: 12px 14px;
-  border: var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 15px;
-  background: var(--blanc);
-  color: var(--noir);
-  transition: border-color 0.15s, box-shadow 0.15s;
-  outline: none; /* compensé par le border-color au :focus ci-dessous */
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%; padding: 14px 16px; border: 1.5px solid var(--line-2);
+  border-radius: var(--radius-sm); box-shadow: none;
+  font-family: var(--font-sans); font-size: var(--fs-5); background: var(--blanc); color: var(--noir);
+  transition: border-color 0.15s, box-shadow 0.15s; outline: none;
 }
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-  border-color: var(--bleu);
-  outline: 2px solid var(--bleu);
-  outline-offset: 2px;
+.form-group input::placeholder, .form-group textarea::placeholder { color: var(--gris); }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  border-color: var(--bleu); outline: none; box-shadow: 0 0 0 4px var(--bleu-clair);
 }
 .form-group textarea { resize: vertical; min-height: 80px; }
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+/* Precision sous un champ : en casse normale, contrairement a l'etiquette. */
+.aide-champ {
+  margin: 7px 0 0; font-size: var(--fs-1); line-height: var(--lh-normal);
+  color: var(--gris); text-transform: none; letter-spacing: 0;
 }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
 .form-error {
-  background: #fde8e6;
-  border: 1px solid var(--rouge);
-  color: var(--rouge);
-  padding: 12px 16px;
-  border-radius: var(--radius);
-  font-size: 14px;
-  margin-bottom: 16px;
+  background: var(--danger-clair); border: 1px solid var(--danger); color: var(--danger);
+  padding: 13px 16px; border-radius: var(--radius-sm); font-size: var(--fs-4); margin-bottom: 16px;
+}
+.form-success {
+  background: var(--succes-clair); border: 1px solid var(--succes); color: var(--succes);
+  padding: 13px 16px; border-radius: var(--radius-sm); font-size: var(--fs-4); margin-bottom: 16px;
 }
 
-.form-success {
-  background: #e8f5e9;
-  border: 1px solid #2e7d32;
-  color: #2e7d32;
-  padding: 12px 16px;
-  border-radius: var(--radius);
-  font-size: 14px;
-  margin-bottom: 16px;
+/* ─── Champ fichier ──────────────────────────────────────────────────────
+   Le bouton natif de <input type="file"> est dessine par le systeme
+   d'exploitation : impossible a styler, different sur chaque machine, et
+   il jure avec le reste. On le masque sans le retirer du DOM (il reste
+   accessible au clavier et aux lecteurs d'ecran) et on declenche le
+   selecteur par le <label>, qui lui se style librement.               */
+.champ-fichier { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.champ-fichier input[type="file"] {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
+.champ-fichier label.btn { cursor: pointer; margin: 0; }
+/* Le focus clavier arrive sur l'input masque : c'est le label qui doit
+   le montrer, sinon la navigation au clavier devient invisible. */
+.champ-fichier input[type="file"]:focus-visible + label.btn {
+  outline: 2px solid var(--bleu); outline-offset: 2px;
+}
+.champ-fichier .nom-fichier {
+  font-size: var(--fs-2); color: var(--gris-fonce);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 190px; min-width: 0;
+}
+.champ-fichier .nom-fichier.vide { color: var(--gris); }
+
+/* Case a cocher : la native est, elle aussi, dessinee par le systeme. */
+.case {
+  display: inline-flex; align-items: center; gap: 9px;
+  font-size: var(--fs-2); color: var(--gris-fonce);
+  cursor: pointer; min-height: var(--touch-min);
+}
+.case input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none;
+  width: 19px; height: 19px; margin: 0; flex-shrink: 0;
+  border: 1.5px solid var(--line-2); border-radius: 6px;
+  background: var(--blanc); cursor: pointer;
+  display: grid; place-content: center;
+  transition: background .15s ease, border-color .15s ease;
+}
+.case input[type="checkbox"]::before {
+  content: ''; width: 10px; height: 10px; transform: scale(0);
+  transition: transform .12s ease-in-out;
+  box-shadow: inset 1em 1em var(--sur-media);
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+.case input[type="checkbox"]:checked {
+  background: var(--rouge-deep); border-color: var(--rouge-deep);
+}
+.case input[type="checkbox"]:checked::before { transform: scale(1); }
+.case input[type="checkbox"]:focus-visible { outline: 2px solid var(--bleu); outline-offset: 2px; }
 
 /* ─── Auth Pages ─── */
 .auth-page {
-  min-height: 100vh;
-  display: grid;
-  grid-template-columns: 1fr;
-  align-items: center;
-  padding: 40px 20px;
-  max-width: 420px;
-  margin: 0 auto;
+  min-height: 100vh; display: grid; grid-template-columns: 1fr; align-items: center;
+  padding: 46px 24px; max-width: 440px; margin: 0 auto;
 }
-
-.auth-logo {
-  margin-bottom: 40px;
-}
-
-.brand {
-  font-family: 'DM Sans', sans-serif;
-  font-weight: 700;
-  font-size: 18px;
-  letter-spacing: -0.01em;
-  color: var(--noir);
-}
-.brand em {
-  font-style: italic;
-  color: var(--rouge);
-}
-
-.auth-headline {
-  margin-bottom: 32px;
-}
+.auth-logo { margin-bottom: 38px; }
+.brand { font-family: var(--font-sans); font-weight: var(--fw-bold); font-size: var(--fs-6); letter-spacing: var(--ls-tight); color: var(--noir); }
+.brand em { font-style: italic; font-family: var(--font-display); color: var(--rouge); }
+.auth-headline { margin-bottom: 30px; }
 
 .type-toggle {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0;
-  border: 2px solid var(--noir);
-  border-radius: var(--radius);
-  overflow: hidden;
-  margin-bottom: 24px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+  border: 1px solid var(--line-2); border-radius: var(--radius-pill); overflow: hidden;
+  margin-bottom: 24px; padding: 4px; background: var(--blanc);
 }
 .type-toggle-btn {
-  padding: 12px;
-  font-size: 13px;
-  font-weight: 700;
-  text-align: center;
-  cursor: pointer;
-  border: none;
-  background: var(--blanc);
-  color: var(--noir);
-  transition: all 0.15s;
-  letter-spacing: 0.04em;
+  padding: 11px; font-size: var(--fs-3); font-weight: var(--fw-bold); text-align: center; cursor: pointer;
+  border: none; border-radius: var(--radius-pill); background: transparent; color: var(--gris-fonce);
+  transition: all 0.18s;
 }
-.type-toggle-btn.active {
-  background: var(--noir);
-  color: var(--blanc);
-}
+.type-toggle-btn.active { background: var(--noir); color: var(--blanc); }
 
-.auth-link {
-  text-align: center;
-  margin-top: 20px;
-  font-size: 14px;
-  color: var(--gris);
-}
-.auth-link a {
-  color: var(--bleu);
-  font-weight: 600;
-  text-decoration: none;
-}
+.auth-link { text-align: center; margin-top: 20px; font-size: var(--fs-4); color: var(--gris); }
+.auth-link a { color: var(--bleu); font-weight: var(--fw-bold); text-decoration: none; }
 
 /* ─── Partner Dashboard ─── */
-.partner-shell {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  min-height: 100vh;
-}
-
+.partner-shell { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
 .partner-sidebar {
-  background: var(--noir);
-  color: var(--blanc);
-  padding: 28px 24px;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow-y: auto;
+  background: linear-gradient(160deg,#26221E,#161310); color: #F3EEE3; padding: 28px 22px;
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
 }
-
-.sidebar-brand {
-  margin-bottom: 48px;
-}
-
-.sidebar-nav { display: flex; flex-direction: column; gap: 4px; }
-
+.sidebar-brand { margin-bottom: 42px; }
+.sidebar-nav { display: flex; flex-direction: column; gap: 5px; }
 .sidebar-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  border-radius: var(--radius);
-  color: rgba(255,255,255,0.6);
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.15s;
+  display: flex; align-items: center; gap: 11px; padding: 12px 14px; border-radius: var(--radius-sm);
+  color: rgba(243,238,227,.6); text-decoration: none; font-size: var(--fs-4); font-weight: var(--fw-semibold); transition: all 0.15s;
 }
-.sidebar-link:hover, .sidebar-link.active {
-  background: rgba(255,255,255,0.1);
-  color: var(--blanc);
-}
-.sidebar-link .icon { font-size: 16px; }
-
-.sidebar-venue {
-  margin-top: auto;
-  padding-top: 24px;
-  border-top: 1px solid rgba(255,255,255,0.1);
-}
+.sidebar-link:hover, .sidebar-link.active { background: rgba(243,238,227,.12); color: #fff; }
+.sidebar-link .icon { font-size: var(--fs-5); }
+.sidebar-venue { margin-top: auto; padding-top: 24px; border-top: 1px solid rgba(243,238,227,.12); }
 .sidebar-venue-name {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--gris);
-  margin-bottom: 2px;
+  font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-label); text-transform: uppercase;
+  color: rgba(243,238,227,.5); margin-bottom: 3px;
 }
-.sidebar-venue-city { font-size: 13px; color: rgba(255,255,255,0.8); }
+.sidebar-venue-city { font-size: var(--fs-3); color: rgba(243,238,227,.8); }
 
-.partner-main {
-  padding: 40px 48px;
-  overflow-y: auto;
+.partner-main { padding: 40px 48px; overflow-y: auto; background: var(--bg); }
+
+/* ─── Back-office fondateurs ──────────────────────────────────────
+   Reprend la coquille partenaire (.partner-shell) : un back-office interne
+   n'a aucune raison d'inventer une troisieme grammaire visuelle. Ce qui
+   suit ne couvre que ce que le tableau de bord ajoute — tuiles de chiffres,
+   filtres, bandeaux d'alerte, colonne d'edition.                          */
+
+/* Contenu principal + colonne d'edition collante. Sous 1100px la colonne
+   passe dessous et perd son position:sticky : une colonne collante dans une
+   pile verticale suit l'ecran en masquant ce qu'on lit juste au-dessus.  */
+.admin-2col {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+  gap: 22px; align-items: start;
+}
+.admin-2col > * { min-width: 0; }
+@media (max-width: 1100px) {
+  .admin-2col { grid-template-columns: 1fr; }
+  .admin-2col .admin-colle { position: static; }
 }
 
-.partner-header {
-  margin-bottom: 36px;
+/* Surface commune : un seul endroit ou regler le fond, le filet et l'ombre
+   des blocs du back-office. */
+.admin-carte {
+  background: var(--blanc); border: 1px solid var(--line-2);
+  border-radius: var(--radius); padding: 22px;
+}
+.admin-carte + .admin-carte { margin-top: 18px; }
+.admin-titre {
+  font-family: var(--font-display); font-weight: var(--fw-black);
+  font-size: var(--fs-6); margin-bottom: 16px;
 }
 
+/* Tuiles de chiffres. auto-fit plutot qu'un nombre de colonnes fixe : la
+   grille se reorganise seule du telephone au grand ecran. */
+.admin-tuiles {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px; margin-bottom: 26px;
+}
+.admin-tuile {
+  background: var(--blanc); border: 1px solid var(--line-2);
+  border-radius: var(--radius); box-shadow: var(--shadow-xs); padding: 18px 20px;
+}
+.admin-tuile dt {
+  font-size: var(--fs-1); font-weight: var(--fw-bold); text-transform: uppercase;
+  letter-spacing: var(--ls-label); color: var(--gris); margin-bottom: 6px;
+}
+.admin-tuile dd {
+  font-family: var(--font-display); font-weight: var(--fw-black);
+  font-size: var(--fs-8); line-height: var(--lh-display); color: var(--noir);
+}
+/* Les deux <dd> d'une tuile n'ont pas le meme role : le premier porte le
+   chiffre, le second la legende. Sans cette reprise, la legende heritait
+   de la serif d'affichage, du corps fs-8 et de la couleur du ton. */
+.admin-tuile .admin-tuile-sous {
+  font-family: var(--font-sans); font-weight: var(--fw-regular);
+  font-size: var(--fs-2); line-height: var(--lh-snug);
+  color: var(--gris); margin-top: 4px;
+}
+.admin-tuile.est-succes .admin-tuile-sous,
+.admin-tuile.est-alerte .admin-tuile-sous,
+.admin-tuile.est-danger .admin-tuile-sous,
+.admin-tuile.est-marque .admin-tuile-sous { color: var(--gris); }
+/* La couleur porte le ton de la valeur, jamais le fond : un tableau de bord
+   ou chaque tuile a son aplat devient illisible des la cinquieme. */
+.admin-tuile.est-succes dd { color: var(--succes); }
+.admin-tuile.est-alerte dd { color: var(--alerte); }
+.admin-tuile.est-danger dd { color: var(--danger); }
+.admin-tuile.est-marque dd { color: var(--sur-rouge-clair); }
+
+/* Barre de filtres. Les libelles sont des micro-etiquettes, comme partout
+   ailleurs dans l'application. */
+.admin-filtres {
+  display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 18px;
+}
+.admin-filtre { display: flex; flex-direction: column; gap: 5px; }
+.admin-filtre.est-large { flex: 1 1 220px; min-width: 0; }
+.admin-filtre > label {
+  font-size: var(--fs-1); font-weight: var(--fw-bold); text-transform: uppercase;
+  letter-spacing: var(--ls-wide); color: var(--gris);
+}
+.admin-filtre input, .admin-filtre select {
+  padding: 10px 14px; border: 1px solid var(--line-2); background: var(--blanc);
+  color: var(--noir); font-family: var(--font-sans); font-size: var(--fs-4); width: 100%;
+}
+.admin-filtres .btn { flex-shrink: 0; }
+.admin-lien-discret {
+  font-size: var(--fs-2); font-weight: var(--fw-bold); color: var(--sur-rouge-clair);
+  text-decoration: none; padding-bottom: 12px;
+}
+
+/* Bandeaux d'alerte. Chaque seuil de SL-07 declenche une action : le bandeau
+   est donc cliquable et mene a l'ecran ou l'on agit. */
+.admin-alertes { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+.admin-alerte {
+  display: block; border-radius: var(--radius); padding: 14px 18px;
+  text-decoration: none; border: 1px solid transparent;
+  background: var(--bleu-clair); color: var(--sur-bleu-clair); border-color: var(--bleu-clair);
+}
+.admin-alerte.est-alerte { background: var(--alerte-clair); color: var(--alerte); border-color: var(--alerte-clair); }
+.admin-alerte.est-danger { background: var(--danger-clair); color: var(--danger); border-color: var(--danger-clair); }
+.admin-alerte:hover { border-color: currentColor; }
+/* Deux <span> : le titre et l'action doivent s'empiler, sinon la consigne
+   se colle a la fin du titre et la phrase devient illisible. */
+.admin-alerte-titre { display: block; font-weight: var(--fw-bold); font-size: var(--fs-4); }
+.admin-alerte-action { display: block; font-size: var(--fs-2); margin-top: 3px; opacity: .85; }
+
+/* North Star : un seul chiffre, en grand, avec sa cible. */
+/* Bloc d'affirmation, pas une surface de l'application : il reste sombre
+   dans les deux themes, comme .profil-header. Avec --noir/--blanc il
+   s'inversait, et la piste de la jauge (un blanc translucide) disparaissait
+   sur le fond clair du theme sombre. */
+.admin-northstar {
+  background: linear-gradient(160deg, #26221E, #161310); color: #F3EEE3;
+  border-radius: var(--radius); padding: 26px 28px; margin-bottom: 24px;
+}
+.admin-northstar-label {
+  font-size: var(--fs-1); font-weight: var(--fw-bold); text-transform: uppercase;
+  letter-spacing: var(--ls-label); opacity: .6; margin-bottom: 8px;
+}
+.admin-northstar-valeur {
+  font-family: var(--font-display); font-weight: var(--fw-black);
+  font-size: var(--fs-10); line-height: var(--lh-display);
+}
+.admin-northstar-jauge {
+  height: 6px; background: rgba(243,238,227,.18); border-radius: var(--radius-pill);
+  margin-top: 16px; overflow: hidden;
+}
+.admin-northstar-jauge > span { display: block; height: 100%; background: var(--lime); border-radius: var(--radius-pill); }
+
+/* Pipeline : une ligne par etape, la barre dit la proportion et le nombre
+   reste ecrit — la longueur seule ne se lit pas au pixel pres. */
+.admin-etape {
+  display: flex; align-items: center; gap: 12px; padding: 9px 0;
+  text-decoration: none; color: inherit; border-bottom: 1px solid var(--gris-clair);
+}
+.admin-etape:hover { background: var(--surface-2); }
+.admin-etape-nom { flex: 0 0 130px; }
+.admin-etape-barre { flex: 1; height: 6px; background: var(--gris-clair); border-radius: var(--radius-pill); overflow: hidden; }
+.admin-etape-barre > span { display: block; height: 100%; }
+.admin-etape-nb { font-weight: var(--fw-bold); font-size: var(--fs-4); min-width: 3ch; text-align: right; }
+
+/* Graphique de tresorerie. Les barres se partagent la largeur disponible :
+   une largeur minimale fixe poussait le mois courant hors de l'ecran, et le
+   graphique s'ouvrait donc vide sur la seule colonne qui compte. */
+.admin-graph { display: flex; align-items: flex-end; gap: 6px; height: 170px; }
+.admin-graph-mois { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.admin-graph-barres { display: flex; align-items: flex-end; justify-content: center; gap: 3px; height: 140px; width: 100%; }
+.admin-graph-barres > span { width: 42%; max-width: 16px; border-radius: 3px 3px 0 0; }
+.admin-graph-recette { background: var(--succes); }
+.admin-graph-depense { background: var(--rouge-deep); }
+.admin-graph-mois small { font-size: var(--fs-1); color: var(--gris); white-space: nowrap; }
+.admin-graph-mois.est-courant small { color: var(--noir); font-weight: var(--fw-bold); }
+.admin-legende { display: flex; gap: 16px; font-size: var(--fs-2); color: var(--gris-fonce); flex-wrap: wrap; }
+.admin-legende span { display: inline-flex; align-items: center; gap: 6px; }
+.admin-legende i { width: 10px; height: 10px; border-radius: 2px; }
+
+.admin-tableau { background: var(--blanc); border: 1px solid var(--line-2); border-radius: var(--radius); overflow: hidden; }
+.admin-tableau-defilant { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.admin-vide { text-align: center; padding: 40px; color: var(--gris); }
+
+/* Pastille de statut : la couleur accompagne le mot, elle ne le remplace pas
+   — une information portee par la seule teinte disparait pour une personne
+   daltonienne. */
+.admin-pastille {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--fs-2); font-weight: var(--fw-bold); white-space: nowrap;
+}
+.admin-pastille::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+/* Encart de rappel des regles : du texte, pas un bloc d'alerte. */
+.admin-encart {
+  background: var(--surface-2); border: 1px solid var(--line-2); border-radius: var(--radius);
+  padding: 18px 20px; font-size: var(--fs-2); color: var(--gris-fonce); line-height: var(--lh-normal);
+}
+.admin-encart strong { color: var(--noir); }
+.partner-header { margin-bottom: 32px; }
 .partner-header .event-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--gris);
-  margin-bottom: 8px;
+  font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-label); text-transform: uppercase;
+  color: var(--gris); margin-bottom: 8px;
 }
+.partner-headline { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-10); line-height: var(--lh-display); letter-spacing: var(--ls-display); }
+/* Meme regle que .display-italic cote etudiant : l'italique porte l'accent,
+   pas la couleur. */
+.partner-headline em { font-style: italic; color: inherit; display: block; }
 
-.partner-headline {
-  font-family: 'Playfair Display', serif;
-  font-weight: 900;
-  font-size: 3.5rem;
-  line-height: 1.0;
-}
-.partner-headline em {
-  font-style: italic;
-  color: var(--rouge);
-  display: block;
-}
+.dashboard-grid { display: grid; grid-template-columns: 1fr 320px; gap: 22px; }
+.dashboard-left { display: flex; flex-direction: column; gap: 18px; }
+.dashboard-right { display: flex; flex-direction: column; gap: 18px; }
 
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 24px;
-}
-
-.dashboard-left { display: flex; flex-direction: column; gap: 20px; }
-.dashboard-right { display: flex; flex-direction: column; gap: 20px; }
-
-.partner-stat-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
+.partner-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .partner-stat-card {
-  border-radius: var(--radius);
-  padding: 20px;
-  border: var(--border);
-  box-shadow: var(--shadow);
+  border-radius: var(--radius); padding: 18px 20px;
+  border: 1px solid var(--gris-clair); box-shadow: var(--shadow-xs);
 }
-
-.partner-stat-card .ps-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-  opacity: 0.7;
-}
-
-.partner-stat-card .ps-value {
-  font-family: 'Playfair Display', serif;
-  font-weight: 900;
-  font-size: 3rem;
-  line-height: 1;
-}
-
-.partner-stat-card .ps-sub {
-  font-size: 12px;
-  margin-top: 6px;
-  opacity: 0.65;
-}
-
-.chart-card {
+/* fond blanc uniquement si la carte ne porte pas un fond de couleur (.card-*) */
+.partner-stat-card:not(.card-rouge):not(.card-bleu):not(.card-lime):not(.card-noir):not(.card-orange) {
   background: var(--blanc);
-  border-radius: var(--radius);
-  padding: 20px;
-  border: var(--border);
-  box-shadow: var(--shadow);
+}
+.partner-stat-card.card-rouge, .partner-stat-card.card-bleu,
+.partner-stat-card.card-noir, .partner-stat-card.card-orange { border: none; }
+.partner-stat-card .ps-label {
+  font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-label); text-transform: uppercase;
+  margin-bottom: 10px; color: var(--gris);
+}
+.partner-stat-card .ps-value { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-9); line-height: var(--lh-display); }
+.partner-stat-card .ps-sub { font-size: var(--fs-2); margin-top: 6px; color: var(--gris-fonce); }
+/* Sur un aplat de marque, le gris des intitules tombe sous le seuil de
+   lisibilite : on repasse sur l'encre claire prevue pour ces fonds. */
+.partner-stat-card.card-rouge .ps-label, .partner-stat-card.card-bleu .ps-label,
+.partner-stat-card.card-orange .ps-label, .partner-stat-card.card-noir .ps-label,
+.partner-stat-card.card-rouge .ps-sub, .partner-stat-card.card-bleu .ps-sub,
+.partner-stat-card.card-orange .ps-sub, .partner-stat-card.card-noir .ps-sub {
+  color: rgba(255,255,255,.82);
+}
+.partner-stat-card.card-lime .ps-label, .partner-stat-card.card-lime .ps-sub {
+  color: var(--lime-deep);
 }
 
-.chart-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
+.chart-card { background: var(--blanc); border-radius: var(--radius); padding: 20px; border: 1px solid var(--gris-clair); box-shadow: var(--shadow-xs); }
+.chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.chart-label { font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-label); text-transform: uppercase; color: var(--gris); }
+.chart-trend { font-size: var(--fs-4); font-weight: var(--fw-bold); color: var(--rouge); }
 
-.chart-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--gris);
-}
-
-.chart-trend {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--rouge);
-}
-
-/* Profil de salle panel */
 .salle-panel {
-  background: var(--bleu);
-  color: var(--blanc);
-  border-radius: var(--radius);
-  padding: 24px;
-  border: var(--border);
-  box-shadow: var(--shadow);
+  background: linear-gradient(155deg,#5A50D2,#392FA0); color: #fff; border-radius: var(--radius);
+  padding: 24px; border: none; box-shadow: var(--shadow);
 }
+.salle-panel .sp-label { font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-label); text-transform: uppercase; opacity: 0.8; margin-bottom: 12px; }
+.salle-panel .sp-title { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-8); line-height: var(--lh-display); margin-bottom: 4px; }
+.salle-panel .sp-title em { font-style: italic; color: var(--lime); }
 
-.salle-panel .sp-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  opacity: 0.7;
-  margin-bottom: 12px;
-}
-
-.salle-panel .sp-title {
-  font-family: 'Playfair Display', serif;
-  font-weight: 900;
-  font-size: 2rem;
-  line-height: 1.0;
-  margin-bottom: 4px;
-}
-.salle-panel .sp-title em {
-  font-style: italic;
-  color: var(--lime);
-}
-
-.school-bar {
-  margin-top: 20px;
-}
-
-.school-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.school-name {
-  font-size: 12px;
-  flex: 1;
-  opacity: 0.85;
-}
-
-.school-track {
-  flex: 2;
-  height: 4px;
-  background: rgba(255,255,255,0.2);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.school-fill {
-  height: 100%;
-  border-radius: 2px;
-}
-
-.school-pct {
-  font-size: 12px;
-  font-weight: 700;
-  width: 30px;
-  text-align: right;
-}
+.school-bar { margin-top: 20px; }
+.school-row { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
+.school-name { font-size: var(--fs-2); flex: 1; opacity: 0.9; }
+.school-track { flex: 2; height: 6px; background: rgba(255,255,255,0.22); border-radius: var(--radius-pill); overflow: hidden; }
+.school-fill { height: 100%; border-radius: var(--radius-pill); }
+.school-pct { font-size: var(--fs-2); font-weight: var(--fw-bold); width: 32px; text-align: right; }
 
 .conseil-card {
-  background: var(--noir);
-  color: var(--blanc);
-  border-radius: var(--radius);
-  padding: 16px;
-  font-size: 13px;
-  line-height: 1.5;
-  border: var(--border);
-  box-shadow: var(--shadow);
+  background: linear-gradient(160deg,#26221E,#161310); color: #F3EEE3; border-radius: var(--radius);
+  padding: 18px; font-size: var(--fs-3); line-height: var(--lh-normal); border: none; box-shadow: var(--shadow);
 }
-
 .conseil-card strong {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--lime);
-  margin-right: 6px;
+  font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-label); text-transform: uppercase;
+  color: var(--lime); margin-right: 6px;
 }
 
-/* ─── Partner Events Table ─── */
+/* ─── Tableaux (espace partenaire et back-office) ───────────────────────
+   Ordre important : les regles de bureau d'abord, la version telephone
+   ensuite. Elles etaient ecrites APRES le @media, donc le padding de bureau
+   (15px 12px) ecrasait celui des cartes (11px 0) : sur telephone chaque
+   cellule empilee gardait une gouttiere laterale de 12px qui n'avait plus
+   lieu d'etre, et le survol repeignait le fond malgre la regle contraire. */
 .events-table { width: 100%; border-collapse: collapse; }
+
 .events-table th {
-  text-align: left;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--gris);
-  padding: 0 12px 12px;
-  border-bottom: 2px solid var(--gris-clair);
+  text-align: left; font-size: var(--fs-1); font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-label); text-transform: uppercase; color: var(--gris);
+  /* Le padding haut valait zero : le libelle de colonne se collait au bord
+     du cadre, sans le moindre air, alors que les cellules en dessous
+     respiraient sur 15px. C'est ce decalage qu'on voyait sur chaque table. */
+  padding: 14px 16px; border-bottom: 1px solid var(--line-2); white-space: nowrap;
 }
 .events-table td {
-  padding: 14px 12px;
-  border-bottom: 1px solid var(--gris-clair);
-  font-size: 14px;
+  padding: 14px 16px; border-bottom: 1px solid var(--gris-clair);
+  font-size: var(--fs-4); vertical-align: middle;
 }
-.events-table tr:hover td { background: rgba(0,0,0,0.02); }
+/* Le cadre porte deja son propre filet : la derniere ligne n'en ajoute pas
+   un second, colle au premier. */
+.events-table tbody tr:last-child td { border-bottom: none; }
+
+@media (hover: hover) and (pointer: fine) {
+  .events-table tbody tr:hover td { background: var(--surface-2); }
+}
+
+/* Sous 900px le tableau devient une pile de cartes : huit colonnes obligeaient
+   a balayer lateralement sur telephone. Chaque cellule porte alors son libelle. */
+@media (max-width: 900px) {
+  .events-table, .events-table tbody, .events-table tr, .events-table td { display: block; width: 100%; }
+  .events-table thead { display: none; }
+  .events-table tr {
+    background: var(--blanc); border: 1px solid var(--gris-clair);
+    border-radius: var(--radius); box-shadow: var(--shadow-sm);
+    padding: 4px 16px 10px; margin-bottom: 14px;
+  }
+  .events-table td {
+    border-bottom: 1px solid var(--gris-clair); padding: 11px 0;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .events-table td::before {
+    content: attr(data-label);
+    font-size: var(--fs-1); font-weight: var(--fw-bold);
+    letter-spacing: var(--ls-label); text-transform: uppercase;
+    color: var(--gris); flex-shrink: 0;
+  }
+  /* Premiere cellule = entete de la carte : pleine largeur, sans libelle.
+     Une classe plutot qu'un selecteur sur le texte du data-label, qui
+     cassait des qu'une page nommait sa premiere colonne autrement. */
+  .events-table td.est-entete-carte,
+  .events-table td[data-label="Titre"] { display: block; padding-top: 12px; }
+  .events-table td.est-entete-carte::before,
+  .events-table td[data-label="Titre"]::before,
+  .events-table td[data-label="Actions"]::before { display: none; }
+  .events-table td[data-label="Actions"] { border-bottom: none; justify-content: flex-end; gap: 8px; }
+  /* Dans une carte, le dernier filet doublerait la bordure du cadre. */
+  .events-table tr td:last-child { border-bottom: none; }
+}
 
 .badge {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 100px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
+  border-radius: var(--radius-pill); font-size: var(--fs-1); font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-wide); text-transform: uppercase;
 }
-.badge-bar     { background: #e3eeff; color: var(--bleu); }
-.badge-boite   { background: #ffe8e6; color: var(--rouge); }
-.badge-resto   { background: #fff3e6; color: var(--orange); }
-.badge-afterwork { background: #f5ffe6; color: #5a7a00; }
-.badge-flash   { background: var(--rouge); color: var(--blanc); }
+.badge-bar       { background: var(--bleu-clair);   color: var(--sur-bleu-clair); }
+.badge-boite     { background: var(--rouge-clair);  color: var(--sur-rouge-clair); }
+.badge-resto     { background: var(--orange-clair); color: var(--sur-orange-clair); }
+.badge-afterwork { background: var(--lime-clair);   color: var(--sur-lime-clair); }
+/* « Flash » est un état, pas une catégorie : il prend la teinte coral.
+   Le seul cas où il se pose sur un fond coloré, c'est la carte flash
+   elle-même — là, et là seulement, il passe en verre translucide.     */
+.badge-flash     { background: var(--rouge-clair); color: var(--sur-rouge-clair); }
+/* Une mise en avant payee doit se voir comme telle : le badge est neutre,
+   jamais dans une couleur de categorie, pour qu'on ne le confonde pas avec
+   un type de lieu. */
+.badge-sponsorise { background: var(--surface-2); color: var(--gris-fonce); border: 1px solid var(--line-2); }
+/* Sur la carte flash, le fond est deja un aplat de marque : le badge passe
+   en verre translucide, comme le reste des elements poses dessus. */
+.badge-sponsorise-media {
+  background: rgba(255,255,255,.18); color: #fff; border-color: rgba(255,255,255,.4);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+}
+.event-card-flash .badge-flash,
+.card-rouge .badge-flash { background: rgba(255,255,255,.2); color: #fff; }
+/* « Gratuit » est un fait, pas une catégorie : il ne doit surtout pas
+   emprunter la teinte d'un type de lieu, sinon la couleur ment. */
+.badge-gratuit   { background: var(--noir); color: var(--blanc); }
 
 /* ─── Modal / Sheet ─── */
 .modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 200;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s;
+  position: fixed; inset: 0; background: rgba(20,17,14,.42); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  z-index: 200; display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.25s;
 }
-.modal-overlay.open {
-  opacity: 1;
-  pointer-events: all;
-}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
 .modal-sheet {
-  width: 100%;
-  max-width: 430px;
-  background: var(--bg);
-  border-radius: 16px 16px 0 0;
-  padding: 24px 20px 40px;
-  transform: translateY(100%);
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  max-height: 90vh;
-  overflow-y: auto;
+  width: 100%; max-width: 440px; background: var(--bg); border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  padding: 12px 22px 36px; transform: translateY(100%);
+  transition: transform 0.34s cubic-bezier(0.32, 0.72, 0, 1); max-height: 90vh; overflow-y: auto;
 }
 .modal-overlay.open .modal-sheet { transform: translateY(0); }
-.modal-handle {
-  width: 36px;
-  height: 4px;
-  background: var(--gris-clair);
-  border-radius: 2px;
-  margin: 0 auto 20px;
-}
+.modal-handle { width: 40px; height: 5px; background: var(--line-2); border-radius: 99px; margin: 0 auto 18px; }
 
 /* ─── Toast ─── */
 .toast {
-  position: fixed;
-  bottom: calc(var(--nav-h) + 16px);
-  left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  background: var(--noir);
-  color: var(--blanc);
-  padding: 12px 20px;
-  border-radius: 100px;
-  font-size: 14px;
-  font-weight: 500;
-  z-index: 300;
-  opacity: 0;
-  pointer-events: none;
-  transition: all 0.25s;
-  white-space: nowrap;
+  position: fixed; bottom: calc(var(--nav-h) + 18px); left: 50%;
+  transform: translateX(-50%) translateY(14px); background: var(--noir); color: var(--blanc);
+  padding: 12px 20px; border-radius: var(--radius-pill); font-size: var(--fs-3); font-weight: var(--fw-semibold);
+  z-index: 300; opacity: 0; pointer-events: none; transition: all 0.28s cubic-bezier(.2,.9,.3,1);
+  white-space: nowrap; box-shadow: var(--shadow-lg);
 }
-.toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-.toast.success { background: #2e7d32; }
-.toast.error   { background: var(--rouge); }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.success { background: var(--succes); color: #fff; }
+.toast.error   { background: var(--danger); color: #fff; }
 
 /* ─── Profil ─── */
 .profil-header {
-  background: var(--noir);
-  color: var(--blanc);
-  padding: 40px 20px 32px;
-  text-align: center;
+  background: linear-gradient(160deg,#26221E,#161310); color: #F3EEE3;
+  padding: 28px 22px 32px; text-align: center; border-radius: 0 0 var(--radius-xl) var(--radius-xl);
 }
-
 .profil-avatar {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  background: var(--rouge);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Playfair Display', serif;
-  font-size: 1.8rem;
-  font-weight: 900;
-  color: var(--blanc);
-  margin: 0 auto 16px;
+  width: 72px; height: 72px; border-radius: 50%; background: var(--rouge);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: var(--fs-7); font-weight: var(--fw-display); color: #fff;
+  margin: 0 auto 16px; box-shadow: 0 8px 22px -8px rgba(224,73,43,.7), 0 0 0 3px rgba(243,238,227,.14);
 }
-
-.profil-name {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.8rem;
-  font-weight: 900;
-}
-
-.profil-school {
-  font-size: 13px;
-  color: rgba(255,255,255,0.6);
-  margin-top: 4px;
-}
-
+.profil-name { font-family: var(--font-display); font-size: var(--fs-7); font-weight: var(--fw-black); color: #F3EEE3; }
+.profil-school { font-size: var(--fs-3); color: rgba(243,238,227,.6); margin-top: 4px; }
 .profil-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 0;
-  border-bottom: 1px solid var(--gris-clair);
-  font-size: 15px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 15px 0; border-bottom: 1px solid var(--gris-clair); font-size: var(--fs-5);
 }
-
-.profil-item a {
-  color: var(--rouge);
-  text-decoration: none;
-  font-weight: 600;
-}
+.profil-item a { color: var(--rouge); text-decoration: none; font-weight: var(--fw-semibold); }
 
 /* ─── Section Divider ─── */
-.section-divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 20px 0 16px;
-}
+.section-divider { display: flex; align-items: center; gap: 12px; margin: 22px 0 14px; }
 .section-divider .sd-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-label); text-transform: uppercase;
+  color: var(--gris); white-space: nowrap;
+}
+.section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--line-2); }
+
+/* ─── En-tête d'une carte événement ───
+   Le bouton « suivre » était posé en absolu dans le coin, et le titre
+   réservait sa place avec un padding deviné à la main. La ligne de badges,
+   elle, ne réservait rien : « GRATUIT » passait dessous, et l'ajout du style
+   de musique a rendu la collision systématique. Les deux vivent désormais
+   dans la même rangée, qui les sépare toute seule. */
+.event-entete {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 10px; margin-bottom: 8px;
+}
+.event-entete__meta {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0;
+}
+.event-lieu-rang {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; min-width: 0;
+}
+.event-lieu-rang .event-lieu { flex: 1; min-width: 0; }
+.btn-suivre-lieu {
+  flex-shrink: 0; cursor: pointer;
+  border: 1px solid var(--gris-clair); border-radius: var(--radius-pill);
+  padding: 5px 11px; font-size: var(--fs-1); font-weight: var(--fw-bold);
+  white-space: nowrap;
+  /* Le serveur rend « + SUIVRE », le JavaScript réécrit « + Suivre » après un
+     clic : la casse changeait sous les yeux. C'est la feuille qui tranche. */
+  text-transform: uppercase; letter-spacing: var(--ls-wide);
+}
+/* Sur la carte flash, le fond est un aplat de marque : le bouton y emprunte
+   l'encre claire, comme les badges voisins. */
+.btn-suivre-lieu--media {
+  border-color: rgba(255,255,255,.5); color: #fff;
+  font-weight: var(--fw-display);
+}
+
+/* ─── Style de musique ───
+   Une pilule de filtre et un badge de carte, dans le même registre discret :
+   le style informe, il ne concurrence pas le titre de la soirée. */
+.badge-musique {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--surface-2); color: var(--gris-fonce);
+  border: 1px solid var(--line-2); border-radius: var(--radius-pill);
+  padding: 2px 9px; font-size: var(--fs-1); font-weight: var(--fw-bold);
+  text-transform: uppercase; letter-spacing: var(--ls-wide); white-space: nowrap;
+}
+/* Sur la carte flash, le fond est un aplat de marque : le badge y emprunte
+   l'encre claire, comme la mention « Sponsorisé » voisine. */
+.badge-musique-media {
+  background: rgba(255,255,255,.18); color: var(--sur-media);
+  border-color: rgba(255,255,255,.34);
+}
+.pill-musique { font-weight: var(--fw-semibold); }
+.pill-musique .icon { margin-right: 4px; }
+
+/* ─── Cloche et notifications ───
+   Les demandes, invitations et nouveautés vivaient dans le profil, où l'on
+   ne passe presque jamais. Elles sont ici, dans l'en-tête du hub. */
+.entete-hub {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 12px; margin-bottom: 16px;
+}
+.cloche {
+  position: relative; flex-shrink: 0;
+  width: var(--touch-min); height: var(--touch-min);
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--blanc); color: var(--noir);
+  border: 1px solid var(--line-2); border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-xs); cursor: pointer;
+}
+.cloche:hover { border-color: var(--gris); }
+/* La pastille déborde du bouton : à l'intérieur, elle recouvrait la cloche
+   et le nombre devenait le dessin. */
+.cloche__pastille {
+  position: absolute; top: -3px; right: -3px;
+  min-width: 19px; height: 19px; padding: 0 5px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--rouge-deep); color: #fff;
+  border: 2px solid var(--bg); border-radius: var(--radius-pill);
+  font-size: var(--fs-1); font-weight: var(--fw-bold); line-height: 1;
+}
+.cloche__pastille[hidden] { display: none; }
+
+.notif-liste { display: flex; flex-direction: column; gap: 8px; }
+.notif-item {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 12px; border-radius: var(--radius);
+  border: 1px solid var(--line-2); background: var(--blanc);
+  text-decoration: none; color: inherit;
+}
+.notif-item__lien {
+  /* flex-direction explicite : les éléments sans bouton portent les deux
+     classes sur la même balise, et héritaient sinon de la colonne de
+     .notif-item — avatar au-dessus du texte, le tout centré. */
+  display: flex; flex-direction: row; align-items: center; gap: 12px;
+  min-width: 0; text-decoration: none; color: inherit;
+}
+.notif-item__lien > :first-child { flex-shrink: 0; }
+.notif-item__corps { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.notif-item__texte { font-size: var(--fs-3); line-height: var(--lh-snug); }
+.notif-item__texte em { font-style: italic; font-weight: var(--fw-semibold); }
+.notif-item__date {
+  font-size: var(--fs-1); color: var(--gris); font-weight: var(--fw-bold);
+  text-transform: uppercase; letter-spacing: var(--ls-wide);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.notif-item__vignette {
+  width: 38px; height: 38px; flex-shrink: 0; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--surface-2); color: var(--gris-fonce);
+}
+/* Les deux réponses côte à côte sous le texte : empilées à droite, elles
+   étiraient la ligne sur trois hauteurs pour deux mots. */
+.notif-item__actions { display: flex; gap: 8px; }
+.notif-oui, .notif-non {
+  flex: 1; min-height: 38px; padding: 0 12px; cursor: pointer;
+  border-radius: var(--radius-pill); font-size: var(--fs-1);
+  font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: var(--ls-wide);
+}
+.notif-oui { background: var(--noir); color: var(--blanc); border: 1px solid var(--noir); }
+.notif-non { background: none; color: var(--gris-fonce); border: 1px solid var(--line-2); }
+.notif-vide {
+  margin: 0; padding: 28px 0; text-align: center;
+  color: var(--gris); font-size: var(--fs-3); line-height: var(--lh-snug);
+}
+
+/* ─── Sélecteur segmenté ───
+   Hub Explore, listes d'abonnés : deux vues, un seul contrôle. La pilule
+   claire glisse sur un fond neutre, dans le registre des contrôles
+   segmentés iOS. */
+.hub-toggle {
+  display: flex;
+  background: var(--surface-2);
+  padding: 4px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-pill);
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-xs);
+}
+.hub-toggle a {
+  flex: 1;
+  /* La regle globale passe ces liens en inline-flex : sans
+     justify-content, le text-align ne recentre rien. */
+  justify-content: center;
+  text-align: center;
+  padding: 12px;
+  font-weight: var(--fw-display);
+  font-size: var(--fs-3);
   text-transform: uppercase;
-  color: var(--gris);
+  text-decoration: none;
+  color: var(--gris-fonce);
+  border-radius: var(--radius-pill);
+  transition: background .18s ease, color .18s ease;
+}
+.hub-toggle a.active {
+  background: var(--noir);
+  color: var(--blanc);
+  box-shadow: var(--shadow-sm);
+}
+/* Sur ordinateur, un controle segmente ne doit pas s'etirer sur toute la
+   largeur : il garde la taille de son contenu, comme sur telephone. */
+@media (min-width: 1000px) {
+  .hub-toggle { max-width: 420px; }
+}
+
+/* ─── Liste de personnes ───
+   Partagée par l'annuaire (explore) et les listes d'abonnés (profil).
+   Des rangées et non des cartes : l'annuaire est fait pour être parcouru,
+   et une carte de 150 px par profil rend trois personnes visibles à la fois.
+   Une rangée tient dans la hauteur de son bouton (44 px de cible tactile),
+   soit deux fois et demie plus de profils par écran. */
+.liste-personnes { display: flex; flex-direction: column; gap: 10px; }
+.ligne-personne {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--blanc); border: 1px solid var(--line-2);
+  border-radius: var(--radius); box-shadow: var(--shadow-xs);
+  padding: 8px 10px 8px 12px;
+}
+.ligne-personne__lien {
+  display: flex; align-items: center; gap: 12px;
+  flex: 1; min-width: 0; text-decoration: none; color: inherit;
+}
+.ligne-personne__lien > :first-child { flex-shrink: 0; }
+.ligne-personne__infos { display: flex; flex-direction: column; min-width: 0; }
+.ligne-personne__nom,
+.ligne-personne__meta {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ligne-personne__nom { font-weight: var(--fw-bold); font-size: var(--fs-3); }
+.ligne-personne__meta {
+  font-size: var(--fs-1); color: var(--gris); font-weight: var(--fw-bold);
+  text-transform: uppercase; letter-spacing: var(--ls-wide);
+}
+/* Les points communs tiennent sur une ligne, tronquée au bord : les pastilles
+   d'avant ajoutaient une deuxième rangée à chaque carte. Coupée net, la ligne
+   tranchait un mot en deux et faisait accroc ; le dégradé dit qu'il y en a
+   davantage, et ne porte sur rien quand la ligne est courte, puisque la fin
+   du bloc est alors vide. */
+.ligne-personne__affinites {
+  display: flex; gap: 6px; overflow: hidden; margin-top: 2px;
+  font-size: var(--fs-1); font-weight: var(--fw-bold); color: var(--gris-fonce);
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+          mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+}
+.ligne-personne__affinites > * { white-space: nowrap; flex-shrink: 0; }
+.ligne-personne__squad {
+  display: inline-flex; align-items: center; gap: 3px;
+  color: var(--sur-rouge-clair); text-transform: uppercase;
+  letter-spacing: var(--ls-wide);
+}
+.ligne-personne__suivre {
+  flex-shrink: 0; min-height: var(--touch-min); padding: 0 14px;
+  border: 1px solid var(--gris-clair); border-radius: var(--radius-pill);
+  font-size: var(--fs-1); font-weight: var(--fw-bold); cursor: pointer;
   white-space: nowrap;
 }
-.section-divider::before, .section-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--gris-clair);
+.liste-personnes__vide {
+  margin: 0; padding: 24px 0; text-align: center;
+  color: var(--gris); font-size: var(--fs-3);
 }
 
 /* ─── Suggestion Banner ─── */
-.banner-card {
-  border-radius: var(--radius);
-  padding: 14px 16px;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.banner-icon {
-  font-size: 20px;
-  flex-shrink: 0;
-}
-
-.banner-text {
-  flex: 1;
-  font-size: 13px;
-  line-height: 1.4;
-  font-weight: 500;
-}
+.banner-card { border-radius: var(--radius); padding: 15px 17px; margin-bottom: 16px; display: flex; align-items: center; gap: 13px; box-shadow: var(--shadow-sm); }
+.banner-icon { font-size: var(--fs-6); flex-shrink: 0; }
+.banner-text { flex: 1; font-size: var(--fs-3); line-height: var(--lh-snug); font-weight: var(--fw-medium); }
 
 /* ─── Responsive Partner ─── */
 @media (max-width: 900px) {
   .partner-shell { grid-template-columns: 1fr; }
   .partner-sidebar {
-    position: relative;
-    height: auto;
-    display: flex;
-    align-items: center;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 16px 20px;
+    position: relative; height: auto; display: flex; align-items: center; flex-direction: row;
+    flex-wrap: wrap; gap: 8px; padding: 16px 20px;
   }
-  .sidebar-nav { flex-direction: row; }
+  /* La nav repliee en barre doit passer a la ligne : sur un telephone,
+     les 3 entrees tenaient sur une seule ligne et sortaient de l'ecran. */
+  .sidebar-nav { flex-direction: row; flex-wrap: wrap; width: 100%; min-width: 0; }
+  .sidebar-link { flex: 0 1 auto; min-width: 0; }
   .sidebar-brand { margin-bottom: 0; margin-right: 24px; }
   .sidebar-venue { display: none; }
   .partner-main { padding: 24px 20px; }
   .dashboard-grid { grid-template-columns: 1fr; }
   .partner-stat-grid { grid-template-columns: 1fr 1fr; }
+  .partner-headline { font-size: var(--fs-9); }
 }
+
+/* ─── Barre de progression de navigation ─────────────────────────────────
+   Sans rechargement de page, le navigateur n'affiche plus sa propre barre :
+   il faut rendre l'attente visible, sinon un clic semble sans effet.      */
+.nav-progress {
+  position: fixed; top: 0; left: 0; height: 2px; width: 0;
+  background: var(--rouge); z-index: 400;
+  opacity: 0; transition: width .2s ease, opacity .2s ease;
+  pointer-events: none;
+}
+.nav-progress.active {
+  width: 80%; opacity: 1;
+  transition: width 1.4s cubic-bezier(.1,.8,.2,1), opacity .12s ease;
+}
+[aria-busy="true"] .app-shell { opacity: .55; transition: opacity .15s ease; }
 
 /* ─── Spinner ─── */
 .spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(255,255,255,0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-  display: inline-block;
+  width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+  border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ─── Animations ─── */
+.fade-in { animation: fadeIn .4s ease both; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
 /* ─── Utilities ─── */
-.text-rouge   { color: var(--rouge); }
-.text-bleu    { color: var(--bleu);  }
-.text-lime    { color: var(--lime);  }
-.text-gris    { color: var(--gris);  }
-.text-blanc   { color: var(--blanc); }
-.font-bold    { font-weight: 700; }
-.font-black   { font-weight: 900; }
-.mt-4  { margin-top: 4px; }
-.mt-8  { margin-top: 8px; }
-.mt-12 { margin-top: 12px; }
-.mt-16 { margin-top: 16px; }
-.mt-24 { margin-top: 24px; }
-.mb-4  { margin-bottom: 4px; }
-.mb-8  { margin-bottom: 8px; }
-.mb-12 { margin-bottom: 12px; }
-.mb-16 { margin-bottom: 16px; }
-.mb-24 { margin-bottom: 24px; }
-.flex  { display: flex; }
-.items-center { align-items: center; }
-.justify-between { justify-content: space-between; }
-.gap-8  { gap: 8px; }
-.gap-12 { gap: 12px; }
-.w-full { width: 100%; }
-.hidden { display: none !important; }
+.text-rouge { color: var(--rouge); }
+.text-bleu  { color: var(--bleu); }
+.text-lime  { color: var(--lime-deep); }
+.text-gris  { color: var(--gris); }
+.text-blanc { color: var(--blanc); }
+.font-medium { font-weight: var(--fw-medium); }
+.font-semibold { font-weight: var(--fw-semibold); }
+.font-bold  { font-weight: var(--fw-bold); }
+/* .font-black retire : 900 n'existe que sur --font-display, via .t-* ou .display */
+.mt-4 { margin-top: 4px; } .mt-8 { margin-top: 8px; } .mt-12 { margin-top: 12px; } .mt-16 { margin-top: 16px; } .mt-24 { margin-top: 24px; }
+.mb-4 { margin-bottom: 4px; } .mb-8 { margin-bottom: 8px; } .mb-12 { margin-bottom: 12px; } .mb-16 { margin-bottom: 16px; } .mb-24 { margin-bottom: 24px; }
+.flex { display: flex; } .items-center { align-items: center; } .justify-between { justify-content: space-between; }
+.gap-8 { gap: 8px; } .gap-12 { gap: 12px; } .w-full { width: 100%; } .hidden { display: none !important; }
+
 /* ─── Interests ─── */
 .interest-tag {
-  padding: 6px 14px;
-  border: 2px solid var(--noir);
-  border-radius: 4px;
-  background: var(--blanc);
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--noir);
-  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 2px 2px 0 var(--noir);
-  user-select: none;
+  padding: 10px 15px; border: 1px solid var(--line-2); border-radius: var(--radius-pill);
+  background: var(--blanc); font-size: var(--fs-2); font-weight: var(--fw-semibold); color: var(--gris-fonce);
+  transition: all 0.16s ease; box-shadow: none; user-select: none;
+  display: inline-block;
 }
-/* LOGO STYLING */
-:root {
-  --logo-accent: var(--rouge); /* Signature Red */
+.interest-tag.active { background: var(--bleu); color: #fff; border-color: var(--bleu); transform: none; box-shadow: none; }
+.interest-tag:active { transform: scale(0.97); box-shadow: none; }
+
+/* Le sélecteur de centres d'intérêt.
+   L'état coché vient de la case elle-même, plus d'un classList.toggle posé
+   à côté : le style et la valeur envoyée ne peuvent plus diverger. */
+.interets-liste { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+/* Dans un .form-group, `label` est un micro-libelle en capitales espacees.
+   Les etiquettes en sont aussi (il faut bien un <label> pour rendre la case
+   cliquable) : sans cette reprise, elles s'affichaient en SORTIES, SOIREES,
+   BOITES au milieu du formulaire d'inscription. Deux selecteurs de classe
+   pour repasser devant `.form-group label`. */
+.interets-liste .interest-chip,
+.interets-liste .interest-tag {
+  text-transform: none;
+  letter-spacing: var(--ls-normal);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
 }
+.interest-chip { cursor: pointer; display: inline-flex; position: relative; }
+.interest-chip input {
+  position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer;
+}
+.interest-chip input:checked + .interest-tag {
+  background: var(--bleu); color: #fff; border-color: var(--bleu);
+}
+.interest-chip input:focus-visible + .interest-tag {
+  outline: 2px solid var(--bleu); outline-offset: 2px;
+}
+/* Le repli : même gabarit qu'une étiquette, mais c'est un bouton. */
+.interest-plus {
+  cursor: pointer; font-family: var(--font-sans); border-style: dashed;
+  color: var(--sur-bleu-clair); background: var(--bleu-clair); border-color: var(--bleu-clair);
+  min-width: 46px;
+}
+.interest-plus:focus-visible { outline: 2px solid var(--bleu); outline-offset: 2px; }
+
+/* Étiquette en lecture seule (profil, fiche d'un autre étudiant). Elle
+   était définie dans le <style> de view_profile.php seulement : la page
+   « Moi » ne pouvait pas la réutiliser sans la recopier. */
+.interest-pill {
+  display: inline-block; padding: 5px 12px;
+  background: var(--bleu-clair); color: var(--sur-bleu-clair);
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-2); font-weight: var(--fw-bold);
+}
+a.interest-pill:hover { background: var(--bleu); color: #fff; }
+
+/* ─── Logo ─── */
+:root { --logo-accent: var(--rouge); }
 .logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-family: 'Playfair Display', serif;
-  font-weight: 900;
-  font-style: italic;
-  font-size: 1.4rem;
-  color: var(--noir);
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-display); font-weight: var(--fw-display); font-style: italic; font-size: var(--fs-6); color: var(--noir);
 }
-.logo-icon {
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
+.logo-icon { width: 32px; height: 32px; flex-shrink: 0; }
+.logo-icon .accent { stroke: var(--logo-accent); }
+.logo em { color: var(--rouge); font-style: italic; margin-left: 4px; }
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE DESKTOP / TABLETTE
+   Sur grand écran, l'app quitte le format "colonne mobile" :
+   — la coquille s'élargit,
+   — les pages de LISTE (.page-grid) passent en grille multi-colonnes,
+   — les pages de DÉTAIL restent une colonne centrée lisible.
+   ═══════════════════════════════════════════════════════════ */
+@media (min-width: 760px) {
+  .app-shell {
+    max-width: 1120px;
+    padding-left: 32px;
+    padding-right: 32px;
+    padding-bottom: calc(var(--nav-h) + 30px);
+  }
+  /* La gouttiere se resserre : en-tete, filtres et contenu bougent ensemble */
+  :root, .app-shell { --gutter: 4px; }
+
+  /* Barre de nav flottante : pilule centrée un peu plus large */
+  .bottom-nav { max-width: 480px; }
+
+  /* Pages de détail / formulaires : colonne centrée lisible */
+  .page-content:not(.page-grid) { max-width: 660px; margin-left: auto; margin-right: auto; }
+
+  /* ...et l'en-tete de ces pages est centre sur la meme colonne, sinon le
+     titre reste colle a gauche pendant que le contenu est au centre.      */
+  .app-shell:has(> .page-content:not(.page-grid)) :is(.page-header, .filter-scroll) {
+    max-width: 660px; margin-left: auto; margin-right: auto;
+  }
+
+  /* Pages de LISTE : grille fluide de cartes */
+  .page-content.page-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    align-items: start;
+  }
+  .page-content.page-grid > * { margin-bottom: 0 !important; }
+  /* éléments qui doivent occuper toute la largeur */
+  .page-content.page-grid > .banner-card,
+  .page-content.page-grid > .filter-scroll,
+  .page-content.page-grid > .section-divider,
+  .page-content.page-grid > .event-card-flash,
+  .page-content.page-grid > form,
+  .page-content.page-grid > [data-modal-open],
+  .page-content.page-grid > .btn-full,
+  .page-content.page-grid > .list-grid { grid-column: 1 / -1; }
+
+  /* conteneur de liste imbriqué (personnes) → grille interne */
+  .list-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px !important;
+    align-items: start;
+  }
+  .list-grid > * { margin-bottom: 0 !important; }
+
+  /* Sur grand écran, .list-grid remplit la largeur avec des colonnes de
+     300 px : trop étroit pour une rangée nom + école + points communs +
+     bouton, qui s'y tronquait de partout. Deux colonnes larges plutôt que
+     trois serrées. */
+  .liste-personnes { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); }
 }
-.logo-icon .accent {
-  stroke: var(--logo-accent);
+
+@media (min-width: 1080px) {
+  .page-content.page-grid { grid-template-columns: repeat(3, 1fr); }
 }
-.logo em {
-  color: var(--rouge);
-  font-style: italic;
-  margin-left: 4px;
+
+/* ═══════════════════════════════════════════════════════════
+   ORDINATEUR — au-dela de 1000px
+   Une barre d'onglets flottante est une convention de telephone :
+   posee au milieu du bas d'un ecran de 1440, elle n'appartient a rien.
+   Le meme balisage devient un rail lateral, dans le registre du
+   back-office partenaire — sans une ligne de HTML en plus.
+   ═══════════════════════════════════════════════════════════ */
+@media (min-width: 1000px) {
+  body:has(.bottom-nav) { padding-left: 264px; }
+  .nav-ordinateur { display: flex; }
+
+  .bottom-nav {
+    top: 20px; bottom: 20px; left: 20px;
+    transform: none;
+    width: 224px; max-width: none; height: auto;
+    flex-direction: column; justify-content: flex-start; align-items: stretch;
+    gap: 4px; padding: 22px 12px;
+    border-radius: var(--radius-lg);
+  }
+
+  .nav-item {
+    flex: 0 0 auto; flex-direction: row; align-items: center;
+    justify-content: flex-start; gap: 13px;
+    padding: 12px 14px; border-radius: var(--radius-sm);
+    transition: background .16s ease, color .16s ease;
+  }
+  .nav-item span:last-child {
+    font-size: var(--fs-4); font-weight: var(--fw-semibold);
+    letter-spacing: var(--ls-normal); text-transform: none;
+  }
+  .nav-item:hover { background: rgba(243,238,227,.08); color: #fff; }
+  .nav-item.active { background: rgba(243,238,227,.14); color: #fff; }
+  /* La pastille signalait l'onglet actif faute de place ; ici le fond suffit. */
+  .nav-item.active::before { display: none; }
+
+  /* Plus de barre en bas, donc plus de reserve a lui garder. */
+  .app-shell { padding-bottom: 48px; }
+  /* Les pages de detail respirent : 660px etait une colonne de telephone
+     posee au centre d'un grand ecran. */
+  .page-content:not(.page-grid) { max-width: 940px; }
+  body:has(.bottom-nav) .toast { bottom: 28px; left: calc(50% + 132px); }
 }
-.interest-tag.active {
-  background: var(--bleu);
-  color: var(--blanc);
-  transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0 var(--noir);
+
+/* Au-dela de 1400px la coquille cesse de s'etirer : une ligne de texte
+   trop longue se lit mal, et les cartes deviendraient des bandeaux. */
+@media (min-width: 1400px) {
+  .app-shell { max-width: 1180px; }
 }
-.interest-tag:active {
-  transform: translate(1px, 1px);
-  box-shadow: 1px 1px 0 var(--noir);
+
+/* ── Etats de survol : attendus sur ordinateur, inutiles au doigt ── */
+@media (hover: hover) and (pointer: fine) {
+  .event-card-regular, .squad-card, .card {
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .event-card-regular:hover, .squad-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+  /* :not(.active) : a specificite egale, cette regle ecrite plus bas
+     l'emportait sur .pill.active. La pilule choisie repassait donc en clair
+     des que le curseur restait dessus — on venait de cliquer, et le filtre
+     avait l'air de n'avoir rien fait. */
+  .pill:hover:not(.active) { background: var(--surface-2); }
+  .btn:hover { transform: translateY(-1px); }
 }

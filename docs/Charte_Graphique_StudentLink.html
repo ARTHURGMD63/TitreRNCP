@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<title>Charte graphique - StudentLink</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700..900;1,700..900&family=DM+Sans:opsz,wght@9..40,400..700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3EEE3; --blanc:#FFFFFF; --surface2:#FBF8F1; --noir:#1C1916;
+  --gris-fonce:#5B554C; --gris:#6E6860; --gris-clair:#EAE3D6; --line2:#DED6C6;
+  --rouge:#E0492B; --bleu:#4A40C2; --lime:#EFB23A; --orange:#EC8233;
+  --font-display:'Playfair Display',Georgia,serif;
+  --font-sans:'DM Sans',system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:var(--font-sans);color:var(--noir);background:var(--blanc);font-size:9.5pt;line-height:1.5}
+@page{size:A4;margin:0}
+.page{page-break-after:always;min-height:297mm;position:relative;padding:13mm 15mm 16mm}
+.page.cover-page{padding:0}
+.page:last-child{page-break-after:auto}
+
+/* --- couverture --- */
+.cover{background:var(--noir);color:var(--bg);padding:34mm 20mm 24mm;min-height:297mm;display:flex;flex-direction:column;justify-content:space-between}
+.cover h1{font-family:var(--font-display);font-weight:900;font-size:52pt;line-height:.95;letter-spacing:-.02em}
+.cover h1 em{font-style:italic;color:var(--rouge);display:block}
+.cover .kicker{font-size:8pt;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(243,238,227,.55);margin-bottom:10mm}
+.cover .lede{font-size:11pt;line-height:1.55;max-width:105mm;color:rgba(243,238,227,.8);margin-top:9mm}
+.cover .meta{display:flex;gap:14mm;font-size:8pt;letter-spacing:.1em;text-transform:uppercase;color:rgba(243,238,227,.55);border-top:1px solid rgba(243,238,227,.2);padding-top:6mm}
+.cover .bar{display:flex;height:7mm;margin-top:11mm;border-radius:99px;overflow:hidden}
+.cover .bar span{flex:1}
+
+/* --- structure --- */
+.ph{display:flex;align-items:baseline;justify-content:space-between;border-bottom:2px solid var(--noir);padding-bottom:3mm;margin-bottom:7mm}
+.ph h2{font-family:var(--font-display);font-weight:900;font-size:21pt;letter-spacing:-.015em;line-height:1}
+.ph .num{font-size:8pt;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gris)}
+.intro{font-size:9.5pt;color:var(--gris-fonce);max-width:150mm;margin-bottom:7mm;line-height:1.6}
+h3{font-family:var(--font-display);font-weight:800;font-size:13pt;margin:7mm 0 2.5mm;letter-spacing:-.01em}
+h3:first-of-type{margin-top:0}
+
+table{width:100%;border-collapse:collapse;margin-bottom:4mm}
+th{text-align:left;font-size:7pt;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gris);padding:0 3mm 2.5mm 0;border-bottom:1px solid var(--line2)}
+td{padding:2.25mm 3mm 2.25mm 0;border-bottom:1px solid var(--gris-clair);vertical-align:middle;font-size:9pt}
+.mono{font-family:var(--mono);font-size:7.8pt;letter-spacing:-.01em}
+td.mono{white-space:nowrap}
+.mono.small{font-size:7pt;color:var(--gris-fonce);line-height:1.35}
+.ratio{text-align:right;font-weight:600;white-space:nowrap}
+.usage{color:var(--gris-fonce);font-size:8.4pt;line-height:1.4}
+code{font-family:var(--mono);font-size:7.4pt;color:var(--gris-fonce)}
+.sw{width:15mm}
+.chip{display:block;width:13mm;height:9mm;border-radius:3mm;border:1px solid rgba(28,25,22,.12)}
+.demo{display:inline-flex;align-items:center;justify-content:center;width:11mm;height:8mm;border-radius:2mm;font-family:var(--font-display);font-weight:900;font-size:11pt;border:1px solid rgba(28,25,22,.12)}
+.on{color:var(--gris);font-weight:400}
+.tag{display:inline-block;font-size:7pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:1mm 2.5mm;border-radius:99px;white-space:nowrap}
+.tag.ok{background:#E3F2E6;color:#1F6B34}
+.tag.ko{background:#FBE7E1;color:#BB3619}
+.spec{line-height:1.1}
+
+.tint{display:grid;grid-template-columns:repeat(4,1fr);gap:4mm;margin-bottom:5mm}
+.tint .t{border-radius:4mm;padding:5mm;border:1px solid var(--gris-clair)}
+.tint .t .lbl{font-size:7pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:2mm}
+.tint .t .hex{font-family:var(--mono);font-size:7pt;opacity:.75}
+.tint .t .use{font-size:7.6pt;margin-top:2mm;line-height:1.35}
+
+.dark{background:#16130F;border-radius:5mm;padding:5mm 6mm;margin-bottom:4mm}
+.dark h3{color:#F3EEE3;margin-top:0}
+.dark table td{border-bottom-color:#322C24;color:#F3EEE3}
+.dark table th{color:#8E8576;border-bottom-color:#322C24}
+.dark .usage{color:#C9C1B2}
+.dark code{color:#C9C1B2}
+
+.families{display:grid;grid-template-columns:1fr 1fr;gap:6mm;margin-bottom:7mm}
+.fam{border:1px solid var(--gris-clair);border-radius:4mm;padding:6mm}
+.fam .name{font-size:7.5pt;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gris);margin-bottom:3mm}
+.fam .glyphs{font-size:30pt;line-height:1.05;margin-bottom:3mm}
+.fam .desc{font-size:8.4pt;color:var(--gris-fonce);line-height:1.5}
+.fam .rule{font-size:8pt;margin-top:3mm;padding-top:3mm;border-top:1px solid var(--gris-clair);color:var(--noir)}
+
+.rules{display:grid;grid-template-columns:1fr 1fr;gap:6mm}
+.rules ul{list-style:none}
+.rules li{font-size:8.6pt;line-height:1.5;padding:2.5mm 0 2.5mm 7mm;position:relative;border-bottom:1px solid var(--gris-clair)}
+.rules li:before{position:absolute;left:0;top:2.5mm;font-weight:700;font-size:9pt}
+.do li:before{content:"OUI";font-size:6.5pt;letter-spacing:.06em;color:#1F6B34;top:3.2mm}
+.dont li:before{content:"NON";font-size:6.5pt;letter-spacing:.06em;color:#BB3619;top:3.2mm}
+.rules h3{margin-top:0}
+
+.btns{display:flex;gap:4mm;flex-wrap:wrap;margin-bottom:5mm;align-items:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-sans);font-weight:700;font-size:8.5pt;padding:3mm 6mm;border-radius:99px;border:1px solid transparent}
+.badges{display:flex;gap:3mm;flex-wrap:wrap;margin-bottom:5mm}
+.badge{font-size:7pt;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:1.4mm 3mm;border-radius:99px}
+.elev{display:grid;grid-template-columns:repeat(4,1fr);gap:5mm;margin:0 2mm 7mm;}
+.elev .e{background:var(--blanc);border:1px solid var(--gris-clair);border-radius:4mm;padding:5mm;font-size:7.4pt;text-align:center}
+.elev .e .n{font-family:var(--mono);font-size:7pt;margin-bottom:2mm;color:var(--gris-fonce)}
+.radii{display:flex;gap:5mm;align-items:flex-end;margin-bottom:5mm}
+.radii .r{background:var(--surface2);border:1px solid var(--line2);width:27mm;height:18mm;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2mm;font-family:var(--mono);font-size:6.2pt;color:var(--gris-fonce);text-align:center;line-height:1.3}
+
+.foot{position:absolute;bottom:8mm;left:15mm;right:15mm;display:flex;justify-content:space-between;font-size:7pt;letter-spacing:.12em;text-transform:uppercase;color:var(--gris);border-top:1px solid var(--gris-clair);padding-top:2.5mm}
+.callout{background:var(--surface2);border-left:3px solid var(--rouge);border-radius:0 3mm 3mm 0;padding:4mm 5mm;font-size:8.4pt;line-height:1.55;color:var(--gris-fonce);margin-bottom:5mm}
+.callout b{color:var(--noir)}
+</style></head><body>
+
+<!-- ============ COUVERTURE ============ -->
+<div class="page cover-page"><div class="cover">
+  <div>
+    <div class="kicker">Systeme de design - Version 2.0</div>
+    <h1>Charte<br>graphique<em>StudentLink</em></h1>
+    <div class="lede">Reference unique des couleurs, de la typographie et des composants de l'application StudentLink. Toute valeur de ce document est extraite automatiquement de <code style="color:rgba(243,238,227,.8)">assets/css/style.css</code> : le document ne peut pas diverger du code.</div>
+    <div class="bar">
+      <span style="background:#E0492B"></span><span style="background:#EC8233"></span>
+      <span style="background:#EFB23A"></span><span style="background:#4A40C2"></span>
+      <span style="background:#F3EEE3"></span>
+    </div>
+  </div>
+  <div class="meta"><div>Genere le 15/09/2026</div><div>Arthur Gramond</div><div>Clermont-Ferrand</div></div>
+</div></div>
+
+<!-- ============ PRINCIPES ============ -->
+<div class="page">
+  <div class="ph"><h2>Principes</h2><div class="num">01</div></div>
+  <div class="intro">StudentLink met en relation des etudiants et des lieux de sortie. Le systeme vise une lecture rapide sur mobile, en soiree, dans de mauvaises conditions lumineuses : contraste eleve, hierarchie nette, surfaces calmes.</div>
+
+  <h3>Les trois regles non negociables</h3>
+  <table>
+    <tr><td style="width:8mm" class="mono"><b>1</b></td><td><b>Une couleur = un sens.</b><span class="usage"> Le coral signe la marque et l'action principale. Il ne sert jamais a signaler une erreur ni a coder une categorie : ces roles ont leurs propres jetons.</span></td></tr>
+    <tr><td class="mono"><b>2</b></td><td><b>La serif ne descend jamais dans l'interface.</b><span class="usage"> Playfair Display est reservee aux titres et aux chiffres cles. Tout le reste (boutons, labels, champs, meta) est en DM Sans, plafonnee a 700.</span></td></tr>
+    <tr><td class="mono"><b>3</b></td><td><b>Aucune valeur hors jeton.</b><span class="usage"> Pas de <code>font-size:13.5px</code> ni de <code>#E5331A</code> dans une page. Dix crans de taille, six graisses, une palette. Ce qui n'est pas dans ce document n'existe pas.</span></td></tr>
+  </table>
+
+  <h3>Fondations</h3>
+  <table>
+    <tr><th>Fondation</th><th>Valeur</th><th>Consequence</th></tr>
+    <tr><td>Base typographique</td><td class="mono">16px = 1rem</td><td class="usage">Les champs de saisie sont a 16px : en dessous, Safari iOS zoome automatiquement au focus.</td></tr>
+    <tr><td>Largeur de coquille</td><td class="mono">440px mobile / 1120px desktop</td><td class="usage">L'application reste une colonne mobile jusqu'a 760px, puis passe en grille.</td></tr>
+    <tr><td>Grille d'espacement</td><td class="mono">multiples de 4px</td><td class="usage">Les marges et gouttieres suivent 4 / 8 / 12 / 16 / 22 / 24px.</td></tr>
+    <tr><td>Themes</td><td class="mono">clair + sombre</td><td class="usage">Bascule via <code>data-theme</code> sur <code>&lt;html&gt;</code>, memorisee en localStorage.</td></tr>
+  </table>
+  <div class="foot"><span>StudentLink - Charte graphique</span><span>01</span></div>
+</div>
+
+<!-- ============ COULEUR : MARQUE ============ -->
+<div class="page">
+  <div class="ph"><h2>Couleur - palette de marque</h2><div class="num">02</div></div>
+  <div class="intro">Un trio analogue chaud (coral, orange, or) ancre par un indigo froid. Chaque teinte possede une variante <em>profonde</em> destinee au texte : la version pure ne passe pas le contraste sur fond clair.</div>
+  <table>
+    <tr><th colspan="2">Jeton</th><th>Hex</th><th>Role</th><th>Sur papier</th></tr>
+    <tr><td class="sw"><span class="chip" style="background:#E0492B"></span></td><td><b>Coral heros</b><br><code>--rouge</code></td><td class="mono">#E0492B</td><td class="usage">Action principale, signature de marque, evenement flash</td><td class="mono ratio">3.52</td></tr>
+<tr><td class="sw"><span class="chip" style="background:#BB3619"></span></td><td><b>Coral profond</b><br><code>--rouge-deep</code></td><td class="mono">#BB3619</td><td class="usage">Texte sur teinte claire, etat presse</td><td class="mono ratio">4.97</td></tr>
+<tr><td class="sw"><span class="chip" style="background:#4A40C2"></span></td><td><b>Indigo ancre</b><br><code>--bleu</code></td><td class="mono">#4A40C2</td><td class="usage">Ancre froide : liens, focus, categorie Bar, avatars</td><td class="mono ratio">6.47</td></tr>
+<tr><td class="sw"><span class="chip" style="background:#332A92"></span></td><td><b>Indigo profond</b><br><code>--bleu-deep</code></td><td class="mono">#332A92</td><td class="usage">Texte sur teinte claire, degrade de carte</td><td class="mono ratio">9.62</td></tr>
+<tr><td class="sw"><span class="chip" style="background:#EFB23A"></span></td><td><b>Or chaud</b><br><code>--lime</code></td><td class="mono">#EFB23A</td><td class="usage">Accent tertiaire, points actifs, mise en avant</td><td class="mono ratio">1.64</td></tr>
+<tr><td class="sw"><span class="chip" style="background:#8E6414"></span></td><td><b>Or profond</b><br><code>--lime-deep</code></td><td class="mono">#8E6414</td><td class="usage">Texte or sur fond clair (le --lime pur ne passe pas)</td><td class="mono ratio">4.56</td></tr>
+<tr><td class="sw"><span class="chip" style="background:#EC8233"></span></td><td><b>Orange pont</b><br><code>--orange</code></td><td class="mono">#EC8233</td><td class="usage">Categorie Resto, liaison coral/or</td><td class="mono ratio">2.32</td></tr>
+<tr><td class="sw"><span class="chip" style="background:#A75517"></span></td><td><b>Orange profond</b><br><code>--orange-deep</code></td><td class="mono">#A75517</td><td class="usage">Texte sur teinte claire</td><td class="mono ratio">4.59</td></tr>
+  </table>
+  <div class="callout"><b>A retenir :</b> la colonne « sur papier » donne le ratio de contraste face au fond <code>--bg</code>. En dessous de 4,5 la couleur ne doit pas porter du texte courant : utiliser la variante <code>-deep</code>.</div>
+
+  <h3>Teintes - fonds doux</h3>
+  <div class="tint"><div class="t" style="background:#FBE7E1;color:#BB3619"><div class="lbl">rouge-clair</div><div class="hex">#FBE7E1</div><div class="use">Badge Boite, badge Flash</div></div>
+<div class="t" style="background:#ECE9FA;color:#4A40C2"><div class="lbl">bleu-clair</div><div class="hex">#ECE9FA</div><div class="use">Halo de focus, badge Bar</div></div>
+<div class="t" style="background:#FBF0D6;color:#8E6414"><div class="lbl">lime-clair</div><div class="hex">#FBF0D6</div><div class="use">Badge Afterwork</div></div>
+<div class="t" style="background:#FCEBDB;color:#A75517"><div class="lbl">orange-clair</div><div class="hex">#FCEBDB</div><div class="use">Badge Resto</div></div></div>
+
+  <div class="foot"><span>StudentLink - Charte graphique</span><span>02</span></div>
+</div>
+
+<div class="page">
+  <div class="ph"><h2>Couleur - sens</h2><div class="num">02b</div></div>
+  <h3>Couleurs de sens</h3>
+  <div class="intro" style="margin-bottom:4mm">Hors palette de marque, volontairement. Le coral signe StudentLink : il ne doit jamais signifier « erreur », sinon un message d'echec porte exactement la couleur du bouton d'action principal.</div>
+  <table>
+    <tr><th colspan="2">Jeton</th><th>Hex</th><th>Role</th><th>Sur teinte</th></tr>
+    <tr><td class="sw"><span class="chip" style="background:#1F6B34"></span></td><td><b>Succes</b><br><code>--succes</code></td><td class="mono">#1F6B34</td><td class="usage">Message de reussite, statut actif, avis possible</td><td class="mono ratio">5.64</td></tr>
+<tr><td class="sw"><span class="chip" style="background:#B3261E"></span></td><td><b>Danger</b><br><code>--danger</code></td><td class="mono">#B3261E</td><td class="usage">Erreur de formulaire, action destructrice</td><td class="mono ratio">5.58</td></tr>
+<tr><td class="sw"><span class="chip" style="background:#8A5A00"></span></td><td><b>Alerte</b><br><code>--alerte</code></td><td class="mono">#8A5A00</td><td class="usage">Avertissement, etat a surveiller</td><td class="mono ratio">5.39</td></tr>
+  </table>
+
+  <div class="callout"><b>Pourquoi les separer.</b> Avant cette refonte, <code>.toast.error</code>
+  utilisait <code>--rouge</code> : un message d'erreur avait donc exactement la couleur du bouton
+  d'action principal. Et deux « succes » coexistaient — un fond ambre dans les formulaires, un fond
+  noir dans les notifications. Un sens, une couleur, partout.</div>
+
+  <h3>Ou elles s'appliquent</h3>
+  <table>
+    <tr><th>Element</th><th>Avant</th><th>Maintenant</th></tr>
+    <tr><td class="mono">.toast.error</td><td class="usage">coral de marque</td><td class="mono">--danger</td></tr>
+    <tr><td class="mono">.toast.success</td><td class="usage">noir</td><td class="mono">--succes</td></tr>
+    <tr><td class="mono">.form-error</td><td class="usage">teinte coral</td><td class="mono">--danger-clair</td></tr>
+    <tr><td class="mono">.form-success</td><td class="usage">teinte ambre</td><td class="mono">--succes-clair</td></tr>
+    <tr><td class="mono">statut « Actif »</td><td class="usage">#2e7d32 en dur</td><td class="mono">--succes</td></tr>
+    <tr><td class="mono">pastille d'avis</td><td class="usage">--lime</td><td class="mono">--succes</td></tr>
+  </table>
+  <div class="foot"><span>StudentLink - Charte graphique</span><span>02b</span></div>
+</div>
+
+<!-- ============ COULEUR : ENCRE ============ -->
+<div class="page">
+  <div class="ph"><h2>Couleur - encre et surfaces</h2><div class="num">03</div></div>
+  <div class="intro">La base neutre est chaude, jamais grise pure : le papier tire sur le beige et l'encre sur le brun. C'est ce qui donne a l'application son caractere editorial plutot que « dashboard ».</div>
+  <table>
+    <tr><th colspan="2">Jeton</th><th>Hex</th><th>Role</th><th>Sur papier</th></tr>
+    <tr><td class="sw"><span class="chip" style="background:#F3EEE3"></span></td><td><b>Papier chaud</b><br><code>--bg</code></td><td class="mono">#F3EEE3</td><td class="usage">Fond d'application</td><td class="mono ratio">1.00</td></tr>
+<tr><td class="sw"><span class="chip" style="background:#FFFFFF"></span></td><td><b>Surface</b><br><code>--blanc</code></td><td class="mono">#FFFFFF</td><td class="usage">Cartes, champs, surfaces principales</td><td class="mono ratio">1.16</td></tr>
+<tr><td class="sw"><span class="chip" style="background:#FBF8F1"></span></td><td><b>Surface elevee</b><br><code>--surface-2</code></td><td class="mono">#FBF8F1</td><td class="usage">Survol de ligne, badges neutres</td><td class="mono ratio">1.09</td></tr>
+<tr><td class="sw"><span class="chip" style="background:#1C1916"></span></td><td><b>Encre</b><br><code>--noir</code></td><td class="mono">#1C1916</td><td class="usage">Texte principal, boutons primaires</td><td class="mono ratio">15.12</td></tr>
+<tr><td class="sw"><span class="chip" style="background:#5B554C"></span></td><td><b>Encre secondaire</b><br><code>--gris-fonce</code></td><td class="mono">#5B554C</td><td class="usage">Texte secondaire, descriptions</td><td class="mono ratio">6.37</td></tr>
+<tr><td class="sw"><span class="chip" style="background:#6E6860"></span></td><td><b>Encre tertiaire</b><br><code>--gris</code></td><td class="mono">#6E6860</td><td class="usage">Legendes, placeholders, labels</td><td class="mono ratio">4.76</td></tr>
+<tr><td class="sw"><span class="chip" style="background:#EAE3D6"></span></td><td><b>Filet fin</b><br><code>--gris-clair</code></td><td class="mono">#EAE3D6</td><td class="usage">Bordures de carte, separateurs</td><td class="mono ratio">1.10</td></tr>
+<tr><td class="sw"><span class="chip" style="background:#DED6C6"></span></td><td><b>Filet marque</b><br><code>--line-2</code></td><td class="mono">#DED6C6</td><td class="usage">Bordures de champ, contours de pilules</td><td class="mono ratio">1.25</td></tr>
+  </table>
+
+  <h3>Mode sombre</h3>
+  <div class="dark">
+    <table>
+      <tr><th>Jeton</th><th>Clair</th><th>Sombre</th><th>Role</th></tr>
+      <tr><td class="mono">--bg</td><td class="mono">#F3EEE3</td><td class="mono">#16130F</td><td class="usage">papier chaud</td></tr>
+<tr><td class="mono">--blanc</td><td class="mono">#FFFFFF</td><td class="mono">#211D18</td><td class="usage">surface principale — BASCULE en sombre, ce n'est pas « du blanc »</td></tr>
+<tr><td class="mono">--noir</td><td class="mono">#1C1916</td><td class="mono">#F3EEE3</td><td class="usage">encre quasi-noire chaude</td></tr>
+<tr><td class="mono">--gris-fonce</td><td class="mono">#5B554C</td><td class="mono">#C9C1B2</td><td class="usage">texte secondaire</td></tr>
+<tr><td class="mono">--gris</td><td class="mono">#6E6860</td><td class="mono">#8E8576</td><td class="usage">texte tertiaire / légendes — 4.76:1 sur le papier</td></tr>
+<tr><td class="mono">--gris-clair</td><td class="mono">#EAE3D6</td><td class="mono">#322C24</td><td class="usage">filet fin</td></tr>
+    </table>
+  </div>
+  <div class="foot"><span>StudentLink - Charte graphique</span><span>03</span></div>
+</div>
+
+<!-- ============ ACCESSIBILITE ============ -->
+<div class="page">
+  <div class="ph"><h2>Accessibilite - contrastes mesures</h2><div class="num">04</div></div>
+  <div class="intro">Ratios calcules selon WCAG 2.1. Seuil retenu : <b>4,5:1</b> pour tout texte inferieur a 18,66px gras ou 24px normal — ce qui couvre la quasi-totalite de l'interface, badges et labels compris (11 a 14px).</div>
+
+  <h3>Theme clair</h3>
+  <table>
+    <tr><th colspan="2">Combinaison</th><th>Couleurs</th><th>Ratio</th><th>Verdict</th></tr>
+    <tr><td><span class="demo" style="background:#F3EEE3;color:#1C1916">Aa</span></td><td>Texte principal sur papier</td><td class="mono">#1C1916 <span class="on">sur</span> #F3EEE3</td><td class="mono ratio">15.12</td><td><span class="tag ok">AAA</span></td></tr>
+<tr><td><span class="demo" style="background:#FFFFFF;color:#1C1916">Aa</span></td><td>Texte principal sur surface</td><td class="mono">#1C1916 <span class="on">sur</span> #FFFFFF</td><td class="mono ratio">17.50</td><td><span class="tag ok">AAA</span></td></tr>
+<tr><td><span class="demo" style="background:#F3EEE3;color:#5B554C">Aa</span></td><td>Texte secondaire sur papier</td><td class="mono">#5B554C <span class="on">sur</span> #F3EEE3</td><td class="mono ratio">6.37</td><td><span class="tag ok">AA</span></td></tr>
+<tr><td><span class="demo" style="background:#F3EEE3;color:#6E6860">Aa</span></td><td>Texte tertiaire sur papier</td><td class="mono">#6E6860 <span class="on">sur</span> #F3EEE3</td><td class="mono ratio">4.76</td><td><span class="tag ok">AA</span></td></tr>
+<tr><td><span class="demo" style="background:#FFFFFF;color:#6E6860">Aa</span></td><td>Texte tertiaire sur surface</td><td class="mono">#6E6860 <span class="on">sur</span> #FFFFFF</td><td class="mono ratio">5.51</td><td><span class="tag ok">AA</span></td></tr>
+<tr><td><span class="demo" style="background:#BB3619;color:#FFFFFF">Aa</span></td><td>Blanc sur coral (bouton)</td><td class="mono">#FFFFFF <span class="on">sur</span> #BB3619</td><td class="mono ratio">5.75</td><td><span class="tag ok">AA</span></td></tr>
+<tr><td><span class="demo" style="background:#4A40C2;color:#FFFFFF">Aa</span></td><td>Blanc sur indigo (bouton)</td><td class="mono">#FFFFFF <span class="on">sur</span> #4A40C2</td><td class="mono ratio">7.49</td><td><span class="tag ok">AAA</span></td></tr>
+<tr><td><span class="demo" style="background:#EFB23A;color:#1C1916">Aa</span></td><td>Encre sur or (bouton)</td><td class="mono">#1C1916 <span class="on">sur</span> #EFB23A</td><td class="mono ratio">9.25</td><td><span class="tag ok">AAA</span></td></tr>
+<tr><td><span class="demo" style="background:#ECE9FA;color:#332A92">Aa</span></td><td>Badge Bar : indigo / teinte</td><td class="mono">#332A92 <span class="on">sur</span> #ECE9FA</td><td class="mono ratio">9.33</td><td><span class="tag ok">AAA</span></td></tr>
+<tr><td><span class="demo" style="background:#FBE7E1;color:#BB3619">Aa</span></td><td>Badge Boite : coral / teinte</td><td class="mono">#BB3619 <span class="on">sur</span> #FBE7E1</td><td class="mono ratio">4.82</td><td><span class="tag ok">AA</span></td></tr>
+<tr><td><span class="demo" style="background:#FCEBDB;color:#A75517">Aa</span></td><td>Badge Resto : orange / teinte</td><td class="mono">#A75517 <span class="on">sur</span> #FCEBDB</td><td class="mono ratio">4.56</td><td><span class="tag ok">AA</span></td></tr>
+<tr><td><span class="demo" style="background:#FBF0D6;color:#8E6414">Aa</span></td><td>Badge Afterwork : or / teinte</td><td class="mono">#8E6414 <span class="on">sur</span> #FBF0D6</td><td class="mono ratio">4.65</td><td><span class="tag ok">AA</span></td></tr>
+<tr><td><span class="demo" style="background:#F3EEE3;color:#8E6414">Aa</span></td><td>Or profond sur papier (.text-lime)</td><td class="mono">#8E6414 <span class="on">sur</span> #F3EEE3</td><td class="mono ratio">4.56</td><td><span class="tag ok">AA</span></td></tr>
+<tr><td><span class="demo" style="background:#E3F2E6;color:#1F6B34">Aa</span></td><td>Succes : texte sur teinte</td><td class="mono">#1F6B34 <span class="on">sur</span> #E3F2E6</td><td class="mono ratio">5.64</td><td><span class="tag ok">AA</span></td></tr>
+<tr><td><span class="demo" style="background:#FBE9E7;color:#B3261E">Aa</span></td><td>Danger : texte sur teinte</td><td class="mono">#B3261E <span class="on">sur</span> #FBE9E7</td><td class="mono ratio">5.58</td><td><span class="tag ok">AA</span></td></tr>
+<tr><td><span class="demo" style="background:#FFF3DC;color:#8A5A00">Aa</span></td><td>Alerte : texte sur teinte</td><td class="mono">#8A5A00 <span class="on">sur</span> #FFF3DC</td><td class="mono ratio">5.39</td><td><span class="tag ok">AA</span></td></tr>
+  </table>
+
+  <div class="foot"><span>StudentLink - Charte graphique</span><span>04</span></div>
+</div>
+
+<div class="page">
+  <div class="ph"><h2>Accessibilite - theme sombre</h2><div class="num">04b</div></div>
+  <div class="intro">Le theme sombre traite mieux le texte gris que le theme clair, mais degrade les badges : les teintes de fond sont assombries alors que les couleurs de texte restent celles du theme clair.</div>
+  <table>
+    <tr><th colspan="2">Combinaison</th><th>Couleurs</th><th>Ratio</th><th>Verdict</th></tr>
+    <tr><td><span class="demo" style="background:#16130F;color:#F3EEE3">Aa</span></td><td>Texte principal sur fond sombre</td><td class="mono">#F3EEE3 <span class="on">sur</span> #16130F</td><td class="mono ratio">16.00</td><td><span class="tag ok">AAA</span></td></tr>
+<tr><td><span class="demo" style="background:#211D18;color:#C9C1B2">Aa</span></td><td>Texte secondaire sur surface</td><td class="mono">#C9C1B2 <span class="on">sur</span> #211D18</td><td class="mono ratio">9.38</td><td><span class="tag ok">AAA</span></td></tr>
+<tr><td><span class="demo" style="background:#211D18;color:#8E8576">Aa</span></td><td>Texte tertiaire sur surface</td><td class="mono">#8E8576 <span class="on">sur</span> #211D18</td><td class="mono ratio">4.60</td><td><span class="tag ok">AA</span></td></tr>
+<tr><td><span class="demo" style="background:#1E1B36;color:#827BD4">Aa</span></td><td>Badge Bar : indigo / teinte sombre</td><td class="mono">#827BD4 <span class="on">sur</span> #1E1B36</td><td class="mono ratio">4.53</td><td><span class="tag ok">AA</span></td></tr>
+<tr><td><span class="demo" style="background:#3A201A;color:#E5674F">Aa</span></td><td>Badge Boite : coral / teinte sombre</td><td class="mono">#E5674F <span class="on">sur</span> #3A201A</td><td class="mono ratio">4.56</td><td><span class="tag ok">AA</span></td></tr>
+<tr><td><span class="demo" style="background:#322A18;color:#BC8825">Aa</span></td><td>Badge Afterwork : or / teinte sombre</td><td class="mono">#BC8825 <span class="on">sur</span> #322A18</td><td class="mono ratio">4.52</td><td><span class="tag ok">AA</span></td></tr>
+  </table>
+  <div class="callout"><b>Points ouverts.</b> Les combinaisons marquees « Echec » concernent les badges de categorie et le texte tertiaire. Corrections proposees, sans modifier l'identite : assombrir <code>--gris</code> vers <code>#7A7365</code>, <code>--lime-deep</code> vers <code>#9A6B12</code>, et introduire des variantes de teinte propres au mode sombre pour <code>--bleu</code> et <code>--rouge</code>.</div>
+  <div class="foot"><span>StudentLink - Charte graphique</span><span>04b</span></div>
+</div>
+
+<!-- ============ TYPO : FAMILLES ============ -->
+<div class="page">
+  <div class="ph"><h2>Typographie - les deux familles</h2><div class="num">05</div></div>
+  <div class="intro">Deux familles, deux territoires stricts. Le contraste serif/sans porte toute la hierarchie : c'est ce qui permet a l'interface de rester sobre sans devenir plate.</div>
+  <div class="families">
+    <div class="fam">
+      <div class="name">Titres - display</div>
+      <div class="glyphs" style="font-family:var(--font-display);font-weight:900">Aa Bb Cc<br><span style="font-style:italic;color:var(--rouge)">0123456789</span></div>
+      <div class="desc"><b>Playfair Display</b><br>Graisses chargees : 700, 800, 900 + italiques.<br>Serif didone a fort contraste, tres lisible en grand corps, signe la dimension editoriale de l'application.</div>
+      <div class="rule"><b>Uniquement :</b> titres, noms d'evenements, chiffres cles, italique de marque.</div>
+    </div>
+    <div class="fam">
+      <div class="name">Interface - sans</div>
+      <div class="glyphs" style="font-family:var(--font-sans);font-weight:700">Aa Bb Cc<br><span style="color:var(--bleu)">0123456789</span></div>
+      <div class="desc"><b>DM Sans</b><br>Graisses chargees : 400 a 700 (variable).<br>Grotesque geometrique a large hauteur d'x, concue pour les petits corps et les ecrans denses.</div>
+      <div class="rule"><b>Tout le reste :</b> corps, boutons, labels, champs, meta, navigation.</div>
+    </div>
+  </div>
+  <div class="callout"><b>Piege corrige.</b> DM Sans n'est chargee que jusqu'a 700. Toute demande de 800 ou 900 en sans declenchait un faux-gras synthetique du navigateur — plus lourd, plus flou, et different d'un appareil a l'autre. 37 occurrences ont ete ramenees a 700 ; les jetons <code>--fw-display</code> et <code>--fw-black</code> sont desormais reserves a la serif.</div>
+
+  <h3>Chargement</h3>
+  <table>
+    <tr><th>Point</th><th>Valeur</th></tr>
+    <tr><td>Source</td><td class="mono">fonts.googleapis.com (autorise par la CSP)</td></tr>
+    <tr><td>Strategie</td><td class="mono">display=swap</td></tr>
+    <tr><td>Axes</td><td class="mono">Playfair 700..900 + ital / DM Sans opsz 9..40, wght 400..700</td></tr>
+    <tr><td>Repli</td><td class="mono">Georgia, Times New Roman, serif / system-ui, Segoe UI</td></tr>
+  </table>
+  <div class="foot"><span>StudentLink - Charte graphique</span><span>05</span></div>
+</div>
+
+<!-- ============ TYPO : ECHELLE ============ -->
+<div class="page">
+  <div class="ph"><h2>Typographie - l'echelle</h2><div class="num">06</div></div>
+  <div class="intro">Dix crans, base 16px. C'est la liste complete : aucune taille en dehors de celle-ci n'est autorisee dans une page. L'application en comptait 37 avant refonte.</div>
+  <table>
+    <tr><th>Jeton</th><th>rem</th><th>px</th><th>Usage</th><th>Specimen</th></tr>
+    <tr><td class="mono">--fs-1</td><td class="mono">0.6875rem</td><td class="mono">11px</td><td class="usage">micro-label capitales, badge, légende</td><td class="spec" style="font-size:0.6875rem;white-space:nowrap">Clermont</td></tr>
+<tr><td class="mono">--fs-2</td><td class="mono">0.75rem</td><td class="mono">12px</td><td class="usage">méta, sous-titre de liste</td><td class="spec" style="font-size:0.75rem;white-space:nowrap">Clermont</td></tr>
+<tr><td class="mono">--fs-3</td><td class="mono">0.8125rem</td><td class="mono">13px</td><td class="usage">texte secondaire</td><td class="spec" style="font-size:0.8125rem;white-space:nowrap">Clermont</td></tr>
+<tr><td class="mono">--fs-4</td><td class="mono">0.875rem</td><td class="mono">14px</td><td class="usage">texte courant, bouton</td><td class="spec" style="font-size:0.875rem;white-space:nowrap">Clermont</td></tr>
+<tr><td class="mono">--fs-5</td><td class="mono">1rem</td><td class="mono">16px</td><td class="usage">texte d'accent, champ de saisie (anti-zoom iOS)</td><td class="spec" style="font-size:1rem;white-space:nowrap">Clermont</td></tr>
+<tr><td class="mono">--fs-6</td><td class="mono">1.25rem</td><td class="mono">20px</td><td class="usage">titre de carte</td><td class="spec" style="font-size:1.25rem;white-space:nowrap">Clermont</td></tr>
+<tr><td class="mono">--fs-7</td><td class="mono">1.5rem</td><td class="mono">24px</td><td class="usage">titre de section</td><td class="spec" style="font-size:1.5rem;white-space:nowrap">Clermont</td></tr>
+<tr><td class="mono">--fs-8</td><td class="mono">2rem</td><td class="mono">32px</td><td class="usage">chiffre clé, titre d'écran</td><td class="spec" style="font-size:2rem;white-space:nowrap">Clermont</td></tr>
+<tr><td class="mono">--fs-9</td><td class="mono">2.5rem</td><td class="mono">40px</td><td class="usage">hero mobile</td><td class="spec" style="font-size:2.5rem;white-space:nowrap">Clermont</td></tr>
+<tr><td class="mono">--fs-10</td><td class="mono">3rem</td><td class="mono">48px</td><td class="usage">hero desktop</td><td class="spec" style="font-size:3rem;white-space:nowrap">Clermont</td></tr>
+  </table>
+  <div class="foot"><span>StudentLink - Charte graphique</span><span>06</span></div>
+</div>
+
+<!-- ============ TYPO : ROLES ============ -->
+<div class="page">
+  <div class="ph"><h2>Typographie - roles</h2><div class="num">07</div></div>
+  <div class="intro">Chaque role est une classe utilitaire prete a l'emploi qui combine famille, taille, graisse, interligne et interlettrage. Une nouvelle page pioche ici plutot que de redeclarer une taille.</div>
+  <table>
+    <tr><th>Classe</th><th>Reglage</th><th>Usage</th><th>Specimen</th></tr>
+    <tr><td class="mono"><b>.t-hero</b></td><td class="mono small">serif<br>--fs-9 / 900</td><td class="usage">Titre d'accueil, ecran d'onboarding</td><td class="spec" style="font-family:var(--font-display);font-size:2.5rem;font-weight:900;line-height:1.1">Le Baron, ce soir</td></tr>
+<tr><td class="mono"><b>.t-title</b></td><td class="mono small">serif<br>--fs-8 / 900</td><td class="usage">Titre d'ecran, chiffre cle</td><td class="spec" style="font-family:var(--font-display);font-size:2rem;font-weight:900;line-height:1.1">Le Baron, ce soir</td></tr>
+<tr><td class="mono"><b>.t-section</b></td><td class="mono small">serif<br>--fs-7 / 800</td><td class="usage">Titre de section</td><td class="spec" style="font-family:var(--font-display);font-size:1.5rem;font-weight:800;line-height:1.1">Le Baron, ce soir</td></tr>
+<tr><td class="mono"><b>.t-card-title</b></td><td class="mono small">serif<br>--fs-6 / 900</td><td class="usage">Titre de carte, nom d'evenement</td><td class="spec" style="font-family:var(--font-display);font-size:1.25rem;font-weight:900;line-height:1.1">Le Baron, ce soir</td></tr>
+<tr><td class="mono"><b>.t-metric</b></td><td class="mono small">serif<br>--fs-8 / 900</td><td class="usage">Compteur, montant, pourcentage</td><td class="spec" style="font-family:var(--font-display);font-size:2rem;font-weight:900;line-height:1.1">Le Baron, ce soir</td></tr>
+<tr><td class="mono"><b>.t-body-lg</b></td><td class="mono small">sans<br>--fs-5 / 400</td><td class="usage">Paragraphe long, CGU, description</td><td class="spec" style="font-family:var(--font-sans);font-size:1rem;font-weight:400;line-height:1.1">Le Baron, ce soir</td></tr>
+<tr><td class="mono"><b>.t-body</b></td><td class="mono small">sans<br>--fs-4 / 400</td><td class="usage">Texte courant, libelle de bouton</td><td class="spec" style="font-family:var(--font-sans);font-size:0.875rem;font-weight:400;line-height:1.1">Le Baron, ce soir</td></tr>
+<tr><td class="mono"><b>.t-caption</b></td><td class="mono small">sans<br>--fs-3 / 500</td><td class="usage">Texte d'appui, sous-titre</td><td class="spec" style="font-family:var(--font-sans);font-size:0.8125rem;font-weight:500;line-height:1.1">Le Baron, ce soir</td></tr>
+<tr><td class="mono"><b>.t-meta</b></td><td class="mono small">sans<br>--fs-2 / 600</td><td class="usage">Lieu, date, compteur de liste</td><td class="spec" style="font-family:var(--font-sans);font-size:0.75rem;font-weight:600;line-height:1.1">Le Baron, ce soir</td></tr>
+<tr><td class="mono"><b>.t-overline</b></td><td class="mono small">sans<br>--fs-1 / 700</td><td class="usage">Label capitales, badge, en-tete</td><td class="spec" style="font-family:var(--font-sans);font-size:0.6875rem;font-weight:700;line-height:1.1">Le Baron, ce soir</td></tr>
+  </table>
+  <div class="callout"><b>Chiffres alignes.</b> Les roles porteurs de chiffres (<code>.t-metric</code>, montants, pourcentages, compteurs) activent <code>font-variant-numeric: tabular-nums</code> : les valeurs qui se rafraichissent en direct ne font plus sauter la mise en page.</div>
+  <div class="foot"><span>StudentLink - Charte graphique</span><span>07</span></div>
+</div>
+
+<!-- ============ TYPO : REGLAGES ============ -->
+<div class="page">
+  <div class="ph"><h2>Typographie - graisses et rythme</h2><div class="num">08</div></div>
+  <h3>Graisses</h3>
+  <table>
+    <tr><th>Jeton</th><th>Valeur</th><th>Famille</th><th>Usage</th><th>Specimen</th></tr>
+    <tr><td class="mono">--fw-regular</td><td class="mono">400</td><td>sans</td><td class="usage">Corps de texte</td><td class="spec" style="font-family:var(--font-sans);font-weight:400;font-size:13pt">Clermont</td></tr>
+<tr><td class="mono">--fw-medium</td><td class="mono">500</td><td>sans</td><td class="usage">Texte d'appui</td><td class="spec" style="font-family:var(--font-sans);font-weight:500;font-size:13pt">Clermont</td></tr>
+<tr><td class="mono">--fw-semibold</td><td class="mono">600</td><td>sans</td><td class="usage">Meta, accent leger</td><td class="spec" style="font-family:var(--font-sans);font-weight:600;font-size:13pt">Clermont</td></tr>
+<tr><td class="mono">--fw-bold</td><td class="mono">700</td><td>sans</td><td class="usage">Boutons, labels, emphase — plafond de la sans</td><td class="spec" style="font-family:var(--font-sans);font-weight:700;font-size:13pt">Clermont</td></tr>
+<tr><td class="mono">--fw-display</td><td class="mono">800</td><td>serif</td><td class="usage">Titres de section, italique de marque</td><td class="spec" style="font-family:var(--font-display);font-weight:800;font-size:13pt">Clermont</td></tr>
+<tr><td class="mono">--fw-black</td><td class="mono">900</td><td>serif</td><td class="usage">Titres, chiffres cles</td><td class="spec" style="font-family:var(--font-display);font-weight:900;font-size:13pt">Clermont</td></tr>
+  </table>
+  <h3>Interlignes</h3>
+  <table>
+    <tr><th>Jeton</th><th>Valeur</th><th>Usage</th></tr>
+    <tr><td class="mono">--lh-display</td><td class="mono">1</td><td class="usage">Titres XXL</td></tr>
+<tr><td class="mono">--lh-tight</td><td class="mono">1.15</td><td class="usage">Titres</td></tr>
+<tr><td class="mono">--lh-snug</td><td class="mono">1.3</td><td class="usage">Sous-titres, meta</td></tr>
+<tr><td class="mono">--lh-normal</td><td class="mono">1.5</td><td class="usage">Corps</td></tr>
+<tr><td class="mono">--lh-relaxed</td><td class="mono">1.6</td><td class="usage">Texte long</td></tr>
+  </table>
+  <h3>Interlettrages</h3>
+  <table>
+    <tr><th>Jeton</th><th>Valeur</th><th>Usage</th><th>Specimen</th></tr>
+    <tr><td class="mono">--ls-display</td><td class="mono">-0.02em</td><td class="usage">Titres XXL</td><td class="spec" style="letter-spacing:-0.02em;font-size:10pt;font-weight:600">SOIREE ETUDIANTE</td></tr>
+<tr><td class="mono">--ls-tight</td><td class="mono">-0.01em</td><td class="usage">Titres</td><td class="spec" style="letter-spacing:-0.01em;font-size:10pt;font-weight:600">SOIREE ETUDIANTE</td></tr>
+<tr><td class="mono">--ls-normal</td><td class="mono">0</td><td class="usage">Corps</td><td class="spec" style="letter-spacing:0;font-size:10pt;font-weight:600">SOIREE ETUDIANTE</td></tr>
+<tr><td class="mono">--ls-wide</td><td class="mono">0.06em</td><td class="usage">Petites capitales</td><td class="spec" style="letter-spacing:0.06em;font-size:10pt;font-weight:600">SOIREE ETUDIANTE</td></tr>
+<tr><td class="mono">--ls-label</td><td class="mono">0.14em</td><td class="usage">Labels capitales</td><td class="spec" style="letter-spacing:0.14em;font-size:10pt;font-weight:600">SOIREE ETUDIANTE</td></tr>
+  </table>
+  <div class="foot"><span>StudentLink - Charte graphique</span><span>08</span></div>
+</div>
+
+<!-- ============ COMPOSANTS ============ -->
+<div class="page">
+  <div class="ph"><h2>Composants</h2><div class="num">09</div></div>
+  <h3>Boutons</h3>
+  <div class="btns">
+    <span class="btn" style="background:#1C1916;color:#FFFFFF">Bouton primaire</span>
+    <span class="btn" style="background:#E0492B;color:#fff">Action heros</span>
+    <span class="btn" style="background:#4A40C2;color:#fff">Action secondaire</span>
+    <span class="btn" style="background:#EFB23A;color:#1C1916">Accent</span>
+    <span class="btn" style="background:#FFFFFF;color:#1C1916;border-color:#DED6C6">Contour</span>
+  </div>
+  <div class="intro" style="margin-bottom:6mm">Rayon <code>--radius-pill</code>, graisse 700, taille <code>--fs-4</code>. Un seul bouton plein coral par ecran : c'est le geste principal.</div>
+
+  <h3>Badges de categorie</h3>
+  <div class="badges">
+    <span class="badge" style="background:#ECE9FA;color:#4A40C2">Bar</span>
+    <span class="badge" style="background:#FBE7E1;color:#E0492B">Boite</span>
+    <span class="badge" style="background:#FCEBDB;color:#A75517">Resto</span>
+    <span class="badge" style="background:#FBF0D6;color:#8E6414">Afterwork</span>
+  </div>
+  <div class="intro" style="margin-bottom:6mm">Taille <code>--fs-1</code>, capitales, interlettrage <code>--ls-wide</code>. Ces badges codent <b>uniquement</b> le type de lieu — un badge « Gratuit » doit avoir sa propre forme, sinon la couleur ment.</div>
+
+  <h3>Elevation</h3>
+  <div class="elev">
+    <div class="e" style="box-shadow:0 1px 2px rgba(28,25,22,.05)"><div class="n">--shadow-xs</div>Tableaux, cartes de stats</div>
+    <div class="e" style="box-shadow:0 1px 2px rgba(28,25,22,.05),0 3px 8px rgba(28,25,22,.05)"><div class="n">--shadow-sm</div>Cartes standard</div>
+    <div class="e" style="box-shadow:0 2px 4px rgba(28,25,22,.04),0 10px 24px rgba(28,25,22,.08)"><div class="n">--shadow</div>Cartes evenement</div>
+    <div class="e" style="box-shadow:0 6px 16px rgba(28,25,22,.07),0 22px 48px rgba(28,25,22,.12)"><div class="n">--shadow-lg</div>Nav flottante, toasts</div>
+  </div>
+
+  <h3>Rayons</h3>
+  <div class="radii">
+    <div class="r" style="border-radius:12px">--radius-sm<br>12px</div>
+    <div class="r" style="border-radius:18px">--radius<br>18px</div>
+    <div class="r" style="border-radius:24px">--radius-lg<br>24px</div>
+    <div class="r" style="border-radius:30px">--radius-xl<br>30px</div>
+    <div class="r" style="border-radius:99px">--radius-pill</div>
+  </div>
+  <div class="foot"><span>StudentLink - Charte graphique</span><span>09</span></div>
+</div>
+
+<!-- ============ USAGE ============ -->
+<div class="page">
+  <div class="ph"><h2>Regles d'usage</h2><div class="num">10</div></div>
+  <div class="rules">
+    <div class="do">
+      <h3>A faire</h3>
+      <ul>
+        <li>Piocher une taille parmi les dix crans <code>--fs-*</code>.</li>
+        <li>Passer par les classes de role <code>.t-*</code> pour tout nouveau texte.</li>
+        <li>Reserver Playfair aux titres et aux chiffres cles.</li>
+        <li>Utiliser les variantes <code>-deep</code> des que la couleur porte du texte.</li>
+        <li>Mettre les champs de saisie a <code>--fs-5</code> (16px) pour eviter le zoom iOS.</li>
+        <li>Verifier chaque nouvelle paire couleur/fond a 4,5:1 minimum.</li>
+        <li>Definir toute couleur via un jeton, y compris en style en ligne.</li>
+      </ul>
+    </div>
+    <div class="dont">
+      <h3>A ne pas faire</h3>
+      <ul>
+        <li>Ecrire une valeur hexadecimale dans une page PHP.</li>
+        <li>Demander 800 ou 900 sur DM Sans : le faux-gras est garanti.</li>
+        <li>Reutiliser un badge de categorie pour dire autre chose que la categorie.</li>
+        <li>Employer le coral pour une erreur : c'est la couleur de la marque.</li>
+        <li>Inventer une taille intermediaire (13,5px, 10,5px, 2,6rem...).</li>
+        <li>Poser un fond ou un texte en dur qui casse le mode sombre.</li>
+        <li>Melanger bordure dure et ombre douce sur un meme composant.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Reprise en main</h3>
+  <table>
+    <tr><th>Besoin</th><th>Ou regarder</th></tr>
+    <tr><td>Ajouter une couleur</td><td class="mono">assets/css/style.css - bloc :root, puis ce document</td></tr>
+    <tr><td>Styler un nouveau texte</td><td class="mono">classes .t-hero / .t-title / .t-body / .t-meta / .t-overline</td></tr>
+    <tr><td>Verifier un contraste</td><td class="mono">page 04 de ce document</td></tr>
+    <tr><td>Regenerer cette charte</td><td class="mono">le document se reconstruit depuis style.css</td></tr>
+  </table>
+  <div class="foot"><span>StudentLink - Charte graphique - 15/09/2026</span><span>10</span></div>
+</div>
+
+</body></html>

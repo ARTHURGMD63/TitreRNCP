@@ -25,7 +25,7 @@ final class GamificationDbTest extends TestCase
             CREATE TABLE users (id INTEGER PRIMARY KEY, prenom TEXT);
             CREATE TABLE inscriptions (id INTEGER PRIMARY KEY, user_id INTEGER, statut TEXT);
             CREATE TABLE squad_membres (id INTEGER PRIMARY KEY, user_id INTEGER);
-            CREATE TABLE follows_users (id INTEGER PRIMARY KEY, follower_id INTEGER, followed_id INTEGER);
+            CREATE TABLE follows_users (id INTEGER PRIMARY KEY, follower_id INTEGER, followed_id INTEGER, statut TEXT NOT NULL DEFAULT 'pending');
             CREATE TABLE avis (id INTEGER PRIMARY KEY, user_id INTEGER, evenement_id INTEGER, note INTEGER);
             CREATE TABLE economies (id INTEGER PRIMARY KEY, user_id INTEGER, montant REAL);
             CREATE TABLE badges (code TEXT PRIMARY KEY, nom TEXT);

@@ -1,5 +1,6 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) session_start();
+// La session est demarree par auth_check.php, qui pose d'abord les
+// drapeaux du cookie : la demarrer ici la ferait naitre sans eux.
 require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/db.php';
 
@@ -15,10 +16,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pass1 = $_POST['password'] ?? '';
     $pass2 = $_POST['password_confirm'] ?? '';
 
+    // Le plancher suit le compte, pas le formulaire : un fondateur qui passe
+    // par « mot de passe oublié » reste tenu à la règle des comptes fondateurs.
+    $stmtType = $pdo->prepare("SELECT type FROM users WHERE email = ?");
+    $stmtType->execute([$email]);
+    $minimum = longueurMinimaleMotDePasse($stmtType->fetchColumn() ?: null);
+
     if (!$email) {
         $error = 'Lien invalide ou expiré.';
-    } elseif (strlen($pass1) < 8) {
-        $error = 'Le mot de passe doit faire au moins 8 caractères.';
+    } elseif (strlen($pass1) < $minimum) {
+        $error = "Le mot de passe doit faire au moins $minimum caractères.";
     } elseif ($pass1 !== $pass2) {
         $error = 'Les mots de passe ne correspondent pas.';
     } else {
@@ -37,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Nouveau mot de passe</title>
 <?= themeBootScript() ?>
-<link rel="stylesheet" href="<?= baseUrl() ?>/assets/css/style.css">
+<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
 </head>
 <body>
 <div class="auth-page">
@@ -45,14 +52,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="brand">StudentLink <em>/ Sécurité</em></div>
   </div>
 
-  <div class="auth-headline">
-    <div class="display" style="font-size:2rem;">Nouveau</div>
-    <div class="display-italic" style="font-size:2rem;">mot de passe</div>
-  </div>
+  <h1 class="auth-headline titre-page">
+    <div class="display" style="font-size:var(--fs-8);">Nouveau</div>
+    <div class="display-italic" style="font-size:var(--fs-8);">mot de passe</div>
+  </h1>
 
   <?php if ($success): ?>
-    <div style="background:var(--lime);border:2px solid var(--noir);box-shadow:4px 4px 0 var(--noir);padding:20px;margin-bottom:24px;font-weight:700;text-align:center;">
-      ✅ Mot de passe mis à jour !
+    <div style="background:var(--lime);color:var(--sur-media-encre);border:1px solid var(--gris-clair);box-shadow:var(--shadow);padding:20px;margin-bottom:24px;font-weight:var(--fw-bold);text-align:center;">
+      <span class="with-icon"><?= icon('valide', 'icon-sm') ?>Mot de passe mis à jour !</span>
     </div>
     <a href="<?= baseUrl('/auth/login.php') ?>" class="btn btn-primary btn-full">
       → Se connecter
@@ -68,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div class="form-error"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
 
-    <p style="font-size:14px;color:var(--gris);margin-bottom:24px;">
+    <p style="font-size:var(--fs-4);color:var(--gris);margin-bottom:24px;">
       Choisis un nouveau mot de passe (8 caractères minimum).
     </p>
 
@@ -78,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       <div class="form-group">
         <label for="password">Nouveau mot de passe</label>
-        <input type="password" id="password" name="password"
+        <input type="password" id="password" name="password" autocomplete="new-password"
                placeholder="••••••••" minlength="8" required autofocus>
       </div>
       <div class="form-group">
@@ -93,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <?php endif; ?>
 
   <div class="auth-link">
-    <a href="<?= baseUrl('/auth/login.php') ?>" style="font-size:13px;">← Connexion</a>
+    <a href="<?= baseUrl('/auth/login.php') ?>" style="font-size:var(--fs-3);">← Connexion</a>
   </div>
 </div>
 </body>

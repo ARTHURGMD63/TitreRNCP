@@ -6,14 +6,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Politique de confidentialité</title>
 <?= themeBootScript() ?>
-<link rel="stylesheet" href="<?= baseUrl() ?>/assets/css/style.css">
+<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
 <style>
   .legal-page { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
-  .legal-page h1 { font-family:'Playfair Display',serif; font-weight:900; font-size:2.4rem; margin-bottom:32px; }
-  .legal-page h2 { font-family:'Playfair Display',serif; font-weight:900; font-size:1.3rem; margin:32px 0 12px; }
-  .legal-page p, .legal-page li { line-height:1.6; margin-bottom:10px; }
+  .legal-page h1 { font-family:var(--font-display); font-weight:var(--fw-black); font-size:var(--fs-9); margin-bottom:32px; }
+  .legal-page h2 { font-family:var(--font-display); font-weight:var(--fw-black); font-size:var(--fs-6); margin:32px 0 12px; }
+  .legal-page p, .legal-page li { line-height:var(--lh-relaxed); margin-bottom:10px; }
   .legal-page ul { padding-left: 22px; margin-bottom: 16px; }
-  .legal-page a.back { color:var(--gris); font-size:13px; text-decoration:none; }
+  .legal-page a.back { color:var(--gris); font-size:var(--fs-3); text-decoration:none; }
 </style>
 </head>
 <body>
@@ -51,7 +51,7 @@
   <ul>
     <li>L'équipe StudentLink</li>
     <li>Les partenaires pour les events auxquels tu t'inscris (prénom, nom, école, promo)</li>
-    <li>L'hébergeur (Railway)</li>
+    <li>L'hébergeur (serveur local, Clermont-Ferrand)</li>
   </ul>
   <p>Aucune donnée n'est vendue à des tiers.</p>
 
@@ -64,11 +64,13 @@
   <h2>8. Sécurité</h2>
   <p>Les mots de passe sont hachés avec bcrypt. Les échanges sont chiffrés en HTTPS. Les sessions sont régénérées à chaque connexion pour éviter les détournements.</p>
 
-  <p style="margin-top:40px;font-size:12px;color:var(--gris);">Dernière mise à jour : <?= date('d/m/Y') ?></p>
+  <p style="margin-top:40px;font-size:var(--fs-2);color:var(--gris);">
+    Document réalisé à Clermont-Ferrand par Arthur Gramond, étudiant en B2 à Hesias.<br>
+    Dernière mise à jour : <?= date('d/m/Y') ?></p>
 
-  <div style="margin-top:40px;padding-top:20px;border-top:2px solid var(--noir);display:flex;gap:16px;flex-wrap:wrap;">
-    <a href="<?= baseUrl('/mentions-legales.php') ?>" style="color:var(--bleu);font-weight:600;text-decoration:none;">Mentions légales</a>
-    <a href="<?= baseUrl('/cgu.php') ?>" style="color:var(--bleu);font-weight:600;text-decoration:none;">CGU</a>
+  <div class="legal-links" style="margin-top:40px;padding-top:20px;border-top:1px solid var(--gris-clair);">
+    <a href="<?= baseUrl('/mentions-legales.php') ?>" style="color:var(--bleu);font-weight:var(--fw-semibold);text-decoration:none;">Mentions légales</a>
+    <a href="<?= baseUrl('/cgu.php') ?>" style="color:var(--bleu);font-weight:var(--fw-semibold);text-decoration:none;">CGU</a>
   </div>
 </div>
 </body>

@@ -55,6 +55,64 @@ StudentLink utilise un **pattern PHP procédural MVC léger** sans framework :
 
 Ce choix est **intentionnel** pour un projet de taille réduite : pas de surcharge d'un framework (Symfony/Laravel), meilleure lisibilité pour la soutenance.
 
+## Les trois espaces
+
+Un seul code, un seul domaine, trois espaces distingués par `users.type` et
+gardés par `requireStudent()`, `requirePartner()` et `requireAdmin()`.
+
+| Espace | Racine | Coquille | Pour qui |
+|--------|--------|----------|----------|
+| Étudiant | `/explore.php`, `/squads.php`, `/wallet.php`, `/profil.php` | `.app-shell` + `.bottom-nav` | Les étudiants |
+| Partenaire | `/partenaire/` | `.partner-shell` | Les établissements clients |
+| Interne | `/admin/` | `.partner-shell` (même gabarit) | Arthur et Étienne |
+
+`accueilSelonType()` (`includes/auth_check.php`) est le **seul** endroit qui
+décide où atterrit un compte après connexion. Sans ce point unique, chaque
+garde renvoyait vers « l'autre » espace et les renvois se répondaient : un
+administrateur envoyé sur `explore.php` était repoussé vers le tableau de bord
+partenaire, qui le repoussait vers `explore.php`. Boucle infinie.
+
+### Back-office fondateurs (`/admin/`)
+
+| Écran | Rôle |
+|-------|------|
+| `index.php` | Relevé hebdomadaire de SL-07 : North Star, marketplace, business, seuils d'alerte |
+| `clients.php` / `client.php` | CRM commercial : pipeline, abonnements, historique des échanges |
+| `utilisateurs.php` | Base étudiants : activité, centres d'intérêt, économies |
+| `evenements.php` | Toutes les soirées, tous établissements : remplissage et taux de présence |
+| `finances.php` | Trésorerie, MRR, registre recettes/dépenses, point mort |
+| `moderation.php` | Signalements à traiter |
+
+Trois tables dédiées (migration v12) :
+
+- **`crm_clients`** — le compte commercial. Il n'est **pas** confondu avec
+  `etablissements` : un prospect existe avant tout compte partenaire, et SL-05
+  demande une liste de 30 cibles dont aucune n'aura de compte au moment où elle
+  est constituée. `etablissement_id` reste `NULL` jusqu'à l'inscription.
+- **`crm_interactions`** — appels, visites, relances, et la prochaine action
+  avec son échéance, dans la même ligne que l'échange qui l'a produite.
+- **`finance_mouvements`** — le registre de caisse. Le MRR se déduit des
+  abonnements ; l'encaissé, non. Les lignes `prevu` (facturé, pas encore en
+  banque) sont séparées des lignes `regle`, parce que confondre les deux est
+  exactement ce qui fait croire qu'on a de la trésorerie.
+
+Les calculs vivent dans `includes/crm.php`, jamais dans les pages : le MRR
+affiché sur le tableau de bord et celui de la page finances doivent venir de la
+même fonction. Les règles chiffrées (point mort, churn, autonomie, taux de
+présence) sont isolées en fonctions pures — `financeCalculPointMort()`,
+`crmCalculChurn()`… — pour être testables sans base, comme `niveauDepuisXp()`
+dans `gamification.php`.
+
+Les comptes fondateurs se créent en ligne de commande :
+
+```bash
+php outils/creer_admin.php "Prénom" "Nom" "email" "motdepasse"
+php outils/creer_admin.php --promouvoir "email"
+```
+
+Pas de formulaire web : un écran qui fabrique des administrateurs est une porte
+ouverte le jour où on l'oublie en ligne.
+
 ## Endpoints API
 
 Les appels AJAX passent par `/api/*.php` qui retournent du JSON :
@@ -121,12 +179,14 @@ $pdo  = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass, [
 ]);
 ```
 
-### Migrations
+### Installation de la base
 
 ```
-db_setup.sql          → Schéma initial + données de démo
-db_migrations_v2.sql  → Avis, badges, gamification (2026-04)
-db_migrations_v3.sql  → Rate limiting, password resets (2026-05)
+db_setup.sql  → Installation complète en une importation :
+                16 tables (schéma consolidé, historique des migrations
+                v2/v3/v4 intégré) + jeu de données de démonstration
+                (événements générés avec NOW() + INTERVAL, donc
+                toujours à venir quelle que soit la date d'import)
 ```
 
 ## Déploiement CI/CD

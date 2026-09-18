@@ -25,8 +25,8 @@ function setSecurityHeaders(): void {
     header(
         "Content-Security-Policy: " .
         "default-src 'self'; " .
-        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " .
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; " .
+        "script-src 'self' 'unsafe-inline'; " .   // bibliothèques auto-hébergées dans /assets/vendor
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " .
         "font-src 'self' https://fonts.gstatic.com; " .
         "img-src 'self' data: https:; " .
         "connect-src 'self'; " .
@@ -37,7 +37,12 @@ function setSecurityHeaders(): void {
 // ─── CSRF ─────────────────────────────────────────────────────────────────
 
 function csrfToken(): string {
-    if (session_status() === PHP_SESSION_NONE) session_start();
+    // Filet de secours : dans le flux normal auth_check.php a deja demarre la
+    // session avec ses drapeaux. Si on arrive ici sans, mieux vaut echouer
+    // que d'ouvrir une session au cookie nu.
+    if (session_status() === PHP_SESSION_NONE) {
+        throw new LogicException('csrfToken() appele avant le demarrage de la session.');
+    }
     if (empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     }
@@ -88,6 +93,22 @@ function recordLoginAttempt(PDO $pdo, string $ip, string $email): void {
 function clearLoginAttempts(PDO $pdo, string $ip): void {
     $pdo->prepare("DELETE FROM login_attempts WHERE ip = ?")
         ->execute([$ip]);
+}
+
+// ─── Politique de mot de passe ────────────────────────────────────
+
+/**
+ * Longueur minimale d'un mot de passe, selon le type de compte.
+ *
+ * Trois valeurs coexistaient sans s'accorder : 6 à l'inscription, 8 à la
+ * réinitialisation, 10 à la création d'un compte fondateur. Un fondateur
+ * pouvait donc redescendre à 8 par « mot de passe oublié », en contournant
+ * sans le vouloir la seule règle qui le concernait. Un compte admin ouvre
+ * le fichier clients et la trésorerie : il ne partage pas le plancher des
+ * comptes étudiants.
+ */
+function longueurMinimaleMotDePasse(?string $type = null): int {
+    return $type === 'admin' ? 12 : 8;
 }
 
 // ─── Mot de passe oublié ───────────────────────────────────────────────────

@@ -54,23 +54,25 @@ StudentLink connecte les étudiants aux établissements (bars, boîtes, restos) 
 
 ### Étapes
 
+**1. Placer le projet** dans le dossier web de WAMP, dans un dossier nommé **exactement** `TitreRNCP` :
+`C:\wamp64\www\TitreRNCP`
+> ⚠️ Le nom du dossier est important : en local, les liens internes utilisent le chemin `/TitreRNCP`.
+
+**2. Créer la base de données** — une **seule** importation suffit (crée les 16 tables **et** un jeu de démonstration avec des événements toujours à venir) :
+- **Via phpMyAdmin** (fourni avec WAMP) : ouvrir `http://localhost/phpmyadmin` → onglet **Importer** → choisir `db_setup.sql` → **Exécuter**.
+- **Ou en ligne de commande** :
+  ```bash
+  mysql -u root < db_setup.sql
+  ```
+
+**3. Ouvrir l'application** :
+`http://localhost/TitreRNCP/explore.php`
+> Si Apache tourne sur un autre port, l'indiquer, ex. `http://localhost:8080/TitreRNCP/explore.php`.
+
+**4. (Optionnel — uniquement pour lancer les tests)** installer les dépendances de développement :
 ```bash
-# 1. Cloner le repo dans le dossier web
-git clone https://github.com/ARTHURGMD63/TitreRNCP.git C:/wamp64/www/TitreRNCP
-
-# 2. Installer les dépendances de développement
-cd C:/wamp64/www/TitreRNCP
-composer install
-
-# 3. Créer la base de données
-mysql -u root < db_setup.sql
-
-# 4. Appliquer les migrations
-mysql -u root studentlink < db_migrations_v2.sql
-mysql -u root studentlink < db_migrations_v3.sql
-
-# 5. Accéder à l'app
-# http://localhost/TitreRNCP/explore.php
+composer install   # récupère PHPUnit / PHPStan (l'application fonctionne sans)
+composer ci         # analyse statique + tests
 ```
 
 ### Comptes de démo
@@ -150,9 +152,7 @@ TitreRNCP/
 ├── partenaire/       # Dashboard, événements, create_event
 ├── tests/            # PHPUnit (Unit/ + Integration/)
 ├── .github/          # CI GitHub Actions
-├── db_setup.sql      # Schéma complet + données de démo
-├── db_migrations_v2.sql  # Avis, badges, gamification
-├── db_migrations_v3.sql  # Rate limiting, password resets
+├── db_setup.sql      # Installation complète : 16 tables + données de démo
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md
 └── SECURITY.md
@@ -173,5 +173,5 @@ TitreRNCP/
 
 ## 📄 Licence
 
-Projet propriétaire — Titre RNCP Concepteur Développeur d'Applications.  
-© 2026 Arthur Martin — tous droits réservés.
+Projet propriétaire — Titre Professionnel Développeur Web et Web Mobile (DWWM), niveau 5.  
+© 2026 Arthur Gramond — tous droits réservés.
