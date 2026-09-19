@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/temps_reel.php';
 header('Content-Type: application/json');
 
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'etudiant') {
@@ -37,6 +38,9 @@ if ($nbMembres >= $squad['quota']) {
 try {
     $stmt = $pdo->prepare("INSERT INTO squad_membres (squad_id, user_id) VALUES (?, ?)");
     $stmt->execute([$squad_id, $_SESSION['user_id']]);
+
+    fluxToucher($pdo, canalSquad((int) $squad_id));
+
     echo json_encode(['success' => true, 'membres' => $nbMembres + 1]);
 } catch (PDOException $e) {
     if ($e->getCode() == '23000') {

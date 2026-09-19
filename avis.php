@@ -2,6 +2,8 @@
 require_once __DIR__ . '/includes/auth_check.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/gamification.php';
+require_once __DIR__ . '/includes/agregats.php';
+require_once __DIR__ . '/includes/temps_reel.php';
 requireStudent();
 $user = currentUser();
 $uid = $user['id'];
@@ -38,6 +40,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                    ON DUPLICATE KEY UPDATE note=VALUES(note), commentaire=VALUES(commentaire)");
             $stmt->execute([$uid, $eid, $note, $commentaire]);
             checkBadges($pdo, $uid);
+
+            // La note moyenne de l'etablissement vient d'un cache partage de
+            // cinq minutes. Sans cet oubli explicite, l'etudiant qui vient de
+            // noter verrait l'ancienne etoile et conclurait que son avis
+            // s'est perdu.
+            oublierNotesEtablissements();
+            fluxToucher($pdo, canalEvenement($eid));
+
             $success = true;
         } catch (PDOException $e) {
             $error = 'Erreur lors de l\'enregistrement.';

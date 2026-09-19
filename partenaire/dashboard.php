@@ -181,7 +181,8 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
         <div class="partner-stat-grid">
           <div class="partner-stat-card card-rouge">
             <div class="ps-label">Inscrits</div>
-            <div class="ps-value" id="live-inscrits" data-event-id="<?= $event['id'] ?? 0 ?>"><?= $nbInscrits ?></div>
+            <div class="ps-value" id="live-inscrits"
+                 data-live-event="<?= (int) ($event['id'] ?? 0) ?>" data-live="inscrits"><?= $nbInscrits ?></div>
             <div class="ps-sub">+<?= max(0, $nbInscrits - 2) ?> en 1h</div>
           </div>
           <div class="partner-stat-card" style="background:var(--blanc);border:2px solid var(--gris-clair);">

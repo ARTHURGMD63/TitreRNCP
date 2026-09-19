@@ -3,6 +3,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/social.php';
 require_once __DIR__ . '/../includes/gamification.php';
+require_once __DIR__ . '/../includes/temps_reel.php';
 header('Content-Type: application/json');
 
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'etudiant') {
@@ -110,6 +111,12 @@ try {
     $count = (int) $stmt->fetchColumn();
 
     checkBadges($pdo, $uid);
+
+    // Les deux cotes de la relation changent d'etat : celui qui demande voit
+    // son bouton bouger, celui qui recoit voit sa pastille s'incrementer. Les
+    // deux canaux sont donc touches, et la cloche d'en face se met a jour sans
+    // que la personne ait besoin de recharger quoi que ce soit.
+    fluxToucher($pdo, canalUtilisateur($uid), canalUtilisateur($target_id));
 
     echo json_encode([
         'success'  => true,

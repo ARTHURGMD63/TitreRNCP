@@ -5,6 +5,7 @@ require_once __DIR__ . '/../includes/crm.php';
 require_once __DIR__ . '/../includes/sponsoring.php';
 require_once __DIR__ . '/../includes/capacites.php';
 require_once __DIR__ . '/../includes/musique.php';
+require_once __DIR__ . '/../includes/temps_reel.php';
 requirePartner();
 $user = currentUser();
 $uid  = $user['id'];
@@ -94,6 +95,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $flash_expiry ?: null, $is_gratuit, $lieu,
             $is_sponsorise, $sponsorFormule, $sponsorTarif, $sponsorFin
         ]);
+        // Le canal global ne bouge que pour ca : une nouvelle soiree publiee.
+        // Assez rare pour qu'un onglet reste des heures sur son 304, assez
+        // important pour meriter d'apparaitre sans rechargement quand ca arrive.
+        fluxToucher($pdo, CANAL_GLOBAL);
+
         header('Location: ' . baseUrl('/partenaire/evenements.php?created=1'));
         exit;
     }

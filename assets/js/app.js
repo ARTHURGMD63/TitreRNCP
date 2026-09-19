@@ -513,19 +513,9 @@ function initApp() {
     });
   }
 
-  // Live counter
-  const liveCounter = document.getElementById('live-inscrits');
-  if (liveCounter && !liveCounter._init) {
-    liveCounter._init = true;
-    const eventId = liveCounter.dataset.eventId;
-    setInterval(async () => {
-      try {
-        const res = await fetch(`${BASE}/api/stats.php?event_id=${eventId}`);
-        const data = await res.json();
-        if (data.inscrits !== undefined) liveCounter.textContent = data.inscrits;
-      } catch {}
-    }, 15000);
-  }
+  // Le compteur en direct du tableau de bord partenaire n'a plus son propre
+  // interrogateur : il porte data-live-event et rejoint le flux commun,
+  // en bas de ce fichier.
 
   // Type toggle on register
   document.querySelectorAll('.type-toggle-btn').forEach(btn => {
@@ -1057,6 +1047,137 @@ if (document.readyState === 'loading') {
   });
 
   history.replaceState({ spa: true }, '', location.href);
+})();
+
+/* ─── Flux temps réel ─────────────────────────────────────────── */
+/*
+ * Un seul interrogateur pour toute la page, et non un par compteur.
+ *
+ * Trois règles, et chacune se traduit directement en charge évitée sur le
+ * serveur :
+ *
+ *  1. Une requête par cycle, quel que soit le nombre de cartes à l'écran.
+ *     Vingt soirées affichées, ce n'était pas vingt appels : c'est un seul,
+ *     qui transporte les vingt identifiants.
+ *
+ *  2. Rien ne part quand l'onglet n'est pas regardé. C'est la règle la plus
+ *     rentable de toutes : la plupart des onglets ouverts sur une application
+ *     sont en arrière-plan, et chacun d'eux interrogeait le serveur toutes
+ *     les quinze secondes pour un écran que personne ne voyait. Le retour au
+ *     premier plan déclenche une interrogation immédiate : l'utilisateur
+ *     retrouve un écran à jour, sans avoir attendu le prochain cycle.
+ *
+ *  3. L'ETag fait le reste. Le navigateur renvoie If-None-Match, le serveur
+ *     répond 304 sans corps, et aucune requête de données n'est exécutée
+ *     derrière. Le coût du temps réel devient proportionnel aux changements
+ *     réels, et non au nombre de spectateurs.
+ */
+(function () {
+  if (!window.fetch) return;
+
+  const PERIODE = 8000;      // rythme quand l'onglet est regardé
+  const MAX_CANAUX = 60;     // aligné sur LIVE_MAX_CANAUX, côté serveur
+
+  let etag = null;
+  let minuteur = null;
+  let enCours = false;
+  let arrete = false;
+
+  /** Les événements actuellement à l'écran. Relu à chaque cycle : le routeur
+   *  remplace le contenu sans recharger la page, la liste change donc seule. */
+  function cartes() {
+    return [...document.querySelectorAll('[data-live-event]')]
+      .filter(el => +el.dataset.liveEvent > 0);
+  }
+
+  function appliquerCompteurs(inscrits) {
+    if (!inscrits) return;
+    cartes().forEach(carte => {
+      const nb = inscrits[carte.dataset.liveEvent];
+      if (nb === undefined) return;
+
+      // La carte elle-même peut être la cible (tableau de bord partenaire),
+      // ou la contenir (cartes du hub).
+      const cible = carte.matches('[data-live="inscrits"]')
+        ? carte
+        : carte.querySelector('[data-live="inscrits"]');
+      if (cible && cible.textContent !== String(nb)) cible.textContent = nb;
+
+      const quota = +carte.dataset.liveQuota || 0;
+      if (!quota) return;
+      const pct = Math.min(100, Math.round(nb / quota * 100));
+
+      const etiquette = carte.querySelector('[data-live="pct"]');
+      if (etiquette) etiquette.textContent = pct + '%';
+      const jauge = carte.querySelector('[data-live="jauge"]');
+      if (jauge) jauge.style.width = pct + '%';
+
+      // Complet : le bouton doit se fermer tout de suite, sinon l'utilisateur
+      // clique dans le vide et reçoit un refus qu'il ne comprend pas.
+      if (nb >= quota) {
+        carte.querySelectorAll('.btn-join-event:not([disabled])')
+             .forEach(b => { b.disabled = true; b.textContent = 'Complet'; });
+      }
+    });
+  }
+
+  function appliquerPastille(aTraiter) {
+    const pastille = document.getElementById('cloche-compteur');
+    if (!pastille) return;
+    pastille.textContent = aTraiter;
+    pastille.hidden = !aTraiter;
+  }
+
+  async function interroger() {
+    if (enCours || arrete || document.hidden) return;
+    enCours = true;
+    try {
+      const ids = cartes().map(el => el.dataset.liveEvent).slice(0, MAX_CANAUX);
+      const url = `${BASE}/api/live.php` + (ids.length ? `?ev=${ids.join(',')}` : '');
+
+      // cache:'no-store' + En-tête posé à la main : on veut voir le 304
+      // nous-mêmes plutôt que de laisser le cache du navigateur le convertir
+      // en 200 silencieux, ne serait-ce que pour pouvoir le mesurer.
+      const entetes = etag ? { 'If-None-Match': etag } : {};
+      const res = await fetch(url, { cache: 'no-store', headers: entetes });
+
+      if (res.status === 304) return;          // rien n'a bougé, cas le plus fréquent
+      if (res.status === 401) { arrete = true; return; }  // session fermée : on cesse
+      if (!res.ok) return;
+
+      etag = res.headers.get('ETag') || etag;
+      const data = await res.json();
+      if (!data || !data.success) return;
+
+      appliquerCompteurs(data.inscrits);
+      if (typeof data.aTraiter === 'number') appliquerPastille(data.aTraiter);
+    } catch {
+      // Réseau coupé, serveur qui redémarre : le prochain cycle reprendra.
+      // Rien à signaler à l'utilisateur, le contenu affiché reste valable.
+    } finally {
+      enCours = false;
+    }
+  }
+
+  function rythmer() {
+    clearInterval(minuteur);
+    if (arrete || document.hidden) return;
+    minuteur = setInterval(interroger, PERIODE);
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      clearInterval(minuteur);
+    } else {
+      interroger();   // rattrapage immédiat au retour sur l'onglet
+      rythmer();
+    }
+  });
+
+  // Le premier cycle attend une période : la page vient d'être rendue, ses
+  // compteurs sont frais, l'interroger tout de suite ne servirait qu'à
+  // doubler le coût de chaque chargement de page.
+  rythmer();
 })();
 
 /* ─── Service worker ─────────────────────────────────────────────────────── */

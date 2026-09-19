@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/temps_reel.php';
 header('Content-Type: application/json');
 
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'etudiant') {
@@ -35,6 +36,11 @@ try {
     $stmt->execute([$_SESSION['user_id'], $inscription['evenement_id']]);
 
     $pdo->commit();
+
+    // Une place vient de se liberer : c'est exactement l'information qui doit
+    // remonter tout de suite chez ceux qui attendaient devant un « Complet ».
+    fluxToucher($pdo, canalEvenement((int) $inscription['evenement_id']));
+
     echo json_encode(['success' => true, 'message' => 'Pass annulé avec succès']);
 } catch (PDOException $e) {
     $pdo->rollBack();

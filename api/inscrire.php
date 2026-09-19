@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/temps_reel.php';
 header('Content-Type: application/json');
 
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'etudiant') {
@@ -72,6 +73,11 @@ try {
     }
 
     $pdo->commit();
+
+    // Le compteur affiche desormais une valeur de plus : les autres onglets
+    // ouverts sur cette soiree doivent l'apprendre a leur prochaine
+    // interrogation, et non au prochain rechargement de page.
+    fluxToucher($pdo, canalEvenement($evenement_id));
 
     echo json_encode(['success' => true, 'inscrits' => $nbInscrits + 1]);
 } catch (PDOException $e) {

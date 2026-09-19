@@ -10,6 +10,7 @@
  */
 require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/temps_reel.php';
 requireLogin();
 
 header('Content-Type: application/json');
@@ -129,6 +130,13 @@ if ($action === 'send') {
         $pdo->prepare(
             "INSERT INTO invitations (from_user_id, to_user_id, type, target_id) VALUES (?,?,?,?)"
         )->execute([$moi, $vers, $type, $cible]);
+
+        // La pastille de la personne invitee doit s'allumer maintenant, pas
+        // au prochain chargement de page : c'est la difference entre une
+        // invitation qu'on accepte dans la minute et une qu'on decouvre le
+        // lendemain, quand la soiree est passee.
+        fluxToucher($pdo, canalUtilisateur($vers));
+
         echo json_encode(['success' => true, 'message' => 'Invitation envoyée !']);
     } catch (PDOException $e) {
         if ($e->getCode() === '23000') {
@@ -188,6 +196,16 @@ if ($action === 'accept') {
     }
 
     $pdo->prepare("UPDATE invitations SET statut = 'accepted' WHERE id = ?")->execute([$inviteId]);
+
+    // Trois choses viennent de changer : ma propre pastille, celle de la
+    // personne qui m'a invite, et le compteur de la sortie rejointe.
+    fluxToucher(
+        $pdo,
+        canalUtilisateur($moi),
+        canalUtilisateur((int) $invite['from_user_id']),
+        $invite['type'] === 'event' ? canalEvenement($cibleId) : canalSquad($cibleId)
+    );
+
     echo json_encode(['success' => true, 'message' => 'Invitation acceptée !']);
     exit;
 }
@@ -197,6 +215,9 @@ if ($action === 'decline') {
     $inviteId = (int) ($data['invite_id'] ?? 0);
     $pdo->prepare("UPDATE invitations SET statut = 'declined' WHERE id = ? AND to_user_id = ? AND statut = 'pending'")
         ->execute([$inviteId, $moi]);
+
+    fluxToucher($pdo, canalUtilisateur($moi));
+
     echo json_encode(['success' => true]);
     exit;
 }

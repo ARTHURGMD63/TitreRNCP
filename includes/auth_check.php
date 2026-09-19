@@ -6,41 +6,11 @@ date_default_timezone_set('Europe/Paris');
 
 require_once __DIR__ . '/security.php';
 
-/*
- * Durcissement du cookie de session — obligatoirement AVANT session_start().
- *
- * PHP laisse HttpOnly, SameSite et Secure vides par défaut, et c'était le cas
- * ici : `Set-Cookie: PHPSESSID=…; path=/`, sans un seul drapeau. Le cookie de
- * session était donc lisible en JavaScript, envoyé sur les requêtes
- * inter-sites, et transmis en clair. La politique CSP autorise encore le
- * script en ligne : une seule faille d'affichage, n'importe où dans
- * l'application, suffisait à emporter la session d'un fondateur, c'est-à-dire
- * le fichier clients, les coordonnées des étudiants et la trésorerie.
- *
- * use_strict_mode refuse un identifiant de session que le serveur n'a pas
- * lui-même émis : sans lui, un identifiant peut être fixé à l'avance et
- * repris après connexion de la victime.
- */
-if (session_status() === PHP_SESSION_NONE) {
-    // Derrière le proxy de Railway, HTTPS se lit sur l'en-tête transmis.
-    $enHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-            || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
-
-    ini_set('session.use_strict_mode', '1');
-    ini_set('session.use_only_cookies', '1');
-    session_set_cookie_params([
-        'lifetime' => 0,
-        'path'     => '/',
-        'httponly' => true,
-        // Lax et non Strict : un lien entrant vers l'application doit encore
-        // trouver la session, sinon chaque partage ramène à l'écran de
-        // connexion. Les écritures passent toutes par POST, protégées par le
-        // jeton CSRF.
-        'samesite' => 'Lax',
-        'secure'   => $enHttps,
-    ]);
-    session_start();
-}
+// Le durcissement du cookie de session vit dans session.php : api/live.php a
+// besoin d'ouvrir la session sans charger tout ce fichier, et deux copies de
+// ces paramètres finiraient tôt ou tard par diverger.
+require_once __DIR__ . '/session.php';
+demarrerSession();
 
 setSecurityHeaders();
 expirerSessionInactive();
@@ -66,8 +36,17 @@ function baseUrl(string $path = ''): string {
  * et reste pleinement efficace tant que le fichier ne bouge pas.
  */
 function asset(string $path): string {
-    $disque = dirname(__DIR__) . $path;
-    $v = is_file($disque) ? filemtime($disque) : null;
+    // Memoise : is_file() puis filemtime() font deux appels systeme, et la
+    // fonction est appelee plusieurs fois par page — davantage encore par le
+    // gabarit partenaire. Sur un hebergement mutualise, ou le code vit sur un
+    // disque reseau, un stat() n'est pas gratuit.
+    static $empreintes = [];
+
+    if (!array_key_exists($path, $empreintes)) {
+        $disque = dirname(__DIR__) . $path;
+        $empreintes[$path] = is_file($disque) ? filemtime($disque) : null;
+    }
+    $v = $empreintes[$path];
 
     return baseUrl($path) . ($v ? '?v=' . $v : '');
 }
