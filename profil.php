@@ -5,6 +5,7 @@ require_once __DIR__ . '/includes/uploads.php';
 require_once __DIR__ . '/includes/icons.php';
 require_once __DIR__ . '/includes/gamification.php';
 require_once __DIR__ . '/includes/interets.php';
+require_once __DIR__ . '/includes/agregats.php';
 requireStudent();
 $user = currentUser();
 $uid = $user['id'];
@@ -74,6 +75,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profil'])) {
     }
 
     $pdo->prepare("UPDATE users SET ecole=?, promo=?, interests=? WHERE id=?")->execute([$ecole, $promo, $interests, $uid]);
+    synchroniserInterets($pdo, (int) $uid, interetsDepuisTexte($interests));
+
+    // La liste des ecoles du filtre est mise en cache : changer d'ecole doit
+    // pouvoir en faire apparaitre une nouvelle dans le menu deroulant.
+    oublierEcolesRepresentees();
     
     $_SESSION['user_ecole'] = $ecole;
     $u['ecole'] = $ecole;

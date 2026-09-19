@@ -7,6 +7,7 @@ require_once __DIR__ . '/includes/uploads.php';
 require_once __DIR__ . '/includes/notifications.php';
 require_once __DIR__ . '/includes/musique.php';
 require_once __DIR__ . '/includes/icons.php';
+require_once __DIR__ . '/includes/agregats.php';
 requireStudent();
 $user = currentUser();
 $uid = $user['id'];
@@ -50,9 +51,10 @@ if ($view === 'people') {
         $interetsManquants = true;
     }
 
-    // Get all distinct schools for filter
-    $stmtE = $pdo->query("SELECT DISTINCT ecole FROM users WHERE type='etudiant' AND ecole IS NOT NULL AND ecole != '' ORDER BY ecole");
-    $allEcoles = $stmtE->fetchAll(PDO::FETCH_COLUMN);
+    // La liste des ecoles alimente un menu deroulant d'une vingtaine
+    // d'entrees. Elle etait recalculee par un DISTINCT sur toute la table a
+    // chaque affichage ; elle vient maintenant d'un agregat mis en cache.
+    $allEcoles = ecolesRepresentees($pdo);
 
     // Le catalogue est la source des intérêts, et non la colonne de chaque
     // compte : lire les goûts de tous les inscrits pour composer un menu de
@@ -67,26 +69,66 @@ if ($view === 'people') {
     // MySQL calcule désormais le score, classe et découpe : il ne renvoie que
     // ce qui s'affiche.
 
-    // Nombre d'intérêts communs, exprimé en SQL : chaque comparaison vaut 1 ou
-    // 0, leur somme est le score. REPLACE parce que d'anciennes lignes séparent
-    // les intérêts par une virgule SUIVIE d'un espace, que FIND_IN_SET ne
-    // pardonne pas.
-    $sqlScore = $myInterests
-        ? implode(' + ', array_fill(0, count($myInterests), "(FIND_IN_SET(?, REPLACE(u.interests, ', ', ',')) > 0)"))
-        : '0';
-    $sqlSquads = "(SELECT COUNT(*) FROM squad_membres sm1
-                   JOIN squad_membres sm2 ON sm2.squad_id = sm1.squad_id AND sm2.user_id = u.id
-                   WHERE sm1.user_id = ?)";
+    /*
+     * Score d'affinité : un comptage sur index, et non des fonctions de
+     * chaîne appliquées à tout l'annuaire.
+     *
+     * L'écriture précédente — un FIND_IN_SET par intérêt, sur la colonne
+     * texte `users.interests` — obligeait MySQL à lire les cinq mille
+     * comptes et à exécuter ces fonctions sur chacun, avant de trier, pour
+     * n'en afficher que vingt-quatre. Aucun index ne peut servir une
+     * recherche à l'intérieur d'une chaîne : c'était structurel, pas un
+     * réglage à trouver.
+     *
+     * `user_interets` (migration v15) range la même information en lignes.
+     * La dérivée ci-dessous ne remonte que les profils partageant au moins
+     * un goût — quelques centaines plutôt que cinq mille — et le fait en
+     * parcourant l'index k_interet, sans jamais toucher à la table.
+     */
+    $jointureScore = '';
+    $parScore      = [];
+    if ($myInterests) {
+        $trousI = implode(',', array_fill(0, count($myInterests), '?'));
+        $jointureScore = " LEFT JOIN (
+                SELECT ui.user_id AS sc_user, COUNT(*) AS sc_nb
+                  FROM user_interets ui
+                 WHERE ui.interet IN ($trousI)
+                 GROUP BY ui.user_id
+            ) sc ON sc.sc_user = u.id";
+        $parScore = $myInterests;
+    }
+    // Sans goût déclaré, tout le monde est à égalité : inutile de joindre.
+    $sqlScore = $myInterests ? 'COALESCE(sc.sc_nb, 0)' : '0';
+    /*
+     * Squads partagées : une agrégation jointe, et non une sous-requête
+     * corrélée.
+     *
+     * Écrite en sous-requête — « (SELECT COUNT(*) … WHERE sm2.user_id = u.id) » —
+     * l'expression était réévaluée pour CHAQUE profil balayé, et le classement
+     * par affinité oblige à balayer tout l'annuaire avant de pouvoir couper à
+     * vingt-quatre. À cinq mille inscrits, c'étaient cinq mille jointures pour
+     * en afficher vingt-quatre. En dérivée, mes squads sont agrégées une fois,
+     * puis rattachées.
+     */
+    $jointureSquads = " LEFT JOIN (
+            SELECT sm2.user_id AS sq_user, COUNT(*) AS sq_nb
+              FROM squad_membres sm1
+              JOIN squad_membres sm2 ON sm2.squad_id = sm1.squad_id
+             WHERE sm1.user_id = ?
+             GROUP BY sm2.user_id
+        ) sq ON sq.sq_user = u.id";
 
-    $colonnes = "u.id, u.nom, u.prenom, u.ecole, u.promo, u.interests, u.created_at, u.photo,
-                 $sqlScore AS score,
-                 $sqlSquads AS shared_squads,
-                 (SELECT fu.statut FROM follows_users fu
-                  WHERE fu.follower_id = ? AND fu.followed_id = u.id) AS follow_statut";
-    // L'ordre compte : les marqueurs du SELECT sont liés avant ceux du WHERE.
-    $parSelect = array_merge($myInterests, [$uid], [$uid]);
+    // Ce qui suffit à classer : l'identifiant et les deux critères. Le reste du
+    // profil — nom, photo, intérêts — n'a aucune raison de traverser le tampon
+    // de tri de MySQL pour être jeté aussitôt.
+    $colonnesTri = "u.id, $sqlScore AS score, COALESCE(sq.sq_nb, 0) AS shared_squads";
 
-    $ou  = " FROM users u WHERE u.type = 'etudiant' AND u.id <> ?";
+    // L'ordre des marqueurs suit l'ordre du texte SQL : le SELECT, puis la
+    // jointure dérivée du FROM, puis le WHERE.
+    $parTri  = [];
+    $parFrom = array_merge($parScore, [$uid]);
+
+    $ou  = " FROM users u $jointureScore $jointureSquads WHERE u.type = 'etudiant' AND u.id <> ?";
     $par = [$uid];
 
     // Les personnes bloquees (dans un sens ou dans l'autre) disparaissent de l'annuaire.
@@ -116,11 +158,15 @@ if ($view === 'people') {
         $par[] = $filterEcole;
     }
     if ($filtreCommeMoi) {
-        $conditions = array_fill(0, count($myInterests), "FIND_IN_SET(?, REPLACE(u.interests, ', ', ',')) > 0");
-        $ou .= ' AND (' . implode(' OR ', $conditions) . ')';
+        // « Les gens qui aiment ce que j'aime » : une existence dans la
+        // table indexée, au lieu d'une fonction de chaîne par profil.
+        $trousM = implode(',', array_fill(0, count($myInterests), '?'));
+        $ou .= " AND EXISTS (SELECT 1 FROM user_interets uim
+                              WHERE uim.user_id = u.id AND uim.interet IN ($trousM))";
         $par = array_merge($par, $myInterests);
     } elseif ($filterInterest) {
-        $ou .= " AND FIND_IN_SET(?, REPLACE(u.interests, ', ', ',')) > 0";
+        $ou .= " AND EXISTS (SELECT 1 FROM user_interets uif
+                              WHERE uif.user_id = u.id AND uif.interet = ?)";
         $par[] = $filterInterest;
     }
 
@@ -142,24 +188,21 @@ if ($view === 'people') {
     $idsSuggeres = [];
     if (!$q && !$filterEcole && !$filterInterest) {
         $monEcole = (string) ($user['ecole'] ?? '');
-        $sqlAffinite = "($sqlScore) * 3 + ($sqlSquads) * 2 + (u.ecole = ? AND ? <> '')";
+        $sqlAffinite = "($sqlScore) * 3 + (COALESCE(sq.sq_nb, 0)) * 2 + (u.ecole = ? AND ? <> '')";
 
-        $sqlSug = "SELECT $colonnes, $sqlAffinite AS affinite $ou
+        $sqlSug = "SELECT u.id, $sqlAffinite AS affinite $ou
                    AND NOT EXISTS (SELECT 1 FROM follows_users flien
                                    WHERE flien.follower_id = ? AND flien.followed_id = u.id)
                    HAVING affinite > 0
                    ORDER BY affinite DESC, u.created_at DESC
                    LIMIT 4";
-        $parSug = array_merge(
-            $parSelect,
-            $myInterests, [$uid], [$monEcole, $monEcole],
-            $par,
-            [$uid]
-        );
         $stmtSug = $pdo->prepare($sqlSug);
-        $stmtSug->execute($parSug);
-        $suggestions = $stmtSug->fetchAll();
-        $idsSuggeres = array_column($suggestions, 'id');
+        $stmtSug->execute(array_merge(
+            [$monEcole, $monEcole],
+            $parFrom,
+            $par, [$uid]
+        ));
+        $idsSuggeres = array_map('intval', $stmtSug->fetchAll(PDO::FETCH_COLUMN));
     }
 
     if ($idsSuggeres) {
@@ -168,23 +211,59 @@ if ($view === 'people') {
         $par   = array_merge($par, $idsSuggeres);
     }
 
-    // Le total sert au « N restants » du bouton : un COUNT, pas une liste
-    // entière rapatriée pour être comptée.
-    $stmtTotal = $pdo->prepare("SELECT COUNT(*) $ou");
-    $stmtTotal->execute($par);
-    $totalProfils = (int) $stmtTotal->fetchColumn();
-
-    // « Voir plus » rallonge la page au lieu de la remplacer : on redemande
+    // « Voir plus » rallonge la page au lieu de la remplacer : on redemande
     // depuis le début, vingt-quatre profils de plus à chaque fois.
     $parPage = 24;
     $page    = max(1, (int) ($_GET['p'] ?? 1));
     $limite  = $parPage * $page;
 
-    $stmtP = $pdo->prepare("SELECT $colonnes $ou $classement LIMIT " . (int) $limite);
-    $stmtP->execute(array_merge($parSelect, $par));
-    $students = $stmtP->fetchAll();
+    /*
+     * Une ligne de plus que demandé, à la place du COUNT(*).
+     *
+     * Le total ne servait qu'à décider d'afficher ou non un bouton, et le
+     * calculer imposait un troisième balayage complet de l'annuaire, aussi
+     * cher que celui qui produit la liste. Savoir s'il reste au moins un
+     * profil suffit, et se lit dans la même requête.
+     */
+    $stmtP = $pdo->prepare("SELECT $colonnesTri $ou $classement LIMIT " . (int) ($limite + 1));
+    $stmtP->execute(array_merge($parTri, $parFrom, $par));
+    $idsListe = array_map('intval', $stmtP->fetchAll(PDO::FETCH_COLUMN));
 
-    $resteProfils = max(0, $totalProfils - count($students));
+    $resteProfils = count($idsListe) > $limite;
+    $idsListe = array_slice($idsListe, 0, $limite);
+
+    /*
+     * Le détail des profils retenus, suggestions et liste confondues : une
+     * seule requête pour les deux, puis on répartit en PHP. C'est ici, et ici
+     * seulement, qu'on paie le statut d'abonnement — pour vingt-huit profils
+     * au lieu de cinq mille.
+     */
+    $detail  = [];
+    $tousIds = array_values(array_unique(array_merge($idsSuggeres, $idsListe)));
+    if ($tousIds) {
+        $trousD = implode(',', array_fill(0, count($tousIds), '?'));
+        $stmtD  = $pdo->prepare(
+            "SELECT u.id, u.nom, u.prenom, u.ecole, u.promo, u.interests, u.created_at, u.photo,
+                    $sqlScore AS score,
+                    COALESCE(sq.sq_nb, 0) AS shared_squads,
+                    (SELECT fu.statut FROM follows_users fu
+                      WHERE fu.follower_id = ? AND fu.followed_id = u.id) AS follow_statut
+               FROM users u $jointureScore $jointureSquads
+              WHERE u.id IN ($trousD)"
+        );
+        $stmtD->execute(array_merge([$uid], $parFrom, $tousIds));
+        foreach ($stmtD->fetchAll() as $ligne) {
+            $detail[(int) $ligne['id']] = $ligne;
+        }
+    }
+
+    // On rejoue l'ordre établi par les requêtes de classement : un IN() n'en
+    // garantit aucun, et l'annuaire se retrouverait trié par identifiant.
+    $reprendre = static fn(array $ids): array => array_values(array_filter(
+        array_map(static fn(int $id): ?array => $detail[$id] ?? null, $ids)
+    ));
+    $suggestions = $reprendre($idsSuggeres);
+    $students    = $reprendre($idsListe);
 
     // Les intérêts communs s'affichent sur chaque rangée : ils se recoupent en
     // PHP, mais seulement pour les profils rendus, pas pour toute la table.
@@ -232,41 +311,112 @@ if ($view === 'events') {
         $friendsByEvent[$row['evenement_id']] = ['prenoms' => explode(',', $row['prenoms']), 'nb' => $row['nb']];
     }
 
-    $sqlE = "SELECT e.*, et.id AS etab_id, et.nom AS etablissement_nom, et.type AS etab_type, et.ville,
-                   (e.is_sponsorise = 1
-                    AND (e.sponsor_jusqu_au IS NULL OR e.sponsor_jusqu_au > NOW())) AS sponso_actif,
-                   (SELECT COUNT(*) FROM inscriptions i WHERE i.evenement_id = e.id AND i.statut != 'annule') AS nb_inscrits,
-                   (SELECT COUNT(*) FROM inscriptions i WHERE i.evenement_id = e.id AND i.user_id = ? AND i.statut != 'annule') AS deja_inscrit,
-                   (SELECT ROUND(AVG(a.note),1) FROM avis a JOIN evenements pe ON pe.id = a.evenement_id WHERE pe.etablissement_id = e.etablissement_id) AS etab_note,
-                   (SELECT COUNT(*) FROM avis a JOIN evenements pe ON pe.id = a.evenement_id WHERE pe.etablissement_id = e.etablissement_id) AS etab_nb_avis
-            FROM evenements e
-            JOIN etablissements et ON et.id = e.etablissement_id
-            WHERE e.date_heure >= NOW()";
-    $paramsE = [$uid];
+    /*
+     * Le fil des soirées se construit en deux temps, et ce n'est pas un
+     * détour : c'est ce qui borne son coût.
+     *
+     * Avant, une seule requête sélectionnait TOUS les événements à venir,
+     * sans limite, en évaluant quatre sous-requêtes corrélées par ligne —
+     * dont deux qui rejoignaient `avis` à `evenements` pour recalculer la
+     * note d'un bar autant de fois qu'il avait de soirées au programme. Vingt
+     * cartes à l'écran, mais le travail était fait pour le catalogue entier.
+     *
+     * Désormais :
+     *   1. une requête ne ramène que les identifiants de la tranche affichée,
+     *      sans aucune sous-requête — elle lit un index et trie des entiers ;
+     *   2. une seconde va chercher le détail de ces identifiants-là, et d'eux
+     *      seuls.
+     *
+     * Les deux agrégats qui restaient — note de l'établissement, inscriptions
+     * de l'utilisateur — ont quitté le SQL : le premier vient d'un cache
+     * partagé, le second d'une requête unique recoupée en PHP.
+     */
+    $sponsoActif = "(e.is_sponsorise = 1
+                     AND (e.sponsor_jusqu_au IS NULL OR e.sponsor_jusqu_au > NOW()))";
+
+    $ouE     = " FROM evenements e
+                 JOIN etablissements et ON et.id = e.etablissement_id
+                 WHERE e.date_heure >= NOW()";
+    $paramsE = [];
 
     if ($filter === 'pour-moi') {
         $friendEventIds = array_keys($friendsByEvent);
         $etabPlaceholders = !empty($followedEtabIds) ? implode(',', array_fill(0, count($followedEtabIds), '?')) : '0';
         $friendPlaceholders = !empty($friendEventIds) ? implode(',', array_fill(0, count($friendEventIds), '?')) : '0';
-        $sqlE .= " AND (et.id IN ($etabPlaceholders) OR e.id IN ($friendPlaceholders))";
+        $ouE .= " AND (et.id IN ($etabPlaceholders) OR e.id IN ($friendPlaceholders))";
         $paramsE = array_merge($paramsE, $followedEtabIds, $friendEventIds);
     } elseif ($filter !== 'all') {
-        $sqlE .= " AND e.type = ?";
+        $ouE .= " AND e.type = ?";
         $paramsE[] = $filter;
     }
 
     if ($musique !== '') {
-        $sqlE .= " AND e.style_musique = ?";
+        $ouE .= " AND e.style_musique = ?";
         $paramsE[] = $musique;
     }
 
-    // Le sponsoring achete passe devant le reste du fil — c'est ce que le
+    // Le sponsoring acheté passe devant le reste du fil — c'est ce que le
     // partenaire paie. Il ne s'en cache pas pour autant : chaque carte
-    // concernee porte le badge « Sponsorisé », et la mise en avant expire.
-    $sqlE .= " ORDER BY sponso_actif DESC, e.is_flash DESC, e.date_heure ASC";
-    $stmtE = $pdo->prepare($sqlE);
-    $stmtE->execute($paramsE);
-    $evenements = $stmtE->fetchAll();
+    // concernée porte le badge « Sponsorisé », et la mise en avant expire.
+    // e.id départage : sans dernier critère stable, deux soirées à la même
+    // heure peuvent changer de place d'un chargement à l'autre, et la
+    // pagination sauter ou répéter une carte.
+    $classementE = " ORDER BY $sponsoActif DESC, e.is_flash DESC, e.date_heure ASC, e.id ASC";
+
+    // Même mécanique que l'annuaire : « voir plus » rallonge la page.
+    $parPageE = 24;
+    $pageE    = max(1, (int) ($_GET['pe'] ?? 1));
+    $limiteE  = $parPageE * $pageE;
+
+    // LIMIT + 1 : on demande une ligne de plus que ce qu'on affiche. Sa
+    // présence dit qu'il reste quelque chose après, ce qui évite le COUNT(*)
+    // complet qu'il aurait fallu sinon — un balayage entier pour afficher ou
+    // non un bouton.
+    $stmtIds = $pdo->prepare("SELECT e.id $ouE $classementE LIMIT " . (int) ($limiteE + 1));
+    $stmtIds->execute($paramsE);
+    $idsE = array_map('intval', $stmtIds->fetchAll(PDO::FETCH_COLUMN));
+
+    $resteEvenements = count($idsE) > $limiteE;
+    $idsE = array_slice($idsE, 0, $limiteE);
+
+    if ($idsE) {
+        $trousE = implode(',', array_fill(0, count($idsE), '?'));
+        // FIELD() rejoue l'ordre établi à l'étape 1 : un IN() ne garantit
+        // aucun ordre, et le sponsoring payé se retrouverait au hasard.
+        $stmtE = $pdo->prepare(
+            "SELECT e.*, et.id AS etab_id, et.nom AS etablissement_nom, et.type AS etab_type, et.ville,
+                    $sponsoActif AS sponso_actif,
+                    (SELECT COUNT(*) FROM inscriptions i
+                      WHERE i.evenement_id = e.id AND i.statut <> 'annule') AS nb_inscrits
+               FROM evenements e
+               JOIN etablissements et ON et.id = e.etablissement_id
+              WHERE e.id IN ($trousE)
+              ORDER BY FIELD(e.id, $trousE)"
+        );
+        $stmtE->execute(array_merge($idsE, $idsE));
+        $evenements = $stmtE->fetchAll();
+
+        // Mes inscriptions parmi les soirées affichées : une requête pour
+        // toute la page, là où il y avait une sous-requête par carte.
+        $stmtMoi = $pdo->prepare(
+            "SELECT evenement_id FROM inscriptions
+              WHERE user_id = ? AND statut <> 'annule' AND evenement_id IN ($trousE)"
+        );
+        $stmtMoi->execute(array_merge([$uid], $idsE));
+        $mesInscriptions = array_flip(array_map('intval', $stmtMoi->fetchAll(PDO::FETCH_COLUMN)));
+
+        $notesEtab = notesEtablissements($pdo);
+
+        foreach ($evenements as &$ev) {
+            $note = $notesEtab[(int) $ev['etablissement_id']] ?? null;
+            $ev['etab_note']    = $note['note'] ?? null;
+            $ev['etab_nb_avis'] = $note['nb']   ?? 0;
+            $ev['deja_inscrit'] = isset($mesInscriptions[(int) $ev['id']]) ? 1 : 0;
+        }
+        // Sans ce unset, $ev reste une référence sur la dernière soirée, que
+        // le foreach d'affichage écrase : la dernière carte se dédoublait.
+        unset($ev);
+    }
 }
 
 // La cloche est dans l'en-tête, donc présente sur les deux vues du hub.
@@ -456,7 +606,8 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
       ?>
 
         <?php if ($isFlash): ?>
-          <div class="event-card event-card-flash" style="margin-bottom:20px; position:relative;">
+          <div class="event-card event-card-flash" style="margin-bottom:20px; position:relative;"
+               data-live-event="<?= (int) $e['id'] ?>" data-live-quota="<?= (int) $e['quota'] ?>">
             <div class="event-entete">
               <div class="event-entete__meta">
                 <div class="label" style="opacity:0.8;">CE SOIR · <?= date('H\hi', strtotime($e['date_heure'])) ?></div>
@@ -513,15 +664,16 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; margin-bottom:4px; font-size:var(--fs-1); font-weight:var(--fw-bold); color:rgba(255,255,255,0.9); text-transform:uppercase; letter-spacing:var(--ls-wide);">
               <span>Remplissage</span>
-              <span><?= $pct ?>%</span>
+              <span data-live="pct"><?= $pct ?>%</span>
             </div>
             <div class="progress-bar" style="margin-top:0;background:rgba(0,0,0,0.2);">
-              <div class="progress-bar-fill" style="width:<?= $pct ?>%;background:var(--blanc);"></div>
+              <div class="progress-bar-fill" data-live="jauge" style="width:<?= $pct ?>%;background:var(--blanc);"></div>
             </div>
           </div>
 
         <?php else: ?>
-          <div class="event-card event-card-regular type-<?= $e['type'] ?>" style="margin-bottom:20px; position:relative;">
+          <div class="event-card event-card-regular type-<?= $e['type'] ?>" style="margin-bottom:20px; position:relative;"
+               data-live-event="<?= (int) $e['id'] ?>" data-live-quota="<?= (int) $e['quota'] ?>">
             <div class="event-entete">
               <div class="event-entete__meta">
                 <span class="event-meta"><?= mb_strtoupper($typeLabels[$e['type']]) ?> · <?= dateFr($e['date_heure'], 'D j M') ?></span>
@@ -565,7 +717,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
             </div>
 
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-              <div style="font-size:var(--fs-1);font-weight:var(--fw-bold);"><?= $e['nb_inscrits'] ?>/<?= $e['quota'] ?> places</div>
+              <div style="font-size:var(--fs-1);font-weight:var(--fw-bold);"><span data-live="inscrits"><?= (int) $e['nb_inscrits'] ?></span>/<?= (int) $e['quota'] ?> places</div>
               <div style="display:flex;gap:6px;">
                 <button type="button" class="btn-ouvrir-invitation"
                         data-invite-type="event"
@@ -582,15 +734,23 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; margin-bottom:4px; font-size:var(--fs-1); font-weight:var(--fw-bold); color:var(--noir); text-transform:uppercase; letter-spacing:var(--ls-wide);">
               <span>Taux d'inscription</span>
-              <span><?= $pct ?>%</span>
+              <span data-live="pct"><?= $pct ?>%</span>
             </div>
             <div class="progress-bar" style="margin-top:0;background:var(--gris-clair);">
-              <div class="progress-bar-fill dark" style="width:<?= $pct ?>%"></div>
+              <div class="progress-bar-fill dark" data-live="jauge" style="width:<?= $pct ?>%"></div>
             </div>
           </div>
         <?php endif; ?>
 
       <?php endforeach; ?>
+
+      <?php if (!empty($resteEvenements)): ?>
+        <?php $suiteE = $_GET; $suiteE['pe'] = ($pageE ?? 1) + 1; ?>
+        <a href="?<?= htmlspecialchars(http_build_query($suiteE), ENT_QUOTES) ?>"
+           class="btn btn-outline btn-full" style="margin-top:4px;">
+          Voir plus d'événements
+        </a>
+      <?php endif; ?>
 
     <?php else: ?>
       <!-- People Section (Matching Original Design) -->
@@ -729,7 +889,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
         <?php $suite = $_GET; $suite['p'] = ($page ?? 1) + 1; ?>
         <a href="?<?= htmlspecialchars(http_build_query($suite), ENT_QUOTES) ?>"
            class="btn btn-outline btn-full" style="margin-top:4px;">
-          Voir plus de profils (<?= (int)$resteProfils ?> restants)
+          Voir plus de profils
         </a>
       <?php endif; ?>
     <?php endif; ?>

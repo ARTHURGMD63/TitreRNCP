@@ -29,6 +29,7 @@ define('DB_NAME', $reglage('MYSQLDATABASE', 'name', 'studentlink'));
 define('DB_USER', $reglage('MYSQLUSER',     'user', 'root'));
 define('DB_PASS', $reglage('MYSQLPASSWORD', 'pass', ''));
 define('DB_PORT', $reglage('MYSQLPORT',     'port', '3306'));
+define('DB_PERSISTANT', in_array($reglage('DB_PERSISTANT', 'persistant', '0'), ['1', 'true', 'on'], true));
 
 // Le mot de passe n'a pas à traîner dans une variable du contexte global.
 unset($configLocale, $reglage);
@@ -46,6 +47,30 @@ try {
             // et non émulées : la valeur ne peut plus être interprétée comme
             // de la syntaxe SQL, quelle qu'elle soit.
             PDO::ATTR_EMULATE_PREPARES   => false,
+
+            /*
+             * Connexions persistantes, sur demande seulement.
+             *
+             * Ouvrir une connexion MySQL coute une poignee de main TCP puis
+             * une authentification : negligeable quand la base tourne sur la
+             * meme machine, mais 5 a 10 ms quand elle est sur un serveur
+             * distinct, ce qui est le cas de tous les hebergements
+             * mutualises. A cent requetes par seconde, c'est une seconde de
+             * latence cumulee par seconde ecoulee.
+             *
+             * Pourquoi ce n'est pas active par defaut : une connexion
+             * persistante est reutilisee telle quelle par la requete
+             * suivante. Avec Apache en prefork, cela plafonne a une connexion
+             * par processus — borne et sain. Sur un mutualise limite a 30
+             * connexions simultanees, en revanche, c'est le meilleur moyen de
+             * les epuiser et de rendre le site indisponible pour tout le
+             * monde.
+             *
+             * Le choix appartient donc a l'hebergement, pas au code :
+             * DB_PERSISTANT=1 dans l'environnement, ou 'persistant' => true
+             * dans config.local.php.
+             */
+            PDO::ATTR_PERSISTENT         => DB_PERSISTANT,
         ]
     );
 } catch (PDOException $e) {

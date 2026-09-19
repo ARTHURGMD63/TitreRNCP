@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/interets.php';
+require_once __DIR__ . '/../includes/agregats.php';
 if (!empty($_SESSION['user_id'])) {
     header('Location: ' . baseUrl('/index.php'));
     exit;
@@ -65,6 +66,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$nom, $prenom, $email, $hash, $ecole ?: null, $promo ?: null,
                             $naissance, $type, interetsVersTexte($interets)]);
             $userId = $pdo->lastInsertId();
+
+            // Table indexee des gouts : c'est elle que lit le classement de
+            // l'annuaire. Sans cet appel, le nouveau compte n'apparaitrait
+            // jamais dans les suggestions de personne.
+            synchroniserInterets($pdo, (int) $userId, $interets);
+
+            // La liste des ecoles du filtre est mise en cache : un inscrit
+            // venant d'une ecole encore absente doit l'y faire entrer tout de
+            // suite, sinon il ne se retrouve pas dans l'annuaire.
+            oublierEcolesRepresentees();
 
             if ($type === 'partenaire' && $etablNom) {
                 $stmt2 = $pdo->prepare(

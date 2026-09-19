@@ -32,5 +32,8 @@ parameters:
         - '#Variable \$_SERVER#'
         # $pdo est fourni par require includes/db.php (non suivi par l'analyse statique)
         - '#Variable \$pdo might not be defined#'
+        # DB_HOST, DB_NAME… sont posees par define() dans includes/db.php,
+        # que l'analyse ne suit pas davantage que la variable ci-dessus.
+        - '#Constant DB_[A-Z_]+ not found#'
     treatPhpDocTypesAsCertain: false
     reportUnmatchedIgnoredErrors: false

@@ -26,4 +26,13 @@ return [
     'user' => 'if0_00000000',
     'pass' => 'a-remplacer',
     'port' => '3306',
+
+    // Connexions persistantes a MySQL : evite une poignee de main par
+    // requete, ce qui compte quand la base est sur une autre machine.
+    //
+    // A n'activer que si l'hebergeur autorise assez de connexions
+    // simultanees. Sur une offre limitee a 30, laisser false : une
+    // connexion reste alors ouverte par processus PHP, et le quota
+    // s'epuise avant que le trafic n'augmente vraiment.
+    'persistant' => false,
 ];

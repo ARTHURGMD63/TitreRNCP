@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/log.php';
 /**
  * Catalogue des centres d'intérêt.
  *
@@ -60,6 +61,59 @@ function interetsDepuisTexte(?string $texte): array
 function interetsVersTexte(array $interets): string
 {
     return implode(',', $interets);
+}
+
+/**
+ * Reporte les intérêts d'un compte dans la table indexée `user_interets`.
+ *
+ * `users.interests` reste la source de vérité — c'est elle que lisent les
+ * gabarits pour afficher les étiquettes. Mais une chaîne « techno,rock » ne
+ * s'indexe pas : classer l'annuaire par goûts communs imposait un
+ * FIND_IN_SET par intérêt et par profil, sur toute la table. La table dérivée
+ * range la même information sous une forme que la base sait parcourir par
+ * index (voir db_migrations_v15.sql).
+ *
+ * À appeler juste après chaque écriture de la colonne. Les deux seuls
+ * endroits concernés sont l'inscription et la page « Moi » ; s'il s'en ajoute
+ * un troisième, c'est cette fonction qu'il doit appeler.
+ *
+ * Tolérante aux pannes : si la table n'existe pas encore — migration v15 pas
+ * passée — l'enregistrement du profil ne doit pas échouer pour autant. Le
+ * classement retombe simplement sur un score nul, et la migration, qui sait
+ * reconstruire la table depuis la colonne texte, rattrapera le retard.
+ *
+ * @param string[] $interets
+ */
+function synchroniserInterets(PDO $pdo, int $userId, array $interets): void
+{
+    $interets = array_values(array_unique(array_filter(array_map('trim', $interets))));
+
+    try {
+        // Effacer puis réécrire, plutôt que calculer la différence : une
+        // liste de vingt-quatre entrées au maximum ne justifie pas la
+        // complexité, et la transaction garantit qu'aucun visiteur ne voit
+        // l'état intermédiaire — un profil momentanément sans aucun goût.
+        $pdo->beginTransaction();
+        $pdo->prepare('DELETE FROM user_interets WHERE user_id = ?')->execute([$userId]);
+
+        if ($interets) {
+            $trous = implode(',', array_fill(0, count($interets), '(?, ?)'));
+            $valeurs = [];
+            foreach ($interets as $interet) {
+                $valeurs[] = $userId;
+                $valeurs[] = $interet;
+            }
+            $pdo->prepare("INSERT INTO user_interets (user_id, interet) VALUES $trous")
+                ->execute($valeurs);
+        }
+
+        $pdo->commit();
+    } catch (PDOException $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        logErreur('Synchronisation des intérêts impossible', $e, ['user' => $userId]);
+    }
 }
 
 /**
