@@ -37,7 +37,7 @@ RedirectMatch 404 (?i)/\.(git|svn|hg|env|idea|vscode)(/|$)
 # Les migrations décrivent le schéma complet, les fichiers de configuration
 # annoncent les outils et leurs versions. Rien de secret pris isolément,
 # mais rien qui doive être servi non plus.
-<FilesMatch "(?i)\.(sql|md|neon|lock|dist|log|bak|old|swp|toml|phar|sh|bat|ps1|ini)$">
+<FilesMatch "(?i)\.(sql|md|neon|lock|dist|log|bak|old|swp|toml|phar|sh|bat|ps1|ini|conf|yml|yaml)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>
@@ -66,3 +66,75 @@ RedirectMatch 404 (?i)/\.(git|svn|hg|env|idea|vscode)(/|$)
     Header always unset X-Powered-By
 </IfModule>
 ServerSignature Off
+
+# ============================================================
+#  Cache et compression des fichiers statiques
+#
+#  Constat avant ces règles : aucune. Chaque visiteur retéléchargeait
+#  877 Ko à chaque page — 208 Ko de Chart.js, 375 Ko de html5-qrcode,
+#  87 Ko de CSS, 50 Ko de JS — sans compression et sans date
+#  d'expiration. Mille visiteurs, c'est près d'un gigaoctet de trafic
+#  parfaitement évitable, et autant de requêtes servies par Apache
+#  pour renvoyer des octets que le navigateur avait déjà.
+#
+#  Ce que ces règles rendent possible sans risque : les fichiers de
+#  /assets sont appelés avec une empreinte « ?v=<date de
+#  modification> », posée par asset() dans includes/auth_check.php.
+#  Modifier un fichier change son URL, donc un cache d'un an ne peut
+#  pas servir une version périmée. Les photos envoyées, elles, portent
+#  un nom aléatoire unique : même raisonnement.
+# ============================================================
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml
+    # text/javascript et non seulement application/javascript : c'est le type
+    # qu'Apache 2.4 sert pour un .js, et l'oublier laissait passer en clair
+    # les 634 Ko de JavaScript de l'application — soit l'essentiel de ce que
+    # cette section est censee economiser.
+    AddOutputFilterByType DEFLATE text/javascript application/javascript application/x-javascript
+    AddOutputFilterByType DEFLATE application/manifest+json
+    AddOutputFilterByType DEFLATE application/json application/xml
+    AddOutputFilterByType DEFLATE image/svg+xml
+    # Déjà compressés : y repasser gzip coûte du processeur pour rien.
+    SetEnvIfNoCase Request_URI \.(?:gif|jpe?g|png|webp|woff2?|mp4)$ no-gzip dont-vary
+</IfModule>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+
+    # Les pages ne se mettent jamais en cache : elles portent l'état de
+    # la session. PHP le dit déjà de son côté, cette ligne couvre le cas
+    # où une page serait servie sans passer par lui.
+    ExpiresByType text/html "access plus 0 seconds"
+
+    ExpiresByType text/css                "access plus 1 year"
+    ExpiresByType application/javascript  "access plus 1 year"
+    ExpiresByType text/javascript         "access plus 1 year"
+    ExpiresByType image/png               "access plus 1 year"
+    ExpiresByType image/jpeg              "access plus 1 year"
+    ExpiresByType image/webp              "access plus 1 year"
+    ExpiresByType image/svg+xml           "access plus 1 year"
+    ExpiresByType font/woff2              "access plus 1 year"
+    ExpiresByType image/x-icon            "access plus 1 year"
+
+    # Le manifeste et le service worker décrivent l'application elle-même :
+    # figés un an, une mise à jour ne parviendrait jamais aux installations
+    # déjà faites.
+    ExpiresByType application/manifest+json "access plus 1 day"
+</IfModule>
+
+<IfModule mod_headers.c>
+    # « immutable » dispense le navigateur de la requête de revalidation
+    # qu'il envoie malgré tout, une fois par session, pour un fichier
+    # pourtant encore valable. Réservé à ce qui porte une empreinte dans
+    # son URL ou un nom unique.
+    <FilesMatch "\.(?:css|js|png|jpe?g|webp|svg|woff2?|ico)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    # Le service worker fait exception : servi depuis le cache, il
+    # figerait la version installée de l'application chez l'utilisateur.
+    <FilesMatch "^sw\.js$">
+        Header set Cache-Control "no-cache, max-age=0, must-revalidate"
+    </FilesMatch>
+</IfModule>

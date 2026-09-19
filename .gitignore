@@ -57,3 +57,8 @@ uploads/*/*
 # Identifiants de base de données d'un hébergement mutualisé.
 # Le modèle à recopier est includes/config.local.example.php.
 includes/config.local.php
+
+# Fichiers verrous d'Office (~$Document.pptx), crees a l'ouverture et
+# supprimes a la fermeture. Le motif « *~ » ne les attrape pas : le tilde
+# est en prefixe, pas en suffixe.
+~$*

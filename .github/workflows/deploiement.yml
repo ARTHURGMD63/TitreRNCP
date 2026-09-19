@@ -68,6 +68,7 @@ jobs:
             --exclude 'vendor' \
             --exclude 'node_modules' \
             --exclude 'Dockerfile' \
+            --exclude 'docker' \
             --exclude 'nixpacks.toml' \
             --exclude 'composer.json' \
             --exclude 'composer.lock' \
