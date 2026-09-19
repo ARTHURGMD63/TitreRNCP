@@ -8,6 +8,108 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **Montée en charge : l'application est préparée pour ~1 000 sessions
+  simultanées, et le direct ne coûte plus rien quand rien ne bouge.**
+  Mesures, protocole et limites dans [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
+  - **Le serveur de production n'était pas un serveur de production.** L'image
+    lançait `php -S`, le serveur intégré de PHP, qui traite *une* requête à la
+    fois faute de `PHP_CLI_SERVER_WORKERS`. Le plafond n'était pas de mille
+    utilisateurs mais d'une requête simultanée. Remplacé par Apache et mod_php
+    (`Dockerfile`, `docker/apache.conf`), dimensionné à 48 processus.
+  - **OPcache et GD étaient absents de l'image.** Sans OPcache, PHP recompilait
+    chaque fichier source à chaque requête — l'instrumentation montre 8 à 15 ms
+    perdus avant la première ligne de logique. Sans GD, `storeUploadedImage()`
+    se repliait sans bruit et les avatars partaient en pleine résolution.
+  - **Temps réel par flux de révisions** (`api/live.php`, `includes/temps_reel.php`,
+    table `flux_revisions`). Un compteur par canal observable, un ETag construit
+    dessus : quand rien n'a changé — le cas courant — le serveur répond 304 sans
+    corps, après *une* lecture sur clé primaire. Places prises, demandes
+    d'abonnement, invitations et membres de squad remontent désormais sans
+    rechargement. Les SSE et les WebSockets ont été écartés : ils gardent un
+    processus PHP ouvert par client, donc mille processus à mille clients.
+  - **Un seul interrogateur côté navigateur**, et rien ne part quand l'onglet
+    n'est pas regardé — la règle la plus rentable, puisque la plupart des
+    onglets ouverts sur une application sont en arrière-plan. Le compteur du
+    tableau de bord partenaire, qui avait son propre `setInterval`, rejoint ce
+    flux commun.
+  - **Cache applicatif** (`includes/cache.php`) : APCu quand il est là, fichiers
+    sinon — donc le même code sous WAMP, sur un mutualisé et en conteneur. Sert
+    les agrégats d'affichage (`includes/agregats.php`) : note moyenne des
+    établissements et liste des écoles, recalculées jusqu'ici à chaque
+    affichage par des balayages de table complets.
+  - **Cache HTTP et compression** dans `.htaccess`. Chaque visiteur
+    retéléchargeait 877 Ko par page — Chart.js, html5-qrcode, le CSS, le JS —
+    sans compression ni date d'expiration, alors que ces fichiers portent déjà
+    une empreinte dans leur URL depuis `asset()`.
+  - **Outils de mesure** : `outils/semer_charge.php` remplit une base jetable
+    avec des volumes plausibles, `outils/charge.php` lance des requêtes
+    réellement simultanées et rend la distribution des latences. Six événements
+    de démonstration ne disent rien de la tenue en charge.
+  - **`cron/entretien.php`** balaie le cache périmé, les canaux morts, les
+    tentatives de connexion et les jetons expirés — hors du chemin des requêtes.
+
+### Changed
+- **Les deux requêtes qui travaillaient sur tout le catalogue ont été
+  réécrites.** Toutes deux demandaient à MySQL de calculer quelque chose pour
+  chaque ligne de la table avant de n'en afficher que vingt-quatre.
+  - Le **fil des soirées** sélectionnait *tous* les événements à venir, sans
+    limite, avec quatre sous-requêtes corrélées par ligne — dont deux qui
+    recalculaient la note d'un bar autant de fois qu'il avait de soirées au
+    programme. Il procède maintenant en deux temps : les identifiants de la
+    tranche affichée, puis leur détail. 63 ms → **23 ms** sur 1 500 événements.
+  - L'**annuaire** classait les profils par intérêts communs avec un
+    `FIND_IN_SET` par intérêt et par profil, sur une colonne texte. Aucun index
+    ne peut servir une recherche à l'intérieur d'une chaîne : c'était
+    structurel, pas un réglage à trouver. La table `user_interets` (v15) range
+    la même information en lignes indexables. 65 ms → **33 ms** sur 5 000
+    comptes, à résultats strictement identiques (vérifié sur cinq combinaisons
+    de filtres).
+  - Les deux `COUNT(*)` qui ne servaient qu'à afficher ou non un bouton
+    « voir plus » sont remplacés par une ligne demandée en trop — un balayage
+    complet en moins à chaque page.
+- **`db_setup.sql` force désormais InnoDB.** Sur un serveur configuré en
+  MyISAM, l'import échouait à la moitié (erreur 1005 : MyISAM ignore les clés
+  étrangères) ; et s'il avait réussi, MyISAM aurait verrouillé la table entière
+  à chaque inscription, ce qui interdit toute tenue en charge.
+  `install_mutualise.sql` le faisait déjà, pas le script principal.
+- **Le démarrage de session vit dans `includes/session.php`.** `api/live.php` a
+  besoin d'ouvrir la session sans charger les 40 Ko d'`auth_check.php`, et deux
+  copies des paramètres du cookie auraient fini par diverger.
+- **Connexions persistantes à MySQL, prêtes et désactivées** (`DB_PERSISTANT`).
+  Le choix appartient à l'hébergement : elles font gagner une poignée de main
+  par requête sur un serveur dédié, et épuisent le quota de connexions sur un
+  mutualisé.
+
+### Fixed
+- **L'image Docker se construisait sans erreur et livrait GD cassée.** Le
+  `Dockerfile` terminait par `apt-get purge --auto-remove` sur les paquets
+  `-dev` ; `--auto-remove` emportait du même coup les bibliothèques
+  d'exécution dont GD dépend, installées comme simples dépendances. Au
+  démarrage : « libpng16.so.16: cannot open shared object file », et le
+  redimensionnement des photos se repliait en silence — exactement la panne
+  que cette image devait corriger. Les paquets restent désormais en place, et
+  une étape de construction vérifie que `gd`, `pdo_mysql` et OPcache se
+  chargent réellement : une extension manquante fait échouer le build.
+- **634 Ko de JavaScript partaient sans compression.** Les règles
+  `mod_deflate` listaient `application/javascript`, mais Apache 2.4 sert un
+  `.js` en `text/javascript` : le CSS était comprimé, le JS non — soit
+  l'essentiel de ce que la section devait économiser. Corrigé dans
+  `.htaccess` et `docker/apache.conf` ; l'ensemble des ressources passe de
+  721 Ko à 215 Ko sur le réseau.
+- **`outils/charge.php` sait faire tourner plusieurs sessions** (`--cookies`).
+  Sans cela, un test de page connectée mesurait le verrou de session de PHP —
+  qui sérialise les requêtes d'un même `PHPSESSID` — et non le serveur :
+  20 requêtes/s avec une session partagée contre 311 avec cinquante sessions
+  distinctes.
+- **Un TTL négatif mettait en cache pour toujours.** APCu comme le magasin
+  fichier ramenaient une durée de vie négative à zéro, c'est-à-dire « sans
+  expiration » : un calcul d'échéance passant sous zéro obtenait l'exact
+  contraire de ce qu'il demandait. Trouvé par le test qui l'accompagne.
+- **Sept index manquants** (v14), dont `avis(evenement_id)` — la seule clé
+  existante commençait par `user_id`, donc la jointure qui calcule la note d'un
+  établissement lisait toute la table des avis pour chaque carte affichée.
+
+### Added
 - **Supports d'impression : flyer A6 pour les bars, affiches A3 pour la rue.**
   Le projet avait deux plaquettes A4 — un document qu'on lit assis, pas un
   support qu'on ramasse sur une table de bar ou qu'on croise à cinq mètres.

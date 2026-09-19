@@ -41,7 +41,9 @@ StudentLink connecte les étudiants aux établissements (bars, boîtes, restos) 
 | Styles | DM Sans + Playfair Display (Google Fonts) |
 | Tests | PHPUnit 10, PHPStan niveau 5 |
 | CI/CD | GitHub Actions (PHP 8.1 / 8.2 / 8.3) |
-| Déploiement | Railway (Docker + Nixpacks) |
+| Déploiement | Docker (Apache + mod_php + OPcache) ou hébergement mutualisé |
+| Temps réel | Interrogation courte avec ETag et flux de révisions |
+| Cache | APCu si présent, fichiers sinon |
 | Base de données | MySQL 8 (local : WAMP / Railway : MySQL plugin) |
 | PWA | Web App Manifest |
 
@@ -167,6 +169,7 @@ TitreRNCP/
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Architecture technique & choix |
 | [`docs/MANUEL_UTILISATEUR.md`](docs/MANUEL_UTILISATEUR.md) | Guide utilisateur étudiant |
 | [`docs/API.md`](docs/API.md) | Référence des endpoints API |
+| [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) | Montée en charge : mesures, temps réel, limites |
 | [`SECURITY.md`](SECURITY.md) | Politique de sécurité & OWASP |
 | [`CHANGELOG.md`](CHANGELOG.md) | Historique des versions |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Guide de contribution |
