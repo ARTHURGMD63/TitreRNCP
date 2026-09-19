@@ -27,7 +27,14 @@ package-lock.json
 *.db
 
 # Composer / PHP tooling
-vendor/
+# La barre oblique initiale compte. Sans elle, « vendor/ » designe un dossier
+# de ce nom A N'IMPORTE QUELLE PROFONDEUR, et la regle emportait aussi
+# assets/vendor/ — Chart.js, html5-qrcode et qrcode.min.js. Ces trois
+# bibliotheques sont auto-hebergees et indispensables a l'execution : sans
+# elles, le pass QR de l'etudiant ne s'affiche pas et le partenaire ne peut
+# pas scanner. Elles ne sont pas des dependances Composer et n'ont rien a
+# faire ici.
+/vendor/
 composer.lock
 .phpunit.cache/
 .phpunit.result.cache
