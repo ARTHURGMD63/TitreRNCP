@@ -1,0 +1,44 @@
+# ============================================================
+#  Fins de ligne
+#
+#  Le dépôt est travaillé sous Windows, avec core.autocrlf=true : Git
+#  convertit les fins de ligne en CRLF à chaque extraction. C'est sans
+#  conséquence pour du PHP ou du CSS, et fatal pour deux catégories de
+#  fichiers :
+#
+#   • les scripts shell exécutés dans un conteneur Linux. Un
+#     « #!/bin/sh » suivi d'un retour chariot donne un interpréteur
+#     introuvable, et le conteneur refuse de démarrer avec un message
+#     qui ne mentionne jamais les fins de ligne.
+#
+#   • les fichiers de configuration lus par Apache et PHP dans l'image :
+#     une directive terminée par \r est acceptée ou rejetée selon la
+#     version, ce qui donne des pannes qui ne se reproduisent pas d'une
+#     machine à l'autre.
+#
+#  Ces fichiers sont donc forcés en LF, quelle que soit la plateforme.
+# ============================================================
+
+# Détection automatique par défaut, normalisation en LF dans le dépôt.
+* text=auto
+
+# Ce qui doit rester en LF sur le disque, y compris sous Windows.
+*.sh            text eol=lf
+docker/*        text eol=lf
+.htaccess       text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+Dockerfile      text eol=lf
+
+# Binaires : aucune conversion, jamais.
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.webp          binary
+*.pdf           binary
+*.mp4           binary
+*.docx          binary
+*.pptx          binary
+*.ico           binary
+*.woff          binary
+*.woff2         binary
