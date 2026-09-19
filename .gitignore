@@ -35,7 +35,12 @@ package-lock.json
 # pas scanner. Elles ne sont pas des dependances Composer et n'ont rien a
 # faire ici.
 /vendor/
-composer.lock
+# composer.lock N'EST PAS ignore, et c'est deliberé : StudentLink est une
+# application, pas une bibliotheque. Le lock fige les versions exactes de
+# PHPUnit et PHPStan ; sans lui, « composer install » se comporte comme un
+# « composer update » et la CI peut valider le code contre des versions
+# d'outils differentes de celles du poste de developpement — au moment
+# precis ou l'on compte sur elle pour dire que tout va bien.
 .phpunit.cache/
 .phpunit.result.cache
 coverage/
