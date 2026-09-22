@@ -25,6 +25,42 @@ require_once __DIR__ . '/../../includes/api.php';
 // une reponse comme du script.
 if (!headers_sent()) {
     header('X-Content-Type-Options: nosniff');
+
+    // ── CORS ────────────────────────────────────────────────────────────────
+    //
+    // Une application native ne connait pas CORS : c'est une regle de
+    // navigateur. Ces en-tetes servent donc au developpement — `expo start
+    // --web` sert l'application depuis un autre port — et a un eventuel front
+    // web qui consommerait cette API.
+    //
+    // POURQUOI « * » EST SANS DANGER ICI, ALORS QU'IL SERAIT GRAVE SUR api/ :
+    //
+    // Ce qui rend une origine permissive dangereuse, c'est l'association avec
+    // des identifiants envoyes automatiquement — les cookies. Un site hostile
+    // fait alors emettre au navigateur une requete authentifiee a l'insu de
+    // l'utilisateur, et CORS lui donne le droit d'en lire la reponse.
+    //
+    // Cette API n'a pas de cookie : elle exige un jeton que seul le detenteur
+    // peut poser dans un en-tete. Un site tiers ne l'a pas, et la ligne
+    // suivante est celle qui garantit qu'il ne l'aura jamais par ce biais —
+    // Allow-Credentials n'est PAS envoye, donc le navigateur n'attachera
+    // jamais de cookie a une requete inter-origine vers ces points. Sans elle,
+    // « * » serait de toute facon refuse par le navigateur.
+    //
+    // api/ (le socle du site, protege par cookie et jeton CSRF) n'a pas de
+    // CORS et ne doit pas en avoir : la distinction est exactement la.
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Headers: Authorization, Content-Type');
+    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+    header('Access-Control-Max-Age: 86400');
+}
+
+// Requete preliminaire : le navigateur demande la permission avant d'envoyer
+// un en-tete Authorization. Elle n'a pas de corps et ne doit surtout pas
+// traverser l'authentification, puisqu'elle ne porte justement pas le jeton.
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
+    http_response_code(204);
+    exit;
 }
 
 // AUCUNE ERREUR N'EST AFFICHEE, MEME HORS PRODUCTION.
