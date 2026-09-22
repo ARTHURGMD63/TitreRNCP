@@ -1,443 +1,87 @@
 <?php
+/**
+ * Le hub étudiant — le gabarit.
+ *
+ * Toute la construction des requêtes vit dans includes/hub.php. Ce fichier ne
+ * fait plus que trois choses : lire les critères de l'URL, demander les
+ * données, les afficher. Aucune requête ne part d'ici.
+ *
+ * Pourquoi ce découpage : à 1 051 lignes, avec dix requêtes mêlées au HTML,
+ * ce fichier était le plus complexe de l'application et le seul qu'aucun test
+ * ne pouvait atteindre — le charger exécutait aussi son affichage. Les
+ * fonctions de includes/hub.php se testent, elles (tests/Unit/HubTest.php).
+ */
 require_once __DIR__ . '/includes/auth_check.php';
 require_once __DIR__ . '/includes/db.php';
-require_once __DIR__ . '/includes/interets.php';
-require_once __DIR__ . '/includes/social.php';
+require_once __DIR__ . '/includes/hub.php';
 require_once __DIR__ . '/includes/uploads.php';
 require_once __DIR__ . '/includes/notifications.php';
-require_once __DIR__ . '/includes/musique.php';
 require_once __DIR__ . '/includes/icons.php';
-require_once __DIR__ . '/includes/agregats.php';
 requireStudent();
 $user = currentUser();
-$uid = $user['id'];
+$uid  = (int) $user['id'];
 
-// ── Hub Configuration ────────────────────────────────────────────────────────
-$view = $_GET['view'] ?? 'events'; 
-$filter = $_GET['type'] ?? 'all';
-// Un style inconnu — lien périmé, URL bricolée — ne filtre rien plutôt que
-// de rendre une page vide qu'on prendrait pour « aucune soirée ce soir ».
-$musique = $_GET['musique'] ?? '';
-$musique = styleMusiqueValide($musique) ? $musique : '';  
-$q = trim($_GET['q'] ?? '');       
+// ── Ce que l'URL demande, ramené à des valeurs sûres ────────────────────────
+$criteres = hubCriteres($_GET);
+$view     = $criteres['vue'];
+$filter   = $criteres['type'];
+$musique  = $criteres['musique'];
+$q        = $criteres['q'];
+$page     = $criteres['page_profils'];
+$pageE    = $criteres['page_evenements'];
 
-// ── LOGIC FOR PEOPLE ────────────────────────────────────────────────────────
-$students = [];
-// Déclaré hors de la branche « personnes » : le gabarit ne doit pas
-// dépendre de l'endroit où la variable a été créée.
-$suggestions = [];
-$myInterests = [];
-$filterEcole = trim($_GET['ecole'] ?? '');
-$filterInterest = trim($_GET['interest'] ?? '');
-// Valeur réservée : « les gens qui aiment ce que j'aime », par opposition à
-// « les gens qui aiment X ». Aucun intérêt du catalogue ne porte ce nom.
-const FILTRE_MES_INTERETS = '__moi__';
-$filtreCommeMoi = $filterInterest === FILTRE_MES_INTERETS;
+// Valeurs par défaut du gabarit : il ne doit pas dépendre de la branche qui a
+// créé — ou non — chaque variable.
+$students          = [];
+$suggestions       = [];
+$myInterests       = [];
+$allEcoles         = [];
+$allInterests      = [];
+$resteProfils      = false;
+$resteEvenements   = false;
 $interetsManquants = false;
-$allEcoles = [];
-$allInterests = [];
+$filterEcole       = $criteres['ecole'];
+$filterInterest    = $criteres['interet'];
+$filtreCommeMoi    = $criteres['comme_moi'];
+$evenements        = [];
+$friendsByEvent    = [];
+$followedEtabIds   = [];
 
+// ── L'annuaire ──────────────────────────────────────────────────────────────
 if ($view === 'people') {
-    $stmt = $pdo->prepare("SELECT interests FROM users WHERE id = ?");
-    $stmt->execute([$uid]);
-    $me = $stmt->fetch();
-    $myInterests = interetsDepuisTexte($me['interests'] ?? null);
+    $annuaire = hubAnnuaire($pdo, $user, $criteres);
 
-    // Filtrer sur ses propres goûts quand on n'en a déclaré aucun ne rendrait
-    // aucun profil, sans dire pourquoi. On retire le filtre et on l'explique.
-    if ($filtreCommeMoi && !$myInterests) {
-        $filtreCommeMoi = false;
-        $filterInterest = '';
-        $interetsManquants = true;
-    }
-
-    // La liste des ecoles alimente un menu deroulant d'une vingtaine
-    // d'entrees. Elle etait recalculee par un DISTINCT sur toute la table a
-    // chaque affichage ; elle vient maintenant d'un agregat mis en cache.
-    $allEcoles = ecolesRepresentees($pdo);
-
-    // Le catalogue est la source des intérêts, et non la colonne de chaque
-    // compte : lire les goûts de tous les inscrits pour composer un menu de
-    // vingt-quatre entrées connues d'avance coûtait un balayage complet de la
-    // table à chaque affichage de la page.
-    $allInterests = interetsDisponibles();
-
-    // ── Annuaire : score, classement et tranche côté base ─────────────
-    // La page chargeait tous les étudiants en mémoire, les triait en PHP puis
-    // n'en gardait que vingt-quatre. À mille comptes, c'est mille lignes lues
-    // pour vingt-quatre affichées, et la mémoire grandit avec les inscriptions.
-    // MySQL calcule désormais le score, classe et découpe : il ne renvoie que
-    // ce qui s'affiche.
-
-    /*
-     * Score d'affinité : un comptage sur index, et non des fonctions de
-     * chaîne appliquées à tout l'annuaire.
-     *
-     * L'écriture précédente — un FIND_IN_SET par intérêt, sur la colonne
-     * texte `users.interests` — obligeait MySQL à lire les cinq mille
-     * comptes et à exécuter ces fonctions sur chacun, avant de trier, pour
-     * n'en afficher que vingt-quatre. Aucun index ne peut servir une
-     * recherche à l'intérieur d'une chaîne : c'était structurel, pas un
-     * réglage à trouver.
-     *
-     * `user_interets` (migration v15) range la même information en lignes.
-     * La dérivée ci-dessous ne remonte que les profils partageant au moins
-     * un goût — quelques centaines plutôt que cinq mille — et le fait en
-     * parcourant l'index k_interet, sans jamais toucher à la table.
-     */
-    $jointureScore = '';
-    $parScore      = [];
-    if ($myInterests) {
-        $trousI = implode(',', array_fill(0, count($myInterests), '?'));
-        $jointureScore = " LEFT JOIN (
-                SELECT ui.user_id AS sc_user, COUNT(*) AS sc_nb
-                  FROM user_interets ui
-                 WHERE ui.interet IN ($trousI)
-                 GROUP BY ui.user_id
-            ) sc ON sc.sc_user = u.id";
-        $parScore = $myInterests;
-    }
-    // Sans goût déclaré, tout le monde est à égalité : inutile de joindre.
-    $sqlScore = $myInterests ? 'COALESCE(sc.sc_nb, 0)' : '0';
-    /*
-     * Squads partagées : une agrégation jointe, et non une sous-requête
-     * corrélée.
-     *
-     * Écrite en sous-requête — « (SELECT COUNT(*) … WHERE sm2.user_id = u.id) » —
-     * l'expression était réévaluée pour CHAQUE profil balayé, et le classement
-     * par affinité oblige à balayer tout l'annuaire avant de pouvoir couper à
-     * vingt-quatre. À cinq mille inscrits, c'étaient cinq mille jointures pour
-     * en afficher vingt-quatre. En dérivée, mes squads sont agrégées une fois,
-     * puis rattachées.
-     */
-    $jointureSquads = " LEFT JOIN (
-            SELECT sm2.user_id AS sq_user, COUNT(*) AS sq_nb
-              FROM squad_membres sm1
-              JOIN squad_membres sm2 ON sm2.squad_id = sm1.squad_id
-             WHERE sm1.user_id = ?
-             GROUP BY sm2.user_id
-        ) sq ON sq.sq_user = u.id";
-
-    // Ce qui suffit à classer : l'identifiant et les deux critères. Le reste du
-    // profil — nom, photo, intérêts — n'a aucune raison de traverser le tampon
-    // de tri de MySQL pour être jeté aussitôt.
-    $colonnesTri = "u.id, $sqlScore AS score, COALESCE(sq.sq_nb, 0) AS shared_squads";
-
-    // L'ordre des marqueurs suit l'ordre du texte SQL : le SELECT, puis la
-    // jointure dérivée du FROM, puis le WHERE.
-    $parTri  = [];
-    $parFrom = array_merge($parScore, [$uid]);
-
-    $ou  = " FROM users u $jointureScore $jointureSquads WHERE u.type = 'etudiant' AND u.id <> ?";
-    $par = [$uid];
-
-    // Les personnes bloquees (dans un sens ou dans l'autre) disparaissent de l'annuaire.
-    [$sqlBlock, $paramsBlock] = blockedFilterSql($pdo, (int) $uid, 'u.id');
-    $ou .= $sqlBlock;
-    $par = array_merge($par, $paramsBlock);
-
-    if ($q) {
-        $ou .= " AND (u.nom LIKE ? OR u.prenom LIKE ? OR u.ecole LIKE ? OR u.interests LIKE ?)";
-        $terme = '%' . addcslashes($q, '%_') . '%';
-        $par[] = $terme; $par[] = $terme; $par[] = $terme; $par[] = $terme;
-    }
-    // On vient ici pour rencontrer du monde, pas pour relire la liste de ceux
-    // qu'on suit déjà : ces comptes sortent de l'annuaire et se retrouvent
-    // depuis le profil, en cliquant sur le compteur d'abonnements. La
-    // recherche par nom, elle, les retrouve — taper le prénom d'un ami pour
-    // n'obtenir aucun résultat se lirait comme une panne. Les demandes en
-    // attente restent aussi visibles, pour pouvoir les annuler.
-    if (!$q) {
-        $ou .= " AND NOT EXISTS (SELECT 1 FROM follows_users fdeja
-                                 WHERE fdeja.follower_id = ? AND fdeja.followed_id = u.id
-                                   AND fdeja.statut = 'accepted')";
-        $par[] = $uid;
-    }
-    if ($filterEcole) {
-        $ou .= " AND u.ecole = ?";
-        $par[] = $filterEcole;
-    }
-    if ($filtreCommeMoi) {
-        // « Les gens qui aiment ce que j'aime » : une existence dans la
-        // table indexée, au lieu d'une fonction de chaîne par profil.
-        $trousM = implode(',', array_fill(0, count($myInterests), '?'));
-        $ou .= " AND EXISTS (SELECT 1 FROM user_interets uim
-                              WHERE uim.user_id = u.id AND uim.interet IN ($trousM))";
-        $par = array_merge($par, $myInterests);
-    } elseif ($filterInterest) {
-        $ou .= " AND EXISTS (SELECT 1 FROM user_interets uif
-                              WHERE uif.user_id = u.id AND uif.interet = ?)";
-        $par[] = $filterInterest;
-    }
-
-    // Le classement par affinité vaut aussi pour « comme moi » : c'est même là
-    // qu'il compte le plus, puisque tous les profils retenus partagent au moins
-    // un intérêt et qu'on veut voir d'abord ceux qui en partagent le plus.
-    // Les inscrits récents départagent : sans ce dernier critère, les nouveaux
-    // comptes — aucun intérêt renseigné — restaient bloqués en fin de liste.
-    $classement = (!$q && !$filterEcole && (!$filterInterest || $filtreCommeMoi))
-        ? ' ORDER BY score DESC, shared_squads DESC, u.created_at DESC, u.id DESC'
-        : ' ORDER BY u.created_at DESC, u.id DESC';
-
-    // ── Suggestions d'abonnement ───────────────────────────────
-    // Quatre profils à suivre, choisis sur les goûts : les intérêts communs
-    // pèsent le plus, une squad partagée ensuite, l'école en dernier recours.
-    // Sans aucun point commun, pas de suggestion : une vignette « à suivre »
-    // qui ne repose sur rien n'apprend rien de plus que la liste en dessous.
-    // Les profils retenus en sont retirés pour ne pas y figurer deux fois.
-    $idsSuggeres = [];
-    if (!$q && !$filterEcole && !$filterInterest) {
-        $monEcole = (string) ($user['ecole'] ?? '');
-        $sqlAffinite = "($sqlScore) * 3 + (COALESCE(sq.sq_nb, 0)) * 2 + (u.ecole = ? AND ? <> '')";
-
-        $sqlSug = "SELECT u.id, $sqlAffinite AS affinite $ou
-                   AND NOT EXISTS (SELECT 1 FROM follows_users flien
-                                   WHERE flien.follower_id = ? AND flien.followed_id = u.id)
-                   HAVING affinite > 0
-                   ORDER BY affinite DESC, u.created_at DESC
-                   LIMIT 4";
-        $stmtSug = $pdo->prepare($sqlSug);
-        $stmtSug->execute(array_merge(
-            [$monEcole, $monEcole],
-            $parFrom,
-            $par, [$uid]
-        ));
-        $idsSuggeres = array_map('intval', $stmtSug->fetchAll(PDO::FETCH_COLUMN));
-    }
-
-    if ($idsSuggeres) {
-        $trous = implode(',', array_fill(0, count($idsSuggeres), '?'));
-        $ou   .= " AND u.id NOT IN ($trous)";
-        $par   = array_merge($par, $idsSuggeres);
-    }
-
-    // « Voir plus » rallonge la page au lieu de la remplacer : on redemande
-    // depuis le début, vingt-quatre profils de plus à chaque fois.
-    $parPage = 24;
-    $page    = max(1, (int) ($_GET['p'] ?? 1));
-    $limite  = $parPage * $page;
-
-    /*
-     * Une ligne de plus que demandé, à la place du COUNT(*).
-     *
-     * Le total ne servait qu'à décider d'afficher ou non un bouton, et le
-     * calculer imposait un troisième balayage complet de l'annuaire, aussi
-     * cher que celui qui produit la liste. Savoir s'il reste au moins un
-     * profil suffit, et se lit dans la même requête.
-     */
-    $stmtP = $pdo->prepare("SELECT $colonnesTri $ou $classement LIMIT " . (int) ($limite + 1));
-    $stmtP->execute(array_merge($parTri, $parFrom, $par));
-    $idsListe = array_map('intval', $stmtP->fetchAll(PDO::FETCH_COLUMN));
-
-    $resteProfils = count($idsListe) > $limite;
-    $idsListe = array_slice($idsListe, 0, $limite);
-
-    /*
-     * Le détail des profils retenus, suggestions et liste confondues : une
-     * seule requête pour les deux, puis on répartit en PHP. C'est ici, et ici
-     * seulement, qu'on paie le statut d'abonnement — pour vingt-huit profils
-     * au lieu de cinq mille.
-     */
-    $detail  = [];
-    $tousIds = array_values(array_unique(array_merge($idsSuggeres, $idsListe)));
-    if ($tousIds) {
-        $trousD = implode(',', array_fill(0, count($tousIds), '?'));
-        $stmtD  = $pdo->prepare(
-            "SELECT u.id, u.nom, u.prenom, u.ecole, u.promo, u.interests, u.created_at, u.photo,
-                    $sqlScore AS score,
-                    COALESCE(sq.sq_nb, 0) AS shared_squads,
-                    (SELECT fu.statut FROM follows_users fu
-                      WHERE fu.follower_id = ? AND fu.followed_id = u.id) AS follow_statut
-               FROM users u $jointureScore $jointureSquads
-              WHERE u.id IN ($trousD)"
-        );
-        $stmtD->execute(array_merge([$uid], $parFrom, $tousIds));
-        foreach ($stmtD->fetchAll() as $ligne) {
-            $detail[(int) $ligne['id']] = $ligne;
-        }
-    }
-
-    // On rejoue l'ordre établi par les requêtes de classement : un IN() n'en
-    // garantit aucun, et l'annuaire se retrouverait trié par identifiant.
-    $reprendre = static fn(array $ids): array => array_values(array_filter(
-        array_map(static fn(int $id): ?array => $detail[$id] ?? null, $ids)
-    ));
-    $suggestions = $reprendre($idsSuggeres);
-    $students    = $reprendre($idsListe);
-
-    // Les intérêts communs s'affichent sur chaque rangée : ils se recoupent en
-    // PHP, mais seulement pour les profils rendus, pas pour toute la table.
-    foreach ($students as &$s) {
-        $s['common_interests'] = array_intersect($myInterests, interetsDepuisTexte($s['interests'] ?? null));
-        $s['score'] = (int) $s['score'];
-        $s['shared_squads'] = (int) $s['shared_squads'];
-    }
-    // Indispensable : sans ce unset, $s reste une référence sur le dernier
-    // étudiant, que le foreach d'affichage écrase — le dernier profil de la
-    // liste (donc les comptes récents) disparaissait au profit d'un doublon.
-    unset($s);
-
-    foreach ($suggestions as &$sg) {
-        $sg['common_interests'] = array_intersect($myInterests, interetsDepuisTexte($sg['interests'] ?? null));
-        $sg['shared_squads'] = (int) $sg['shared_squads'];
-    }
-    unset($sg);
+    $students     = $annuaire['profils'];
+    $suggestions  = $annuaire['suggestions'];
+    $myInterests  = $annuaire['mes_interets'];
+    $allEcoles    = $annuaire['ecoles'];
+    $allInterests = $annuaire['catalogue'];
+    $resteProfils = $annuaire['reste'];
+    // Le filtre « comme moi » se retire tout seul quand aucun goût n'est
+    // déclaré : on affiche l'état appliqué, pas celui demandé.
+    $interetsManquants = $annuaire['interets_manquants'];
+    $filtreCommeMoi    = $annuaire['comme_moi'];
+    $filterInterest    = $annuaire['interet'];
 }
 
-// ── ABONNÉS (pour modal invitation) ─────────────────────────────────────────
-$stmtFollowing = $pdo->prepare("SELECT u.id, u.prenom, u.nom, u.photo FROM follows_users f JOIN users u ON u.id = f.followed_id WHERE f.follower_id = ? AND f.statut = 'accepted' AND u.type = 'etudiant'");
-$stmtFollowing->execute([$uid]);
-$following = $stmtFollowing->fetchAll();
+// Les abonnements alimentent la fenêtre d'invitation, présente sur les deux vues.
+$following = hubAbonnements($pdo, $uid);
 
-// ── LOGIC FOR EVENTS ────────────────────────────────────────────────────────
-$evenements = [];
-$friendsByEvent = [];
-$followedEtabIds = [];
+// ── Le fil des soirées ──────────────────────────────────────────────────────
 if ($view === 'events') {
-    $stmtFe = $pdo->prepare("SELECT etablissement_id FROM follows_etablissements WHERE user_id=?");
-    $stmtFe->execute([$uid]);
-    $followedEtabIds = $stmtFe->fetchAll(PDO::FETCH_COLUMN);
+    $followedEtabIds = hubEtablissementsSuivis($pdo, $uid);
+    $friendsByEvent  = hubAmisParEvenement($pdo, $uid);
 
-    $stmtFriends = $pdo->prepare("
-        SELECT i.evenement_id, GROUP_CONCAT(u.prenom ORDER BY i.created_at SEPARATOR ',') AS prenoms, COUNT(*) AS nb
-        FROM follows_users fu
-        JOIN inscriptions i ON i.user_id = fu.followed_id AND i.statut='inscrit'
-        JOIN users u ON u.id = fu.followed_id
-        WHERE fu.follower_id = ? AND fu.statut = 'accepted'
-        GROUP BY i.evenement_id
-    ");
-    $stmtFriends->execute([$uid]);
-    foreach ($stmtFriends->fetchAll() as $row) {
-        $friendsByEvent[$row['evenement_id']] = ['prenoms' => explode(',', $row['prenoms']), 'nb' => $row['nb']];
-    }
-
-    /*
-     * Le fil des soirées se construit en deux temps, et ce n'est pas un
-     * détour : c'est ce qui borne son coût.
-     *
-     * Avant, une seule requête sélectionnait TOUS les événements à venir,
-     * sans limite, en évaluant quatre sous-requêtes corrélées par ligne —
-     * dont deux qui rejoignaient `avis` à `evenements` pour recalculer la
-     * note d'un bar autant de fois qu'il avait de soirées au programme. Vingt
-     * cartes à l'écran, mais le travail était fait pour le catalogue entier.
-     *
-     * Désormais :
-     *   1. une requête ne ramène que les identifiants de la tranche affichée,
-     *      sans aucune sous-requête — elle lit un index et trie des entiers ;
-     *   2. une seconde va chercher le détail de ces identifiants-là, et d'eux
-     *      seuls.
-     *
-     * Les deux agrégats qui restaient — note de l'établissement, inscriptions
-     * de l'utilisateur — ont quitté le SQL : le premier vient d'un cache
-     * partagé, le second d'une requête unique recoupée en PHP.
-     */
-    $sponsoActif = "(e.is_sponsorise = 1
-                     AND (e.sponsor_jusqu_au IS NULL OR e.sponsor_jusqu_au > NOW()))";
-
-    $ouE     = " FROM evenements e
-                 JOIN etablissements et ON et.id = e.etablissement_id
-                 WHERE e.date_heure >= NOW()";
-    $paramsE = [];
-
-    if ($filter === 'pour-moi') {
-        $friendEventIds = array_keys($friendsByEvent);
-        $etabPlaceholders = !empty($followedEtabIds) ? implode(',', array_fill(0, count($followedEtabIds), '?')) : '0';
-        $friendPlaceholders = !empty($friendEventIds) ? implode(',', array_fill(0, count($friendEventIds), '?')) : '0';
-        $ouE .= " AND (et.id IN ($etabPlaceholders) OR e.id IN ($friendPlaceholders))";
-        $paramsE = array_merge($paramsE, $followedEtabIds, $friendEventIds);
-    } elseif ($filter !== 'all') {
-        $ouE .= " AND e.type = ?";
-        $paramsE[] = $filter;
-    }
-
-    if ($musique !== '') {
-        $ouE .= " AND e.style_musique = ?";
-        $paramsE[] = $musique;
-    }
-
-    // Le sponsoring acheté passe devant le reste du fil — c'est ce que le
-    // partenaire paie. Il ne s'en cache pas pour autant : chaque carte
-    // concernée porte le badge « Sponsorisé », et la mise en avant expire.
-    // e.id départage : sans dernier critère stable, deux soirées à la même
-    // heure peuvent changer de place d'un chargement à l'autre, et la
-    // pagination sauter ou répéter une carte.
-    $classementE = " ORDER BY $sponsoActif DESC, e.is_flash DESC, e.date_heure ASC, e.id ASC";
-
-    // Même mécanique que l'annuaire : « voir plus » rallonge la page.
-    $parPageE = 24;
-    $pageE    = max(1, (int) ($_GET['pe'] ?? 1));
-    $limiteE  = $parPageE * $pageE;
-
-    // LIMIT + 1 : on demande une ligne de plus que ce qu'on affiche. Sa
-    // présence dit qu'il reste quelque chose après, ce qui évite le COUNT(*)
-    // complet qu'il aurait fallu sinon — un balayage entier pour afficher ou
-    // non un bouton.
-    $stmtIds = $pdo->prepare("SELECT e.id $ouE $classementE LIMIT " . (int) ($limiteE + 1));
-    $stmtIds->execute($paramsE);
-    $idsE = array_map('intval', $stmtIds->fetchAll(PDO::FETCH_COLUMN));
-
-    $resteEvenements = count($idsE) > $limiteE;
-    $idsE = array_slice($idsE, 0, $limiteE);
-
-    if ($idsE) {
-        $trousE = implode(',', array_fill(0, count($idsE), '?'));
-        // FIELD() rejoue l'ordre établi à l'étape 1 : un IN() ne garantit
-        // aucun ordre, et le sponsoring payé se retrouverait au hasard.
-        $stmtE = $pdo->prepare(
-            "SELECT e.*, et.id AS etab_id, et.nom AS etablissement_nom, et.type AS etab_type, et.ville,
-                    $sponsoActif AS sponso_actif,
-                    (SELECT COUNT(*) FROM inscriptions i
-                      WHERE i.evenement_id = e.id AND i.statut <> 'annule') AS nb_inscrits
-               FROM evenements e
-               JOIN etablissements et ON et.id = e.etablissement_id
-              WHERE e.id IN ($trousE)
-              ORDER BY FIELD(e.id, $trousE)"
-        );
-        $stmtE->execute(array_merge($idsE, $idsE));
-        $evenements = $stmtE->fetchAll();
-
-        // Mes inscriptions parmi les soirées affichées : une requête pour
-        // toute la page, là où il y avait une sous-requête par carte.
-        $stmtMoi = $pdo->prepare(
-            "SELECT evenement_id FROM inscriptions
-              WHERE user_id = ? AND statut <> 'annule' AND evenement_id IN ($trousE)"
-        );
-        $stmtMoi->execute(array_merge([$uid], $idsE));
-        $mesInscriptions = array_flip(array_map('intval', $stmtMoi->fetchAll(PDO::FETCH_COLUMN)));
-
-        $notesEtab = notesEtablissements($pdo);
-
-        foreach ($evenements as &$ev) {
-            $note = $notesEtab[(int) $ev['etablissement_id']] ?? null;
-            $ev['etab_note']    = $note['note'] ?? null;
-            $ev['etab_nb_avis'] = $note['nb']   ?? 0;
-            $ev['deja_inscrit'] = isset($mesInscriptions[(int) $ev['id']]) ? 1 : 0;
-        }
-        // Sans ce unset, $ev reste une référence sur la dernière soirée, que
-        // le foreach d'affichage écrase : la dernière carte se dédoublait.
-        unset($ev);
-    }
+    $fil             = hubEvenements($pdo, $uid, $criteres, $followedEtabIds, $friendsByEvent);
+    $evenements      = $fil['evenements'];
+    $resteEvenements = $fil['reste'];
 }
 
 // La cloche est dans l'en-tête, donc présente sur les deux vues du hub.
-$notifs = notificationsEtudiant($pdo, (int) $uid);
+$notifs = notificationsEtudiant($pdo, $uid);
 
-/**
- * Lien d'un filtre, en gardant l'autre dimension.
- *
- * Les pilules écrivaient leur URL en dur : choisir un style effaçait le type,
- * et inversement. On ne peut pas demander « les boîtes techno » en deux clics
- * si le second annule le premier.
- */
-$lienFiltre = static function (array $change) use ($filter, $musique): string {
-    $params = array_merge(
-        ['view' => 'events', 'type' => $filter, 'musique' => $musique],
-        $change
-    );
-    $params = array_filter($params, static fn($v) => $v !== '' && $v !== null);
-
-    return '?' . htmlspecialchars(http_build_query($params), ENT_QUOTES);
-};
+/** Lien d'un filtre, en gardant l'autre dimension. Voir hubLienFiltre(). */
+$lienFiltre = static fn(array $change): string => hubLienFiltre($filter, $musique, $change);
 
 $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Afterwork'];
 ?>
@@ -448,6 +92,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Hub</title>
 <?= themeBootScript() ?>
+<?= metaCsrf() ?>
 <link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
 <link rel="icon" type="image/png" href="<?= baseUrl('/Logo.png') ?>">
 <link rel="apple-touch-icon" href="<?= baseUrl('/Logo.png') ?>">
