@@ -60,7 +60,7 @@ StudentLink connecte les étudiants aux établissements (bars, boîtes, restos) 
 `C:\wamp64\www\TitreRNCP`
 > ⚠️ Le nom du dossier est important : en local, les liens internes utilisent le chemin `/TitreRNCP`.
 
-**2. Créer la base de données** — une **seule** importation suffit (crée les 16 tables **et** un jeu de démonstration avec des événements toujours à venir) :
+**2. Créer la base de données** — une **seule** importation suffit (crée les 26 tables **et** un jeu de démonstration avec des événements toujours à venir, back-office fondateurs compris) :
 - **Via phpMyAdmin** (fourni avec WAMP) : ouvrir `http://localhost/phpmyadmin` → onglet **Importer** → choisir `db_setup.sql` → **Exécuter**.
 - **Ou en ligne de commande** :
   ```bash
@@ -68,14 +68,29 @@ StudentLink connecte les étudiants aux établissements (bars, boîtes, restos) 
   ```
 
 **3. Ouvrir l'application** :
-`http://localhost/TitreRNCP/explore.php`
-> Si Apache tourne sur un autre port, l'indiquer, ex. `http://localhost:8080/TitreRNCP/explore.php`.
+`http://localhost/TitreRNCP/`
+> La racine est la page de présentation publique ; la connexion et l'inscription
+> s'y trouvent. Si Apache tourne sur un autre port, l'indiquer, ex.
+> `http://localhost:8080/TitreRNCP/`.
 
 **4. (Optionnel — uniquement pour lancer les tests)** installer les dépendances de développement :
 ```bash
 composer install   # récupère PHPUnit / PHPStan (l'application fonctionne sans)
 composer ci         # analyse statique + tests
 ```
+
+### Mettre à jour une base existante
+
+`db_setup.sql` est un point de départ complet : il contient déjà le résultat de toutes les migrations. Pour une base créée plus tôt, ou après l'arrivée d'un nouveau fichier `db_migrations_v*.sql` :
+
+```bash
+php outils/migrer.php --etat    # ce qui est appliqué, ce qui ne l'est pas
+php outils/migrer.php           # applique ce qui manque, et l'enregistre
+```
+
+La table `schema_migrations` retient ce qui est passé, et quand. Une base antérieure à ce suivi se raccorde une fois pour toutes avec `php outils/migrer.php --adopter`, qui enregistre les migrations sans les rejouer.
+
+> Les migrations ne se posent plus à la main dans phpMyAdmin. C'est ce qui avait laissé `db_setup.sql` et `install_mutualise.sql` diverger de quatre tables, et toute installation faite en suivant ce README produisait un back-office en erreur. `tests/Unit/SchemaTest.php` échoue désormais en intégration continue à la première divergence.
 
 ### Comptes de démo
 
@@ -109,9 +124,21 @@ composer stan
 composer ci
 ```
 
-Les tests couvrent :
-- **Unitaires** : fonctions gamification (XP, niveau, badges), validation, auth helpers
-- **Intégration** : persistance des badges avec SQLite in-memory
+**171 tests, 768 assertions.** Ils couvrent :
+
+| Domaine | Ce qui est vérifié |
+|---|---|
+| Gamification, validation, sessions, cache, CRM | XP, niveaux, badges, listes blanches, expiration, agrégats |
+| `ApiProtectionTest` | Chaque point d'API en écriture exige jeton et origine, **avant** la première requête SQL — et le JavaScript envoie bien le jeton |
+| `SchemaTest` | `db_setup.sql` et `install_mutualise.sql` décrivent la même base, et le code n'interroge aucune table absente |
+| `MigrationsTest` | Découpage des scripts SQL : `DELIMITER`, chaînes, commentaires, ordre numérique |
+| `RedirectionTest` | Aucune redirection vers un hôte externe ; contrôle d'origine |
+| `HubTest` | Lecture des critères d'URL du hub : page négative, style inventé, vue inconnue |
+| `MailTest` | En-têtes RFC, encodage du sujet, anti-injection d'en-tête |
+| `DepotTest` | Aucun binaire lourd ne réapparaît dans le suivi Git |
+| Intégration | Persistance des badges avec SQLite in-memory |
+
+Les tests de type `ApiProtectionTest`, `SchemaTest` et `DepotTest` lisent les fichiers du projet plutôt que d'appeler du code : ils ne vérifient pas que les onze points d'API existants sont corrects — cela a été fait en conditions réelles — mais que **le douzième ne pourra pas être ajouté sans sa garde**.
 
 ## 🗄 Schéma de base de données
 
@@ -135,7 +162,10 @@ Voir [`SECURITY.md`](SECURITY.md) pour la couverture OWASP Top 10 détaillée.
 Points clés :
 - PDO prepared statements (anti-SQLi)
 - bcrypt `PASSWORD_DEFAULT` (hash mots de passe)
-- CSRF tokens sur tous les POST
+- Jeton CSRF sur tous les POST — formulaires **et** points d'API JSON
+- Contrôle de l'en-tête `Origin` en seconde couche, derrière le jeton
+- Écriture refusée hors `POST` (405) : une écriture atteignable en `GET` se déclenche depuis une balise `<img>`
+- Redirection de retour bornée aux URL internes (pas de redirection ouverte)
 - Rate limiting login (5 tentatives / 15 min / IP)
 - Headers HTTP : CSP, HSTS, X-Frame-Options
 - Session regeneration après auth
@@ -150,11 +180,14 @@ TitreRNCP/
 │   └── js/app.js     # JS vanilla (SPA-like, dark mode, timer)
 ├── auth/             # Login, register, logout, forgot, reset
 ├── docs/             # Documentation technique (MCD, UML, API, manuel)
-├── includes/         # auth_check.php, db.php, security.php, gamification.php
+├── cron/             # Tâches planifiées (rappels, entretien)
+├── includes/         # auth_check.php, db.php, security.php, hub.php, mail.php…
+├── outils/           # Ligne de commande : migrer.php, creer_admin.php, charge.php
 ├── partenaire/       # Dashboard, événements, create_event
 ├── tests/            # PHPUnit (Unit/ + Integration/)
 ├── .github/          # CI GitHub Actions
-├── db_setup.sql      # Installation complète : 16 tables + données de démo
+├── db_setup.sql      # Installation complète : 26 tables + données de démo
+├── db_migrations_v*.sql  # Migrations, appliquées par outils/migrer.php
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md
 └── SECURITY.md
@@ -170,6 +203,8 @@ TitreRNCP/
 | [`docs/MANUEL_UTILISATEUR.md`](docs/MANUEL_UTILISATEUR.md) | Guide utilisateur étudiant |
 | [`docs/API.md`](docs/API.md) | Référence des endpoints API |
 | [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) | Montée en charge : mesures, temps réel, limites |
+| [`docs/EMAIL.md`](docs/EMAIL.md) | Délivrabilité : SPF, DKIM, DMARC, transport SMTP |
+| [`docs/LIVRABLES.md`](docs/LIVRABLES.md) | Où vivent les binaires lourds, comment refaire les PDF |
 | [`SECURITY.md`](SECURITY.md) | Politique de sécurité & OWASP |
 | [`CHANGELOG.md`](CHANGELOG.md) | Historique des versions |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Guide de contribution |

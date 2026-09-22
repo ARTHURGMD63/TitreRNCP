@@ -10,6 +10,67 @@ Tous les endpoints vérifient `$_SESSION['user_id']`. Si absent → `{"error": "
 
 ---
 
+## Écriture : jeton CSRF obligatoire
+
+Tout endpoint qui **écrit** exige trois choses, vérifiées par
+`protegerEcritureApi()` ([`includes/security.php`](../includes/security.php))
+avant la moindre requête SQL :
+
+| Exigence | Sinon |
+| --- | --- |
+| Méthode `POST` | `405` + `Allow: POST` |
+| En-tête `X-CSRF-Token` valide | `403` avec `"code": "csrf"` |
+| `Origin` (ou à défaut `Referer`) du même hôte | `403` avec `"code": "csrf"` |
+
+Le jeton est publié dans le `<head>` de chaque page :
+
+```html
+<meta name="csrf-token" content="…">
+```
+
+Côté client, `enTetesJson()` (`assets/js/app.js`) le lit et le pose — ne pas
+recopier l'objet d'en-têtes à la main, c'est ainsi qu'on oublie le jeton :
+
+```js
+const res = await fetch(BASE + '/api/inscrire.php', {
+  method: 'POST',
+  headers: enTetesJson(),
+  body: JSON.stringify({ evenement_id: id })
+});
+```
+
+Le jeton peut aussi voyager dans le corps JSON (`"csrf_token": "…"`) pour un
+appelant qui ne peut pas poser d'en-tête.
+
+**Pourquoi, alors que le cookie est en `SameSite=Lax`.** Lax bloque
+effectivement l'envoi du cookie sur un POST venu d'un autre site :
+l'application n'était pas vulnérable en l'état. Mais c'était sa seule
+défense, là où les formulaires en ont deux, et elle tenait entièrement à une
+ligne de configuration de session — un passage en `None` pour faire
+fonctionner une intégration tierce, et onze points d'écriture s'ouvraient
+d'un coup sans que rien dans leur code ne le signale.
+
+`tests/Unit/ApiProtectionTest.php` échoue si un endpoint d'écriture est
+ajouté sans cette garde, ou si un `fetch` POST du JavaScript oublie le jeton.
+
+### Endpoints en lecture seule
+
+Sans jeton, appelables en `GET` : `live.php`, `social_feed.php`,
+`squad_members.php`, `stats.php`. Ils ne modifient rien — et un test le
+vérifie, pour que l'exemption ne devienne pas un trou le jour où l'un d'eux
+se met à écrire.
+
+### Réponse en cas de refus
+
+```json
+{ "success": false, "code": "csrf", "message": "Session expirée. Recharge la page." }
+```
+
+Le champ `code` permet au client de distinguer une session expirée d'une
+erreur métier : `estRefusCsrf(data)` est disponible dans `app.js`.
+
+---
+
 ## Endpoints Étudiant
 
 ### `POST /api/inscrire.php`

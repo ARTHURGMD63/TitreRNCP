@@ -49,11 +49,43 @@ StudentLink utilise un **pattern PHP procédural MVC léger** sans framework :
 
 | Couche | Implémentation |
 |--------|---------------|
-| **Model** | Requêtes PDO inline dans chaque page / helpers dans `includes/` |
+| **Model** | Helpers dans `includes/` ; requêtes PDO encore inline dans les pages secondaires |
 | **View** | HTML inline avec `<?php ?>` |
 | **Controller** | Logique en haut de chaque fichier `.php` |
 
-Ce choix est **intentionnel** pour un projet de taille réduite : pas de surcharge d'un framework (Symfony/Laravel), meilleure lisibilité pour la soutenance.
+Ce choix est **intentionnel** pour un projet de cette taille : pas de surcharge d'un framework (Symfony/Laravel), et un fichier par écran qui se lit de haut en bas.
+
+### Sa limite, et où elle a été franchie
+
+Le modèle tient tant qu'une page reste lisible d'un bout à l'autre. `explore.php` ne l'était plus : **1 051 lignes**, dix requêtes, deux classements par affinité et deux paginations mêlés à six cents lignes de gabarit. C'était le fichier le plus complexe de l'application, et le seul qu'aucun test ne pouvait atteindre — le charger exécutait aussi son affichage.
+
+La couche données en a été extraite dans [`includes/hub.php`](../includes/hub.php), sans toucher aux requêtes elles-mêmes :
+
+| Fonction | Rôle |
+|---|---|
+| `hubCriteres()` | Traduit `$_GET` en critères validés. Calcul pur, sans base ni session : c'est là que se testent page négative, style de musique inventé, vue inconnue |
+| `hubAnnuaire()` | L'annuaire étudiant : suggestions, liste, filtres |
+| `hubEvenements()` | Le fil des soirées |
+| `hubAbonnements()`, `hubEtablissementsSuivis()`, `hubAmisParEvenement()` | Les trois lectures annexes |
+
+`explore.php` est passé de 1 051 à **696 lignes**, dont 88 d'orchestration : lire les critères, demander les données, afficher. Aucune requête ne part plus du gabarit, et le rendu a été comparé avant/après sur quatorze combinaisons de filtres — identique sur toutes, à une exception voulue : `?view=bidon` affichait une page sans aucune des deux listes, il retombe désormais sur le fil des soirées.
+
+Les autres pages n'ont pas été découpées : à 300–500 lignes, elles restent lisibles, et un découpage systématique coûterait plus en indirection qu'il ne rapporterait.
+
+### Fichiers transverses de `includes/`
+
+| Fichier | Rôle |
+|---|---|
+| `config.php` | Lecture des réglages : environnement, puis `config.local.php`, puis défaut. Point unique — `db.php` et `mail.php` en dépendent tous deux |
+| `db.php` | Connexion PDO, requêtes réellement préparées, connexions persistantes sur demande |
+| `session.php` | Démarrage de session durci ; `sessionLectureSeule()` relâche le verrou immédiatement |
+| `auth_check.php` | Gardes de rôle, `baseUrl()`, `asset()`, formatage des dates |
+| `security.php` | En-têtes, CSRF (formulaires **et** API), contrôle d'origine, redirections internes, rate limiting |
+| `migrations.php` | Découpage des scripts SQL et suivi des versions appliquées |
+| `mail.php` | Envoi : en-têtes RFC, encodage, transport `mail()` ou SMTP authentifié |
+| `hub.php` | Couche données du hub étudiant |
+| `temps_reel.php` | Flux de révisions et ETag |
+| `cache.php`, `agregats.php` | APCu si présent, fichiers sinon ; agrégats partagés |
 
 ## Les trois espaces
 
@@ -183,11 +215,29 @@ $pdo  = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass, [
 
 ```
 db_setup.sql  → Installation complète en une importation :
-                16 tables (schéma consolidé, historique des migrations
-                v2/v3/v4 intégré) + jeu de données de démonstration
+                26 tables (schéma consolidé, migrations v4 à v15
+                intégrées) + jeu de données de démonstration
                 (événements générés avec NOW() + INTERVAL, donc
                 toujours à venir quelle que soit la date d'import)
 ```
+
+### Migrations
+
+Les migrations se posaient à la main, fichier par fichier, dans phpMyAdmin, et rien n'enregistrait celles qui étaient déjà passées. Deux dumps complets — `db_setup.sql` et `install_mutualise.sql` — devaient en plus être tenus à jour à la main. **Ils ont divergé de quatre tables** (`crm_clients`, `crm_interactions`, `finance_mouvements`, `rappels_envoyes`) : toute installation faite en suivant le README produisait un back-office qui tombait en erreur au premier clic.
+
+Trois choses ont changé :
+
+1. **`schema_migrations`** enregistre chaque version appliquée, et quand. Les deux dumps l'amorcent à `v4…v15`, puisqu'ils contiennent déjà leur résultat.
+2. **`outils/migrer.php`** applique ce qui manque, dans l'ordre numérique (`v9` avant `v10`, ce qu'un tri alphabétique ferait à l'envers). En ligne de commande uniquement : un outil qui modifie le schéma n'a rien à faire derrière une URL.
+3. **`tests/Unit/SchemaTest.php`** échoue en intégration continue si les deux dumps cessent de décrire la même base, ou si le code interroge une table qu'aucune installation ne crée.
+
+```bash
+php outils/migrer.php --etat      # ce qui est appliqué, ce qui ne l'est pas
+php outils/migrer.php             # applique ce qui manque
+php outils/migrer.php --adopter   # raccorde une base antérieure au suivi
+```
+
+Le découpage SQL gère `DELIMITER` — sans quoi les procédures stockées de la migration v7 seraient coupées à leur premier point-virgule interne — ainsi que les chaînes, les commentaires, et les jeux de résultats que produisent les `PREPARE`/`EXECUTE` des migrations conditionnelles.
 
 ## Déploiement CI/CD
 

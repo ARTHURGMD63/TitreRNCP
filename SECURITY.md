@@ -46,8 +46,36 @@ Réponse sous 48h. Merci de ne pas publier la vulnérabilité publiquement avant
 | Mesure | Implémentation |
 |--------|----------------|
 | Token CSRF | `bin2hex(random_bytes(32))` stocké en session |
-| Vérification | `hash_equals()` sur tous les formulaires POST |
-| Périmètre | Login, Register, Avis, Profil, Création event, Suppression event, Reset password |
+| Vérification | `hash_equals()` sur tous les formulaires POST (`csrfVerify()`) |
+| Points d'API JSON | `protegerEcritureApi()` : jeton lu dans `X-CSRF-Token` ou dans le corps JSON, sur les **11 points d'écriture** |
+| Publication du jeton au client | `metaCsrf()` pose `<meta name="csrf-token">` dans le `<head>` de chaque page ; `enTetesJson()` (app.js) le lit |
+| Seconde couche | `origineFiable()` : `Origin`, à défaut `Referer`, doit désigner l'hôte courant |
+| Troisième couche | Cookie de session en `SameSite=Lax` |
+| Méthode | Une écriture hors `POST` est refusée en 405 : atteignable en `GET`, elle se déclencherait depuis une simple balise `<img>` |
+| Non-régression | `tests/Unit/ApiProtectionTest.php` échoue si un point d'écriture est ajouté sans garde, si la garde arrive après la première requête SQL, ou si un `fetch` POST du JavaScript oublie le jeton |
+
+> **Ce qui a changé, et pourquoi.** Les 11 points de `/api/` écrivaient en base
+> sur la seule foi du cookie de session. `SameSite=Lax` bloque effectivement
+> le POST venu d'un autre site — l'application n'était donc pas vulnérable en
+> l'état — mais c'était sa **seule** défense, là où les formulaires en avaient
+> deux, et elle tenait entièrement à une ligne de configuration de session. Un
+> passage en `SameSite=None` pour faire fonctionner une intégration tierce, et
+> onze points d'écriture s'ouvraient d'un coup, sans que rien dans leur code ne
+> le signale.
+
+### 🔁 Redirections
+
+| Mesure | Implémentation |
+|--------|----------------|
+| Retour après échec CSRF | `urlInterneOuDefaut()` : seuls le chemin, la requête et le fragment d'une URL du même hôte sont conservés |
+| Cas couverts | Hôte étranger, hôte qui commence pareil (`studentlink.example.evil.tld`), port différent, URL protocole-relatif (`//evil.tld`), `/\evil.tld`, chemin relatif |
+
+> `csrfVerify()` renvoyait l'utilisateur vers `$_SERVER['HTTP_REFERER']` tel
+> quel. Cet en-tête est posé par le navigateur d'après la page précédente, qui
+> peut appartenir à n'importe qui : une page hostile pointant vers un
+> formulaire de l'application avec un jeton volontairement faux récupérait le
+> visiteur sur son propre domaine, avec l'application comme caution. Couvert
+> par `tests/Unit/RedirectionTest.php`.
 
 ### 🏠 Contrôle d'accès
 
@@ -78,7 +106,7 @@ Réponse sous 48h. Merci de ne pas publier la vulnérabilité publiquement avant
 | Dossiers internes | `.htaccess` refusant tout dans `includes/`, `vendor/`, `tests/`, `outils/`, `cron/` |
 | Fichiers de projet | `.sql`, `.md`, `.lock`, `.neon`, `composer.json`, `phpunit.xml`… refusés |
 | Uploads | `uploads/.htaccess` : moteur PHP coupé, handlers retirés, seules les images servies |
-| Scripts hors-web | `cron/rappels.php` et `outils/creer_admin.php` refusent toute invocation qui n'est pas CLI |
+| Scripts hors-web | `cron/rappels.php`, `outils/creer_admin.php` et `outils/migrer.php` refusent toute invocation qui n'est pas CLI — un outil qui modifie le schéma n'a rien à faire derrière une URL, même protégée |
 
 > `AllowOverride all` doit être actif pour que ces `.htaccess` s'appliquent.
 > Sur un hébergement qui l'interdit, reporter ces règles dans la configuration
@@ -97,7 +125,9 @@ Réponse sous 48h. Merci de ne pas publier la vulnérabilité publiquement avant
 | Mesure | Implémentation |
 |--------|----------------|
 | HTTPS | Automatique via Railway (TLS Let's Encrypt) |
-| Variables d'environnement | Credentials DB via `$_ENV` (jamais dans le code) |
+| Variables d'environnement | Identifiants DB et SMTP via l'environnement ou `includes/config.local.php`, non versionné (jamais dans le code) |
+| Envoi d'e-mails | En-têtes RFC complets, sujet encodé, adresse d'enveloppe explicite, transport SMTP authentifié avec vérification du certificat. SPF/DKIM/DMARC à publier : voir [`docs/EMAIL.md`](docs/EMAIL.md) |
+| Poids du dépôt | `tests/Unit/DepotTest.php` refuse tout binaire suivi de plus de 2 Mo |
 | Séparation dev/prod | `baseUrl()` détecte l'environnement, headers HSTS conditionnels |
 
 ---
@@ -114,5 +144,5 @@ Réponse sous 48h. Merci de ne pas publier la vulnérabilité publiquement avant
 | A06 | Vulnerable Components | ✅ PHPStan niveau 5, dépendances minimales |
 | A07 | Auth & Session Failures | ✅ Session regen, CSRF, rate limiting |
 | A08 | Software Integrity Failures | ✅ Pas de CDN non fiable |
-| A09 | Logging & Monitoring | ⚠️ Logs Railway (à améliorer) |
+| A09 | Logging & Monitoring | ⚠️ Journal PHP via `logErreur()`, échecs d'envoi tracés — pas d'alerte automatique |
 | A10 | SSRF | ✅ Pas de requêtes HTTP sortantes côté serveur |

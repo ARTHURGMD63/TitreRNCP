@@ -7,7 +7,167 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+- **`db_setup.sql` était incomplet, et c'est le fichier du README.** Il lui
+  manquait quatre tables que `install_mutualise.sql` contenait :
+  `crm_clients`, `crm_interactions`, `finance_mouvements` et
+  `rappels_envoyes`. Elles sont utilisées par les sept écrans de `/admin`, par
+  `partenaire/abonnement.php` et par `cron/rappels.php` : toute installation
+  faite en suivant le README — « une **seule** importation suffit » —
+  produisait un back-office qui tombait en erreur au premier clic. Les deux
+  fichiers créent désormais les mêmes 26 tables, vérifié par import réel sur
+  base vierge.
+- **Le compte partenaire de démonstration n'atteignait plus son tableau de
+  bord.** Conséquence directe du point précédent : une fois les tables du CRM
+  présentes, `exigerAbonnement()` renvoyait `jean@lebecquipique.fr` vers le mur
+  d'abonnement, parce que la reprise de l'existant posait `offre = 'aucune'`.
+  Le jeu de démonstration de `db_setup.sql` place maintenant les deux
+  établissements en période d'essai — des valeurs de démonstration, qui
+  n'affirment aucune règle commerciale : la grille tarifaire vit dans le
+  contrat partenaire, hors du dépôt, et se saisit depuis le back-office.
+- **Redirection ouverte après un échec CSRF.** `csrfVerify()` renvoyait
+  l'utilisateur vers `$_SERVER['HTTP_REFERER']` tel quel. Cet en-tête est posé
+  par le navigateur d'après la page précédente, qui peut appartenir à
+  n'importe qui : une page hostile pointant vers un formulaire de
+  l'application avec un jeton volontairement faux récupérait le visiteur sur
+  son propre domaine, avec l'application comme caution. `urlInterneOuDefaut()`
+  ne conserve désormais que le chemin, la requête et le fragment d'une URL du
+  même hôte — hôte étranger, hôte qui commence pareil, port différent, URL
+  protocole-relatif et chemin relatif retombent tous sur le défaut interne.
+- **Une vue inconnue du hub rendait une page vide.** `?view=bidon` affichait la
+  coquille sans aucune des deux listes, ce qui se lisait comme une panne. Un
+  lien périmé retombe maintenant sur le fil des soirées.
+- **`outils/migrer.php` laissait un curseur ouvert.** Corrigé avant même d'être
+  livré : plusieurs migrations passent par `PREPARE`/`EXECUTE` pour rendre un
+  `ALTER TABLE` conditionnel, ce qui produit un jeu de résultats que
+  `PDO::exec()` ne consomme pas. L'instruction suivante échouait alors sur
+  « Cannot execute queries while other unbuffered queries are active », à une
+  centaine de lignes de la vraie cause.
+
+### Security
+- **Jeton CSRF sur les onze points d'écriture de l'API.** `api/follow.php`,
+  `inscrire.php`, `annuler_pass.php`, `create_squad.php`, `delete_squad.php`,
+  `rejoindre_squad.php`, `quitter_squad.php`, `remove_squad_member.php`,
+  `inviter.php`, `moderation.php` et `partenaire/api_scan.php` écrivaient en
+  base sur la seule foi du cookie de session.
+
+  `SameSite=Lax` bloque effectivement le POST venu d'un autre site :
+  l'application n'était pas vulnérable en l'état. Mais c'était sa **seule**
+  défense, là où les formulaires en avaient deux, et elle tenait entièrement à
+  une ligne de configuration de session — un passage en `SameSite=None` pour
+  faire fonctionner une intégration tierce, et onze points d'écriture
+  s'ouvraient d'un coup, sans que rien dans leur code ne le signale.
+
+  `protegerEcritureApi()` (`includes/security.php`) exige désormais trois
+  choses avant la moindre requête SQL : la méthode `POST` (405 sinon — une
+  écriture atteignable en `GET` se déclenche depuis une balise `<img>`, et
+  aucun jeton n'est demandé à une image), un jeton valide lu dans
+  `X-CSRF-Token` ou dans le corps JSON, et une origine qui désigne bien
+  l'application. Le jeton est publié par `metaCsrf()` dans le `<head>` de
+  chaque page et posé côté client par `enTetesJson()` — un point de passage
+  unique, parce que quatorze copies de l'objet d'en-têtes, c'est quatorze
+  occasions d'oublier le jeton.
+- **Contrôle de l'en-tête `Origin` en seconde couche** sur les formulaires
+  comme sur l'API (`origineFiable()`). Le navigateur le pose sur toute requête
+  non simple et le script d'un site tiers ne peut ni le retirer ni le
+  falsifier. L'absence simultanée d'`Origin` et de `Referer` reste acceptée :
+  quelques proxys d'entreprise les suppriment, et refuser rendrait
+  l'application inutilisable derrière eux pour un gain nul — le jeton, lui,
+  est exigé dans tous les cas.
+- **Envoi d'e-mails durci.** La réinitialisation de mot de passe appelait
+  `mail()` directement, avec ses propres en-têtes : le message le plus critique
+  de l'application — celui sans lequel on ne récupère pas son compte — partait
+  par le chemin le moins soigné, en doublon de `envoyerEmail()`. Les deux
+  chemins sont fusionnés, et `includes/mail.php` pose maintenant un jeu
+  d'en-têtes complet (`Date`, `Message-ID`, `Return-Path`, `MIME-Version`,
+  `Auto-Submitted`…), encode le sujet selon la RFC 2047 — « Réinitialisation »
+  partait en octets bruts dans un en-tête qui ne transporte que de l'ASCII —,
+  encode le corps en quoted-printable, pose l'adresse d'enveloppe (`-f`) pour
+  que SPF et les rebonds s'alignent sur le domaine annoncé, et journalise les
+  échecs. Un transport **SMTP authentifié** optionnel a été ajouté, sans
+  dépendance, avec vérification du certificat. Les enregistrements DNS, eux,
+  ne peuvent pas être posés par du code : voir [`docs/EMAIL.md`](docs/EMAIL.md).
+
+### Changed
+- **`explore.php` découpé : 1 051 → 696 lignes.** C'était le fichier le plus
+  complexe de l'application — dix requêtes, deux classements par affinité,
+  deux paginations mêlés à six cents lignes de gabarit — et le seul qu'aucun
+  test ne pouvait atteindre, puisque le charger exécutait aussi son affichage.
+  La couche données vit maintenant dans [`includes/hub.php`](includes/hub.php)
+  (`hubCriteres()`, `hubAnnuaire()`, `hubEvenements()`…), et le gabarit ne fait
+  plus partir aucune requête. **Les requêtes elles-mêmes n'ont pas bougé** :
+  le travail de montée en charge est repris tel quel, commentaires compris. Le
+  rendu a été comparé avant/après sur quatorze combinaisons de filtres, et il
+  est identique sur toutes — hors la vue inconnue, corrigée exprès.
+- **Suivi des migrations.** Elles se posaient à la main dans phpMyAdmin, sans
+  trace de ce qui était déjà passé, et deux dumps complets devaient être tenus
+  à jour en parallèle. C'est ainsi qu'ils ont divergé. La table
+  `schema_migrations` enregistre chaque version et sa date ;
+  `outils/migrer.php` applique ce qui manque dans l'ordre numérique (`v9` avant
+  `v10`, ce qu'un tri alphabétique ferait à l'envers) ; les deux dumps amorcent
+  le suivi à `v4…v15`, qu'ils contiennent déjà. Le découpage SQL gère
+  `DELIMITER`, faute de quoi les procédures stockées de la v7 seraient coupées
+  à leur premier point-virgule interne.
+- **Lecture de configuration unifiée** dans `includes/config.php` :
+  environnement, puis `config.local.php`, puis défaut. `db.php` la relisait à
+  sa façon et l'envoi d'e-mails en avait le même besoin — c'est exactement ce
+  genre de duplication qui avait fait diverger les deux chemins d'envoi.
+- **44 Mo de binaires retirés du suivi Git** : un teaser de 11 Mo, quatre
+  diaporamas pour 24 Mo, sept PDF entièrement reconstructibles depuis le HTML
+  versionné. Aucun n'est référencé par l'application. Un binaire ne se « diffe »
+  pas : Git en garde une copie entière à chaque enregistrement, et l'historique
+  ne rétrécit jamais. Les fichiers **restent sur le disque** ; le suivi passe de
+  52 à 7,8 Mo. Voir [`docs/LIVRABLES.md`](docs/LIVRABLES.md).
+
+  > Les 44 Mo déjà enregistrés restent dans l'historique : retirer un fichier
+  > du suivi empêche la croissance future mais ne réécrit pas le passé. Les
+  > effacer vraiment demande un `git filter-repo` et une publication forcée —
+  > une décision à prendre, pas un effet de bord.
+
+### Tests
+- **De 100 à 171 tests** (768 assertions), avec l'API et le schéma enfin
+  couverts. Les nouveaux tests lisent les fichiers du projet plutôt que
+  d'appeler du code : ils ne vérifient pas que les onze points d'API existants
+  sont corrects — cela a été fait en conditions réelles, requête par requête —
+  mais que **le douzième ne pourra pas être ajouté sans sa garde**.
+  - `ApiProtectionTest` — chaque point d'écriture exige jeton et origine,
+    **avant** sa première requête SQL ; les points exemptés n'écrivent
+    réellement rien ; chaque `fetch` POST du JavaScript porte le jeton.
+  - `SchemaTest` — les deux fichiers d'installation décrivent la même base, et
+    le code n'interroge aucune table absente. Vérifié en retirant une table :
+    le test nomme précisément la manquante.
+  - `MigrationsTest` — découpage SQL : `DELIMITER`, chaînes, quotes doublées,
+    commentaires, ordre numérique, et chaque migration du dépôt.
+  - `RedirectionTest` — aucune redirection vers un hôte externe, contrôle
+    d'origine.
+  - `HubTest` — critères d'URL du hub : page négative, style inventé, vue
+    inconnue, paramètre non textuel (`?q[]=x`).
+  - `MailTest` — en-têtes RFC, encodage du sujet et césure UTF-8,
+    anti-injection d'en-tête.
+  - `DepotTest` — aucun binaire lourd ne réapparaît dans le suivi Git, et les
+    sources des PDF retirés sont toujours versionnées.
+
 ### Added
+- **Une page d'accueil publique, avec le choix du public en tête.** La racine
+  du site renvoyait vers le formulaire de connexion : rien n'expliquait ce
+  qu'est StudentLink, et un gérant de bar n'avait aucune raison d'aller plus
+  loin. `index.php` présente désormais le produit à ses deux publics —
+  étudiants et établissements — derrière le même sélecteur segmenté que le hub
+  de l'application. Les deux ne partagent presque rien (vocabulaire, arguments,
+  prix) : plutôt qu'une page moyenne qui ne parle à personne, chaque public a
+  sa page complète, avec hero, aperçu de l'écran réel, arguments, parcours en
+  trois étapes et appel final — et la grille tarifaire, côté établissements,
+  vient de `crmOffres()` plutôt que d'un prix recopié.
+  - Le choix vit dans l'URL (`?pour=etudiants` / `?pour=etablissements`) :
+    sans JavaScript le lien recharge la page sur le bon public, un lien
+    partagé arrive au bon endroit, et le script ne fait qu'éviter
+    l'aller-retour réseau en tenant l'historique à jour.
+  - `auth/register.php` accepte `?type=partenaire` pour ouvrir l'onglet
+    partenaire du formulaire. Le paramètre ne décide de rien : le type
+    réellement enregistré reste celui relu du POST.
+  - Un compte connecté qui arrive sur la racine part directement vers son
+    écran ; `auth/register.php` fait de même au lieu de le renvoyer sur la
+    vitrine, qui l'aurait aussitôt redirigé.
 - **Montée en charge : l'application est préparée pour ~1 000 sessions
   simultanées, et le direct ne coûte plus rien quand rien ne bouge.**
   Mesures, protocole et limites dans [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
