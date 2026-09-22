@@ -4,6 +4,12 @@
  * Inclus automatiquement via auth_check.php
  */
 
+// apiSessionDepuisJeton(), employee par protegerEcritureApi() pour reconnaitre
+// l'application mobile. Ce fichier ne declenche rien au chargement : il ne
+// declare que des fonctions, et celles qui dependent d'autres modules ne sont
+// resolues qu'a l'appel.
+require_once __DIR__ . '/api.php';
+
 // ─── Headers de sécurité ──────────────────────────────────────────────────
 
 function setSecurityHeaders(): void {
@@ -237,6 +243,22 @@ function exigerPost(): void {
  */
 function protegerEcritureApi(): void {
     exigerPost();
+
+    // Deux clients, deux preuves.
+    //
+    // L'application mobile presente un jeton dans « Authorization ». Elle
+    // n'envoie aucun cookie, donc il n'y a pas de CSRF a couvrir : une requete
+    // qu'aucun navigateur n'emet automatiquement ne peut pas etre declenchee a
+    // l'insu de l'utilisateur. Le jeton EST la preuve.
+    //
+    // Le navigateur, lui, envoie son cookie tout seul — et c'est precisement
+    // pour cela qu'il doit fournir en plus un jeton CSRF et une origine. Rien
+    // n'est relache de ce cote : apiSessionDepuisJeton() exige un en-tete
+    // qu'aucun navigateur n'ajoute de lui-meme.
+    if (apiSessionDepuisJeton()) {
+        return;
+    }
+
     csrfVerifyApi();
 }
 

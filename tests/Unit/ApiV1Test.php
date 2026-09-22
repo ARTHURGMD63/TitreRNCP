@@ -243,4 +243,80 @@ final class ApiV1Test extends TestCase
         // Sans expiration, une session mobile volée reste ouverte à vie.
         $this->assertStringContainsString('expire_le', $migration);
     }
+
+    // ── Le pont entre les deux authentifications ────────────────────────────
+
+    public function testUnJetonValideDispenseDuJetonCsrf(): void
+    {
+        // Les quatorze points de api/ portent la logique metier et lisent
+        // $_SESSION. Plutot que de les reecrire pour le mobile — donc de
+        // dedoubler chaque regle —, protegerEcritureApi() reconnait un jeton.
+        $securite = $this->code(__DIR__ . '/../../includes/security.php');
+
+        $this->assertStringContainsString('apiSessionDepuisJeton()', $securite);
+
+        // L'ordre compte : la dispense doit precedaer la verification CSRF,
+        // sinon elle ne sert jamais.
+        $posJeton = strpos($securite, 'apiSessionDepuisJeton()');
+        $posCsrf  = strpos($securite, 'csrfVerifyApi();', (int) strpos($securite, 'function protegerEcritureApi'));
+
+        $this->assertIsInt($posJeton);
+        $this->assertIsInt($posCsrf);
+        $this->assertLessThan($posCsrf, $posJeton);
+    }
+
+    public function testLeWebGardeSaVerificationCsrf(): void
+    {
+        // Le relachement ne vaut QUE pour un porteur de jeton. Une requete de
+        // navigateur, qui envoie son cookie toute seule, doit toujours fournir
+        // jeton CSRF et origine.
+        $securite = $this->code(__DIR__ . '/../../includes/security.php');
+
+        $this->assertStringContainsString('csrfVerifyApi', $securite);
+        $this->assertStringContainsString('origineFiable()', $securite);
+    }
+
+    public function testLeJetonEstValideContreLaBaseEtSonEcheance(): void
+    {
+        $api = $this->code(__DIR__ . '/../../includes/api.php');
+        $pont = substr($api, (int) strpos($api, 'function apiSessionDepuisJeton'));
+
+        // Un jeton perime ne doit pas ouvrir de session : sans la condition
+        // d'echeance, la revocation et l'expiration ne serviraient a rien sur
+        // ce chemin-la, qui est pourtant celui de toutes les ecritures.
+        $this->assertStringContainsString('expire_le >= NOW()', $pont);
+        $this->assertStringContainsString('apiEmpreinte(', $pont);
+    }
+
+    public function testUneRequeteAJetonNOuvrePasDeSessionSurDisque(): void
+    {
+        // session_start() ecrit son fichier immediatement, avant meme qu'on y
+        // range quoi que ce soit. L'application n'envoyant aucun cookie, ce
+        // fichier ne serait jamais repris : a mille appareils qui sondent le
+        // direct, c'est un dossier de sessions mortes qui grossit sans fin.
+        $session = $this->code(__DIR__ . '/../../includes/session.php');
+
+        $this->assertStringContainsString('requeteAvecJeton()', $session);
+
+        $fonction = substr($session, (int) strpos($session, 'function demarrerSession'));
+        $posGarde = strpos($fonction, 'requeteAvecJeton()');
+        $posStart = strpos($fonction, 'session_start()');
+
+        $this->assertIsInt($posGarde);
+        $this->assertIsInt($posStart);
+        $this->assertLessThan($posStart, $posGarde, 'la garde doit precedaer session_start()');
+    }
+
+    public function testLEnteteAutorisationEstLuAuMemeEndroitPourTous(): void
+    {
+        // Une premiere version lisait cet en-tete a deux endroits, et un seul
+        // avait le repli apache_request_headers(). Sous Apache, session.php ne
+        // voyait donc jamais le jeton et ouvrait une session a chaque appel.
+        $session = $this->code(__DIR__ . '/../../includes/session.php');
+        $api     = $this->code(__DIR__ . '/../../includes/api.php');
+
+        $this->assertStringContainsString('apache_request_headers', $session);
+        $this->assertStringContainsString('enteteAutorisation()', $api);
+        $this->assertStringNotContainsString('apache_request_headers', $api);
+    }
 }

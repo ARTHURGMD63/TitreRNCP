@@ -108,20 +108,11 @@ function apiCorps(): array
  */
 function apiJetonPresente(): ?string
 {
-    $entete = $_SERVER['HTTP_AUTHORIZATION']
-        ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION']
-        ?? '';
-
-    if ($entete === '' && function_exists('apache_request_headers')) {
-        foreach (apache_request_headers() as $nom => $valeur) {
-            if (strcasecmp($nom, 'Authorization') === 0) {
-                $entete = $valeur;
-                break;
-            }
-        }
-    }
-
-    if (!is_string($entete) || !preg_match('/^Bearer\s+([A-Za-z0-9._-]+)$/i', trim($entete), $m)) {
+    // La lecture de l'en-tete vit dans session.php : elle sert aussi a decider
+    // s'il faut ouvrir une session, et deux lectures finiraient par diverger —
+    // ce qui est deja arrive une fois, l'une ayant le repli Apache et l'autre
+    // non.
+    if (!preg_match('/^Bearer\s+([A-Za-z0-9._-]+)$/i', enteteAutorisation(), $m)) {
         return null;
     }
 
@@ -221,6 +212,72 @@ function apiEtudiant(PDO $pdo): array
     }
 
     return $u;
+}
+
+/**
+ * Ouvre une session applicative à partir du jeton, s'il y en a un de valide.
+ *
+ * POURQUOI CETTE FONCTION EXISTE
+ *
+ * Les quatorze points de `api/` portent 1 068 lignes de logique métier —
+ * s'inscrire, suivre, rejoindre un squad, inviter, modérer — et lisent tous
+ * `$_SESSION['user_id']`. Les réécrire pour le mobile aurait produit deux
+ * implémentations de chaque règle, condamnées à diverger : le jour où le quota
+ * d'une soirée change d'un côté, il ne change pas de l'autre.
+ *
+ * Plutôt que de dupliquer, on renseigne la session comme l'aurait fait une
+ * connexion par formulaire. Les points existants continuent de lire ce qu'ils
+ * ont toujours lu, sans une ligne de changement, et servent les deux clients.
+ *
+ * CE QUE CELA N'OUVRE PAS
+ *
+ * Aucun contournement du jeton CSRF pour un navigateur : cette fonction exige
+ * un en-tête `Authorization`, qu'aucun navigateur n'ajoute tout seul. Un site
+ * hostile ne peut pas le poser sur une requête inter-origine sans une
+ * autorisation préalable que `api/v1/` n'accorde qu'en l'absence de cookies
+ * (voir la note CORS du socle). La garde CSRF reste donc entière pour le web.
+ *
+ * @return bool vrai si un jeton valide a été présenté
+ */
+function apiSessionDepuisJeton(): bool
+{
+    $jeton = apiJetonPresente();
+    if ($jeton === null) {
+        return false;
+    }
+
+    // $pdo est créé par db.php, chargé avant l'appel par tous les points
+    // concernés. Il est pris ici explicitement plutôt que reçu en paramètre :
+    // la solution inverse aurait obligé à modifier les quatorze signatures,
+    // c'est-à-dire exactement ce que cette fonction évite.
+    $pdo = $GLOBALS['pdo'] ?? null;
+    if (!$pdo instanceof PDO) {
+        return false;
+    }
+
+    $stmt = $pdo->prepare(
+        'SELECT u.id, u.prenom, u.nom, u.type, u.ecole
+           FROM api_tokens t
+           JOIN users u ON u.id = t.user_id
+          WHERE t.token_hash = ? AND t.expire_le >= NOW()'
+    );
+    $stmt->execute([apiEmpreinte($jeton)]);
+    $u = $stmt->fetch();
+
+    if (!$u) {
+        return false;
+    }
+
+    $_SESSION['user_id']     = (int) $u['id'];
+    $_SESSION['user_type']   = (string) $u['type'];
+    $_SESSION['user_prenom'] = (string) $u['prenom'];
+    $_SESSION['user_nom']    = (string) $u['nom'];
+    $_SESSION['user_ecole']  = (string) ($u['ecole'] ?? '');
+
+    // Rien à écarter : demarrerSession() n'a ouvert aucune session, parce
+    // qu'elle a reconnu une requête à jeton (voir requeteAvecJeton()). Le
+    // tableau rempli ci-dessus ne vit qu'en mémoire, le temps de la requête.
+    return true;
 }
 
 /** Révoque le jeton présenté. Sans effet s'il n'existe pas. */

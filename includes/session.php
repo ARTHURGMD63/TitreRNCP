@@ -19,9 +19,75 @@
  * Doit impérativement s'exécuter AVANT tout session_start(), sans quoi les
  * drapeaux ne s'appliquent pas au cookie déjà émis.
  */
+/**
+ * L'en-tête « Authorization » de la requête, ou une chaîne vide.
+ *
+ * Trois sources, parce que c'est l'en-tête le plus mal transmis de tous :
+ * Apache ne le passe pas à PHP en CGI/FastCGI sans y être invité — il s'en
+ * sert lui-même pour l'authentification HTTP — et le renomme en
+ * `REDIRECT_HTTP_AUTHORIZATION` dès qu'une règle de réécriture est passée par
+ * là. `apache_request_headers()` est le dernier recours, et le seul qui
+ * fonctionne là où aucune règle ne peut être posée.
+ *
+ * Cette lecture vit ici, au plus bas, parce que deux modules en ont besoin et
+ * qu'ils ne peuvent pas dépendre l'un de l'autre : session.php doit savoir
+ * s'il faut ouvrir une session, api.php doit lire le jeton lui-même. Une
+ * première version n'avait mis le repli que dans api.php — et session.php,
+ * qui regardait $_SERVER seul, ne voyait jamais le jeton sous Apache. Il
+ * ouvrait donc une session pour chaque appel mobile, silencieusement.
+ */
+function enteteAutorisation(): string
+{
+    $entete = $_SERVER['HTTP_AUTHORIZATION']
+        ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION']
+        ?? '';
+
+    if ($entete === '' && function_exists('apache_request_headers')) {
+        foreach (apache_request_headers() as $nom => $valeur) {
+            if (strcasecmp($nom, 'Authorization') === 0) {
+                $entete = $valeur;
+                break;
+            }
+        }
+    }
+
+    return is_string($entete) ? trim($entete) : '';
+}
+
+/**
+ * La requête porte-t-elle un jeton d'application plutôt qu'un cookie ?
+ *
+ * On ne lit ici que la FORME de l'en-tête, jamais sa validité : la question
+ * posée est « faut-il ouvrir une session de navigateur ? », et la réponse ne
+ * dépend pas de la valeur du jeton. La validation, elle, a besoin de la base
+ * et vit dans apiSessionDepuisJeton().
+ */
+function requeteAvecJeton(): bool
+{
+    return stripos(enteteAutorisation(), 'Bearer ') === 0;
+}
+
 function demarrerSession(): void
 {
     if (session_status() !== PHP_SESSION_NONE) {
+        return;
+    }
+
+    // AUCUNE SESSION POUR L'APPLICATION MOBILE.
+    //
+    // Elle n'envoie pas de cookie et ne le lira jamais : la session ouverte
+    // ici ne serait donc reprise par personne. Mais session_start() écrit son
+    // fichier immédiatement, avant même qu'on y range quoi que ce soit —
+    // mesuré : trois appels d'API laissaient trois fichiers derrière eux. À
+    // mille appareils qui sondent le direct, c'est un dossier de sessions
+    // mortes qui grossit sans fin, et un fichier créé puis abandonné à chaque
+    // requête.
+    //
+    // $_SESSION reste un tableau ordinaire, que apiSessionDepuisJeton()
+    // remplit ensuite : les quatorze points d'API lisent la même chose
+    // qu'avant, sans savoir d'où elle vient.
+    if (requeteAvecJeton()) {
+        $_SESSION = [];
         return;
     }
 

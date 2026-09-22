@@ -192,6 +192,40 @@ export type Pass = {
   code_qr: string | null;
 };
 
+export type Squad = {
+  id: number;
+  titre: string;
+  description: string;
+  type: string;
+  niveau: string;
+  date_heure: string;
+  lieu: string;
+  createur: { id: number; prenom: string; nom: string; photo_url: string | null };
+  places: { quota: number; membres: number; restantes: number | null; complet: boolean };
+  deja_membre: boolean;
+  est_createur: boolean;
+  membres: { id: number; prenom: string; photo_url: string | null }[];
+};
+
+/**
+ * La fiche detaillee.
+ *
+ * `amis` est volontairement retire d'Evenement avant d'etre redeclare : le fil
+ * ne rend que des prenoms agreges — assez pour « Hugo et 2 autres y vont » —
+ * la ou la fiche rend chaque ami avec son avatar. Deux formes differentes sous
+ * le meme nom, et `Omit` est ce qui empeche de les confondre : sans lui,
+ * TypeScript tenterait de les intersecter et le type deviendrait impossible a
+ * satisfaire.
+ */
+export type EvenementDetail = Omit<Evenement, 'amis' | 'etablissement' | 'places'> & {
+  etablissement: Evenement['etablissement'] & { adresse: string };
+  places: Evenement['places'] & { pourcentage: number | null };
+  photos: { url: string; legende: string | null }[];
+  amis: { id: number; prenom: string; nom: string; photo_url: string | null }[];
+};
+
+export type ReponseSquads = { squads: Squad[] };
+
 export type ReponseConnexion = { token: string; expire_le: string; utilisateur: Profil };
 export type ReponseEvenements = {
   evenements: Evenement[];
@@ -225,4 +259,92 @@ export const api = {
 
   wallet: (jeton: string, page?: number) =>
     appelApi<ReponseWallet>('wallet.php', { jeton, params: { h: page } }),
+
+  evenement: (jeton: string, id: number) =>
+    appelApi<{ evenement: EvenementDetail }>('evenement.php', { jeton, params: { id } }),
+
+  squads: (jeton: string) => appelApi<ReponseSquads>('squads.php', { jeton }),
 };
+
+/**
+ * Les actions qui ecrivent.
+ *
+ * Elles ne passent PAS par api/v1/ mais par les points historiques de api/ —
+ * ceux qui servent deja le site. Ce n'est pas un raccourci : ces quatorze
+ * fichiers portent la logique metier (quotas, doublons, moderation,
+ * gamification), et la dupliquer pour le mobile aurait condamne les deux
+ * copies a diverger. protegerEcritureApi() y reconnait desormais le jeton.
+ *
+ * D'ou le chemin different : BASE_ACTIONS et non BASE_API.
+ */
+const BASE_ACTIONS = `${adresseServeur()}/api`;
+
+async function action<T>(fichier: string, jeton: string, corps: unknown): Promise<T> {
+  const reponse = await fetch(`${BASE_ACTIONS}/${fichier}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      Authorization: `Bearer ${jeton}`,
+    },
+    body: JSON.stringify(corps),
+  });
+
+  const texte = await reponse.text();
+  let donnees: any = null;
+  try {
+    donnees = texte ? JSON.parse(texte) : null;
+  } catch {
+    throw new ErreurApi('Réponse inattendue du serveur.', 'reponse_illisible', reponse.status);
+  }
+
+  // Ces points repondent 200 avec success:false pour un refus metier — « plus
+  // de place », « deja inscrit ». Le message est fait pour etre affiche.
+  if (!reponse.ok || donnees?.success === false) {
+    throw new ErreurApi(
+      donnees?.message ?? 'Action impossible.',
+      donnees?.code ?? String(reponse.status),
+      reponse.status,
+    );
+  }
+
+  return donnees as T;
+}
+
+export const actions = {
+  inscrire: (jeton: string, evenementId: number) =>
+    action<{ success: true }>('inscrire.php', jeton, { evenement_id: evenementId }),
+
+  annulerPass: (jeton: string, inscriptionId: number) =>
+    action<{ success: true }>('annuler_pass.php', jeton, { inscription_id: inscriptionId }),
+
+  rejoindreSquad: (jeton: string, squadId: number) =>
+    action<{ success: true }>('rejoindre_squad.php', jeton, { squad_id: squadId }),
+
+  quitterSquad: (jeton: string, squadId: number) =>
+    action<{ success: true }>('quitter_squad.php', jeton, { squad_id: squadId }),
+
+  supprimerSquad: (jeton: string, squadId: number) =>
+    action<{ success: true }>('delete_squad.php', jeton, { squad_id: squadId }),
+
+  creerSquad: (
+    jeton: string,
+    squad: {
+      titre: string;
+      type: string;
+      niveau: string;
+      date_heure: string;
+      quota: number;
+      lieu: string;
+      description: string;
+    },
+  ) => action<{ success: true }>('create_squad.php', jeton, squad),
+
+  suivre: (jeton: string, cible: number, suivre: boolean) =>
+    action<{ success: true; etat: string; count: number }>('follow.php', jeton, {
+      action: suivre ? 'follow' : 'unfollow',
+      type: 'user',
+      target_id: cible,
+    }),
+};
+
