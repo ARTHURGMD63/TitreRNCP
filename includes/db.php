@@ -12,27 +12,17 @@
 // Sans le point 2, un mutualisé retombait silencieusement sur « localhost »
 // et « root », et la connexion échouait sans indiquer pourquoi.
 require_once __DIR__ . '/log.php';
+// La lecture des trois sources vit dans config.php : la configuration des
+// e-mails en a le même besoin, et deux lecteurs finiraient par diverger.
+require_once __DIR__ . '/config.php';
 installerGardesErreurs();
 
-$configLocale = is_file(__DIR__ . '/config.local.php')
-    ? require __DIR__ . '/config.local.php'
-    : [];
-if (!is_array($configLocale)) {
-    $configLocale = [];
-}
-
-$reglage = static fn(string $variable, string $cle, string $defaut): string
-    => (string) (getenv($variable) ?: ($configLocale[$cle] ?? $defaut));
-
-define('DB_HOST', $reglage('MYSQLHOST',     'host', 'localhost'));
-define('DB_NAME', $reglage('MYSQLDATABASE', 'name', 'studentlink'));
-define('DB_USER', $reglage('MYSQLUSER',     'user', 'root'));
-define('DB_PASS', $reglage('MYSQLPASSWORD', 'pass', ''));
-define('DB_PORT', $reglage('MYSQLPORT',     'port', '3306'));
-define('DB_PERSISTANT', in_array($reglage('DB_PERSISTANT', 'persistant', '0'), ['1', 'true', 'on'], true));
-
-// Le mot de passe n'a pas à traîner dans une variable du contexte global.
-unset($configLocale, $reglage);
+define('DB_HOST', reglage('MYSQLHOST',     'host', 'localhost'));
+define('DB_NAME', reglage('MYSQLDATABASE', 'name', 'studentlink'));
+define('DB_USER', reglage('MYSQLUSER',     'user', 'root'));
+define('DB_PASS', reglage('MYSQLPASSWORD', 'pass', ''));
+define('DB_PORT', reglage('MYSQLPORT',     'port', '3306'));
+define('DB_PERSISTANT', reglageBooleen('DB_PERSISTANT', 'persistant'));
 
 try {
     $pdo = new PDO(
