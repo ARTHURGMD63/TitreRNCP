@@ -1,0 +1,29 @@
+# ─── En-tete Authorization ──────────────────────────────────────────────────
+#
+# Apache ne transmet pas « Authorization » a PHP en CGI ou FastCGI : il le
+# retient pour lui, parce qu'il sert aussi a l'authentification HTTP du
+# serveur. Sans cette regle, apiJetonPresente() ne voit jamais le jeton et
+# toute l'API repond 401 — un symptome qui ressemble a un bug d'application
+# alors qu'il est dans la configuration du serveur.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTP:Authorization} ^(.+)$
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%1]
+</IfModule>
+
+# mod_setenvif fait le meme travail sans reecriture, la ou mod_rewrite n'est
+# pas actif. Les deux peuvent cohabiter sans se gener.
+<IfModule mod_setenvif.c>
+    SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+</IfModule>
+
+# Le socle n'est pas un point d'entree : il est inclus par les autres et ne
+# repond rien de sensé si on l'appelle directement.
+<Files "_socle.php">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Deny from all
+    </IfModule>
+</Files>

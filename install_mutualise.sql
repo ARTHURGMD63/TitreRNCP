@@ -1040,18 +1040,40 @@ WHERE decoupe.interet <> '';
 --  Suivi des migrations
 --
 --  Ce fichier est un point de départ complet : il contient déjà le résultat
---  de toutes les migrations db_migrations_v4 à v15. Les enregistrer ici évite
+--  de toutes les migrations db_migrations_v4 à v16. Les enregistrer ici évite
 --  qu'`outils/migrer.php` ne propose de les rejouer sur une base neuve — ce
 --  qui échouerait sur v4, dont le contenu est intégré plus haut et qui n'est
 --  pas rejouable (« Nom du champ statut déjà utilisé »).
 --
 --  À partir d'ici, le cycle est simple : on ajoute un fichier
---  db_migrations_v16.sql, et `php outils/migrer.php` l'applique et
+--  db_migrations_v17.sql, et `php outils/migrer.php` l'applique et
 --  l'enregistre. Plus rien ne se pose à la main dans phpMyAdmin.
 --
 --  Pour une base créée AVANT l'existence de ce suivi :
 --      php outils/migrer.php --adopter
 -- ═══════════════════════════════════════════════════════════════════════════
+
+-- ═══════════════════════════════════════════════════════════════════════════
+--  migration v16 — jetons d'authentification de l'application mobile
+--
+--  L'application native n'a pas de cookie de session : elle range un jeton et
+--  le presente a chaque appel. Ce qui est stocke ici n'est pas le jeton mais
+--  son empreinte SHA-256 — le jeton en clair n'existe qu'une fois, dans la
+--  reponse a la connexion. Voir db_migrations_v16.sql pour le raisonnement
+--  complet, et includes/api.php pour l'usage.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS api_tokens (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    token_hash CHAR(64) NOT NULL UNIQUE,
+    appareil VARCHAR(120) DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    derniere_utilisation DATETIME DEFAULT NULL,
+    expire_le DATETIME NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_token_user (user_id, expire_le)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS schema_migrations (
     version     VARCHAR(20) NOT NULL,
@@ -1061,4 +1083,4 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 
 INSERT IGNORE INTO schema_migrations (version) VALUES
 ('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
-('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15');
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16');
