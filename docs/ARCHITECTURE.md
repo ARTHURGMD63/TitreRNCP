@@ -234,7 +234,8 @@ Trois choses ont changé :
 ```bash
 php outils/migrer.php --etat      # ce qui est appliqué, ce qui ne l'est pas
 php outils/migrer.php             # applique ce qui manque
-php outils/migrer.php --adopter   # raccorde une base antérieure au suivi
+php outils/migrer.php --adopter     # raccorde une base déjà complètement à jour
+php outils/migrer.php --adopter=v13 # raccorde jusqu'à v13 ; v14 et v15 restent en attente
 ```
 
 Le découpage SQL gère `DELIMITER` — sans quoi les procédures stockées de la migration v7 seraient coupées à leur premier point-virgule interne — ainsi que les chaînes, les commentaires, et les jeux de résultats que produisent les `PREPARE`/`EXECUTE` des migrations conditionnelles.

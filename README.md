@@ -88,7 +88,16 @@ php outils/migrer.php --etat    # ce qui est appliqué, ce qui ne l'est pas
 php outils/migrer.php           # applique ce qui manque, et l'enregistre
 ```
 
-La table `schema_migrations` retient ce qui est passé, et quand. Une base antérieure à ce suivi se raccorde une fois pour toutes avec `php outils/migrer.php --adopter`, qui enregistre les migrations sans les rejouer.
+La table `schema_migrations` retient ce qui est passé, et quand. Une base antérieure à ce suivi se raccorde une fois pour toutes, sans rejouer ce qu'elle contient déjà :
+
+```bash
+php outils/migrer.php --adopter        # la base contient déjà TOUTES les migrations
+php outils/migrer.php --adopter=v13    # elle s'arrête à v13 ; v14 et v15 restent à poser
+```
+
+Choisir la borne plutôt que `--adopter` seul dès que la base n'est pas complètement à jour : sans elle, les migrations manquantes sont enregistrées comme faites et ne seront jamais posées. Une base qui ignore de quelles migrations elle a besoin le fait savoir à la première requête sur une table absente, pas avant.
+
+En cas de doute, lancer `php outils/migrer.php` sans option : si la base est en avance sur son suivi, l'erreur nomme la version à adopter.
 
 > Les migrations ne se posent plus à la main dans phpMyAdmin. C'est ce qui avait laissé `db_setup.sql` et `install_mutualise.sql` diverger de quatre tables, et toute installation faite en suivant ce README produisait un back-office en erreur. `tests/Unit/SchemaTest.php` échoue désormais en intégration continue à la première divergence.
 
