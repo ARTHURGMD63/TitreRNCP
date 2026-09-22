@@ -12,6 +12,10 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/social.php';
 header('Content-Type: application/json');
 
+// Ecriture : POST obligatoire, jeton CSRF et origine verifies.
+// Voir protegerEcritureApi() dans includes/security.php.
+protegerEcritureApi();
+
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'etudiant') {
     echo json_encode(['success' => false, 'message' => 'Non autorisé']);
     exit;

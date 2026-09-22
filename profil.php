@@ -96,6 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profil'])) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Moi</title>
 <?= themeBootScript() ?>
+<?= metaCsrf() ?>
 <link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
 <link rel="icon" type="image/png" href="<?= baseUrl('/Logo.png') ?>">
 <link rel="apple-touch-icon" href="<?= baseUrl('/Logo.png') ?>">

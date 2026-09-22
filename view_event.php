@@ -58,6 +58,7 @@ $isFlash = $e['is_flash'] && strtotime($e['flash_expiry'] ?? '') > time();
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= htmlspecialchars($e['titre']) ?> — StudentLink</title>
 <?= themeBootScript() ?>
+<?= metaCsrf() ?>
 <link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
 <link rel="icon" type="image/png" href="<?= baseUrl('/Logo.png') ?>">
 <link rel="apple-touch-icon" href="<?= baseUrl('/Logo.png') ?>">

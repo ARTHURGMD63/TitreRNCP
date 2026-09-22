@@ -14,6 +14,39 @@ window.setTheme = function(theme) {
   localStorage.setItem('theme', theme);
 };
 
+// ─── Jeton CSRF ──────────────────────────────────────────────────────────────
+//
+// Les points d'écriture de l'API exigent ce jeton, en plus du cookie de
+// session. Le cookie est en SameSite=Lax, ce qui bloque déjà l'envoi depuis un
+// autre site — mais c'était la seule défense, et elle tenait à une ligne de
+// configuration de session. Le jeton en ajoute une seconde, qu'un site tiers
+// ne peut pas obtenir : il est publié dans une balise <meta> de la page, et la
+// politique d'origine identique lui en interdit la lecture.
+//
+// La balise est posée par metaCsrf() (includes/security.php), appelée dans le
+// <head> de chaque page à côté de themeBootScript().
+function jetonCsrf() {
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  return meta ? meta.getAttribute('content') : '';
+}
+window.jetonCsrf = jetonCsrf;
+
+// Les en-têtes de tout appel d'écriture. Passer par cette fonction plutôt que
+// de recopier l'objet à chaque appel : quatorze copies, c'est quatorze
+// occasions d'oublier le jeton sur le prochain point d'API ajouté.
+function enTetesJson() {
+  return { 'Content-Type': 'application/json', 'X-CSRF-Token': jetonCsrf() };
+}
+window.enTetesJson = enTetesJson;
+
+// Réponse 403 « csrf » : la session a expiré ou la page a été laissée ouverte
+// assez longtemps pour que le jeton change. Recharger est la seule sortie, et
+// le dire vaut mieux qu'un bouton qui reste bloqué sur « … ».
+function estRefusCsrf(data) {
+  return data && data.success === false && data.code === 'csrf';
+}
+window.estRefusCsrf = estRefusCsrf;
+
 // ─── Échappement HTML (protection XSS côté client) ───────────────────────────
 // Toute donnée venant de la base est échappée avant injection dans le DOM.
 function escapeHtml(value) {
@@ -99,7 +132,7 @@ function initApp() {
       btn.innerHTML = '<span class="spinner"></span>';
       try {
         const res = await fetch(BASE + '/api/inscrire.php', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: enTetesJson(),
           body: JSON.stringify({ evenement_id: id })
         });
         const data = await res.json();
@@ -131,7 +164,7 @@ function initApp() {
       btn.disabled = true;
       try {
         const res = await fetch(BASE + '/api/rejoindre_squad.php', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: enTetesJson(),
           body: JSON.stringify({ squad_id: id })
         });
         const data = await res.json();
@@ -366,7 +399,7 @@ function initApp() {
         try {
           const res = await fetch(BASE + '/api/inviter.php', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: enTetesJson(),
             credentials: 'same-origin',
             body: JSON.stringify({
               action: 'send',
@@ -409,7 +442,7 @@ function initApp() {
       try {
         const res = await fetch(BASE + '/api/inviter.php', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: enTetesJson(),
           credentials: 'same-origin',
           body: JSON.stringify({ action: accepter ? 'accept' : 'decline', invite_id: btn.dataset.id })
         });
@@ -471,7 +504,7 @@ function initApp() {
       const body = Object.fromEntries(new FormData(createSquadForm));
       try {
         const res = await fetch(BASE + '/api/create_squad.php', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: enTetesJson(),
           body: JSON.stringify(body)
         });
         const data = await res.json();
@@ -561,7 +594,7 @@ function initApp() {
       btn.disabled = true;
       try {
         const res = await fetch(BASE + '/api/annuler_pass.php', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: enTetesJson(),
           body: JSON.stringify({ inscription_id: id })
         });
         const data = await res.json();
@@ -585,7 +618,7 @@ function initApp() {
       btn.disabled = true;
       try {
         const res = await fetch(BASE + '/api/quitter_squad.php', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: enTetesJson(),
           body: JSON.stringify({ squad_id: id })
         });
         const data = await res.json();
@@ -633,7 +666,7 @@ function initApp() {
             kbtn.addEventListener('click', async () => {
               if (!confirm("Retirer cette personne du groupe ?")) return;
               const kres = await fetch(BASE + '/api/remove_squad_member.php', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: enTetesJson(),
                 body: JSON.stringify({ squad_id: kbtn.dataset.squad, member_id: kbtn.dataset.user })
               });
               const kdata = await kres.json();
@@ -654,7 +687,7 @@ function initApp() {
     btn.disabled = true;
     try {
       const res = await fetch(BASE + '/api/delete_squad.php', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: enTetesJson(),
         body: JSON.stringify({ squad_id: id })
       });
       const data = await res.json();
@@ -699,7 +732,7 @@ function initApp() {
     btn.textContent = '...';
     try {
       const res = await fetch(BASE + '/api/follow.php', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: enTetesJson(),
         body: JSON.stringify({ action, type, target_id: targetId })
       });
       const data = await res.json();
@@ -781,7 +814,7 @@ function initApp() {
       btn.disabled = true;
       try {
         const res = await fetch(BASE + '/api/follow.php', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: enTetesJson(),
           body: JSON.stringify({
             action: accepte ? 'accept' : 'decline',
             type: 'user',
@@ -816,7 +849,7 @@ function initApp() {
       btn.disabled = true;
       try {
         const res = await fetch(BASE + '/api/moderation.php', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: enTetesJson(),
           body: JSON.stringify({ action: bloque ? 'unblock' : 'block', target_id: btn.dataset.userId })
         });
         const data = await res.json();
@@ -851,7 +884,7 @@ function initApp() {
       envoi.innerHTML = '<span class="spinner"></span>';
       try {
         const res = await fetch(BASE + '/api/moderation.php', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: enTetesJson(),
           body: JSON.stringify({
             action: 'report',
             target_id: formSignalement.dataset.userId,

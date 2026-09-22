@@ -66,6 +66,7 @@ $existing = $stmt->fetch();
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Laisser un avis</title>
 <?= themeBootScript() ?>
+<?= metaCsrf() ?>
 <link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
 <style>
   .rate-page { max-width: 520px; margin: 0 auto; padding: 32px 24px 100px; }

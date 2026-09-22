@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Mentions légales</title>
 <?= themeBootScript() ?>
+<?= metaCsrf() ?>
 <link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
 <style>
   .legal-page { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }

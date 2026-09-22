@@ -111,6 +111,7 @@ $photos = $stmt->fetchAll();
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Photos de l'établissement</title>
 <?= themeBootScript() ?>
+<?= metaCsrf() ?>
 <link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
 <style>
   .form-card {

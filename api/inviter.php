@@ -15,6 +15,10 @@ requireLogin();
 
 header('Content-Type: application/json');
 
+// Ecriture : POST obligatoire, jeton CSRF et origine verifies.
+// Voir protegerEcritureApi() dans includes/security.php.
+protegerEcritureApi();
+
 $data   = json_decode(file_get_contents('php://input'), true) ?: [];
 $action = $data['action'] ?? 'send';
 $moi    = (int) $_SESSION['user_id'];

@@ -112,6 +112,7 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Dashboard Partenaire</title>
 <?= themeBootScript() ?>
+<?= metaCsrf() ?>
 <link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
 <script src="<?= asset('/assets/vendor/chart.umd.min.js') ?>"></script>
 <script src="<?= asset('/assets/vendor/html5-qrcode.min.js') ?>"></script>
@@ -370,9 +371,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         html5QrcodeScanner.pause(true);
 
+        // enTetesJson() vient d'app.js : le check-in écrit en base, il lui
+        // faut le jeton CSRF comme à tout autre point d'écriture.
         fetch(BASE + '/partenaire/api_scan.php', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: enTetesJson(),
             body: JSON.stringify({ qr_code: decodedText, event_id: eventId })
         })
         .then(res => res.json())

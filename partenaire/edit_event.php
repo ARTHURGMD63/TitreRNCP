@@ -145,6 +145,7 @@ $flashLocal = $event['flash_expiry'] ? date('Y-m-d\TH:i', strtotime($event['flas
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Modifier l'événement</title>
 <?= themeBootScript() ?>
+<?= metaCsrf() ?>
 <link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
 <style>
   .form-card {

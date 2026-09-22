@@ -156,6 +156,7 @@ $actuelle  = abonnementChoisi($client) ? $client['offre'] : null;
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Abonnement</title>
 <?= themeBootScript() ?>
+<?= metaCsrf() ?>
 <link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
 <link rel="icon" type="image/png" href="<?= baseUrl('/Logo.png') ?>">
 </head>
