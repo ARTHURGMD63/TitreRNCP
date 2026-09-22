@@ -74,3 +74,31 @@ includes/config.local.php
 # supprimes a la fermeture. Le motif « *~ » ne les attrape pas : le tilde
 # est en prefixe, pas en suffixe.
 ~$*
+
+# ─── Livrables lourds : présents sur le disque, absents du dépôt ────────────
+#
+# Le dépôt portait 44 Mo de binaires : un teaser de 11 Mo, quatre versions
+# du même diaporama pour 24 Mo, et sept PDF entièrement reconstructibles.
+# Aucun n'est utilisé par l'application — rien dans le code ne les référence.
+#
+# Ce que ça coûtait : chaque clone les télécharge tous, et chaque nouvelle
+# version d'un .pptx ajoute son poids entier à l'historique, définitivement.
+# Un format binaire ne se « diffe » pas : Git en stocke une copie complète à
+# chaque enregistrement. Le dépôt ne rétrécit jamais.
+#
+# Où ils vont : les fichiers restent sur le disque, ils ne sont simplement
+# plus suivis. Voir docs/LIVRABLES.md pour où les déposer et comment
+# regénérer ce qui est reconstructible.
+#
+# Ce qui RESTE versionné, et pourquoi : les .docx sources (1,4 Mo au total),
+# qui ne se régénèrent depuis rien et dont le dépôt est la seule sauvegarde,
+# et tout le HTML dont les PDF sont tirés.
+
+# Médias et diaporamas
+*.mp4
+*.pptx
+
+# PDF reconstructibles depuis le HTML versionné de docs/
+docs/*.pdf
+# et depuis Script_Oral_StudentLink.docx
+Script_Oral_StudentLink.pdf
