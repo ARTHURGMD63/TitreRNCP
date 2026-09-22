@@ -611,8 +611,8 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
 
         <?php if (!$notifs['items']): ?>
           <p class="notif-vide">
-            Rien de neuf pour l'instant.<br>
-            <a href="?view=people" style="color:var(--sur-rouge-clair);font-weight:var(--fw-bold);">Suis des étudiants et des lieux →</a>
+            Rien de neuf pour l'instant.
+            <a href="?view=people">Suis des étudiants et des lieux →</a>
           </p>
         <?php endif; ?>
       </div>

@@ -667,7 +667,13 @@ button, input[type="submit"], input[type="button"] {
   background: var(--rouge); padding: 34px 20px; text-align: center; cursor: pointer; user-select: none;
   min-height: 188px; display: grid; place-items: center;
 }
-.qr-body.revealed { background: var(--blanc); padding: 20px; }
+/* Blanc écrit en dur, et non var(--blanc) : ce jeton désigne « la surface
+   principale » et bascule à #211D18 en mode sombre. Le padding qui entoure le
+   code n'est pas décoratif — c'est la « zone de silence » exigée par la norme,
+   quatre modules de marge claire sans lesquels un lecteur ne trouve pas les
+   repères d'angle. La bibliothèque n'en dessine aucune : elle vient d'ici, et
+   doit donc rester de la couleur du fond du code, quel que soit le thème. */
+.qr-body.revealed { background: #FFFFFF; padding: 20px; }
 .qr-reveal-text { font-family: var(--font-display); font-style: italic; font-size: var(--fs-7); color: #fff; line-height: var(--lh-tight); }
 #qr-canvas { display: block; margin: 0 auto; }
 
@@ -705,7 +711,17 @@ button, input[type="submit"], input[type="button"] {
   margin: 7px 0 0; font-size: var(--fs-1); line-height: var(--lh-normal);
   color: var(--gris); text-transform: none; letter-spacing: 0;
 }
+/* min-width: 0 sur les colonnes — sans quoi la rangée déborde.
+   Un élément de grille vaut « min-width: auto » par défaut : il refuse de
+   descendre sous sa largeur intrinsèque. Or un <input type="datetime-local">
+   sur iOS réserve la place de « jj/mm/aaaa --:-- » et de son sélecteur, bien
+   plus que la moitié de l'écran d'un téléphone. Le champ Date & heure
+   débordait donc de sa colonne et passait sous le champ Max participants, qui
+   devenait inatteignable. Le « 1fr » ne suffit pas : il fixe le partage de
+   l'espace, pas le droit de rétrécir. */
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-row > * { min-width: 0; }
+.form-row input, .form-row select, .form-row textarea { width: 100%; max-width: 100%; }
 
 .form-error {
   background: var(--danger-clair); border: 1px solid var(--danger); color: var(--danger);
@@ -1323,10 +1339,22 @@ button, input[type="submit"], input[type="button"] {
 }
 .notif-oui { background: var(--noir); color: var(--blanc); border: 1px solid var(--noir); }
 .notif-non { background: none; color: var(--gris-fonce); border: 1px solid var(--line-2); }
+/* État vide de la cloche.
+   Il était en 13px et en --gris, c'est-à-dire réglé comme une légende posée à
+   côté d'autre chose. Mais quand le panneau est vide, cette phrase EST le
+   contenu : elle occupe seule un écran de téléphone, et s'y lisait à peine.
+   Passée au corps de texte, avec le gris qui sert aux textes secondaires et
+   non aux mentions tertiaires. */
 .notif-vide {
-  margin: 0; padding: 28px 0; text-align: center;
-  color: var(--gris); font-size: var(--fs-3); line-height: var(--lh-snug);
+  margin: 0; padding: 32px 16px; text-align: center;
+  color: var(--gris-fonce); font-size: var(--fs-5); line-height: var(--lh-snug);
 }
+.notif-vide a {
+  display: inline-block; margin-top: 12px;
+  color: var(--sur-rouge-clair); font-weight: var(--fw-bold);
+  font-size: var(--fs-4); text-decoration: none;
+}
+.notif-vide a:hover, .notif-vide a:focus-visible { text-decoration: underline; }
 
 /* ─── Sélecteur segmenté ───
    Hub Explore, listes d'abonnés : deux vues, un seul contrôle. La pilule

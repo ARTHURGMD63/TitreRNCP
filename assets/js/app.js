@@ -226,8 +226,19 @@ function initApp() {
           new QRCode(qrCanvas, {
             text: 'studentlink:' + qrCanvas.dataset.code,
             width: 200, height: 200,
-            // Un QR code doit rester très contrasté : encre de la charte sur blanc pur.
-            colorDark: jeton('--noir', '#1C1916'), colorLight: '#FFFFFF',
+            // Couleurs ecrites en dur, et surtout PAS prises dans le theme.
+            //
+            // Ces deux valeurs venaient de jeton('--noir'). En mode sombre,
+            // --noir vaut #F3EEE3 — un creme clair, parce que ce jeton designe
+            // « la couleur de l'encre », pas la couleur noire. Le code se
+            // dessinait donc en creme sur blanc pur : invisible a l'oeil, et
+            // surtout illisible par un lecteur, qui attend des modules sombres
+            // sur fond clair. Un pass qui ne se scanne pas, c'est un etudiant
+            // bloque a l'entree.
+            //
+            // Un QR code n'est pas un element d'interface : c'est une cible
+            // optique. Il ne suit aucun theme.
+            colorDark: '#1C1916', colorLight: '#FFFFFF',
             correctLevel: QRCode.CorrectLevel.H
           });
         });
@@ -247,8 +258,25 @@ function initApp() {
     modale.classList.add('open');
     // Le focus entre dans la fenetre : sans cela, rien n'est annonce et la
     // tabulation continue derriere la modale.
-    const premier = modale.querySelector(FOCUSABLES);
-    (premier || modale.querySelector('.modal-sheet'))?.focus?.();
+    //
+    // Mais il va sur la feuille elle-meme, pas sur son premier champ. Viser le
+    // premier element focusable ouvrait le clavier des l'ouverture sur
+    // telephone : la moitie de l'ecran disparaissait, la feuille remontait, et
+    // on ne voyait meme plus de quoi parlait le formulaire avant d'avoir ferme
+    // le clavier a la main. C'est aussi ce que recommande WAI-ARIA pour un
+    // dialogue — focaliser le conteneur, que le lecteur d'ecran annonce en
+    // entier, et laisser l'utilisateur descendre vers les champs lui-meme.
+    //
+    // tabindex est pose ici plutot que dans le HTML de chaque modale : il n'a
+    // de sens que pour ce focus programmatique, et une valeur oubliee sur une
+    // future modale reintroduirait le defaut sans prevenir.
+    const feuille = modale.querySelector('.modal-sheet');
+    if (feuille) {
+      feuille.setAttribute('tabindex', '-1');
+      feuille.focus();
+    } else {
+      modale.querySelector(FOCUSABLES)?.focus?.();
+    }
   }
 
   function fermerModale(modale) {
