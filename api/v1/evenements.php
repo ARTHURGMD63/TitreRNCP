@@ -28,6 +28,7 @@
 
 require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/hub.php';
+require_once __DIR__ . '/../../includes/musique.php';
 
 apiExigerMethode('GET');
 
@@ -53,7 +54,7 @@ $resultat = hubEvenements($pdo, $uid, $criteres, $etabsSuivis, $amisParEvent);
  *        hubAmisParEvenement() : les prenoms deja agreges, et leur nombre.
  * @return array<string,mixed>
  */
-function apiEvenement(array $e, array $amis): array
+function apiEvenement(array $e, array $amis, array $etabsSuivis): array
 {
     $id      = (int) $e['id'];
     $quota   = (int) ($e['quota'] ?? 0);
@@ -75,6 +76,11 @@ function apiEvenement(array $e, array $amis): array
             'ville'   => (string) ($e['ville'] ?? ''),
             'note'    => $e['etab_note'] !== null ? round((float) $e['etab_note'], 1) : null,
             'nb_avis' => (int) ($e['etab_nb_avis'] ?? 0),
+            // Etat du bouton « + SUIVRE » de la carte. Calcule ici : sans lui,
+            // l'application devrait charger la liste des lieux suivis a part
+            // puis la croiser elle-meme, pour une information que le serveur a
+            // deja sous la main.
+            'suivi'   => in_array((int) ($e['etab_id'] ?? $e['etablissement_id']), $etabsSuivis, true),
         ],
 
         'places' => [
@@ -109,7 +115,7 @@ function apiEvenement(array $e, array $amis): array
 apiReponse([
     'success'    => true,
     'evenements' => array_map(
-        static fn (array $e): array => apiEvenement($e, $amisParEvent),
+        static fn (array $e): array => apiEvenement($e, $amisParEvent, $etabsSuivis),
         $resultat['evenements']
     ),
     'pagination' => [
@@ -126,5 +132,13 @@ apiReponse([
     'filtres' => [
         'type'    => $criteres['type'],
         'musique' => $criteres['musique'],
+        // Le catalogue vient de musique.php, source unique partagee avec le
+        // web : un style ajoute la-bas apparait dans l'application sans
+        // qu'une seule ligne ne change ici.
+        'styles_musique' => array_map(
+            static fn (string $code, string $libelle): array => ['code' => $code, 'libelle' => $libelle],
+            array_keys(stylesMusique()),
+            array_values(stylesMusique())
+        ),
     ],
 ]);

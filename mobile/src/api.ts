@@ -165,6 +165,7 @@ export type Evenement = {
     ville: string;
     note: number | null;
     nb_avis: number;
+    suivi: boolean;
   };
   places: { quota: number; inscrits: number; restantes: number | null; complet: boolean };
   reduction: number | null;
@@ -230,7 +231,11 @@ export type ReponseConnexion = { token: string; expire_le: string; utilisateur: 
 export type ReponseEvenements = {
   evenements: Evenement[];
   pagination: { page: number; a_suivre: boolean; cumulative: boolean };
-  filtres: { type: string; musique: string };
+  filtres: {
+    type: string;
+    musique: string;
+    styles_musique: { code: string; libelle: string }[];
+  };
 };
 export type ReponseWallet = {
   economies: { mois: number; annee: number };
@@ -339,6 +344,13 @@ export const actions = {
       description: string;
     },
   ) => action<{ success: true }>('create_squad.php', jeton, squad),
+
+  suivreEtablissement: (jeton: string, etablissementId: number, suivre: boolean) =>
+    action<{ success: true; etat: string; count: number }>('follow.php', jeton, {
+      action: suivre ? 'follow' : 'unfollow',
+      type: 'etablissement',
+      target_id: etablissementId,
+    }),
 
   suivre: (jeton: string, cible: number, suivre: boolean) =>
     action<{ success: true; etat: string; count: number }>('follow.php', jeton, {
