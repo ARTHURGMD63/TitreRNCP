@@ -4,7 +4,10 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/interets.php';
 require_once __DIR__ . '/../includes/agregats.php';
 if (!empty($_SESSION['user_id'])) {
-    header('Location: ' . baseUrl('/index.php'));
+    // Vers son écran, pas vers la vitrine : depuis que la racine est une page
+    // de présentation, y renvoyer un compte connecté ajoutait une redirection
+    // de plus pour arriver au même endroit.
+    header('Location: ' . accueilSelonType($_SESSION['user_type'] ?? null));
     exit;
 }
 
@@ -103,7 +106,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
-$selectedType = $_POST['type'] ?? 'etudiant';
+// L'onglet ouvert au chargement. Le ?type= de l'URL sert aux liens de la page
+// d'accueil : un gérant de bar qui clique « Devenir partenaire » doit trouver
+// le formulaire partenaire ouvert, pas le formulaire étudiant. Il ne décide de
+// rien — le type réellement enregistré est celui relu du POST, plus haut.
+$selectedType = $_POST['type'] ?? $_GET['type'] ?? 'etudiant';
+if (!in_array($selectedType, ['etudiant', 'partenaire'], true)) {
+    $selectedType = 'etudiant';
+}
 // Une erreur de formulaire ne doit pas effacer les étiquettes déjà choisies.
 $interetsChoisis = filtrerInterets($_POST['interests'] ?? []);
 ?>
@@ -114,6 +124,7 @@ $interetsChoisis = filtrerInterets($_POST['interests'] ?? []);
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudentLink — Inscription</title>
 <?= themeBootScript() ?>
+<?= metaCsrf() ?>
 <link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
 </head>
 <body>
