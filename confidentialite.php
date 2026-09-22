@@ -1,13 +1,6 @@
-<?php require_once __DIR__ . '/includes/auth_check.php'; ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudentLink — Politique de confidentialité</title>
-<?= themeBootScript() ?>
-<?= metaCsrf() ?>
-<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
+<?php require_once __DIR__ . '/includes/auth_check.php';
+require_once __DIR__ . '/includes/page.php'; ?>
+<?php ob_start(); ?>
 <style>
   .legal-page { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
   .legal-page h1 { font-family:var(--font-display); font-weight:var(--fw-black); font-size:var(--fs-9); margin-bottom:32px; }
@@ -16,8 +9,7 @@
   .legal-page ul { padding-left: 22px; margin-bottom: 16px; }
   .legal-page a.back { color:var(--gris); font-size:var(--fs-3); text-decoration:none; }
 </style>
-</head>
-<body>
+<?php pageDebut('StudentLink — Politique de confidentialité', ['tete' => ob_get_clean()]); ?>
 <div class="legal-page">
   <a href="javascript:history.back()" class="back">← Retour</a>
   <h1>Politique de confidentialité</h1>

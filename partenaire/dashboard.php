@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth_check.php';
+require_once __DIR__ . '/../includes/page.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/crm.php';
 requirePartner();
@@ -105,19 +106,7 @@ $eventDayNum = $event ? date('j', strtotime($event['date_heure'])) : date('j');
 $eventType = $event ? mb_strtoupper($event['titre']) : 'HAPPY HOUR';
 $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudentLink — Dashboard Partenaire</title>
-<?= themeBootScript() ?>
-<?= metaCsrf() ?>
-<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
-<script src="<?= asset('/assets/vendor/chart.umd.min.js') ?>"></script>
-<script src="<?= asset('/assets/vendor/html5-qrcode.min.js') ?>"></script>
-</head>
-<body>
+<?php pageDebut('StudentLink — Dashboard Partenaire', ['scripts' => ['/assets/vendor/chart.umd.min.js', '/assets/vendor/html5-qrcode.min.js']]); ?>
 <div class="partner-shell">
 
   <!-- Sidebar -->

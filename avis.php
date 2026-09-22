@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/auth_check.php';
+require_once __DIR__ . '/includes/page.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/gamification.php';
 require_once __DIR__ . '/includes/agregats.php';
@@ -59,15 +60,7 @@ $stmt = $pdo->prepare("SELECT * FROM avis WHERE user_id=? AND evenement_id=?");
 $stmt->execute([$uid, $eid]);
 $existing = $stmt->fetch();
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudentLink — Laisser un avis</title>
-<?= themeBootScript() ?>
-<?= metaCsrf() ?>
-<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
+<?php ob_start(); ?>
 <style>
   .rate-page { max-width: 520px; margin: 0 auto; padding: 32px 24px 100px; }
   .stars { display: flex; gap: 8px; justify-content: center; margin: 24px 0; }
@@ -86,8 +79,7 @@ $existing = $stmt->fetch();
     min-height: 120px; resize: vertical; box-sizing: border-box;
   }
 </style>
-</head>
-<body>
+<?php pageDebut('StudentLink — Laisser un avis', ['tete' => ob_get_clean()]); ?>
 <div class="rate-page">
   <a href="<?= baseUrl('/wallet.php') ?>" style="color:var(--gris);font-size:var(--fs-3);text-decoration:none;">← Retour au wallet</a>
 

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/auth_check.php';
+require_once __DIR__ . '/includes/page.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/sponsoring.php';
 require_once __DIR__ . '/includes/musique.php';
@@ -51,21 +52,7 @@ $friends = $stmtF->fetchAll();
 $pct = $e['quota'] > 0 ? round($e['nb_inscrits'] / $e['quota'] * 100) : 0;
 $isFlash = $e['is_flash'] && strtotime($e['flash_expiry'] ?? '') > time();
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><?= htmlspecialchars($e['titre']) ?> — StudentLink</title>
-<?= themeBootScript() ?>
-<?= metaCsrf() ?>
-<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
-<link rel="icon" type="image/png" href="<?= baseUrl('/Logo.png') ?>">
-<link rel="apple-touch-icon" href="<?= baseUrl('/Logo.png') ?>">
-<link rel="manifest" href="<?= baseUrl('/manifest.json') ?>">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="StudentLink">
+<?php ob_start(); ?>
 <style>
   /* Le hero porte la photo du lieu quand elle existe ; l'aplat de couleur
      n'est plus que le repli. Le texte reste lisible grâce au voile dégradé,
@@ -148,8 +135,7 @@ $isFlash = $e['is_flash'] && strtotime($e['flash_expiry'] ?? '') > time();
     color: var(--gris); margin-bottom: 8px;
   }
 </style>
-</head>
-<body>
+<?php pageDebut($e['titre'] . ' — StudentLink', ['pwa' => true, 'tete' => ob_get_clean()]); ?>
 <div class="app-shell">
 
   <main id="main-content" class="page-content">

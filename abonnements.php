@@ -8,6 +8,7 @@
  * et le sélecteur segmenté du hub — même composant, même comportement.
  */
 require_once __DIR__ . '/includes/auth_check.php';
+require_once __DIR__ . '/includes/page.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/social.php';
 require_once __DIR__ . '/includes/uploads.php';
@@ -79,23 +80,7 @@ if ($encore) {
 $totalVue = $vue === 'abonnes' ? $nbAbonnes : $nbAbonnements;
 $titre    = $vue === 'abonnes' ? 'Abonnés' : 'Abonnements';
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudentLink — <?= $titre ?></title>
-<?= themeBootScript() ?>
-<?= metaCsrf() ?>
-<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
-<link rel="icon" type="image/png" href="<?= baseUrl('/Logo.png') ?>">
-<link rel="apple-touch-icon" href="<?= baseUrl('/Logo.png') ?>">
-<link rel="manifest" href="<?= baseUrl('/manifest.json') ?>">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="StudentLink">
-</head>
-<body>
+<?php pageDebut('StudentLink — ' . $titre, ['pwa' => true]); ?>
 <a href="#main-content" class="skip-nav">Aller au contenu principal</a>
 <div class="app-shell">
 

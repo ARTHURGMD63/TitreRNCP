@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth_check.php';
+require_once __DIR__ . '/../includes/page.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/crm.php';
 require_once __DIR__ . '/../includes/sponsoring.php';
@@ -105,15 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudentLink — Créer un événement</title>
-<?= themeBootScript() ?>
-<?= metaCsrf() ?>
-<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
+<?php ob_start(); ?>
 <style>
   .form-card {
     background: var(--blanc);
@@ -221,8 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
   .form-errors li { margin: 4px 0; color: var(--rouge); font-weight: var(--fw-semibold); }
 </style>
-</head>
-<body>
+<?php pageDebut('StudentLink — Créer un événement', ['tete' => ob_get_clean()]); ?>
 <div class="partner-shell">
 
   <aside class="partner-sidebar">

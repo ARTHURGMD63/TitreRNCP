@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/auth_check.php';
+require_once __DIR__ . '/includes/page.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/social.php';
 require_once __DIR__ . '/includes/uploads.php';
@@ -73,21 +74,7 @@ $upcomingEvents = $stmtEv->fetchAll();
 }
 
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><?= htmlspecialchars($u['prenom']) ?> — StudentLink</title>
-<?= themeBootScript() ?>
-<?= metaCsrf() ?>
-<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
-<link rel="icon" type="image/png" href="<?= baseUrl('/Logo.png') ?>">
-<link rel="apple-touch-icon" href="<?= baseUrl('/Logo.png') ?>">
-<link rel="manifest" href="<?= baseUrl('/manifest.json') ?>">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="StudentLink">
+<?php ob_start(); ?>
 <style>
   .profile-header-bg {
     background: var(--bleu);
@@ -149,8 +136,7 @@ $upcomingEvents = $stmtEv->fetchAll();
   }
   .event-strip:last-child { border-bottom: none; }
 </style>
-</head>
-<body>
+<?php pageDebut($u['prenom'] . ' — StudentLink', ['pwa' => true, 'tete' => ob_get_clean()]); ?>
 <div class="app-shell">
 
   <main id="main-content" class="page-content">

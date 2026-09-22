@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/auth_check.php';
+require_once __DIR__ . '/includes/page.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/uploads.php';
 require_once __DIR__ . '/includes/icons.php';
@@ -89,21 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profil'])) {
     $success = $photoErr !== '' ? '' : 'Profil mis à jour.';
 }
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudentLink — Moi</title>
-<?= themeBootScript() ?>
-<?= metaCsrf() ?>
-<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
-<link rel="icon" type="image/png" href="<?= baseUrl('/Logo.png') ?>">
-<link rel="apple-touch-icon" href="<?= baseUrl('/Logo.png') ?>">
-<link rel="manifest" href="<?= baseUrl('/manifest.json') ?>">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="StudentLink">
+<?php ob_start(); ?>
 <style>
   .profile-card {
     background: var(--blanc);
@@ -123,8 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profil'])) {
     gap: 8px;
   }
 </style>
-</head>
-<body>
+<?php pageDebut('StudentLink — Moi', ['pwa' => true, 'tete' => ob_get_clean()]); ?>
 <a href="#main-content" class="skip-nav">Aller au contenu principal</a>
 <div class="app-shell">
 

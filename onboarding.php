@@ -1,19 +1,10 @@
 <?php
 require_once __DIR__ . '/includes/auth_check.php';
+require_once __DIR__ . '/includes/page.php';
 requireLogin();
 $prenom = $_SESSION['user_prenom'] ?? 'toi';
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Bienvenue — StudentLink</title>
-<?= themeBootScript() ?>
-<?= metaCsrf() ?>
-<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
-<link rel="icon" type="image/png" href="<?= baseUrl('/Logo.png') ?>">
-<meta name="apple-mobile-web-app-capable" content="yes">
+<?php ob_start(); ?>
 <style>
   body { background: var(--bg); overflow: hidden; height: 100dvh; }
 
@@ -250,8 +241,7 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
 
   .onb-btn:active { box-shadow: none; transform: translate(2px, 2px); }
 </style>
-</head>
-<body>
+<?php pageDebut('Bienvenue — StudentLink', ['pwa' => true, 'viewport' => 'width=device-width, initial-scale=1.0, viewport-fit=cover', 'tete' => ob_get_clean()]); ?>
 <div class="onb-wrapper">
 
   <button class="onb-skip" onclick="finish()">Passer</button>

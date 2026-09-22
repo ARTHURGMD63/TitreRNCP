@@ -2,6 +2,7 @@
 // La session est demarree par auth_check.php, qui pose d'abord les
 // drapeaux du cookie : la demarrer ici la ferait naitre sans eux.
 require_once __DIR__ . '/../includes/auth_check.php';
+require_once __DIR__ . '/../includes/page.php';
 require_once __DIR__ . '/../includes/db.php';
 
 $token = trim($_GET['token'] ?? $_POST['token'] ?? '');
@@ -37,17 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudentLink — Nouveau mot de passe</title>
-<?= themeBootScript() ?>
-<?= metaCsrf() ?>
-<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
-</head>
-<body>
+<?php pageDebut('StudentLink — Nouveau mot de passe'); ?>
 <div class="auth-page">
   <div class="auth-logo">
     <div class="brand">StudentLink <em>/ Sécurité</em></div>

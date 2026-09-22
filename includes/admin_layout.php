@@ -14,6 +14,7 @@
  */
 
 require_once __DIR__ . '/crm.php';
+require_once __DIR__ . '/page.php';
 
 /**
  * Ouvre la page : <head>, coquille, barre latérale, début du contenu.
@@ -41,19 +42,8 @@ function adminHeader(PDO $pdo, string $page, string $titre, string $surtitre = '
     // pas seulement depuis la sienne : un signalement non traité est une
     // obligation de délai, pas une notification parmi d'autres.
     $nbSignalements = crmSignalementsEnAttente($pdo);
+    pageDebut('StudentLink — ' . $titre);
     ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudentLink — <?= htmlspecialchars($titre) ?></title>
-<?= themeBootScript() ?>
-<?= metaCsrf() ?>
-<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
-<link rel="icon" type="image/png" href="<?= baseUrl('/Logo.png') ?>">
-</head>
-<body>
 <a href="#contenu" class="skip-nav">Aller au contenu</a>
 <div class="partner-shell">
 

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth_check.php';
+require_once __DIR__ . '/../includes/page.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/interets.php';
 require_once __DIR__ . '/../includes/agregats.php';
@@ -117,17 +118,7 @@ if (!in_array($selectedType, ['etudiant', 'partenaire'], true)) {
 // Une erreur de formulaire ne doit pas effacer les étiquettes déjà choisies.
 $interetsChoisis = filtrerInterets($_POST['interests'] ?? []);
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudentLink — Inscription</title>
-<?= themeBootScript() ?>
-<?= metaCsrf() ?>
-<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
-</head>
-<body>
+<?php pageDebut('StudentLink — Inscription'); ?>
 <div class="auth-page" style="padding-top:24px;">
   <div class="auth-logo">
     <div class="brand">StudentLink <em>/ Inscription</em></div>

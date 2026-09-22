@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth_check.php';
+require_once __DIR__ . '/../includes/page.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/crm.php';
 require_once __DIR__ . '/../includes/uploads.php';
@@ -104,15 +105,7 @@ $stmt = $pdo->prepare("SELECT * FROM etablissement_photos WHERE etablissement_id
 $stmt->execute([$etab['id']]);
 $photos = $stmt->fetchAll();
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudentLink — Photos de l'établissement</title>
-<?= themeBootScript() ?>
-<?= metaCsrf() ?>
-<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
+<?php ob_start(); ?>
 <style>
   .form-card {
     background: var(--blanc);
@@ -216,8 +209,7 @@ $photos = $stmt->fetchAll();
     margin-top: 24px;
   }
 </style>
-</head>
-<body>
+<?php pageDebut('StudentLink — Photos de l\'établissement', ['tete' => ob_get_clean()]); ?>
 <div class="partner-shell">
 
   <aside class="partner-sidebar">

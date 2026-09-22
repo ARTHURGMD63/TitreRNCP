@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth_check.php';
+require_once __DIR__ . '/../includes/page.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/crm.php';
 require_once __DIR__ . '/../includes/sponsoring.php';
@@ -42,17 +43,7 @@ $evenements = $stmt->fetchAll();
 
 $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Afterwork'];
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudentLink — Mes événements</title>
-<?= themeBootScript() ?>
-<?= metaCsrf() ?>
-<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
-</head>
-<body>
+<?php pageDebut('StudentLink — Mes événements'); ?>
 <div class="partner-shell">
 
   <aside class="partner-sidebar">

@@ -15,6 +15,7 @@
  * partagé arrive sur le bon public.
  */
 require_once __DIR__ . '/includes/auth_check.php';
+require_once __DIR__ . '/includes/page.php';
 require_once __DIR__ . '/includes/crm.php';
 require_once __DIR__ . '/includes/sponsoring.php';
 
@@ -96,17 +97,7 @@ function lpEtape(int $rang, string $titre, string $texte): string
          . '</li>';
 }
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title><?= htmlspecialchars($titres[$pour]) ?></title>
-<meta name="description" content="<?= htmlspecialchars($description) ?>">
-<?= themeBootScript() ?>
-<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
-<link rel="icon" type="image/png" href="<?= baseUrl('/Logo.png') ?>">
-<link rel="manifest" href="<?= baseUrl('/manifest.json') ?>">
+<?php ob_start(); ?>
 <style>
   /* ═══════════════════════════════════════════════════════════════════
      Accueil public.
@@ -300,8 +291,7 @@ function lpEtape(int $rang, string $titre, string $texte): string
     .lp-entete__connexion { display: none; }
   }
 </style>
-</head>
-<body>
+<?php pageDebut($titres[$pour], ['description' => $description, 'pwa' => true, 'viewport' => 'width=device-width, initial-scale=1.0, viewport-fit=cover', 'tete' => ob_get_clean()]); ?>
 <a href="#contenu" class="skip-nav">Aller au contenu principal</a>
 
 <header class="lp-entete">

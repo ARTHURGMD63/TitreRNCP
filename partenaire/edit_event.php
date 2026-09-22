@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth_check.php';
+require_once __DIR__ . '/../includes/page.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/crm.php';
 require_once __DIR__ . '/../includes/sponsoring.php';
@@ -138,15 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $dtLocal = date('Y-m-d\TH:i', strtotime($event['date_heure']));
 $flashLocal = $event['flash_expiry'] ? date('Y-m-d\TH:i', strtotime($event['flash_expiry'])) : '';
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudentLink — Modifier l'événement</title>
-<?= themeBootScript() ?>
-<?= metaCsrf() ?>
-<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
+<?php ob_start(); ?>
 <style>
   .form-card {
     background: var(--blanc);
@@ -263,8 +256,7 @@ $flashLocal = $event['flash_expiry'] ? date('Y-m-d\TH:i', strtotime($event['flas
   .stats-bar-value { font-size: var(--fs-7); font-weight: var(--fw-black); }
   .stats-bar-label { font-size: var(--fs-1); color: var(--gris); text-transform: uppercase; letter-spacing: var(--ls-wide); font-weight: var(--fw-bold); }
 </style>
-</head>
-<body>
+<?php pageDebut('StudentLink — Modifier l\'événement', ['tete' => ob_get_clean()]); ?>
 <div class="partner-shell">
 
   <aside class="partner-sidebar">

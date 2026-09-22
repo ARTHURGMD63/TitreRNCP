@@ -13,6 +13,7 @@
  * en place du prélèvement se fait hors de l'outil.
  */
 require_once __DIR__ . '/../includes/auth_check.php';
+require_once __DIR__ . '/../includes/page.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/crm.php';
 requirePartner();
@@ -149,18 +150,7 @@ $formules  = formulesSouscriptibles($pdo);
 $restantes = placesFondateurRestantes($pdo);
 $actuelle  = abonnementChoisi($client) ? $client['offre'] : null;
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudentLink — Abonnement</title>
-<?= themeBootScript() ?>
-<?= metaCsrf() ?>
-<link rel="stylesheet" href="<?= asset('/assets/css/style.css') ?>">
-<link rel="icon" type="image/png" href="<?= baseUrl('/Logo.png') ?>">
-</head>
-<body>
+<?php pageDebut('StudentLink — Abonnement'); ?>
 <a href="#contenu" class="skip-nav">Aller au contenu</a>
 
 <div class="abo-page">
