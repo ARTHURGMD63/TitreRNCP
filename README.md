@@ -133,7 +133,7 @@ composer stan
 composer ci
 ```
 
-**171 tests, 768 assertions.** Ils couvrent :
+**242 tests, 912 assertions.** Ils couvrent :
 
 | Domaine | Ce qui est vérifié |
 |---|---|
@@ -143,6 +143,10 @@ composer ci
 | `MigrationsTest` | Découpage des scripts SQL : `DELIMITER`, chaînes, commentaires, ordre numérique |
 | `RedirectionTest` | Aucune redirection vers un hôte externe ; contrôle d'origine |
 | `HubTest` | Lecture des critères d'URL du hub : page négative, style inventé, vue inconnue |
+| `PageTest` | Aucune page ne rouvre sa propre coquille HTML ; l'icône sort partout, les métas d'installation sur demande |
+| `UploadsTest` | Onze noms de fichiers hostiles contre la suppression d'image, dont quatre traversées de répertoire |
+| `ConfigTest` | Priorité environnement → `config.local.php` → défaut, et la variable définie mais vide |
+| `InteretsTest` | Filtrage de ce qui vient du formulaire, et synchronisation de la table indexée |
 | `MailTest` | En-têtes RFC, encodage du sujet, anti-injection d'en-tête |
 | `DepotTest` | Aucun binaire lourd ne réapparaît dans le suivi Git |
 | Intégration | Persistance des badges avec SQLite in-memory |
@@ -186,11 +190,11 @@ TitreRNCP/
 ├── api/              # Endpoints JSON (inscriptions, follows, squads…)
 ├── assets/
 │   ├── css/style.css # Design system complet
-│   └── js/app.js     # JS vanilla (SPA-like, dark mode, timer)
+│   └── js/app.js     # JS vanilla (dark mode, timer, interrogation du direct)
 ├── auth/             # Login, register, logout, forgot, reset
 ├── docs/             # Documentation technique (MCD, UML, API, manuel)
 ├── cron/             # Tâches planifiées (rappels, entretien)
-├── includes/         # auth_check.php, db.php, security.php, hub.php, mail.php…
+├── includes/         # page.php (coquille HTML), auth_check.php, db.php, security.php, hub.php, mail.php…
 ├── outils/           # Ligne de commande : migrer.php, creer_admin.php, charge.php
 ├── partenaire/       # Dashboard, événements, create_event
 ├── tests/            # PHPUnit (Unit/ + Integration/)

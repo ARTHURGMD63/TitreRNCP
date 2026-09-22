@@ -7,6 +7,90 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+- **Une seule coquille HTML, au lieu de vingt-quatre.** Le `<head>` était
+  recopié dans vingt-quatre fichiers : doctype, jeu de caractères, viewport,
+  titre, amorce de thème, jeton CSRF, feuille de style, icône, métas
+  d'installation. Douze lignes par page, dont onze ne changent jamais.
+
+  Une duplication ne reste pas identique, elle diverge — et personne ne relit
+  douze lignes de `<head>` à chaque modification. Ce qu'elle avait réellement
+  produit : **l'icône manquait sur treize pages sur vingt-quatre**, dont les
+  quatre pages d'authentification ; les métas d'installation n'étaient que sur
+  sept pages, si bien qu'un étudiant arrivé par `explore.php` pouvait installer
+  l'application et le même arrivé par `avis.php` non ; `onboarding.php` portait
+  `apple-mobile-web-app-capable` toute seule et `index.php` le manifeste sans
+  les métas apple.
+
+  `pageDebut()` ([`includes/page.php`](includes/page.php)) écrit la coquille.
+  Ce qui varie légitimement reste en option — métas d'installation, viewport,
+  description, scripts de tête, et le `<style>` propre à une page, capturé par
+  `ob_start()` pour que le PHP qu'il contient parfois soit évalué normalement.
+  L'icône, elle, n'est pas une option.
+
+  > Vérification : le HTML rendu de **trente-neuf écrans** a été comparé avant
+  > et après, sur une base jetable — neuf pages publiques, dix écrans étudiant
+  > dont huit combinaisons de filtres du hub, six écrans partenaire et les sept
+  > du back-office. Hors les ajouts ci-dessus, tout est identique ; les sept
+  > écrans du back-office le sont à l'octet près. Une première passe avait fait
+  > perdre une balise à `onboarding.php` : la comparaison l'a rattrapée.
+
+- **L'intégration continue tourne sur toutes les branches.** Elle ne se
+  déclenchait que sur `main` et `develop`, alors que le travail se fait sur des
+  branches thématiques — `perf/montee-en-charge` en portait neuf commits, plus
+  un lot entier non enregistré. Une CI qui ne tourne qu'après la fusion apprend
+  trop tard qu'un test casse sous PHP 8.1.
+
+- **`assets/js/router.js` retiré.** Mort depuis `b404d5c`, qui a supprimé le
+  routeur SPA pour revenir à la navigation standard. Plus rien ne le
+  référençait : ni une page, ni le manifeste, ni la liste de précache du
+  service worker.
+
+### Fixed
+- **`outils/migrer.php --adopter` était tout ou rien.** Une base n'est pourtant
+  pas forcément « à jour » ou « vierge ». Trouvé en conditions réelles sur la
+  base de travail du projet : créée il y a quelques semaines, elle avait reçu
+  `v4` à `v13` à la main, et ni `v14` ni `v15`. Pour ce cas — le cas courant —
+  aucune commande n'était correcte. Sans option, `v4` échoue sur « Column
+  already exists », car toutes les migrations ne sont pas rejouables ;
+  `--adopter` la déclarait entièrement à jour, donc `v14` et `v15` n'auraient
+  jamais été posées, `flux_revisions` et `user_interets` seraient restées
+  absentes, et le temps réel comme l'annuaire seraient tombés en erreur sans
+  que rien n'indique pourquoi.
+
+  `--adopter=v13` raccorde jusqu'à `v13` et laisse les suivantes en attente.
+  Une version inconnue est refusée en nommant celles qui existent.
+
+  Le message d'échec affirmait par ailleurs que « les migrations sont
+  idempotentes », ce qui est faux : il envoyait chercher une erreur dans le
+  fichier SQL alors que la base était simplement en avance sur son suivi. Il
+  nomme désormais la commande à lancer.
+
+### Tests
+- **De 183 à 242 tests** (912 assertions). Treize des vingt-six fichiers
+  d'`includes/` n'étaient chargés par aucun test : la couverture suivait ce qui
+  venait d'être retravaillé, pas ce qui risquait le plus. Les trois plus
+  exposés sont désormais couverts.
+  - `UploadsTest` — la surface la plus exposée de l'application : un fichier
+    arrive d'ailleurs, avec un nom et un type que l'expéditeur choisit. Onze
+    noms hostiles sont jetés contre `deleteStoredImage()`, dont quatre formes
+    de traversée de répertoire, l'octet nul et la double extension, avec un
+    fichier témoin hors du dossier qui doit survivre. Le code tient sur tous :
+    ces tests confirment une garde plutôt qu'ils ne réparent un défaut — mais
+    une garde que rien ne tient se retire un jour par inadvertance.
+  - `ConfigTest` — priorité environnement → `config.local.php` → défaut. Une
+    erreur de priorité ne se voit pas en développement, où les trois sources
+    disent la même chose. Couvre notamment la variable définie mais vide, cas
+    d'un panneau d'hébergeur.
+  - `InteretsTest` — filtrage de ce qui vient du formulaire, et synchronisation
+    de la table indexée, y compris quand elle n'existe pas encore.
+  - `PageTest` — aucune page ne peut rouvrir sa propre coquille. Vérifié en le
+    cassant : le test nomme le fichier fautif. `db.php` et `log.php` en sont
+    exemptés, et c'est dit — leurs pages de secours s'affichent quand la base
+    est injoignable, moment où dépendre du gabarit serait le plus mauvais des
+    paris.
+
+
 ### Fixed
 - **`db_setup.sql` était incomplet, et c'est le fichier du README.** Il lui
   manquait quatre tables que `install_mutualise.sql` contenait :
