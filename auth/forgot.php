@@ -18,9 +18,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $token = createPasswordResetToken($pdo, $email);
         // On envoie toujours un message de succès (même si email inconnu) → anti-enumération
+        // Le lien du message doit être absolu : il est suivi depuis un client
+        // de messagerie, qui n'a aucun contexte de page. Schéma réellement
+        // servi, hôte demandé, puis le préfixe d'installation calculé par
+        // prefixeApplication() — et non plus deviné d'après le nom d'hôte, ce
+        // qui produisait un lien sans « /TitreRNCP » dès qu'on ouvrait le site
+        // à autre chose que localhost.
         $host    = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $isLocal = str_contains($host, 'localhost') || str_contains($host, '127.0.0.1');
-        $base    = $isLocal ? 'http://' . $host . '/TitreRNCP' : 'https://' . $host;
+        $enHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+                || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+        $base    = ($enHttps ? 'https://' : 'http://') . $host . baseUrl('');
 
         if ($token) {
             sendResetEmail($email, $token, $base);

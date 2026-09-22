@@ -19,24 +19,41 @@ final class AuthCheckTest extends TestCase
         $_SESSION = [];
     }
 
-    public function testBaseUrlOnLocalhostPrefixesTitreRNCP(): void
+    /**
+     * Le nom d'hôte ne décide plus du préfixe.
+     *
+     * Trois tests figeaient ici le comportement inverse : « localhost » ou
+     * « 127.0.0.1 » donnaient « /TitreRNCP », tout autre hôte donnait la
+     * racine. Ils décrivaient fidèlement un défaut — ouvrir le site à un
+     * téléphone du même réseau, donc par une adresse IP, faisait tomber le
+     * préfixe et arriver la page sans style ni lien valide.
+     *
+     * Le préfixe se déduit désormais du chemin d'installation.
+     * `PrefixeTest` couvre ce calcul cas par cas ; ici, on vérifie seulement
+     * que baseUrl() n'écoute plus l'hôte.
+     */
+    public function testBaseUrlNeDependPlusDeLHote(): void
     {
-        $_SERVER['HTTP_HOST'] = 'localhost';
-        $this->assertSame('/TitreRNCP', baseUrl());
-        $this->assertSame('/TitreRNCP/explore.php', baseUrl('/explore.php'));
+        $reference = baseUrl('/explore.php');
+
+        foreach (['localhost', '127.0.0.1:8080', '192.168.1.82:8080', 'studentlink.example.com'] as $hote) {
+            $_SERVER['HTTP_HOST'] = $hote;
+            $this->assertSame($reference, baseUrl('/explore.php'), "l'hôte « $hote » a changé le préfixe");
+        }
     }
 
-    public function testBaseUrlOn127IsLocal(): void
+    public function testBaseUrlConcateneLeCheminSansDoubleBarre(): void
     {
-        $_SERVER['HTTP_HOST'] = '127.0.0.1:8080';
-        $this->assertSame('/TitreRNCP/api/follow.php', baseUrl('/api/follow.php'));
+        $this->assertStringEndsWith('/explore.php', baseUrl('/explore.php'));
+        $this->assertStringNotContainsString('//', baseUrl('/api/follow.php'));
     }
 
-    public function testBaseUrlOnProductionHasNoPrefix(): void
+    public function testBaseUrlSansCheminNeRendJamaisUneBarreSeule(): void
     {
-        $_SERVER['HTTP_HOST'] = 'studentlink.example.com';
-        $this->assertSame('', baseUrl());
-        $this->assertSame('/explore.php', baseUrl('/explore.php'));
+        // baseUrl() sert de base à toutes les concaténations : une barre
+        // esseulée produirait « //explore.php », que le navigateur lit comme
+        // un hôte et non comme un chemin.
+        $this->assertNotSame('/', baseUrl());
     }
 
     public function testIsLoggedInReturnsFalseWithoutSession(): void

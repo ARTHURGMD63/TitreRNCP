@@ -82,6 +82,11 @@ function pageDebut(string $titre, array $options = []): void
     echo themeBootScript() . "\n";
     echo metaCsrf() . "\n";
 
+    // Le préfixe d'installation, pour que le JavaScript n'ait pas à le
+    // deviner : app.js le refaisait avec sa propre règle sur le nom d'hôte,
+    // et se trompait donc exactement dans les mêmes cas.
+    echo metaBase() . "\n";
+
     echo '<link rel="stylesheet" href="' . htmlspecialchars(asset('/assets/css/style.css'), ENT_QUOTES) . "\">\n";
 
     // L'icône, sur toutes les pages. Elle manquait sur treize d'entre elles,

@@ -1,7 +1,32 @@
 /* StudentLink — app.js */
 
-// Detect base path for local WAMP vs Railway
-const BASE = location.hostname === 'localhost' || location.hostname === '127.0.0.1' ? '/TitreRNCP' : '';
+// ─── Chemin d'installation ───────────────────────────────────────────────────
+//
+// Le prefixe sous lequel l'application est servie : « /TitreRNCP » sous WAMP,
+// vide sur Railway. Il est calcule par PHP (prefixeApplication(), dans
+// includes/auth_check.php) et publie dans une balise <meta> par pageDebut().
+//
+// Il etait devine ici a partir du nom d'hote — localhost voulait dire
+// sous-dossier, tout le reste racine. Deux consequences : la regle vivait en
+// double, en PHP et en JavaScript, donc un changement demandait deux
+// corrections dans deux langages ; et elle tombait en defaut des qu'on
+// ouvrait le site a un telephone du meme reseau, ou l'hote est une adresse IP.
+// Chaque appel d'API partait alors a la racine du serveur.
+const BASE = (function () {
+  const meta = document.querySelector('meta[name="base-url"]');
+  if (meta) return meta.getAttribute('content') || '';
+
+  // Repli, pour une page qui n'aurait pas encore la balise : deduire le
+  // prefixe du chemin de la page courante plutot que de son hote. Les pages de
+  // l'application vivent soit a la racine du projet, soit dans un sous-dossier
+  // connu — auth/, partenaire/ ou admin/.
+  const segments = location.pathname.split('/').filter(Boolean);
+  segments.pop();                                    // le fichier .php
+  if (['auth', 'partenaire', 'admin', 'api'].includes(segments[segments.length - 1])) {
+    segments.pop();                                  // le sous-dossier
+  }
+  return segments.length ? '/' + segments.join('/') : '';
+})();
 
 // Apply saved theme instantly (before first paint)
 (function(){
