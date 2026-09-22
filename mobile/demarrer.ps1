@@ -1,36 +1,84 @@
 # ============================================================
-#  StudentLink — demarrer l'application pour Expo Go
+#  StudentLink — lanceur de l'environnement de developpement
 #
-#  Lancer depuis PowerShell, dans le dossier mobile :
+#  Double-cliquer sur « StudentLink.bat » (racine du projet) ou sur le
+#  raccourci du Bureau. Sinon, depuis PowerShell :
 #
-#      .\demarrer.ps1
+#      cd C:\wamp64\www\TitreRNCP\mobile; .\demarrer.ps1
 #
-#  Le QR code s'affiche : le scanner avec l'appareil photo de l'iPhone
-#  (Expo Go doit etre installe depuis l'App Store).
+#  Ce que le script fait, dans l'ordre :
 #
-#  ── POURQUOI CE SCRIPT PLUTOT QUE « npx expo start » ────────────────────
+#    1. verifie qu'Apache et MySQL tournent ;
+#    2. choisit l'adresse reseau que le telephone pourra joindre ;
+#    3. verifie que l'API repond reellement dessus ;
+#    4. affiche les adresses — site web ET application ;
+#    5. lance Expo, QR code a l'appui.
+#
+#  ── POURQUOI IL EXISTE ──────────────────────────────────────────────────
 #
 #  Cette machine a sept interfaces reseau : Wi-Fi, deux cartes VMware, une
 #  VirtualBox, deux ponts Hyper-V/WSL, plus le point d'acces mobile quand il
-#  est actif. Expo en choisit une — et rien ne garantit que ce soit celle que
-#  le telephone peut joindre. Un QR code pointant vers 192.168.56.1
-#  (VirtualBox) donne « impossible de se connecter au serveur de
-#  developpement », sans rien dire de la raison.
+#  est actif. « npx expo start » en choisit une — mesure, il annonce
+#  « localhost » — et rien ne garantit que ce soit celle que le telephone
+#  peut joindre. Un QR code pointant vers 192.168.56.1 donne « impossible de
+#  se connecter au serveur de developpement », sans dire pourquoi.
 #
-#  Ce script choisit l'interface explicitement, verifie que l'API repond
-#  dessus, et la passe a Expo.
+#  Le script choisit explicitement, verifie, et le dit.
 # ============================================================
 
 $ErrorActionPreference = 'Stop'
+Set-Location -Path $PSScriptRoot
 
-# ─── 1. Trouver l'adresse que le telephone pourra joindre ───────────────────
+function Titre($texte) {
+    Write-Host ""
+    Write-Host "  $texte" -ForegroundColor Cyan
+    Write-Host "  $('-' * $texte.Length)" -ForegroundColor DarkGray
+}
+
+Write-Host ""
+Write-Host "  StudentLink " -NoNewline -ForegroundColor White
+Write-Host "/ environnement de developpement" -ForegroundColor Red
+
+# ─── 1. Les services WAMP ───────────────────────────────────────────────────
 #
-# Par ordre de preference : le point d'acces mobile d'abord — c'est le seul
-# reseau ou les appareils se voient a coup sur —, le Wi-Fi ensuite.
+# Apache sert le site et l'API, MySQL porte les donnees. Sans eux,
+# l'application se charge, affiche sa connexion, et echoue au premier appel —
+# un symptome qui ressemble a un bug de l'application.
+
+Titre "Services"
+
+$apache = Get-Process httpd  -ErrorAction SilentlyContinue
+$mysql  = Get-Process mysqld -ErrorAction SilentlyContinue
+
+if ($apache) {
+    Write-Host "    Apache  " -NoNewline; Write-Host "en marche" -ForegroundColor Green
+} else {
+    Write-Host "    Apache  " -NoNewline; Write-Host "ARRETE" -ForegroundColor Red
+}
+if ($mysql) {
+    Write-Host "    MySQL   " -NoNewline; Write-Host "en marche" -ForegroundColor Green
+} else {
+    Write-Host "    MySQL   " -NoNewline; Write-Host "ARRETE" -ForegroundColor Red
+}
+
+if (-not $apache -or -not $mysql) {
+    Write-Host ""
+    Write-Host "    Demarrer WAMP (icone verte dans la barre des taches)," -ForegroundColor Yellow
+    Write-Host "    puis relancer ce script." -ForegroundColor Yellow
+    Write-Host ""
+    Read-Host "    Entree pour fermer"
+    exit 1
+}
+
+# ─── 2. L'adresse que le telephone pourra joindre ───────────────────────────
 #
-# Les interfaces virtuelles sont ecartees par leur nom : aucune n'est
-# joignable depuis un telephone, et ce sont precisement celles qu'Expo a
-# tendance a choisir.
+# Par ordre de preference : le point d'acces mobile — le seul reseau ou les
+# appareils se voient a coup sur —, le Wi-Fi ensuite. Les interfaces
+# virtuelles sont ecartees par leur nom : aucune n'est joignable depuis un
+# telephone, et ce sont precisement celles qu'Expo a tendance a choisir.
+
+Titre "Reseau"
+
 $virtuelles = 'vEthernet|VMware|VirtualBox|Loopback|Hyper-V|Bluetooth'
 
 $candidates = Get-NetIPAddress -AddressFamily IPv4 |
@@ -40,60 +88,78 @@ $candidates = Get-NetIPAddress -AddressFamily IPv4 |
         $_.InterfaceAlias -notmatch $virtuelles
     }
 
-# Le point d'acces mobile de Windows sert toujours en 192.168.137.x.
 $hotspot = $candidates | Where-Object { $_.IPAddress -like '192.168.137.*' } | Select-Object -First 1
 $wifi    = $candidates | Where-Object { $_.InterfaceAlias -like '*Wi-Fi*' }   | Select-Object -First 1
-
 $choisie = if ($hotspot) { $hotspot } elseif ($wifi) { $wifi } else { $candidates | Select-Object -First 1 }
 
 if (-not $choisie) {
-    Write-Host "Aucune interface reseau utilisable." -ForegroundColor Red
-    Write-Host "Activer le point d'acces mobile (Win+A -> Point d'acces sans fil) puis relancer."
+    Write-Host "    Aucune interface reseau utilisable." -ForegroundColor Red
+    Write-Host "    Activer le partage de connexion (Win+A -> Point d'acces sans fil)."
+    Read-Host "    Entree pour fermer"
     exit 1
 }
 
 $ip = $choisie.IPAddress
 
 if ($hotspot) {
-    Write-Host "Point d'acces mobile detecte : $ip" -ForegroundColor Green
+    Write-Host "    Partage de connexion " -NoNewline
+    Write-Host "ACTIF" -ForegroundColor Green -NoNewline
+    Write-Host " — $ip"
+    Write-Host "    Les telephones connectes dessus pourront ouvrir l'application."
 } else {
-    Write-Host "Adresse retenue : $ip ($($choisie.InterfaceAlias))" -ForegroundColor Yellow
+    Write-Host "    Partage de connexion " -NoNewline
+    Write-Host "ETEINT" -ForegroundColor Yellow
+    Write-Host "    Adresse retenue : $ip ($($choisie.InterfaceAlias))"
     Write-Host ""
-    Write-Host "  ATTENTION : ce n'est pas un point d'acces mobile." -ForegroundColor Yellow
-    Write-Host "  Si le reseau isole les appareils entre eux — ce qui est le cas de"
-    Write-Host "  WIFI_Bonjour_World — le telephone ne joindra pas cette machine."
-    Write-Host "  Dans ce cas : Win+A, activer « Point d'acces sans fil », y connecter"
-    Write-Host "  le telephone, puis relancer ce script."
-    Write-Host ""
+    Write-Host "    Si ce reseau isole les appareils entre eux — c'est le cas de" -ForegroundColor Yellow
+    Write-Host "    WIFI_Bonjour_World — le telephone ne joindra pas cette machine." -ForegroundColor Yellow
+    Write-Host "    Activer le partage de connexion : Win+A, « Point d'acces sans fil »." -ForegroundColor Yellow
 }
 
-# ─── 2. L'API repond-elle sur cette adresse ? ───────────────────────────────
+# ─── 3. L'API repond-elle sur cette adresse ? ───────────────────────────────
 #
-# Verifie AVANT d'afficher le QR code. Sans cela, l'application se charge,
-# affiche son ecran de connexion, et echoue au premier appel — un symptome
-# qui ressemble a un bug de l'application alors que le serveur web est
-# simplement arrete.
-$urlApi = "http://${ip}:8080/TitreRNCP/auth/login.php"
+# Verifie AVANT d'afficher le QR code, pour que l'echec soit nomme ici plutot
+# que decouvert sur le telephone.
+
+Titre "API"
+
+$urlSite = "http://${ip}:8080/TitreRNCP/"
 try {
-    $reponse = Invoke-WebRequest -Uri $urlApi -TimeoutSec 5 -UseBasicParsing
-    Write-Host "API joignable sur $ip`:8080 (HTTP $($reponse.StatusCode))" -ForegroundColor Green
+    $r = Invoke-WebRequest -Uri "${urlSite}auth/login.php" -TimeoutSec 5 -UseBasicParsing
+    Write-Host "    Joignable sur $ip`:8080 " -NoNewline
+    Write-Host "(HTTP $($r.StatusCode))" -ForegroundColor Green
 } catch {
-    Write-Host "L'API ne repond pas sur $urlApi" -ForegroundColor Red
-    Write-Host "  Demarrer Apache depuis WAMP (icone verte), puis relancer."
-    Write-Host "  L'application se chargerait, mais ne pourrait pas se connecter."
+    Write-Host "    INJOIGNABLE sur ${ip}:8080" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "    Apache tourne, mais refuse cette adresse. Verifier que le vhost" -ForegroundColor Yellow
+    Write-Host "    autorise ce reseau (Require ip ...) dans :" -ForegroundColor Yellow
+    Write-Host "      C:\wamp64\bin\apache\apache2.4.62.1\conf\extra\httpd-vhosts.conf" -ForegroundColor DarkGray
+    Write-Host ""
+    Read-Host "    Entree pour fermer"
     exit 1
 }
 
-# ─── 3. Lancer Expo sur cette adresse ───────────────────────────────────────
+# ─── 4. Les adresses ────────────────────────────────────────────────────────
+
+Titre "Adresses"
+Write-Host "    Site web      " -NoNewline; Write-Host $urlSite -ForegroundColor White
+Write-Host "    Application   " -NoNewline; Write-Host "scanner le QR ci-dessous avec l'appareil photo" -ForegroundColor White
+Write-Host ""
+Write-Host "    Comptes de demonstration :" -ForegroundColor DarkGray
+Write-Host "      etudiant    arthur@uca.fr / password" -ForegroundColor DarkGray
+Write-Host "      partenaire  jean@lebecquipique.fr / password" -ForegroundColor DarkGray
+
+# ─── 5. Expo ────────────────────────────────────────────────────────────────
 #
 # REACT_NATIVE_PACKAGER_HOSTNAME impose l'adresse ecrite dans le QR code et
 # dans l'URL exp://. C'est aussi elle que src/api.ts relit pour deduire ou
 # joindre l'API : une seule adresse a poser, et tout suit.
+
 $env:REACT_NATIVE_PACKAGER_HOSTNAME = $ip
 
-Write-Host ""
-Write-Host "Scanner le QR code ci-dessous avec l'appareil photo de l'iPhone." -ForegroundColor Cyan
-Write-Host "Expo Go doit etre installe depuis l'App Store."
+Titre "Expo"
+Write-Host "    Expo Go doit etre installe sur le telephone (App Store)."
+Write-Host "    Ctrl+C pour arreter."
 Write-Host ""
 
 npx expo start --lan
