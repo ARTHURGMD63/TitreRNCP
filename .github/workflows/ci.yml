@@ -1,10 +1,16 @@
 name: CI
 
+# Sur toute branche poussee, et non plus seulement main et develop.
+#
+# Le travail se fait sur des branches thematiques - perf/montee-en-charge en
+# portait neuf commits, plus un lot entier non enregistre - et aucune n'etait
+# verifiee avant d'atteindre main. Une CI qui ne tourne qu'apres la fusion
+# apprend trop tard qu'un test casse sous PHP 8.1.
 on:
   push:
-    branches: [main, develop]
+    branches: ['**']
   pull_request:
-    branches: [main, develop]
+    branches: ['**']
 
 jobs:
   quality:
