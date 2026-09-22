@@ -603,3 +603,200 @@ SELECT u.id AS user_id,
 -- Une chaine « techno,,rock » ou une virgule finale produit un element vide :
 -- il n'a rien a faire dans la table, et la cle primaire ne l'interdit pas.
 WHERE decoupe.interet <> '';
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+--  Back-office fondateurs et rappels  (migrations v9 et v12)
+--
+--  Ces quatre tables manquaient à ce fichier alors qu'elles existaient dans
+--  install_mutualise.sql. Conséquence : une installation faite en suivant le
+--  README — « une seule importation suffit » — produisait une base sans CRM,
+--  sans registre financier et sans garde-fou de rappels. Les sept écrans de
+--  /admin, partenaire/abonnement.php et cron/rappels.php tombaient en erreur
+--  au premier accès.
+--
+--  Elles sont placées ici, après les données de démonstration, parce que la
+--  reprise de l'existant en fin de section lit `etablissements`.
+--
+--  La parité entre ce fichier et install_mutualise.sql est désormais
+--  vérifiée par tests/Unit/SchemaTest.php, qui échoue en CI si l'un des deux
+--  reçoit une table que l'autre n'a pas.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- ─── Trace des rappels envoyés (v9) ─────────────────────────────────────────
+--
+-- Sans elle, un rappel serait renvoyé à chaque passage de la tâche planifiée :
+-- la table sert de garde-fou, pas de journal décoratif. La clé primaire
+-- composée rend le doublon impossible au niveau de la base, quelles que
+-- soient les erreurs du script.
+
+CREATE TABLE IF NOT EXISTS rappels_envoyes (
+    inscription_id INT NOT NULL,
+    type ENUM('veille') NOT NULL DEFAULT 'veille',
+    envoye_le TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (inscription_id, type),
+    CONSTRAINT fk_rappel_inscription
+        FOREIGN KEY (inscription_id) REFERENCES inscriptions(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ─── Comptes commerciaux (v12) ──────────────────────────────────────────────
+--
+-- `crm_clients` n'est PAS confondu avec `etablissements`. Un prospect existe
+-- avant tout compte partenaire : la liste de cibles clermontoises se
+-- constitue alors qu'aucune n'a encore de compte dans l'application. Lier le
+-- CRM à `etablissements` aurait rendu le pipeline commercial impossible à
+-- tenir avant la signature, c'est-à-dire exactement là où il sert.
+-- `etablissement_id` se remplit le jour où le partenaire crée son compte.
+
+CREATE TABLE IF NOT EXISTS crm_clients (
+    id               INT AUTO_INCREMENT PRIMARY KEY,
+    -- NULL tant que le partenaire n'a pas créé son compte dans l'app.
+    etablissement_id INT NULL,
+    nom              VARCHAR(191) NOT NULL,
+    categorie        ENUM('bar','boite','resto','afterwork','bde','autre') NOT NULL DEFAULT 'bar',
+    ville            VARCHAR(100) NOT NULL DEFAULT 'Clermont-Ferrand',
+    adresse          VARCHAR(255) NULL,
+    contact_nom      VARCHAR(191) NULL,
+    contact_role     VARCHAR(100) NULL,
+    contact_email    VARCHAR(191) NULL,
+    contact_tel      VARCHAR(40)  NULL,
+    -- Le pipeline : prospect → contacté → rendez-vous → essai → actif.
+    -- « pause » et « perdu » sont des sorties, pas des étapes.
+    statut           ENUM('prospect','contacte','rdv','essai','actif','pause','perdu')
+                     NOT NULL DEFAULT 'prospect',
+    offre            ENUM('aucune','fondateur','essentiel','premium','bde')
+                     NOT NULL DEFAULT 'aucune',
+    -- Montant mensuel HT réellement facturé. Recopié depuis la grille à la
+    -- signature, puis figé : le tarif fondateur est gelé, une grille qui
+    -- évolue ne doit pas réécrire un contrat en cours.
+    mrr              DECIMAL(8,2) NOT NULL DEFAULT 0,
+    essai_jusqu_au   DATE NULL,
+    signe_le         DATE NULL,
+    perdu_le         DATE NULL,
+    motif_perte      VARCHAR(255) NULL,
+    responsable_id   INT NULL,
+    notes            TEXT NULL,
+    created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_etablissement (etablissement_id),
+    KEY k_statut (statut),
+    KEY k_responsable (responsable_id),
+    CONSTRAINT fk_crm_client_etab
+        FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE SET NULL,
+    CONSTRAINT fk_crm_client_resp
+        FOREIGN KEY (responsable_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ─── Interactions commerciales (v12) ────────────────────────────────────────
+--
+-- Un rappel sans historique se répète ou s'oublie : la fiche client doit
+-- dire qui a appelé, quand, et ce qui a été promis.
+
+CREATE TABLE IF NOT EXISTS crm_interactions (
+    id                 INT AUTO_INCREMENT PRIMARY KEY,
+    client_id          INT NOT NULL,
+    auteur_id          INT NULL,
+    type               ENUM('appel','visite','email','demo','relance','note') NOT NULL DEFAULT 'note',
+    contenu            TEXT NOT NULL,
+    -- La prochaine action est dans la même ligne que l'échange qui l'a
+    -- produite : séparée, elle se perd.
+    prochaine_action   VARCHAR(255) NULL,
+    prochaine_action_le DATE NULL,
+    fait               TINYINT(1) NOT NULL DEFAULT 0,
+    created_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY k_client (client_id, created_at),
+    KEY k_relance (prochaine_action_le, fait),
+    CONSTRAINT fk_crm_inter_client
+        FOREIGN KEY (client_id) REFERENCES crm_clients(id) ON DELETE CASCADE,
+    CONSTRAINT fk_crm_inter_auteur
+        FOREIGN KEY (auteur_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ─── Registre financier (v12) ───────────────────────────────────────────────
+--
+-- Le MRR se déduit des abonnements ; l'encaissé, non. Sans registre, la
+-- trésorerie reste une estimation et le plancher de 1 000 € une règle
+-- invérifiable.
+
+CREATE TABLE IF NOT EXISTS finance_mouvements (
+    id             INT AUTO_INCREMENT PRIMARY KEY,
+    sens           ENUM('recette','depense') NOT NULL,
+    -- Une chaîne libre aurait produit quinze orthographes du mot
+    -- « hébergement » et un tableau de charges inexploitable.
+    categorie      ENUM('abonnement','sponsoring','autre_recette',
+                        'hebergement','banque','comptabilite','assurance',
+                        'marketing','juridique','materiel','autre_depense')
+                   NOT NULL,
+    client_id      INT NULL,
+    libelle        VARCHAR(191) NOT NULL,
+    montant_ht     DECIMAL(10,2) NOT NULL,
+    tva_taux       DECIMAL(5,2) NOT NULL DEFAULT 20.00,
+    date_mouvement DATE NOT NULL,
+    -- `prevu` : facturé ou engagé, pas encore en banque. La distinction fait
+    -- tout l'écart entre le MRR et la trésorerie.
+    statut         ENUM('prevu','regle') NOT NULL DEFAULT 'regle',
+    moyen          VARCHAR(40) NULL,
+    note           TEXT NULL,
+    cree_par       INT NULL,
+    created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY k_periode (date_mouvement, sens),
+    KEY k_client (client_id),
+    CONSTRAINT fk_fin_client
+        FOREIGN KEY (client_id) REFERENCES crm_clients(id) ON DELETE SET NULL,
+    CONSTRAINT fk_fin_auteur
+        FOREIGN KEY (cree_par) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ─── Reprise de l'existant ──────────────────────────────────────────────────
+--  Chaque établissement déjà présent devient un client, sinon le CRM s'ouvre
+--  vide alors que les comptes existent.
+--  INSERT ... SELECT avec NOT EXISTS : relancer ce fichier ne duplique rien.
+--
+--  Une différence assumée avec install_mutualise.sql, qui reprend l'existant
+--  en « aucune » : ce fichier-ci est celui du README, celui qui monte la
+--  démonstration. Avec « aucune », exigerAbonnement() (includes/crm.php)
+--  renvoie le compte partenaire de démo vers le mur d'abonnement dès la
+--  connexion — jean@lebecquipique.fr n'atteint jamais son tableau de bord, et
+--  la moitié de l'application reste invisible à qui suit le README.
+--
+--  Les valeurs posées ici sont des valeurs de DÉMONSTRATION, et n'affirment
+--  aucune règle commerciale : `essai` avec `essai_jusqu_au` à trois mois
+--  reprend la période d'essai que la colonne documente déjà, et `mrr` reste à
+--  0 parce qu'un essai n'est précisément pas facturé. La grille tarifaire
+--  réelle vit dans le contrat partenaire, hors de ce dépôt : elle se saisit
+--  depuis le back-office, elle ne s'écrit pas en dur dans un jeu de démo.
+
+INSERT INTO crm_clients (etablissement_id, nom, categorie, ville, adresse,
+                         statut, offre, mrr, essai_jusqu_au)
+SELECT e.id, e.nom, e.type, e.ville, e.adresse,
+       'essai', 'fondateur', 0, DATE_ADD(CURDATE(), INTERVAL 3 MONTH)
+  FROM etablissements e
+ WHERE NOT EXISTS (SELECT 1 FROM crm_clients c WHERE c.etablissement_id = e.id);
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+--  Suivi des migrations
+--
+--  Ce fichier est un point de départ complet : il contient déjà le résultat
+--  de toutes les migrations db_migrations_v4 à v15. Les enregistrer ici évite
+--  qu'`outils/migrer.php` ne propose de les rejouer sur une base neuve — ce
+--  qui échouerait sur v4, dont le contenu est intégré plus haut et qui n'est
+--  pas rejouable (« Nom du champ statut déjà utilisé »).
+--
+--  À partir d'ici, le cycle est simple : on ajoute un fichier
+--  db_migrations_v16.sql, et `php outils/migrer.php` l'applique et
+--  l'enregistre. Plus rien ne se pose à la main dans phpMyAdmin.
+--
+--  Pour une base créée AVANT l'existence de ce suivi :
+--      php outils/migrer.php --adopter
+-- ═══════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS schema_migrations (
+    version     VARCHAR(20) NOT NULL,
+    applique_le DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (version)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO schema_migrations (version) VALUES
+('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15');

@@ -1034,3 +1034,31 @@ SELECT u.id AS user_id,
 -- Une chaine « techno,,rock » ou une virgule finale produit un element vide :
 -- il n'a rien a faire dans la table, et la cle primaire ne l'interdit pas.
 WHERE decoupe.interet <> '';
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+--  Suivi des migrations
+--
+--  Ce fichier est un point de départ complet : il contient déjà le résultat
+--  de toutes les migrations db_migrations_v4 à v15. Les enregistrer ici évite
+--  qu'`outils/migrer.php` ne propose de les rejouer sur une base neuve — ce
+--  qui échouerait sur v4, dont le contenu est intégré plus haut et qui n'est
+--  pas rejouable (« Nom du champ statut déjà utilisé »).
+--
+--  À partir d'ici, le cycle est simple : on ajoute un fichier
+--  db_migrations_v16.sql, et `php outils/migrer.php` l'applique et
+--  l'enregistre. Plus rien ne se pose à la main dans phpMyAdmin.
+--
+--  Pour une base créée AVANT l'existence de ce suivi :
+--      php outils/migrer.php --adopter
+-- ═══════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS schema_migrations (
+    version     VARCHAR(20) NOT NULL,
+    applique_le DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (version)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO schema_migrations (version) VALUES
+('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15');
