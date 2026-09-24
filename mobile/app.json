@@ -1,32 +1,35 @@
 {
   "expo": {
-    "name": "StudentLink",
-    "slug": "studentlink",
+    "name": "Linkee",
+    "slug": "linkee",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "fr.studentlink.app"
+      "bundleIdentifier": "fr.linkee.app"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#111013",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "fr.studentlink.app"
+      "package": "fr.linkee.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-web-browser",
+      "@react-native-community/datetimepicker"
     ],
-    "scheme": "studentlink"
+    "scheme": "linkee",
+    "backgroundColor": "#111013"
   }
 }

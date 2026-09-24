@@ -1,346 +1,257 @@
 /**
- * La fiche d'une soiree — transposition de view_event.php.
+ * La fiche d'une soirée — view_event.php.
  *
- * Le hero porte la photo du lieu quand elle existe, l'aplat de couleur n'etant
- * que le repli — comme sur le web, ou le texte reste lisible grace au voile
- * degrade et jamais grace a un assombrissement global de l'image.
+ * Le hero porte la photo du lieu sous un voile dégradé (ou, sans photo,
+ * l'aplat lave d'un flash, ou la surface rayée de la maquette), le rond de
+ * retour, « Partager », l'étiquette « BAR · JEU 12 MARS · TECHNO », le titre,
+ * le lieu et la réduction en pilule. Puis la jauge d'inscription, la
+ * description, les photos du lieu, les amis qui y vont, la date et le lieu,
+ * et « Rejoindre l'événement ».
  */
 
-import { useCallback, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import Feather from '@expo/vector-icons/Feather';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { Image, ImageBackground, Pressable, ScrollView, Share, Text, View, useWindowDimensions } from 'react-native';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Defs, Pattern, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { actions, api, ErreurApi } from '../../api';
+import { actions, adresseServeur, api, ErreurApi, type EvenementDetail } from '../../api';
+import { Bouton } from '../../composants/Bouton';
+import { libelleStyle } from '../../composants/CarteEvenement';
+import { Chargement, Ecran, Erreur } from '../../composants/Ecran';
+import { Avatar, Badge, BoutonRetour, Jauge } from '../../composants/Elements';
+import { Icone, type NomIcone } from '../../composants/Icone';
+import { Display, Mono, T } from '../../composants/Texte';
+import { useToast } from '../../composants/Toast';
+import { dateFr, heure, majuscules, ts } from '../../format';
 import { useJeton } from '../../session';
-import { useChargement } from '../../useChargement';
+import { fixe, fs, gutter, lh, lsEm, mono, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
-import { espace, fixe, rayon, taille } from '../../theme';
-import { Vide } from '../../composants/Vide';
 
-function dateComplete(iso: string): string {
-  const d = new Date(iso.replace(' ', 'T'));
-  if (Number.isNaN(d.getTime())) return '';
-
-  const jours = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-  const mois = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin',
-                'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-
-  return `${jours[d.getDay()]} ${d.getDate()} ${mois[d.getMonth()]} · ${d.getHours()}h${String(d.getMinutes()).padStart(2, '0')}`;
-}
-
-export default function FicheEvenement() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const jeton = useJeton();
-  const { c, ombre } = useTheme();
-  const marges = useSafeAreaInsets();
-  const router = useRouter();
-
-  const [enCours, setEnCours] = useState(false);
-
-  const { donnees, chargement, erreur, rafraichir } = useChargement(
-    useCallback(() => api.evenement(jeton, Number(id)), [jeton, id]),
-  );
-
-  const e = donnees?.evenement;
-
-  async function sInscrire() {
-    if (!e || enCours) return;
-    setEnCours(true);
-    try {
-      if (e.deja_inscrit) {
-        Alert.alert('Déjà inscrit', 'Retrouve ton pass dans le Wallet.');
-      } else {
-        await actions.inscrire(jeton, e.id);
-        rafraichir();
-      }
-    } catch (err) {
-      Alert.alert('Impossible', err instanceof ErreurApi ? err.message : 'Réessaie.');
-    } finally {
-      setEnCours(false);
-    }
-  }
-
-  if (chargement) {
-    return (
-      <View style={[s.centre, { backgroundColor: c.bg }]}>
-        <ActivityIndicator color={c.rouge} />
-      </View>
-    );
-  }
-
-  if (erreur !== null || !e) {
-    return (
-      <View style={{ flex: 1, backgroundColor: c.bg, paddingTop: marges.top }}>
-        <Vide
-          icone="alert-circle"
-          titre="Soirée introuvable"
-          texte={erreur ?? "Cette soirée n'existe plus."}
-          action={{ libelle: 'Retour', onPress: () => router.back() }}
-        />
-      </View>
-    );
-  }
-
-  const photo = e.photos[0]?.url ?? null;
-  const couleurHero = e.is_flash ? c.rouge : c.bleu;
-
+function Section({ icone, children }: { icone?: NomIcone; children: string }) {
+  const { c } = useTheme();
   return (
-    <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: marges.bottom + 100 }}>
-        {/* Hero : photo du lieu, ou aplat de marque en repli */}
-        <View style={[s.hero, { backgroundColor: couleurHero }]}>
-          {photo !== null && (
-            <Image source={{ uri: photo }} style={s.heroPhoto} resizeMode="cover" />
-          )}
-          {/* Le voile ne s'applique qu'au bas du hero : le texte reste lisible
-              sans assombrir toute la photo. */}
-          <View style={s.voile} />
-
-          <Pressable
-            onPress={() => router.back()}
-            style={[s.retour, { top: marges.top + espace.sm }]}
-          >
-            <Feather name="arrow-left" size={20} color={fixe.surMedia} />
-          </Pressable>
-
-          <View style={s.heroTexte}>
-            {e.is_flash && (
-              <View style={[s.badgeFlash, { backgroundColor: fixe.surMedia }]}>
-                <Text style={{ color: c.rouge, fontSize: taille.xs, fontWeight: '900' }}>
-                  FLASH
-                </Text>
-              </View>
-            )}
-            <Text style={[s.heroTitre, { color: fixe.surMedia }]}>{e.titre}</Text>
-            <Text style={[s.heroLieu, { color: fixe.surMedia }]}>
-              {e.etablissement.nom} · {e.etablissement.ville}
-            </Text>
-          </View>
-        </View>
-
-        <View style={s.corps}>
-          {/* Date et adresse */}
-          <View style={[s.bloc, { backgroundColor: c.blanc, borderColor: c.grisClair }, ombre('sm')]}>
-            <View style={s.ligne}>
-              <Feather name="calendar" size={16} color={c.gris} />
-              <Text style={[s.ligneTexte, { color: c.noir }]}>{dateComplete(e.date_heure)}</Text>
-            </View>
-            {e.etablissement.adresse !== '' && (
-              <View style={[s.ligne, { marginTop: espace.base }]}>
-                <Feather name="map-pin" size={16} color={c.gris} />
-                <Text style={[s.ligneTexte, { color: c.noir }]}>{e.etablissement.adresse}</Text>
-              </View>
-            )}
-            {e.reduction !== null && e.reduction > 0 && (
-              <View style={[s.ligne, { marginTop: espace.base }]}>
-                <Feather name="tag" size={16} color={c.rouge} />
-                <Text style={[s.ligneTexte, { color: c.rouge, fontWeight: '900' }]}>
-                  −{e.reduction}% sur place
-                  {e.prix_normal !== null
-                    ? ` · au lieu de ${e.prix_normal.toFixed(2).replace('.', ',')} €`
-                    : ''}
-                </Text>
-              </View>
-            )}
-            {e.is_gratuit && (
-              <View style={[s.ligne, { marginTop: espace.base }]}>
-                <Feather name="gift" size={16} color={c.succes} />
-                <Text style={[s.ligneTexte, { color: c.succes, fontWeight: '900' }]}>
-                  Entrée gratuite
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {/* Description */}
-          {e.description !== '' && (
-            <Text style={[s.description, { color: c.grisFonce }]}>{e.description}</Text>
-          )}
-
-          {/* Amis qui y vont */}
-          {e.amis.length > 0 && (
-            <View style={s.section}>
-              <Text style={[s.sectionTitre, { color: c.noir }]}>
-                {e.amis.length} personne{e.amis.length > 1 ? 's' : ''} que tu suis y {e.amis.length > 1 ? 'vont' : 'va'}
-              </Text>
-              <View style={s.amis}>
-                {e.amis.map((a) => (
-                  <View key={a.id} style={s.ami}>
-                    {a.photo_url !== null ? (
-                      <Image source={{ uri: a.photo_url }} style={s.amiPhoto} />
-                    ) : (
-                      <View style={[s.amiPhoto, s.amiInitiale, { backgroundColor: c.bleu }]}>
-                        <Text style={{ color: fixe.surMedia, fontWeight: '900' }}>
-                          {a.prenom.charAt(0).toUpperCase()}
-                        </Text>
-                      </View>
-                    )}
-                    <Text style={[s.amiPrenom, { color: c.grisFonce }]} numberOfLines={1}>
-                      {a.prenom}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-
-          {/* Places */}
-          <View style={s.section}>
-            <View style={s.ligneTaux}>
-              <Text style={[s.tauxLabel, { color: c.noir }]}>
-                {e.places.inscrits}/{e.places.quota} places
-              </Text>
-              {e.places.pourcentage !== null && (
-                <Text style={[s.tauxLabel, { color: c.noir }]}>{e.places.pourcentage}%</Text>
-              )}
-            </View>
-            <View style={[s.jauge, { backgroundColor: c.grisClair }]}>
-              <View
-                style={[
-                  s.jaugeRemplie,
-                  {
-                    width: `${Math.min(100, e.places.pourcentage ?? 0)}%`,
-                    backgroundColor: e.places.complet ? c.danger : c.rouge,
-                  },
-                ]}
-              />
-            </View>
-          </View>
-
-          {/* Autres photos du lieu */}
-          {e.photos.length > 1 && (
-            <View style={s.section}>
-              <Text style={[s.sectionTitre, { color: c.noir }]}>Le lieu</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.galerie}>
-                {e.photos.slice(1).map((p, i) => (
-                  <Image key={i} source={{ uri: p.url }} style={s.galeriePhoto} />
-                ))}
-              </ScrollView>
-            </View>
-          )}
-        </View>
-      </ScrollView>
-
-      {/* Barre d'action, fixée en bas — comme le bouton du web */}
-      <View
-        style={[
-          s.barre,
-          {
-            backgroundColor: c.blanc,
-            borderTopColor: c.grisClair,
-            paddingBottom: marges.bottom + espace.base,
-          },
-        ]}
-      >
-        <Pressable
-          onPress={sInscrire}
-          disabled={enCours || (e.places.complet && !e.deja_inscrit)}
-          style={({ pressed }) => [
-            s.boutonPrincipal,
-            {
-              backgroundColor: e.deja_inscrit ? c.succesClair : c.noir,
-              opacity: e.places.complet && !e.deja_inscrit ? 0.5 : pressed ? 0.85 : 1,
-            },
-          ]}
-        >
-          {enCours ? (
-            <ActivityIndicator color={c.bg} />
-          ) : (
-            <Text
-              style={{
-                color: e.deja_inscrit ? c.succes : c.bg,
-                fontSize: taille.texte,
-                fontWeight: '700',
-              }}
-            >
-              {e.deja_inscrit
-                ? '✓ Tu es inscrit — pass dans le Wallet'
-                : e.places.complet
-                  ? 'Complet'
-                  : "S'inscrire et obtenir mon pass"}
-            </Text>
-          )}
-        </Pressable>
-      </View>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 12 }}>
+      {icone ? <Icone nom={icone} taille={16} couleur={c.gris} /> : null}
+      <Mono accessibilityRole="header">{children}</Mono>
     </View>
   );
 }
 
-const s = StyleSheet.create({
-  centre: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+/** Le repli sans photo : repeating-linear-gradient(135deg, surface 0 22px, surface-2 22px 44px). */
+function Rayures({ a, b }: { a: string; b: string }) {
+  return (
+    <Svg style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} width="100%" height="100%">
+      <Defs>
+        <Pattern id="rayures" patternUnits="userSpaceOnUse" width={62.2} height={62.2} patternTransform="rotate(45)">
+          <Rect x={0} y={0} width={31.1} height={62.2} fill={a} />
+          <Rect x={31.1} y={0} width={31.1} height={62.2} fill={b} />
+        </Pattern>
+      </Defs>
+      <Rect x={0} y={0} width="100%" height="100%" fill="url(#rayures)" />
+    </Svg>
+  );
+}
 
-  hero: { height: 260, justifyContent: 'flex-end', overflow: 'hidden' },
-  heroPhoto: { ...StyleSheet.absoluteFill, width: '100%', height: '100%' },
-  voile: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-  },
-  retour: {
-    position: 'absolute',
-    left: espace.md,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroTexte: { padding: espace.lg },
-  badgeFlash: {
-    alignSelf: 'flex-start',
-    borderRadius: rayon.pill,
-    paddingHorizontal: espace.sm,
-    paddingVertical: 3,
-    marginBottom: espace.sm,
-  },
-  heroTitre: { fontSize: taille.hero, fontWeight: '900', lineHeight: 38 },
-  heroLieu: { fontSize: taille.texte, marginTop: espace.xs, opacity: 0.9 },
+export default function FicheEvenement() {
+  const { c } = useTheme();
+  const jeton = useJeton();
+  const toast = useToast();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { top } = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
 
-  corps: { padding: espace.lg },
-  bloc: { borderWidth: 1, borderRadius: rayon.base, padding: espace.md },
-  ligne: { flexDirection: 'row', alignItems: 'center', gap: espace.sm },
-  ligneTexte: { fontSize: taille.texte, flexShrink: 1 },
+  const [e, setE] = useState<EvenementDetail | null>(null);
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [inscription, setInscription] = useState<'libre' | 'attente' | 'vient'>('libre');
+  const [libelleErreur, setLibelleErreur] = useState<string | null>(null);
+  const [instant] = useState(() => Date.now() / 1000);
 
-  description: { fontSize: taille.texte, lineHeight: 22, marginTop: espace.lg },
+  const charger = useCallback(async () => {
+    try {
+      setErreur(null);
+      setE((await api.evenement(jeton, Number(id))).evenement);
+    } catch (err) {
+      setErreur(err instanceof Error ? err.message : 'Événement introuvable.');
+    }
+  }, [jeton, id]);
 
-  section: { marginTop: espace.xl },
-  sectionTitre: { fontSize: taille.corps, fontWeight: '900', marginBottom: espace.base },
+  useFocusEffect(useCallback(() => { void charger(); }, [charger]));
 
-  amis: { flexDirection: 'row', flexWrap: 'wrap', gap: espace.md },
-  ami: { alignItems: 'center', width: 64 },
-  amiPhoto: { width: 48, height: 48, borderRadius: 24 },
-  amiInitiale: { alignItems: 'center', justifyContent: 'center' },
-  amiPrenom: { fontSize: taille.sm, marginTop: espace.xs },
+  if (!e) {
+    return (
+      <Ecran avecBarre={false}>
+        <View style={{ paddingHorizontal: gutter, paddingTop: 16 }}><BoutonRetour /></View>
+        {erreur ? <Erreur message={erreur} onReessayer={charger} /> : <Chargement />}
+      </Ecran>
+    );
+  }
 
-  ligneTaux: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: espace.sm },
-  tauxLabel: { fontSize: taille.base, fontWeight: '700' },
-  jauge: { height: 6, borderRadius: 3, overflow: 'hidden' },
-  jaugeRemplie: { height: '100%', borderRadius: 3 },
+  const flash = e.is_flash && ts(e.flash_expiry) > instant;
+  const photo = e.photos[0]?.url ?? null;
+  const encre = photo ? fixe.craie : flash ? fixe.surLave : c.noir;
+  const accent = photo ? '#FF5424' : flash ? fixe.surLave : c.surRougeClair;
+  const pct = e.places.pourcentage ?? 0;
+  const style = e.style_musique ? ' · ' + majuscules(libelleStyle(e.style_musique)) : '';
+  const inscrit = e.deja_inscrit || inscription === 'vient';
 
-  galerie: { flexGrow: 0 },
-  galeriePhoto: { width: 140, height: 100, borderRadius: rayon.sm, marginRight: espace.sm },
+  async function partager() {
+    try {
+      await Share.share({
+        title: e!.titre,
+        message: `${e!.titre} — ${e!.etablissement.nom} · ${dateFr(e!.date_heure, 'D j M')}\n${adresseServeur()}/view_event.php?id=${e!.id}`,
+      });
+    } catch {
+      // Partage annulé : rien à signaler.
+    }
+  }
 
-  barre: {
-    borderTopWidth: 1,
-    paddingHorizontal: espace.lg,
-    paddingTop: espace.base,
-  },
-  boutonPrincipal: {
-    borderRadius: rayon.bouton,
-    paddingVertical: espace.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 52,
-  },
-});
+  async function rejoindre() {
+    setInscription('attente');
+    try {
+      await actions.inscrire(jeton, e!.id);
+      setInscription('vient');
+      toast('Tu es inscrit ! Rendez-vous ce soir.', 'success');
+    } catch (err) {
+      const msg = err instanceof ErreurApi ? err.message : 'Erreur réseau';
+      setLibelleErreur(err instanceof ErreurApi && err.statut !== 0 ? msg : '→ je rejoins');
+      setInscription('libre');
+      toast(msg, 'error');
+    }
+  }
+
+  // padding-top: 120px, et margin-top: -20px sur le site.
+  const contenuHero = (
+    <View style={{ paddingTop: 100 + top, paddingHorizontal: 20, paddingBottom: 32 }}>
+      <Text style={{ fontFamily: mono(500), fontSize: fs[2], letterSpacing: lsEm.label * fs[2], textTransform: 'uppercase', color: accent, marginBottom: 10 }}>
+        {majuscules(e.etablissement.type)} · {dateFr(e.date_heure, 'D j M')}{style}
+      </Text>
+      {e.sponsorise ? (
+        <Badge libelle="Sponsorisé" fond="rgba(17,16,19,0.1)" encre={fixe.surLave} filet="rgba(17,16,19,0.3)" style={{ alignSelf: 'flex-start', marginBottom: 10 }} />
+      ) : null}
+      <View accessibilityRole="header">
+        <Display taille={fs[9]} interligne={lh.display} couleur={encre}>{e.titre}</Display>
+        <Display taille={fs[7]} interligne={lh.display} couleur={encre} style={{ opacity: 0.85, marginTop: 6 }}>{e.etablissement.nom}</Display>
+      </View>
+      {(e.reduction ?? 0) > 0 || e.is_gratuit ? (
+        <View style={{ alignSelf: 'flex-start', marginTop: 18, backgroundColor: flash && !photo ? fixe.basalte : c.rouge, borderRadius: rayon.pill, paddingVertical: 8, paddingHorizontal: 20 }}>
+          <Display taille={fs[7]} interligne={1.2} couleur={flash && !photo ? fixe.craie : fixe.surLave}>
+            {(e.reduction ?? 0) > 0 ? `-${e.reduction}%` : 'Gratuit'}
+          </Display>
+        </View>
+      ) : null}
+    </View>
+  );
+
+  const arrondi = { borderBottomLeftRadius: rayon.xl, borderBottomRightRadius: rayon.xl, overflow: 'hidden' as const };
+
+  return (
+    <Ecran avecBarre={false} plein onRafraichir={charger}>
+      {photo ? (
+        <ImageBackground source={{ uri: photo }} accessibilityLabel={e.photos[0]?.legende ?? `Photo de ${e.etablissement.nom}`} style={arrondi}>
+          <LinearGradient
+            colors={['rgba(17,16,19,0.94)', 'rgba(17,16,19,0.74)', 'rgba(17,16,19,0.34)', 'rgba(17,16,19,0.18)']}
+            locations={[0, 0.32, 0.62, 1]}
+            start={{ x: 0, y: 1 }} end={{ x: 0, y: 0 }}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+          />
+          {contenuHero}
+        </ImageBackground>
+      ) : (
+        <View style={[arrondi, { backgroundColor: flash ? c.rouge : c.blanc }]}>
+          {flash ? null : <Rayures a={c.blanc} b={c.surface2} />}
+          {contenuHero}
+        </View>
+      )}
+
+      <BoutonRetour media style={{ position: 'absolute', top: top + 36, left: 20 }} />
+      <Pressable
+        onPress={partager}
+        accessibilityRole="button"
+        style={{ position: 'absolute', top: top + 36, right: 20, flexDirection: 'row', alignItems: 'center', gap: 7, minHeight: 44, paddingHorizontal: 18, borderRadius: rayon.pill, backgroundColor: fixe.basalte }}
+      >
+        <Icone nom="partage" taille={16} couleur={fixe.craie} />
+        <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: fixe.craie }}>Partager</Text>
+      </Pressable>
+
+      <View style={{ paddingHorizontal: gutter, marginTop: 24 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Icone nom="personnes" taille={20} couleur={c.grisFonce} />
+            <T taille={fs[4]} poids={700}>{e.places.inscrits} / {e.places.quota} inscrits</T>
+          </View>
+          <Text style={{ fontFamily: mono(600), fontSize: fs[4], color: c.surRougeClair }}>{pct}%</Text>
+        </View>
+        <Jauge pourcentage={pct} piste={c.grisClair} remplissage={c.rouge} hauteur={8} />
+
+        <View style={{ marginTop: 32 }}>
+          <Section icone="info">À propos de l&apos;événement</Section>
+          <T taille={fs[5]} interligne={lh.relaxed} couleur={c.grisFonce}>{e.description}</T>
+        </View>
+
+        {e.photos.length ? (
+          <View style={{ marginTop: 32 }}>
+            <Section icone="image">Le lieu en photos</Section>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 8 }}>
+              {e.photos.map((p, i) => (
+                <View key={i}>
+                  <Image source={{ uri: p.url }} accessibilityLabel={p.legende ?? `Photo de ${e.etablissement.nom}`}
+                    style={{ height: 180, width: Math.min(280, width * 0.7), borderRadius: rayon.md }} resizeMode="cover" />
+                  {p.legende ? <T taille={fs[2]} couleur={c.gris} style={{ marginTop: 6, maxWidth: 280 }}>{p.legende}</T> : null}
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
+
+        {e.amis.length ? (
+          <View style={{ marginTop: 32 }}>
+            <Section>Tes potes qui y vont</Section>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+              {e.amis.map((f) => (
+                <Pressable key={f.id} onPress={() => router.push({ pathname: '/etudiant/[id]', params: { id: String(f.id) } })}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.pill, paddingVertical: 5, paddingLeft: 5, paddingRight: 14 }}>
+                  <Avatar photo={f.photo_url} prenom={f.prenom} taille={24} />
+                  <T taille={fs[3]} poids={600}>{f.prenom}</T>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        ) : null}
+
+        <View style={{ flexDirection: 'row', gap: 12, marginTop: 24 }}>
+          <View style={{ flex: 1, backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.md, padding: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+              <Icone nom="horloge" taille={16} couleur={c.gris} />
+              <Mono>Date &amp; heure</Mono>
+            </View>
+            <T taille={fs[4]} poids={700}>{dateFr(e.date_heure, 'j M Y')}</T>
+            <Text style={{ fontFamily: mono(400), fontSize: fs[4], color: c.grisFonce }}>{heure(e.date_heure)}</Text>
+          </View>
+          <View style={{ flex: 1, backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.md, padding: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+              <Icone nom="epingle" taille={16} couleur={c.gris} />
+              <Mono>Lieu</Mono>
+            </View>
+            <T taille={fs[4]} poids={700}>{e.etablissement.nom}</T>
+            <T taille={fs[3]} couleur={c.gris}>{e.etablissement.ville}</T>
+          </View>
+        </View>
+
+        <View style={{ marginTop: 40, marginBottom: 60 }}>
+          <Bouton
+            plein
+            variante={inscription === 'vient' ? 'contour' : 'primaire'}
+            libelle={inscription === 'vient' ? 'Inscrit' : inscrit ? 'Tu es inscrit·e' : libelleErreur ?? "Rejoindre l'événement"}
+            icone={inscrit ? 'check' : undefined}
+            desactive={inscrit}
+            chargement={inscription === 'attente'}
+            onPress={rejoindre}
+            style={{ paddingVertical: 18 }}
+          />
+        </View>
+      </View>
+    </Ecran>
+  );
+}

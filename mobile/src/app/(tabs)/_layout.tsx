@@ -1,66 +1,32 @@
 /**
- * Les quatre onglets, dans l'ordre du web : Explore, Squads, Wallet, Moi.
+ * Les quatre onglets, dans l'ordre et avec les libellés du site : Explorer,
+ * Squads, Pass, Moi — dessinés par la barre flottante de la charte.
  *
- * Meme ordre et memes libelles que la barre du bas du site : un etudiant qui
- * passe du navigateur a l'application doit retrouver son pouce au meme
- * endroit. Les icones sont de la famille Feather, celle dont le trait — 2 px,
- * bouts arrondis — correspond aux SVG dessines a la main dans les gabarits.
+ * Notifications, Classement et Abonnements vivent ici aussi, sans onglet
+ * propre : sur le site ces pages gardent la barre du bas, et c'est ce qui
+ * permet de la garder ici.
  */
 
-import Feather from '@expo/vector-icons/Feather';
 import { Tabs } from 'expo-router';
 
+import { BarreOnglets } from '../../composants/BarreOnglets';
 import { useTheme } from '../../useTheme';
-import { taille } from '../../theme';
 
 export default function Onglets() {
   const { c } = useTheme();
 
   return (
     <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: c.noir,
-        tabBarInactiveTintColor: c.gris,
-        tabBarStyle: {
-          backgroundColor: c.blanc,
-          borderTopColor: c.grisClair,
-        },
-        tabBarLabelStyle: {
-          fontSize: taille.xs,
-          fontWeight: '700',
-          letterSpacing: 0.5,
-        },
-      }}
+      tabBar={(props) => <BarreOnglets {...props} />}
+      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: c.bg }, animation: 'fade' }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'EXPLORE',
-          tabBarIcon: ({ color, size }) => <Feather name="search" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="squads"
-        options={{
-          title: 'SQUADS',
-          tabBarIcon: ({ color, size }) => <Feather name="users" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="wallet"
-        options={{
-          title: 'WALLET',
-          tabBarIcon: ({ color, size }) => <Feather name="credit-card" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="moi"
-        options={{
-          title: 'MOI',
-          tabBarIcon: ({ color, size }) => <Feather name="user" size={size} color={color} />,
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: 'Explorer' }} />
+      <Tabs.Screen name="squads" options={{ title: 'Squads' }} />
+      <Tabs.Screen name="wallet" options={{ title: 'Pass' }} />
+      <Tabs.Screen name="moi" options={{ title: 'Moi' }} />
+      <Tabs.Screen name="notifications" options={{ href: null }} />
+      <Tabs.Screen name="classement" options={{ href: null }} />
+      <Tabs.Screen name="abonnements" options={{ href: null }} />
     </Tabs>
   );
 }

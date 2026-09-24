@@ -1,177 +1,112 @@
 /**
- * Ecran de connexion.
+ * Connexion — auth/login.php.
  *
- * Reprend le ton du web — « Content de te revoir. », Playfair en italique sur
- * le second mot — parce qu'une application qui ne ressemble pas au site
- * ressemble a une autre application.
+ * Le logo, « Content de te revoir. », les deux champs, « Mot de passe
+ * oublié ? » aligné à droite, la pilule lave, le lien vers l'inscription et
+ * le bloc des comptes de démonstration en mono. Mêmes textes, même ordre.
  */
 
-import { useState } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import React, { useState } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { Link, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErreurApi } from '../api';
+import { Bouton } from '../composants/Bouton';
+import { Encart } from '../composants/Elements';
+import { Champ } from '../composants/Formulaire';
+import { Marque } from '../composants/Marque';
+import { T, TitreEcran } from '../composants/Texte';
 import { useSession } from '../session';
+import { fs, lsEm, mono, rayon, sans } from '../theme';
 import { useTheme } from '../useTheme';
-import { espace, rayon, taille } from '../theme';
 
 export default function Connexion() {
-  const { connexion, enCours } = useSession();
   const { c } = useTheme();
-  const marges = useSafeAreaInsets();
-
+  const { connexion, enCours } = useSession();
+  const { top, bottom } = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
   const [erreur, setErreur] = useState<string | null>(null);
 
-  const pret = email.trim() !== '' && motDePasse !== '' && !enCours;
-
-  async function envoyer() {
-    if (!pret) return;
+  async function valider() {
+    if (!email.trim() || !motDePasse) {
+      setErreur('Merci de remplir tous les champs.');
+      return;
+    }
     setErreur(null);
     try {
       await connexion(email, motDePasse);
-      // La garde de _layout.tsx bascule sur les onglets : rien a faire ici.
     } catch (e) {
-      setErreur(e instanceof ErreurApi ? e.message : 'Connexion impossible.');
+      // Mêmes phrases que le site : « Email ou mot de passe incorrect. »
+      if (e instanceof ErreurApi && e.code === 'identifiants') setErreur('Email ou mot de passe incorrect.');
+      else if (e instanceof ErreurApi && e.code === 'trop_de_tentatives') setErreur('Trop de tentatives. Réessaye dans 15 minutes.');
+      else setErreur(e instanceof ErreurApi ? e.message : 'Connexion impossible.');
     }
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: c.bg }}
-      // Sur iOS le clavier recouvre le formulaire sans ce decalage ; sur
-      // Android le systeme redimensionne deja la fenetre.
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
-        contentContainerStyle={[
-          s.contenu,
-          { paddingTop: marges.top + espace.xxl, paddingBottom: marges.bottom + espace.xl },
-        ]}
         keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingTop: 46 + top, paddingBottom: 46 + bottom, paddingHorizontal: 24, width: '100%', maxWidth: 460, alignSelf: 'center' }}
       >
-        <Text style={[s.marque, { color: c.noir }]}>
-          StudentLink <Text style={{ color: c.rouge, fontStyle: 'italic' }}>/ Explorer</Text>
-        </Text>
+        <View style={{ marginBottom: 34 }}>
+          <Marque />
+        </View>
 
-        <Text style={[s.titre, { color: c.noir }]}>
-          Content de{'\n'}
-          <Text style={{ fontStyle: 'italic' }}>te revoir.</Text>
-        </Text>
+        <TitreEcran lignes={['Content de te', 'revoir.']} taille={fs[9]} style={{ marginBottom: 30 }} />
 
-        {erreur !== null && (
-          <View style={[s.erreur, { backgroundColor: c.dangerClair, borderColor: c.danger }]}>
-            <Text style={{ color: c.danger, fontSize: taille.texte }}>{erreur}</Text>
-          </View>
-        )}
+        {erreur ? <Encart genre="erreur">{erreur}</Encart> : null}
 
-        <Text style={[s.etiquette, { color: c.grisFonce }]}>E-MAIL</Text>
-        <TextInput
+        <Champ
+          etiquette="Email"
           value={email}
           onChangeText={setEmail}
           placeholder="arthur@uca.fr"
-          placeholderTextColor={c.gris}
+          keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
-          keyboardType="email-address"
+          autoComplete="username"
           textContentType="username"
-          style={[s.champ, { backgroundColor: c.blanc, borderColor: c.grisClair, color: c.noir }]}
+          returnKeyType="next"
         />
-
-        <Text style={[s.etiquette, { color: c.grisFonce }]}>MOT DE PASSE</Text>
-        <TextInput
+        <Champ
+          etiquette="Mot de passe"
           value={motDePasse}
           onChangeText={setMotDePasse}
           placeholder="••••••••"
-          placeholderTextColor={c.gris}
           secureTextEntry
-          // Laisse iOS proposer le trousseau plutot qu'une saisie a la main.
+          autoComplete="current-password"
           textContentType="password"
-          onSubmitEditing={envoyer}
           returnKeyType="go"
-          style={[s.champ, { backgroundColor: c.blanc, borderColor: c.grisClair, color: c.noir }]}
+          onSubmitEditing={valider}
         />
 
-        <Pressable
-          onPress={envoyer}
-          disabled={!pret}
-          style={({ pressed }) => [
-            s.bouton,
-            {
-              backgroundColor: c.noir,
-              opacity: !pret ? 0.5 : pressed ? 0.85 : 1,
-            },
-          ]}
-        >
-          {enCours ? (
-            <ActivityIndicator color={c.bg} />
-          ) : (
-            <Text style={[s.boutonTexte, { color: c.bg }]}>→ Se connecter</Text>
-          )}
-        </Pressable>
+        <View style={{ alignItems: 'flex-end', marginTop: -4, marginBottom: 18 }}>
+          <Link href="/mot-de-passe" style={{ minHeight: 44, paddingVertical: 12 }}>
+            <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: c.surRougeClair }}>Mot de passe oublié ?</Text>
+          </Link>
+        </View>
 
-        <View style={[s.demo, { backgroundColor: c.surface2, borderColor: c.grisClair }]}>
-          <Text style={{ color: c.grisFonce, fontSize: taille.base, fontWeight: '700' }}>
+        <Bouton libelle="Se connecter" plein onPress={valider} chargement={enCours} />
+
+        <View style={{ flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', marginTop: 20 }}>
+          <T taille={fs[4]} couleur={c.gris}>Pas encore de compte ? </T>
+          <Text onPress={() => router.push('/inscription')} accessibilityRole="link" style={{ fontFamily: sans(700), fontSize: fs[4], color: c.noir }}>
+            Créer un compte
+          </Text>
+        </View>
+
+        <View style={{ marginTop: 32, paddingVertical: 16, paddingHorizontal: 18, backgroundColor: c.blanc, borderRadius: rayon.md }}>
+          <Text style={{ fontFamily: mono(500), fontSize: fs[2], color: c.noir, textTransform: 'uppercase', letterSpacing: lsEm.label * fs[2], marginBottom: 4 }}>
             Comptes de démo
           </Text>
-          <Text style={{ color: c.gris, fontSize: taille.base, marginTop: espace.xs }}>
-            arthur@uca.fr / password
+          <Text style={{ fontFamily: mono(400), fontSize: fs[2], lineHeight: fs[2] * 1.7, color: c.gris }}>
+            Étudiant : arthur@uca.fr / password{'\n'}Partenaire : jean@lebecquipique.fr / password
           </Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
-
-const s = StyleSheet.create({
-  contenu: { paddingHorizontal: espace.lg, flexGrow: 1 },
-  marque: { fontSize: taille.corps, fontWeight: '700', marginBottom: espace.xxl },
-  titre: { fontSize: taille.hero, fontWeight: '900', lineHeight: 40, marginBottom: espace.xl },
-  etiquette: {
-    fontSize: taille.xs,
-    fontWeight: '700',
-    letterSpacing: 1,
-    marginBottom: espace.sm,
-    marginTop: espace.md,
-  },
-  champ: {
-    borderWidth: 1,
-    borderRadius: rayon.sm,
-    paddingHorizontal: espace.md,
-    paddingVertical: espace.base,
-    // 16 pt minimum : en dessous, iOS zoome sur le champ a la mise au point.
-    fontSize: taille.corps,
-  },
-  bouton: {
-    marginTop: espace.xl,
-    borderRadius: rayon.bouton,
-    paddingVertical: espace.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 52,
-  },
-  boutonTexte: { fontSize: taille.texte, fontWeight: '700', letterSpacing: 0.5 },
-  erreur: {
-    borderWidth: 1,
-    borderRadius: rayon.sm,
-    padding: espace.base,
-    marginBottom: espace.sm,
-  },
-  demo: {
-    marginTop: espace.xxl,
-    borderWidth: 1,
-    borderRadius: rayon.sm,
-    padding: espace.md,
-  },
-});

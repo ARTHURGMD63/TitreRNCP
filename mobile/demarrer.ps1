@@ -1,14 +1,15 @@
 # ============================================================
-#  StudentLink — lanceur de l'environnement de developpement
+#  Linkee — lanceur de l'environnement de developpement
 #
-#  Double-cliquer sur « StudentLink.bat » (racine du projet) ou sur le
+#  Double-cliquer sur « Linkee.bat » (racine du projet) ou sur le
 #  raccourci du Bureau. Sinon, depuis PowerShell :
 #
 #      cd C:\wamp64\www\TitreRNCP\mobile; .\demarrer.ps1
 #
 #  Ce que le script fait, dans l'ordre :
 #
-#    1. verifie qu'Apache et MySQL tournent ;
+#    1. verifie que MySQL tourne, et qu'un serveur web repond sur 8080 —
+#       Apache, ou a defaut le serveur PHP integre, lance ici ;
 #    2. choisit l'adresse reseau que le telephone pourra joindre ;
 #    3. verifie que l'API repond reellement dessus ;
 #    4. affiche les adresses — site web ET application ;
@@ -36,7 +37,7 @@ function Titre($texte) {
 }
 
 Write-Host ""
-Write-Host "  StudentLink " -NoNewline -ForegroundColor White
+Write-Host "  Linkee " -NoNewline -ForegroundColor White
 Write-Host "/ environnement de developpement" -ForegroundColor Red
 
 # ─── 1. Les services WAMP ───────────────────────────────────────────────────
@@ -47,27 +48,45 @@ Write-Host "/ environnement de developpement" -ForegroundColor Red
 
 Titre "Services"
 
-$apache = Get-Process httpd  -ErrorAction SilentlyContinue
 $mysql  = Get-Process mysqld -ErrorAction SilentlyContinue
-
-if ($apache) {
-    Write-Host "    Apache  " -NoNewline; Write-Host "en marche" -ForegroundColor Green
-} else {
-    Write-Host "    Apache  " -NoNewline; Write-Host "ARRETE" -ForegroundColor Red
-}
 if ($mysql) {
     Write-Host "    MySQL   " -NoNewline; Write-Host "en marche" -ForegroundColor Green
 } else {
     Write-Host "    MySQL   " -NoNewline; Write-Host "ARRETE" -ForegroundColor Red
-}
-
-if (-not $apache -or -not $mysql) {
     Write-Host ""
     Write-Host "    Demarrer WAMP (icone verte dans la barre des taches)," -ForegroundColor Yellow
     Write-Host "    puis relancer ce script." -ForegroundColor Yellow
     Write-Host ""
     Read-Host "    Entree pour fermer"
     exit 1
+}
+
+# Le serveur web. Apache s'il tourne ; sinon le serveur PHP integre, avec le
+# routeur outils/serveur_local.php (cache, compression, et les memes refus que
+# .htaccess). Il ecoute sur toutes les interfaces : c'est ce qui permet au
+# telephone de le joindre.
+$web = Get-NetTCPConnection -State Listen -LocalPort 8080 -ErrorAction SilentlyContinue
+if ($web) {
+    Write-Host "    Web     " -NoNewline; Write-Host "en marche (port 8080)" -ForegroundColor Green
+} else {
+    $php = Get-ChildItem 'C:\wamp64\bin\php\php8*\php.exe' -ErrorAction SilentlyContinue |
+        Sort-Object FullName -Descending | Select-Object -First 1
+    if (-not $php) {
+        Write-Host "    Web     " -NoNewline; Write-Host "ARRETE, et PHP introuvable" -ForegroundColor Red
+        Read-Host "    Entree pour fermer"
+        exit 1
+    }
+    # La base de travail est sur MariaDB ; son port est 3307 quand MySQL
+    # occupe deja le 3306 dans WAMP.
+    $port = if (Get-NetTCPConnection -State Listen -LocalPort 3307 -ErrorAction SilentlyContinue) { '3307' } else { '3306' }
+    $env:MYSQLHOST = '127.0.0.1'
+    $env:MYSQLPORT = $port
+    if (-not $env:MYSQLDATABASE) { $env:MYSQLDATABASE = 'linkee' }
+    $racine = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+    Start-Process -FilePath $php.FullName -WindowStyle Minimized -WorkingDirectory $racine `
+        -ArgumentList '-d', 'zlib.output_compression=On', '-S', '0.0.0.0:8080', '-t', $racine, 'TitreRNCP\outils\serveur_local.php'
+    Start-Sleep -Seconds 1
+    Write-Host "    Web     " -NoNewline; Write-Host "serveur PHP lance (port 8080, base $($env:MYSQLDATABASE) sur $port)" -ForegroundColor Green
 }
 
 # ─── 2. L'adresse que le telephone pourra joindre ───────────────────────────
@@ -131,9 +150,10 @@ try {
 } catch {
     Write-Host "    INJOIGNABLE sur ${ip}:8080" -ForegroundColor Red
     Write-Host ""
-    Write-Host "    Apache tourne, mais refuse cette adresse. Verifier que le vhost" -ForegroundColor Yellow
-    Write-Host "    autorise ce reseau (Require ip ...) dans :" -ForegroundColor Yellow
+    Write-Host "    Le serveur tourne, mais refuse cette adresse. Avec Apache, verifier" -ForegroundColor Yellow
+    Write-Host "    que le vhost autorise ce reseau (Require ip ...) dans :" -ForegroundColor Yellow
     Write-Host "      C:\wamp64\bin\apache\apache2.4.62.1\conf\extra\httpd-vhosts.conf" -ForegroundColor DarkGray
+    Write-Host "    Sinon, le pare-feu Windows bloque peut-etre php.exe." -ForegroundColor Yellow
     Write-Host ""
     Read-Host "    Entree pour fermer"
     exit 1

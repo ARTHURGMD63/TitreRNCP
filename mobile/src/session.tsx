@@ -18,14 +18,22 @@ import { Platform } from 'react-native';
 
 import { api, ErreurApi, type Profil } from './api';
 
-const CLE_JETON = 'studentlink.jeton';
+const CLE_JETON = 'linkee.jeton';
+/** Clé d'avant le changement de nom : relue une fois, puis effacée. */
+const ANCIENNE_CLE_JETON = 'studentlink.jeton';
 
 type EtatSession = {
   /** null = deconnecte ; undefined = on ne sait pas encore. */
   profil: Profil | null | undefined;
   jeton: string | null;
   enCours: boolean;
+  /** Vrai juste après une inscription : l'accueil (onboarding) s'affiche. */
+  nouveau: boolean;
   connexion: (email: string, motDePasse: string) => Promise<void>;
+  inscription: (champs: Record<string, unknown>) => Promise<void>;
+  terminerAccueil: () => void;
+  /** Après « Enregistrer les modifications » : photo, école, promo. */
+  mettreAJour: (p: Profil) => void;
   deconnexion: () => Promise<void>;
 };
 
@@ -38,7 +46,16 @@ function nomAppareil(): string {
 
 async function lireJeton(): Promise<string | null> {
   try {
-    return await SecureStore.getItemAsync(CLE_JETON);
+    const jeton = await SecureStore.getItemAsync(CLE_JETON);
+    if (jeton) return jeton;
+    // Une installation d'avant Linkee garde son jeton sous l'ancien nom :
+    // on le reprend plutôt que de déconnecter tout le monde à la mise à jour.
+    const ancien = await SecureStore.getItemAsync(ANCIENNE_CLE_JETON);
+    if (ancien) {
+      await SecureStore.setItemAsync(CLE_JETON, ancien);
+      await SecureStore.deleteItemAsync(ANCIENNE_CLE_JETON);
+    }
+    return ancien;
   } catch {
     // Le trousseau peut etre indisponible — appareil verrouille juste apres
     // le demarrage, ou execution sur le web ou SecureStore n'existe pas. On
@@ -61,6 +78,7 @@ export function FournisseurSession({ children }: { children: React.ReactNode }) 
   const [profil, setProfil] = useState<Profil | null | undefined>(undefined);
   const [jeton, setJeton] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
+  const [nouveau, setNouveau] = useState(false);
 
   // Au lancement : un jeton range ne prouve pas que la session vit encore. Il
   // a pu expirer, ou etre revoque depuis un autre appareil. On le verifie
@@ -103,6 +121,7 @@ export function FournisseurSession({ children }: { children: React.ReactNode }) 
       profil,
       jeton,
       enCours,
+      nouveau,
 
       async connexion(email, motDePasse) {
         setEnCours(true);
@@ -114,6 +133,27 @@ export function FournisseurSession({ children }: { children: React.ReactNode }) 
         } finally {
           setEnCours(false);
         }
+      },
+
+      async inscription(champs) {
+        setEnCours(true);
+        try {
+          const rep = await api.inscription({ ...champs, appareil: nomAppareil() });
+          await ecrireJeton(rep.token);
+          setNouveau(rep.utilisateur.type === 'etudiant');
+          setJeton(rep.token);
+          setProfil(rep.utilisateur);
+        } finally {
+          setEnCours(false);
+        }
+      },
+
+      terminerAccueil() {
+        setNouveau(false);
+      },
+
+      mettreAJour(p) {
+        setProfil(p);
       },
 
       async deconnexion() {
@@ -133,7 +173,7 @@ export function FournisseurSession({ children }: { children: React.ReactNode }) 
         }
       },
     }),
-    [profil, jeton, enCours],
+    [profil, jeton, enCours, nouveau],
   );
 
   return <Contexte.Provider value={valeur}>{children}</Contexte.Provider>;

@@ -1,253 +1,317 @@
 /**
- * Wallet — les pass et les economies.
+ * Pass — wallet.php.
  *
- * Le QR code est dessine ici, a partir de la chaine rendue par l'API. Ses deux
- * couleurs viennent de `fixe` et jamais du theme : c'est la lecon du web, ou
- * elles etaient prises dans les jetons et donnaient, en mode sombre, un code
- * creme sur blanc — invisible a l'oeil et refuse par les lecteurs.
+ * « Ton pass, / en poche. », les deux montants (ce mois en volt, l'année),
+ * le carrousel des pass (aplat lave, halo, « Appuyer pour afficher. » puis le
+ * QR code sur fond blanc), les squads prévus, la liste des passes actifs
+ * (pastille lave ou moutarde selon le lieu) et l'historique, avec « Laisser
+ * un avis → » après un passage validé.
  */
 
-import { useCallback, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, { useCallback, useState } from 'react';
+import { Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
 import QRCode from 'react-native-qrcode-svg';
 
-import { api, type Pass } from '../../api';
-import { useJeton } from '../../session';
-import { useChargement } from '../../useChargement';
+import { actions, api, ErreurApi, type Pass, type ReponseWallet, type SquadAgenda } from '../../api';
+import { Bouton } from '../../composants/Bouton';
+import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
+import { Separateur } from '../../composants/Elements';
+import { Icone } from '../../composants/Icone';
+import { Display, Mono, T, TitreEcran } from '../../composants/Texte';
+import { useToast } from '../../composants/Toast';
+import { confirmer } from '../../confirmer';
+import { court, dateFr, majuscules, nombre } from '../../format';
+import { useJeton, useSession } from '../../session';
+import { fixe, fs, gutter, haloLave, lh, lsEm, mono, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
-import { espace, fixe, rayon, taille } from '../../theme';
-import { Vide } from '../../composants/Vide';
 
-/** La carte d'un pass, avec son code revele au toucher. */
-function CartePass({ pass }: { pass: Pass }) {
-  const { c, ombre } = useTheme();
+const MOIS = ['JANVIER', 'FÉVRIER', 'MARS', 'AVRIL', 'MAI', 'JUIN', 'JUILLET', 'AOÛT', 'SEPTEMBRE', 'OCTOBRE', 'NOVEMBRE', 'DÉCEMBRE'];
+
+/** Arrondi de number_format() : au plus proche, la moitié vers le haut. */
+const euros = (n: number) => nombre(Math.round(n));
+
+function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
+  p: Pass; index: number; total: number; largeur: number; nomTitulaire: string; onAnnule: () => void;
+}) {
+  const jeton = useJeton();
+  const toast = useToast();
   const [revele, setRevele] = useState(false);
+  const [attente, setAttente] = useState(false);
+
+  async function annuler() {
+    if (!(await confirmer('Veux-tu vraiment annuler ce pass ?'))) return;
+    setAttente(true);
+    try {
+      await actions.annulerPass(jeton, p.id);
+      toast('Pass annulé !', 'success');
+      setTimeout(onAnnule, 1000);
+    } catch (e) {
+      setAttente(false);
+      toast(e instanceof ErreurApi ? e.message : 'Erreur réseau', 'error');
+    }
+  }
+
+  const supprime = p.evenement_supprime;
+  const encre = fixe.surLave;
 
   return (
-    <View style={[s.pass, { backgroundColor: c.blanc, borderColor: c.grisClair }, ombre('sm')]}>
-      <View style={s.passEntete}>
-        <Text style={[s.passEtiquette, { color: c.gris }]}>PASS ÉTUDIANT</Text>
-        {pass.economie !== null && (
-          <Text style={[s.passEconomie, { color: c.rouge }]}>
-            −{pass.economie.toFixed(2).replace('.', ',')} €
-          </Text>
-        )}
+    <View
+      style={[
+        { width: largeur, backgroundColor: supprime ? '#767676' : '#FF5424', borderRadius: rayon.xl, marginBottom: 18, opacity: supprime ? 0.6 : 1 },
+        supprime ? null : haloLave,
+      ]}
+    >
+      <View style={{ paddingTop: 18, paddingHorizontal: 22, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <View style={{ flex: 1 }}>
+          <Mono couleur={encre} style={{ opacity: 0.8, marginBottom: 4 }}>
+            Pass étudiant · {index + 1}/{total}{supprime ? '' : ' · Actif'}
+          </Mono>
+          <T taille={fs[4]} poids={700} couleur={encre}>{supprime ? 'Pass invalide' : majuscules(nomTitulaire)}</T>
+        </View>
+        <Pressable
+          onPress={annuler}
+          disabled={attente}
+          accessibilityRole="button"
+          accessibilityLabel={supprime ? 'Supprimer ce pass' : 'Annuler ce pass'}
+          style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(17,16,19,0.12)', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Icone nom="croix" taille={16} couleur={encre} />
+        </Pressable>
       </View>
 
-      <Pressable
-        onPress={() => setRevele(true)}
-        // Le code n'apparait qu'au toucher : un pass affiche en clair dans la
-        // liste se photographie par-dessus l'epaule, et il vaut une entree.
-        style={[
-          s.zoneCode,
-          {
-            backgroundColor: revele ? fixe.qrClair : c.rouge,
-          },
-        ]}
-      >
-        {revele && pass.code_qr !== null ? (
-          <QRCode
-            value={pass.code_qr}
-            size={180}
-            color={fixe.qrSombre}
-            backgroundColor={fixe.qrClair}
-            // Niveau H : un quart du code peut etre masque — un doigt, un
-            // reflet — sans perdre la lecture. Un pass se scanne dans un bar,
-            // pas dans un studio.
-            ecl="H"
-          />
-        ) : (
-          <Text style={[s.zoneCodeTexte, { color: fixe.surMedia }]}>
-            Appuyer{'\n'}pour afficher.
-          </Text>
-        )}
-      </Pressable>
-
-      <Text style={[s.passTitre, { color: c.noir }]}>
-        {pass.etablissement} — {pass.titre}
-      </Text>
-      {pass.date_heure !== null && (
-        <Text style={[s.passDate, { color: c.gris }]}>
-          {new Date(pass.date_heure.replace(' ', 'T')).toLocaleDateString('fr-FR', {
-            weekday: 'short',
-            day: 'numeric',
-            month: 'short',
-          })}
-          {pass.reduction !== null ? ` · −${pass.reduction}%` : ''}
-        </Text>
+      {supprime ? (
+        <View style={{ backgroundColor: 'rgba(17,16,19,0.12)', marginHorizontal: 18, marginBottom: 18, borderRadius: rayon.base, paddingVertical: 34, paddingHorizontal: 20, minHeight: 188, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <Icone nom="interdit" taille={40} couleur="#666666" />
+          <Display taille={fs[5]} couleur="#555555" style={{ textAlign: 'center' }}>{'Événement\nsupprimé'}</Display>
+        </View>
+      ) : (
+        <Pressable
+          onPress={() => setRevele(true)}
+          accessibilityRole="button"
+          accessibilityLabel={revele ? 'QR code du pass' : 'Afficher le QR code'}
+          style={{ backgroundColor: revele ? '#FFFFFF' : 'rgba(17,16,19,0.1)', marginHorizontal: 18, marginBottom: 18, borderRadius: rayon.base, paddingVertical: revele ? 20 : 34, paddingHorizontal: 20, minHeight: 188, alignItems: 'center', justifyContent: 'center' }}
+        >
+          {revele && p.code_qr ? (
+            // Couleurs fixes : un QR code est une cible optique, il ne suit pas le thème.
+            <QRCode value={p.code_qr} size={200} color={fixe.qrSombre} backgroundColor={fixe.qrClair} ecl="H" />
+          ) : (
+            <Display taille={fs[6]} interligne={lh.tight} couleur={encre} style={{ textAlign: 'center' }}>{'Appuyer\npour afficher.'}</Display>
+          )}
+        </Pressable>
       )}
+
+      <View style={{ paddingHorizontal: 22, paddingBottom: 20 }}>
+        {supprime ? (
+          <>
+            <T taille={fs[4]} poids={700} couleur={encre}>Cet événement n&apos;existe plus</T>
+            <T taille={fs[3]} couleur={encre} style={{ opacity: 0.75, marginTop: 2 }}>Tu peux supprimer ce pass</T>
+          </>
+        ) : (
+          <>
+            <T taille={fs[5]} poids={700} couleur={encre}>{p.etablissement} — {p.titre}</T>
+            <T taille={fs[3]} couleur={encre} style={{ opacity: 0.8, marginTop: 2 }}>
+              {dateFr(p.date_heure, 'D j M · H\\hi')} · {(p.reduction ?? 0) > 0 ? `-${p.reduction}%` : 'entrée gratuite'}
+            </T>
+          </>
+        )}
+      </View>
     </View>
   );
 }
 
-export default function Wallet() {
-  const jeton = useJeton();
+function CarteSquadAgenda({ sq, largeur, onQuitte }: { sq: SquadAgenda; largeur: number; onQuitte: () => void }) {
   const { c } = useTheme();
-  const marges = useSafeAreaInsets();
+  const jeton = useJeton();
+  const toast = useToast();
 
-  const { donnees, chargement, rafraichit, erreur, recharger, rafraichir } =
-    useChargement(useCallback(() => api.wallet(jeton), [jeton]));
-
-  if (chargement) {
-    return (
-      <View style={[s.centre, { backgroundColor: c.bg }]}>
-        <ActivityIndicator color={c.rouge} />
-      </View>
-    );
+  async function quitter() {
+    if (!(await confirmer('Veux-tu vraiment quitter ce groupe de sport ?'))) return;
+    try {
+      await actions.quitterSquad(jeton, sq.id);
+      toast('Groupe quitté !', 'success');
+      setTimeout(onQuitte, 1000);
+    } catch (e) {
+      toast(e instanceof ErreurApi ? e.message : 'Erreur réseau', 'error');
+    }
   }
-
-  if (erreur !== null) {
-    return (
-      <View style={{ flex: 1, backgroundColor: c.bg, paddingTop: marges.top }}>
-        <Vide
-          icone="wifi-off"
-          titre="Rien n'arrive"
-          texte={erreur}
-          action={{ libelle: 'Réessayer', onPress: recharger }}
-        />
-      </View>
-    );
-  }
-
-  const actifs = donnees?.pass_actifs ?? [];
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: c.bg }}
-      contentContainerStyle={{
-        paddingTop: marges.top + espace.base,
-        paddingHorizontal: espace.lg,
-        paddingBottom: espace.xxl,
-      }}
-      refreshControl={
-        <RefreshControl refreshing={rafraichit} onRefresh={rafraichir} tintColor={c.rouge} />
-      }
-    >
-      <Text style={[s.marque, { color: c.noir }]}>
-        StudentLink <Text style={{ color: c.rouge, fontStyle: 'italic' }}>/ Wallet</Text>
-      </Text>
-
-      <Text style={[s.titre, { color: c.noir }]}>
-        Ton pass,{'\n'}
-        <Text style={{ fontStyle: 'italic' }}>en poche.</Text>
-      </Text>
-
-      <View style={s.economies}>
-        <View style={[s.tuile, { backgroundColor: c.rouge }]}>
-          <Text style={[s.tuileLabel, { color: fixe.surMedia }]}>CE MOIS</Text>
-          <Text style={[s.tuileValeur, { color: fixe.surMedia }]}>
-            {(donnees?.economies.mois ?? 0).toFixed(0)} €
-          </Text>
-          <Text style={[s.tuileSous, { color: fixe.surMedia }]}>économisé</Text>
+    <View style={{ width: largeur, backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderLeftWidth: 4, borderLeftColor: c.bleu, borderRadius: rayon.md, overflow: 'hidden' }}>
+      <View style={{ paddingTop: 16, paddingHorizontal: 16, paddingBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <View style={{ flex: 1 }}>
+          <Mono couleur={c.surBleuClair} style={{ marginBottom: 4 }}>Session {sq.type}</Mono>
+          <Display taille={fs[6]} interligne={lh.tight}>{sq.titre}</Display>
         </View>
-
-        <View style={[s.tuile, { backgroundColor: c.blanc, borderColor: c.grisClair, borderWidth: 1 }]}>
-          <Text style={[s.tuileLabel, { color: c.gris }]}>TOTAL ANNÉE</Text>
-          <Text style={[s.tuileValeur, { color: c.noir }]}>
-            {(donnees?.economies.annee ?? 0).toFixed(0)} €
-          </Text>
-          <Text style={[s.tuileSous, { color: c.gris }]}>depuis janvier</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Icone nom="activite" taille={24} couleur={c.surBleuClair} />
+          <Pressable onPress={quitter} accessibilityRole="button" accessibilityLabel="Quitter ce groupe" hitSlop={10} style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center', marginTop: -2 }}>
+            <Icone nom="croix" taille={16} couleur={c.noir} />
+          </Pressable>
         </View>
       </View>
-
-      {actifs.length === 0 ? (
-        <Vide
-          icone="credit-card"
-          titre="Aucun pass"
-          texte="Inscris-toi à une soirée depuis Explore, ton pass apparaîtra ici."
-        />
-      ) : (
-        actifs.map((p) => <CartePass key={p.id} pass={p} />)
-      )}
-
-      {(donnees?.historique.length ?? 0) > 0 && (
-        <>
-          <Text style={[s.section, { color: c.gris, borderTopColor: c.grisClair }]}>
-            {donnees?.historique.length} PASS PASSÉ
-            {(donnees?.historique.length ?? 0) > 1 ? 'S' : ''}
-          </Text>
-
-          {donnees?.historique.map((p) => (
-            <View key={p.id} style={[s.ligneHisto, { borderBottomColor: c.grisClair }]}>
-              <View style={{ flex: 1 }}>
-                <Text style={[s.histoTitre, { color: c.noir }]} numberOfLines={1}>
-                  {p.etablissement}
-                </Text>
-                <Text style={[s.histoSous, { color: c.gris }]} numberOfLines={1}>
-                  {p.titre}
-                </Text>
-              </View>
-              {p.economie !== null && (
-                <Text style={[s.histoMontant, { color: c.rouge }]}>
-                  −{p.economie.toFixed(2).replace('.', ',')} €
-                </Text>
-              )}
-            </View>
-          ))}
-        </>
-      )}
-    </ScrollView>
+      <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
+        <T taille={fs[4]} poids={700} style={{ marginBottom: 6 }}>{dateFr(sq.date_heure, 'D j M · H\\hi')}</T>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+          <Icone nom="epingle" taille={16} couleur={c.grisFonce} />
+          <T taille={fs[3]} couleur={c.grisFonce}>{sq.lieu}</T>
+        </View>
+        <T taille={fs[3]} poids={500} couleur={c.gris}>Organisé par {sq.createur_prenom} · Niveau : {sq.niveau}</T>
+      </View>
+    </View>
   );
 }
 
-const s = StyleSheet.create({
-  centre: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  marque: { fontSize: taille.titre, fontWeight: '700' },
-  titre: { fontSize: taille.grand, fontWeight: '900', lineHeight: 32, marginTop: espace.md },
-  economies: { flexDirection: 'row', gap: espace.base, marginTop: espace.lg },
-  tuile: { flex: 1, borderRadius: rayon.base, padding: espace.md },
-  tuileLabel: { fontSize: taille.xs, fontWeight: '700', letterSpacing: 1 },
-  tuileValeur: { fontSize: taille.grand, fontWeight: '900', marginTop: espace.xs },
-  tuileSous: { fontSize: taille.base, opacity: 0.9 },
+function EnTeteListe({ gauche, droite, style }: { gauche: string; droite: string; style?: object }) {
+  const { c } = useTheme();
+  const txt = { fontFamily: mono(500), fontSize: fs[1], letterSpacing: lsEm.label * fs[1], textTransform: 'uppercase' as const, color: c.gris };
+  return (
+    <View style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, borderTopWidth: 1, borderTopColor: c.grisClair }, style]}>
+      <Text style={txt}>{gauche}</Text>
+      <Text style={txt}>{droite}</Text>
+    </View>
+  );
+}
 
-  pass: {
-    borderWidth: 1,
-    borderRadius: rayon.base,
-    padding: espace.md,
-    marginTop: espace.md,
-  },
-  passEntete: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  passEtiquette: { fontSize: taille.xs, fontWeight: '700', letterSpacing: 1 },
-  passEconomie: { fontSize: taille.texte, fontWeight: '900' },
-  zoneCode: {
-    borderRadius: rayon.sm,
-    marginTop: espace.base,
-    minHeight: 210,
-    alignItems: 'center',
-    justifyContent: 'center',
-    // La marge blanche autour du code est la « zone de silence » exigee par la
-    // norme : sans elle, le lecteur ne trouve pas les reperes d'angle.
-    padding: espace.md,
-  },
-  zoneCodeTexte: { fontSize: taille.titre, fontWeight: '900', fontStyle: 'italic', textAlign: 'center' },
-  passTitre: { fontSize: taille.texte, fontWeight: '700', marginTop: espace.base },
-  passDate: { fontSize: taille.base, marginTop: 2 },
+function economie(p: Pass) {
+  if ((p.reduction ?? 0) > 0 && (p.prix_normal ?? 0) > 0) {
+    return '-' + nombre(Math.round((p.prix_normal! * p.reduction!) / 100 * 100) / 100, 2) + '€';
+  }
+  return 'Gratuit';
+}
 
-  section: {
-    fontSize: taille.xs,
-    fontWeight: '700',
-    letterSpacing: 1,
-    borderTopWidth: 1,
-    marginTop: espace.xl,
-    paddingTop: espace.md,
-  },
-  ligneHisto: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: espace.base,
-    borderBottomWidth: 1,
-    paddingVertical: espace.base,
-  },
-  histoTitre: { fontSize: taille.texte, fontWeight: '700' },
-  histoSous: { fontSize: taille.base, marginTop: 1 },
-  histoMontant: { fontSize: taille.texte, fontWeight: '700' },
-});
+export default function Wallet() {
+  const { c } = useTheme();
+  const jeton = useJeton();
+  const { profil } = useSession();
+  const largeurEcran = Math.min(useWindowDimensions().width, 440);
+  const largeurCarte = (largeurEcran - gutter * 2) * 0.88;
+
+  const [page, setPage] = useState(1);
+  const [donnees, setDonnees] = useState<ReponseWallet | null>(null);
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [rafraichit, setRafraichit] = useState(false);
+  const [suite, setSuite] = useState(false);
+
+  const charger = useCallback(async (p = page) => {
+    try {
+      setErreur(null);
+      setDonnees(await api.wallet(jeton, p));
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : 'Chargement impossible.');
+    } finally {
+      setRafraichit(false);
+      setSuite(false);
+    }
+  }, [jeton, page]);
+
+  useFocusEffect(useCallback(() => { void charger(); }, [charger]));
+
+  const passes = donnees?.pass_actifs ?? [];
+  const squads = donnees?.squads ?? [];
+  const nomTitulaire = profil ? court(profil.prenom, profil.nom) : '';
+  const couleurType = (t: string | null) => (t === 'resto' ? c.orange : t === 'bar' || t === 'boite' || t === 'afterwork' ? c.rouge : c.gris);
+
+  return (
+    <Ecran rafraichit={rafraichit} onRafraichir={() => { setRafraichit(true); void charger(); }}>
+      <EnTete>
+        <TitreEcran lignes={['Ton pass,', 'en poche.']} />
+      </EnTete>
+
+      <Contenu>
+        {erreur ? <Erreur message={erreur} onReessayer={() => charger()} /> : donnees === null ? <Chargement /> : (
+          <>
+            <View style={{ flexDirection: 'row', gap: 11, marginBottom: 16 }}>
+              <View style={{ flex: 1, borderRadius: rayon.base, padding: 18, borderWidth: 1, borderColor: c.grisClair, backgroundColor: c.blanc }}>
+                <Mono style={{ marginBottom: 8, opacity: 0.85 }}>{MOIS[new Date().getMonth()]}</Mono>
+                <Display taille={fs[8]} couleur={c.surLimeClair} style={{ fontVariant: ['tabular-nums'] }}>{euros(donnees.economies.mois)}€</Display>
+                <T taille={fs[2]} couleur={c.gris} style={{ marginTop: 4, opacity: 0.85 }}>économisé ce mois</T>
+              </View>
+              <View style={{ flex: 1, borderRadius: rayon.base, padding: 18, borderWidth: 1, borderColor: c.line2, backgroundColor: c.blanc }}>
+                <Mono style={{ marginBottom: 8, opacity: 0.85 }}>Total année</Mono>
+                <Display taille={fs[8]} style={{ fontVariant: ['tabular-nums'] }}>{euros(donnees.economies.annee)}€</Display>
+                <T taille={fs[2]} couleur={c.gris} style={{ marginTop: 4, opacity: 0.85 }}>depuis janvier</T>
+              </View>
+            </View>
+
+            {passes.length ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                snapToInterval={largeurCarte + 16}
+                decelerationRate="fast"
+                style={{ flexGrow: 0 }}
+                contentContainerStyle={{ gap: 16, paddingBottom: 16 }}
+              >
+                {passes.map((p, i) => (
+                  <CartePass key={p.id} p={p} index={i} total={passes.length} largeur={largeurCarte} nomTitulaire={nomTitulaire} onAnnule={() => charger()} />
+                ))}
+              </ScrollView>
+            ) : (
+              <View style={{ backgroundColor: c.blanc, borderRadius: rayon.base, padding: 32, alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: c.grisClair }}>
+                <View style={{ marginBottom: 16 }}><Icone nom="ticket" taille={48} couleur={c.gris} trait={1.5} /></View>
+                <T taille={fs[5]} poids={600} style={{ marginBottom: 6 }}>Aucun pass actif</T>
+                <T taille={fs[3]} couleur={c.gris} style={{ marginBottom: 16, textAlign: 'center' }}>Inscris-toi à un événement pour obtenir ton pass.</T>
+                <Bouton libelle="Explorer les événements" onPress={() => router.navigate('/')} style={{ alignSelf: 'center' }} />
+              </View>
+            )}
+
+            {squads.length ? (
+              <>
+                <EnTeteListe style={{ marginTop: 24 }} gauche={`${squads.length} Squad${squads.length > 1 ? 's' : ''} prévu${squads.length > 1 ? 's' : ''}`} droite="—— Sport ↓" />
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} snapToInterval={largeurCarte + 16} decelerationRate="fast"
+                  style={{ flexGrow: 0 }} contentContainerStyle={{ gap: 16, paddingBottom: 16 }}>
+                  {squads.map((sq) => <CarteSquadAgenda key={sq.id} sq={sq} largeur={largeurCarte} onQuitte={() => charger()} />)}
+                </ScrollView>
+              </>
+            ) : null}
+
+            <EnTeteListe style={{ marginTop: 16 }} gauche={`${passes.length} passe${passes.length > 1 ? 's' : ''} actif${passes.length > 1 ? 's' : ''}`} droite="—— Agenda ↓" />
+            {passes.map((p) => (
+              <View key={p.id} style={{ paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: c.grisClair, flexDirection: 'row', alignItems: 'center', gap: 13 }}>
+                <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: couleurType(p.etab_type) }} />
+                <View style={{ flex: 1 }}>
+                  <T taille={fs[4]} poids={600}>{p.etablissement}</T>
+                  <T taille={fs[2]} couleur={c.gris} style={{ marginTop: 2 }}>{p.titre} · {dateFr(p.date_heure, 'D j M · H\\hi')}</T>
+                </View>
+                <Text style={{ fontFamily: mono(600), fontSize: fs[4], color: c.surLimeClair }}>{economie(p)}</Text>
+              </View>
+            ))}
+
+            {donnees.historique.length ? (
+              <>
+                <Separateur libelle="Historique" />
+                {donnees.historique.map((p) => {
+                  const avis = p.statut === 'checkin';
+                  return (
+                    <View key={p.id} style={{ paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: c.grisClair, flexDirection: 'row', alignItems: 'center', gap: 13, opacity: avis ? 1 : 0.5 }}>
+                      <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: avis ? c.lime : c.gris }} />
+                      <View style={{ flex: 1 }}>
+                        <T taille={fs[4]} poids={600}>{p.etablissement}</T>
+                        <T taille={fs[2]} couleur={c.gris} style={{ marginTop: 2 }}>{p.titre} · {dateFr(p.date_heure, 'D j M')}</T>
+                        {avis && p.evenement_id ? (
+                          <Text
+                            onPress={() => router.push({ pathname: '/avis/[id]', params: { id: String(p.evenement_id) } })}
+                            accessibilityRole="link"
+                            style={{ marginTop: 6, fontFamily: sans(700), fontSize: fs[3], color: c.surRougeClair }}
+                          >
+                            Laisser un avis →
+                          </Text>
+                        ) : null}
+                      </View>
+                      <Text style={{ fontFamily: mono(600), fontSize: fs[4], color: c.gris }}>{economie(p)}</Text>
+                    </View>
+                  );
+                })}
+                {donnees.pagination.a_suivre ? (
+                  <Bouton libelle="Voir plus d'historique" variante="contour" plein chargement={suite}
+                    onPress={() => { setSuite(true); const p = page + 1; setPage(p); void charger(p); }} style={{ marginTop: 14 }} />
+                ) : null}
+              </>
+            ) : null}
+          </>
+        )}
+      </Contenu>
+    </Ecran>
+  );
+}

@@ -1,203 +1,189 @@
 /**
- * Le design system de StudentLink, transpose pour React Native.
+ * Le design system de Linkee (charte v1.0), transposé pour React Native.
  *
- * Les valeurs sont reprises une a une d'assets/css/style.css, y compris les
- * paires de contraste verifiees qui s'y trouvent. Ce n'est pas une nouvelle
- * palette « inspiree de » : c'est la meme, sans quoi l'application et le site
- * divergeraient des la premiere retouche, et un etudiant qui passe de l'un a
- * l'autre verrait deux produits.
+ * Chaque valeur est reprise d'assets/css/style.css, jeton pour jeton : même
+ * palette, mêmes graisses, même échelle typographique, mêmes rayons. Ce n'est
+ * pas une palette « inspirée de » : un étudiant qui passe du site à
+ * l'application doit voir le même produit.
  *
- * CE QUI A CHANGE, ET POURQUOI
+ * Deux univers, comme le site : « la nuit » (basalte, par défaut) et « le
+ * jour » (craie). Le choix se fait dans Moi › Apparence.
  *
- * Le web pose des variables CSS et laisse la cascade choisir. React Native n'a
- * ni cascade ni variables : chaque composant recoit ses couleurs a la main,
- * depuis le theme rendu par useTheme(). D'ou un objet par mode plutot qu'un
- * jeu de variables redefinies.
- *
- * Les noms de jetons sont conserves tels quels — `noir`, `blanc`, `bg` — y
- * compris la ou ils mentent en mode sombre (`noir` vaut alors un creme clair).
- * Les renommer aurait ete plus honnete, mais aurait surtout empeche de
- * comparer une regle CSS et son equivalent natif d'un coup d'oeil. Le piege
- * est reel : c'est exactement lui qui avait rendu le QR code illisible en mode
- * sombre. Il est desamorce au seul endroit qui compte, `fixe` ci-dessous.
+ * Les noms de jetons sont conservés tels quels — `noir`, `blanc`, `bg` — y
+ * compris là où ils mentent en sombre (`noir` y vaut la craie) : c'est ce qui
+ * permet de comparer une règle CSS et son équivalent natif d'un coup d'œil.
+ * Le piège est désamorcé là où il compte : les couleurs de `fixe`.
  */
 
 export type Mode = 'clair' | 'sombre';
 
-/**
- * Couleurs qui ne suivent JAMAIS le theme.
- *
- * Un QR code n'est pas un element d'interface, c'est une cible optique : les
- * lecteurs attendent des modules sombres sur fond clair, et la norme exige une
- * marge claire autour. Prendre ces deux valeurs dans le theme — ce que faisait
- * le web — donne un code creme sur blanc en mode sombre, invisible a l'oeil et
- * refuse par les scanners.
- */
+/** Couleurs qui ne suivent JAMAIS le thème. */
 export const fixe = {
-  qrSombre: '#1C1916',
+  /** Un QR code est une cible optique : modules sombres sur fond clair. */
+  qrSombre: '#111013',
   qrClair: '#FFFFFF',
-  /** Texte clair pose sur une photo ou un aplat de marque. */
-  surMedia: '#FFFFFF',
-  /** Texte sombre pose sur un aplat clair de marque (l'or). */
-  surMediaEncre: '#1C1916',
+  basalte: '#111013',
+  craie: '#F5F1E8',
+  /** --sur-lave : sur un aplat vif, le texte est toujours en basalte. */
+  surLave: '#111013',
+  /** --sur-media : texte clair posé sur une photo. */
+  surMedia: '#F5F1E8',
 } as const;
 
 const marque = {
-  rouge: '#E0492B',
-  rougeDeep: '#BB3619',
-  bleu: '#4A40C2',
-  bleuDeep: '#332A92',
-  lime: '#EFB23A',
-  limeDeep: '#8E6414',
-  orange: '#EC8233',
-  orangeDeep: '#A75517',
+  rouge: '#FF5424', // lave
+  rougeDeep: '#B8350D',
+  bleu: '#5B8CFF', // dôme
+  bleuDeep: '#2A56C0',
+  lime: '#C8F547', // volt
+  limeDeep: '#4D6B00',
+  orange: '#FFC23D', // moutarde
+  orangeDeep: '#8A5A00',
+  alerteVif: '#FF4D6A',
+  surLave: '#111013',
 } as const;
 
 const clair = {
   ...marque,
-  bg: '#F3EEE3',
+  bg: '#F5F1E8',
   blanc: '#FFFFFF',
-  surface2: '#FBF8F1',
-  noir: '#1C1916',
-  grisFonce: '#5B554C',
-  gris: '#6E6860',
-  grisClair: '#EAE3D6',
-  line2: '#DED6C6',
+  surface2: '#EFEAE0',
+  noir: '#111013',
+  grisFonce: '#4B4751',
+  gris: '#67626D',
+  grisClair: '#E8E2D6',
+  line2: '#DCD5C7',
 
-  rougeClair: '#FBE7E1',
-  bleuClair: '#ECE9FA',
-  limeClair: '#FBF0D6',
-  orangeClair: '#FCEBDB',
-
-  succes: '#1F6B34',
-  succesClair: '#E3F2E6',
-  danger: '#B3261E',
-  dangerClair: '#FBE9E7',
+  succes: '#2D6A14',
+  succesClair: '#E6F4D6',
+  danger: '#C4203F',
+  dangerClair: '#FFE4E9',
   alerte: '#8A5A00',
-  alerteClair: '#FFF3DC',
+  alerteClair: '#FFF1D1',
 
-  // Texte pose sur une teinte claire. Sans ces jetons, les badges empruntent
-  // la couleur pure de la marque et tombent entre 2.2 et 3.4:1.
-  surRougeClair: '#BB3619',
-  surBleuClair: '#332A92',
-  surLimeClair: '#8E6414',
-  surOrangeClair: '#A75517',
-} as const;
+  surRougeClair: '#B8350D',
+  surBleuClair: '#2A56C0',
+  surLimeClair: '#4D6B00',
+  surOrangeClair: '#8A5A00',
 
-const sombre = {
+  rougeClair: '#FFE3D9',
+  bleuClair: '#E3EBFF',
+  limeClair: '#EEF9CF',
+  orangeClair: '#FFF1D1',
+};
+
+const sombre: typeof clair = {
   ...marque,
-  bg: '#16130F',
-  blanc: '#211D18',
-  surface2: '#1B1813',
-  noir: '#F3EEE3',
-  grisFonce: '#C9C1B2',
-  gris: '#8E8576',
-  grisClair: '#322C24',
-  line2: '#3D362C',
+  bg: '#111013',
+  blanc: '#1C1A1F',
+  surface2: '#242127',
+  noir: '#F5F1E8',
+  grisFonce: '#CFC9D3',
+  gris: '#8A858F',
+  grisClair: '#2A272E',
+  line2: '#36323B',
 
-  rougeClair: '#3A201A',
-  bleuClair: '#1E1B36',
-  limeClair: '#322A18',
-  orangeClair: '#33220F',
+  succes: '#C8F547',
+  succesClair: '#273011',
+  danger: '#FF4D6A',
+  dangerClair: '#3A151D',
+  alerte: '#FFC23D',
+  alerteClair: '#33280F',
 
-  // Sur fond sombre la teinte s'assombrit : le texte doit s'eclaircir, sinon
-  // les badges retombent a 2.2:1.
-  succes: '#7FC99A',
-  succesClair: '#14261A',
-  danger: '#F29384',
-  dangerClair: '#2E1512',
-  alerte: '#E0B25C',
-  alerteClair: '#2B2008',
+  surRougeClair: '#FF5424',
+  surBleuClair: '#5B8CFF',
+  surLimeClair: '#C8F547',
+  surOrangeClair: '#FFC23D',
 
-  surRougeClair: '#E5674F',
-  surBleuClair: '#827BD4',
-  surLimeClair: '#BC8825',
-  surOrangeClair: '#D98A45',
-} as const;
+  rougeClair: '#3A1B12',
+  bleuClair: '#18223D',
+  limeClair: '#273011',
+  orangeClair: '#33280F',
+};
 
 export const couleurs = { clair, sombre } as const;
+export type Couleurs = typeof clair;
 
 /**
- * Les noms de jetons du theme, dont les valeurs sont des couleurs.
- *
- * `typeof clair` ne conviendrait pas : `as const` y fige chaque valeur en
- * litteral, si bien que `bg` vaut le type `"#F3EEE3"` et non `string`. Le
- * theme sombre, dont `bg` vaut « #16130F », n'etait alors pas assignable au
- * meme type — deux themes qui ne partagent aucune valeur ne partageraient
- * jamais de type. On garde donc les CLES exactes, en elargissant les valeurs.
+ * « var(--rouge) » → la couleur du thème. Les badges portent leur couleur en
+ * base sous cette forme (migration v8) ; la même chaîne sert au site et ici.
  */
-export type Couleurs = { readonly [K in keyof typeof clair]: string };
+export function couleurCss(valeur: string | null | undefined, c: Couleurs, repli: string): string {
+  if (!valeur) return repli;
+  const m = /^var\(--([a-z0-9-]+)\)$/.exec(valeur.trim());
+  if (!m) return valeur;
+  const cle = m[1].replace(/-([a-z0-9])/g, (_, l: string) => l.toUpperCase()) as keyof Couleurs;
+  return (c[cle] as string | undefined) ?? repli;
+}
 
-/** Rayons, repris de --radius & co. */
-export const rayon = {
-  sm: 10,
-  base: 12,
-  bouton: 10,
-  lg: 16,
-  xl: 22,
-  pill: 999,
-} as const;
+/** --fs-1 … --fs-10, en points. */
+export const fs = { 1: 11, 2: 12, 3: 13, 4: 14, 5: 16, 6: 20, 7: 24, 8: 32, 9: 36, 10: 48 } as const;
 
-/**
- * Echelle typographique, en points.
- *
- * Le web part de rem ; ici les valeurs sont en points, que React Native met
- * lui-meme a l'echelle des reglages d'accessibilite du systeme. Un etudiant
- * qui a grossi le texte de son iPhone doit voir l'application grossir avec.
- */
-export const taille = {
-  xs: 11,
-  sm: 12,
-  base: 13,
-  texte: 14,
-  corps: 16,
-  titre: 20,
-  grand: 26,
-  hero: 34,
-} as const;
+/** Interlignes, en multiples du corps (--lh-*). */
+export const lh = { display: 1.04, tight: 1.12, snug: 1.3, normal: 1.5, relaxed: 1.6 } as const;
+
+/** Interlettrages, en em (--ls-*) : à multiplier par le corps, voir ls(). */
+export const lsEm = { display: -0.035, tight: -0.02, normal: 0, wide: 0.06, label: 0.1 } as const;
+export const ls = (em: number, taille: number) => em * taille;
+
+/** Rayons (--radius-*). */
+export const rayon = { xs: 8, sm: 12, md: 16, base: 24, lg: 24, xl: 32, pill: 999 } as const;
+
+/** Gouttière horizontale (--gutter) et cible tactile (--touch-min). */
+export const gutter = 20;
+export const toucheMin = 44;
 
 /**
- * Familles typographiques.
+ * Familles typographiques, une par graisse : React Native ne synthétise pas
+ * les graisses d'une police chargée, il faut nommer le fichier.
  *
- * Playfair Display pour les titres, DM Sans pour le reste — comme le web.
- * Tant que les polices ne sont pas embarquees (expo-font), on retombe sur les
- * familles systeme : `undefined` laisse React Native choisir San Francisco sur
- * iOS, ce qui reste correct. Mettre un nom de police absente donnerait un
- * rendu par defaut silencieux et different selon la plateforme.
+ *  - display : Unbounded 800 (titres, chiffres clés), 400 (suffixe du logo)
+ *  - sans    : Instrument Sans 400 à 700 (texte, interfaces, boutons)
+ *  - mono    : JetBrains Mono 400 à 600 (étiquettes, horaires, XP)
  */
 export const police = {
-  titre: undefined as string | undefined,
-  texte: undefined as string | undefined,
+  display: 'Unbounded_800ExtraBold',
+  displayRegular: 'Unbounded_400Regular',
+  sans400: 'InstrumentSans_400Regular',
+  sans500: 'InstrumentSans_500Medium',
+  sans600: 'InstrumentSans_600SemiBold',
+  sans700: 'InstrumentSans_700Bold',
+  sans600Italique: 'InstrumentSans_600SemiBold_Italic',
+  mono400: 'JetBrainsMono_400Regular',
+  mono500: 'JetBrainsMono_500Medium',
+  mono600: 'JetBrainsMono_600SemiBold',
 } as const;
 
-/** Espacements, multiples de 4. */
-export const espace = {
-  xs: 4,
-  sm: 8,
-  base: 12,
-  md: 16,
-  lg: 20,
-  xl: 28,
-  xxl: 40,
-} as const;
+export function sans(poids: 400 | 500 | 600 | 700 = 400): string {
+  return { 400: police.sans400, 500: police.sans500, 600: police.sans600, 700: police.sans700 }[poids];
+}
+export function mono(poids: 400 | 500 | 600 = 500): string {
+  return { 400: police.mono400, 500: police.mono500, 600: police.mono600 }[poids];
+}
 
 /**
- * Ombres.
- *
- * iOS et Android ne les expriment pas pareil : `shadow*` d'un cote,
- * `elevation` de l'autre. Les deux sont poses, chaque plateforme ignore ce qui
- * ne la concerne pas.
+ * Ombres (--shadow-*). Sur basalte, pas d'ombre portée : on superpose des
+ * surfaces plus claires — sauf --shadow-lg, gardé pour ce qui flotte.
  */
-export function ombre(mode: Mode, niveau: 'sm' | 'base' | 'lg' = 'base') {
-  const opacite = mode === 'sombre' ? { sm: 0.4, base: 0.4, lg: 0.5 } : { sm: 0.06, base: 0.08, lg: 0.12 };
-  const rayonOmbre = { sm: 3, base: 10, lg: 22 };
-  const decalage = { sm: 1, base: 2, lg: 6 };
-
-  return {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: decalage[niveau] },
-    shadowOpacity: opacite[niveau],
-    shadowRadius: rayonOmbre[niveau],
-    elevation: decalage[niveau] * 2,
-  };
+export function ombre(mode: Mode, niveau: 'sm' | 'base' | 'lg') {
+  if (mode === 'sombre') {
+    return niveau === 'lg'
+      ? { shadowColor: '#000', shadowOffset: { width: 0, height: 18 }, shadowOpacity: 0.5, shadowRadius: 24, elevation: 12 }
+      : {};
+  }
+  const t = {
+    sm: { h: 1, r: 2, o: 0.04, e: 1 },
+    base: { h: 6, r: 12, o: 0.06, e: 2 },
+    lg: { h: 16, r: 22, o: 0.12, e: 10 },
+  }[niveau];
+  return { shadowColor: '#111013', shadowOffset: { width: 0, height: t.h }, shadowOpacity: t.o, shadowRadius: t.r, elevation: t.e };
 }
+
+/** --halo-lave : seuls la carte flash et le pass actif le portent. */
+export const haloLave = {
+  shadowColor: '#FF5424',
+  shadowOffset: { width: 0, height: 18 },
+  shadowOpacity: 0.45,
+  shadowRadius: 26,
+  elevation: 14,
+} as const;
