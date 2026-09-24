@@ -27,6 +27,7 @@ final class ApiProtectionTest extends TestCase
         'social_feed.php',
         'squad_members.php',
         'stats.php',
+        'liste_attente_statut.php', // rang d'une inscription, pour un visiteur qui revient
     ];
 
     /**
@@ -37,7 +38,8 @@ final class ApiProtectionTest extends TestCase
      * visiteur qui n'a justement pas encore de compte.
      */
     private const ANONYME = [
-        'liste_attente.php', // formulaire de la page d'accueil « bientôt disponible »
+        'liste_attente.php',        // formulaire de la page d'accueil « bientôt disponible »
+        'liste_attente_statut.php', // lecture du même rang, par la même personne sans compte
     ];
 
     /** @return list<string> chemins absolus de tous les points d'API */

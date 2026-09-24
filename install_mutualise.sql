@@ -1103,10 +1103,12 @@ CREATE TABLE IF NOT EXISTS notifications_lues (
 -- ═══════════════════════════════════════════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS liste_attente (
-    id        INT AUTO_INCREMENT PRIMARY KEY,
-    email     VARCHAR(190) NOT NULL,
-    cree_le   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY idx_email (email)
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    email       VARCHAR(190) NOT NULL,
+    parrain_id  INT NULL DEFAULT NULL,
+    cree_le     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY idx_email (email),
+    INDEX idx_parrain (parrain_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -1117,4 +1119,4 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 
 INSERT IGNORE INTO schema_migrations (version) VALUES
 ('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
-('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19');
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20');
