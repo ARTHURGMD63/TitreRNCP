@@ -21,6 +21,9 @@ npm-debug.log*
 # Node
 node_modules/
 package-lock.json
+# Sauf celui de l'application mobile : la construction sur GitHub
+# (npm ci) installe exactement les versions testees ici.
+!mobile/package-lock.json
 
 # Database
 *.sqlite
