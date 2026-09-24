@@ -7,7 +7,7 @@
  *
  * LE CODE DU PASS N'EST PAS UNE IMAGE.
  *
- * L'API renvoie `code_qr`, la chaine a encoder — « studentlink:<code> » —, pas
+ * L'API renvoie `code_qr`, la chaine a encoder — « linkee:<code> » —, pas
  * un QR code dessine. Trois raisons : un PNG en base64 pese dix fois le texte
  * qu'il represente ; une image rendue cote serveur ne s'adapte ni a la densite
  * de l'ecran ni au mode sombre ; et surtout, l'application iOS devra de toute
@@ -115,18 +115,43 @@ function apiPass(array $p, bool $avecCode): array
             ? round($prix * $reduction / 100, 2)
             : null,
         'evenement_supprime' => (bool) ($p['evenement_supprime'] ?? false),
+        // La pastille de la liste « passes actifs » : lave pour les soirées,
+        // moutarde pour les restos, comme sur le site.
+        'etab_type'     => isset($p['etab_type']) && $p['etab_type'] !== null ? (string) $p['etab_type'] : null,
 
         // Uniquement sur les pass actifs : un pass passe ou annule n'a plus de
         // code a presenter, et l'envoyer quand meme serait donner un secret
         // qui ne sert plus a rien.
         'code_qr' => $avecCode && !empty($p['qr_code'])
-            ? 'studentlink:' . (string) $p['qr_code']
+            ? 'linkee:' . (string) $p['qr_code']
             : null,
     ];
 }
 
+// Les squads à venir dont l'étudiant est membre : le second carrousel de
+// wallet.php (« N squads prévus »).
+$stmt = $pdo->prepare("
+    SELECT s.id, s.titre, s.type, s.niveau, s.date_heure, s.lieu, u.prenom AS createur_prenom
+      FROM squad_membres sm
+      JOIN squads s ON s.id = sm.squad_id
+      JOIN users u  ON u.id = s.createur_id
+     WHERE sm.user_id = ? AND s.date_heure >= NOW()
+     ORDER BY s.date_heure ASC
+");
+$stmt->execute([$uid]);
+$mesSquads = $stmt->fetchAll();
+
 apiReponse([
     'success' => true,
+    'squads' => array_map(static fn (array $s): array => [
+        'id'              => (int) $s['id'],
+        'titre'           => (string) $s['titre'],
+        'type'            => (string) ($s['type'] ?? ''),
+        'niveau'          => (string) ($s['niveau'] ?? ''),
+        'date_heure'      => (string) $s['date_heure'],
+        'lieu'            => (string) ($s['lieu'] ?? ''),
+        'createur_prenom' => (string) $s['createur_prenom'],
+    ], $mesSquads),
     'economies' => [
         'mois'  => round($economiesMois, 2),
         'annee' => round($economiesAnnee, 2),

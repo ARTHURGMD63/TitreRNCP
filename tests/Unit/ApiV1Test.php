@@ -23,6 +23,9 @@ final class ApiV1Test extends TestCase
 {
     private const DOSSIER = __DIR__ . '/../../api/v1';
 
+    /** Les points ouverts sans compte, à l'image de leurs pages sur le site. */
+    private const PUBLICS = ['login.php', 'logout.php', 'inscription.php', 'mot_de_passe_oublie.php'];
+
     /**
      * Le code d'un fichier, commentaires retirés.
      *
@@ -76,10 +79,12 @@ final class ApiV1Test extends TestCase
      *
      * `login.php` établit l'authentification, il ne peut pas l'exiger.
      * `logout.php` lit le jeton directement pour le révoquer.
+     * `inscription.php` et `mot_de_passe_oublie.php` servent justement ceux
+     * qui n'ont pas (ou plus) de compte utilisable, comme leurs pages du site.
      */
     public function testChaquePointExigeUnCompte(): void
     {
-        $exemptes = ['login.php', 'logout.php'];
+        $exemptes = self::PUBLICS;
         $fautifs  = [];
 
         foreach ($this->points() as $chemin) {
@@ -110,7 +115,7 @@ final class ApiV1Test extends TestCase
 
         foreach ($this->points() as $chemin) {
             $nom = basename($chemin);
-            if (in_array($nom, ['login.php', 'logout.php'], true)) {
+            if (in_array($nom, self::PUBLICS, true)) {
                 continue;
             }
             $source = $this->code($chemin);

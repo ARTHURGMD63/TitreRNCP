@@ -12,6 +12,11 @@
  * s'authentifier.
  */
 
+// Même fuseau que le site (auth_check.php). Sans lui, PHP compte en UTC :
+// une échéance flash lue en base (heure de Paris) paraissait deux heures
+// plus tard, et « il y a 3 h » devenait « il y a 5 h ».
+date_default_timezone_set('Europe/Paris');
+
 require_once __DIR__ . '/../../includes/db.php';
 require_once __DIR__ . '/../../includes/urls.php';
 require_once __DIR__ . '/../../includes/interets.php';
@@ -97,4 +102,39 @@ function apiPagination(int $limiteDefaut = 20, int $limiteMax = 50): array
     $limite = max(1, min($limiteMax, $limite));
 
     return ['page' => $page, 'limite' => $limite, 'offset' => ($page - 1) * $limite];
+}
+
+/**
+ * L'adresse de la photo d'un étudiant, ou null.
+ *
+ * Même règle qu'avatarHtml() côté web : un nom de fichier en base ne suffit
+ * pas, le fichier doit exister. Sinon l'application afficherait une image
+ * cassée là où le site montre l'initiale.
+ */
+function apiPhotoUrl(?string $fichier): ?string
+{
+    if ($fichier === null || $fichier === '') {
+        return null;
+    }
+    require_once __DIR__ . '/../../includes/uploads.php';
+
+    return is_file(avatarDir() . '/' . $fichier) ? avatarUrlAbsolue($fichier) : null;
+}
+
+/**
+ * Une personne telle que les listes de l'application l'affichent.
+ *
+ * @param array<string,mixed> $p ligne de users (id, prenom, nom, photo…)
+ * @return array<string,mixed>
+ */
+function apiPersonne(array $p): array
+{
+    return [
+        'id'        => (int) $p['id'],
+        'prenom'    => (string) $p['prenom'],
+        'nom'       => (string) ($p['nom'] ?? ''),
+        'ecole'     => isset($p['ecole']) && $p['ecole'] !== null ? (string) $p['ecole'] : null,
+        'promo'     => isset($p['promo']) && $p['promo'] !== null ? (string) $p['promo'] : null,
+        'photo_url' => apiPhotoUrl(isset($p['photo']) ? (string) $p['photo'] : null),
+    ];
 }

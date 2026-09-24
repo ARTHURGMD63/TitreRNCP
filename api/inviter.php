@@ -11,13 +11,18 @@
 require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/temps_reel.php';
-requireLogin();
-
 header('Content-Type: application/json');
 
 // Ecriture : POST obligatoire, jeton CSRF et origine verifies.
 // Voir protegerEcritureApi() dans includes/security.php.
+//
+// AVANT requireLogin(), comme dans les neuf autres points d'ecriture : c'est
+// protegerEcritureApi() qui reconnait le jeton de l'application et remplit la
+// session. Dans l'ordre inverse, requireLogin() ne voyait aucune session et
+// renvoyait l'application vers la page de connexion du site — l'invitation
+// ne partait jamais depuis un telephone.
 protegerEcritureApi();
+requireLogin();
 
 $data   = json_decode(file_get_contents('php://input'), true) ?: [];
 $action = $data['action'] ?? 'send';

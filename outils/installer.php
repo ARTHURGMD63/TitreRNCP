@@ -17,16 +17,16 @@
  * `db_setup.sql` commence par deux lignes qui lui sont indispensables en
  * local, et qui le rendent inutilisable ailleurs :
  *
- *     CREATE DATABASE IF NOT EXISTS studentlink …;
- *     USE studentlink;
+ *     CREATE DATABASE IF NOT EXISTS linkee …;
+ *     USE linkee;
  *
  * Sur un hébergeur, le nom de la base est imposé — « railway », ou
- * « c1234_studentlink » sur un mutualisé — et le compte n'a en général pas le
+ * « c1234_linkee » sur un mutualisé — et le compte n'a en général pas le
  * droit d'en créer une. Le fichier bascule alors sur une base qui n'existe
  * pas, ou pire : sur une AUTRE base du même serveur qui, elle, existe.
  *
  * Ce n'est pas théorique. Diriger `mysql` vers une base de test ne suffit pas :
- * le script bascule à la ligne 16 et s'exécute sur `studentlink`, quoi qu'on
+ * le script bascule à la ligne 16 et s'exécute sur `linkee`, quoi qu'on
  * ait demandé sur la ligne de commande. Le fichier ne contient ni DROP ni
  * DELETE, donc l'accident reste sans dégât — mais il écrit bien dans la
  * mauvaise base, sans que rien ne le signale.
@@ -117,12 +117,45 @@ $sql = preg_replace(
 $instructions = decouperSql($sql);
 printf("\n%d instruction(s) à exécuter.\n\n", count($instructions));
 
+// ── Compatibilité TiDB ──────────────────────────────────────────────────────
+//
+// TiDB (TiDB Cloud) parle MySQL, à deux détails près pour ce fichier :
+//  - il n'a qu'un moteur de stockage : « SET default_storage_engine » n'y a
+//    pas d'objet, et n'y est pas une variable connue ;
+//  - les index ajoutés « s'ils manquent » passent par PREPARE st FROM @s,
+//    une requête SQL fabriquée côté serveur. Ici elle est lue puis exécutée
+//    directement : même résultat sur MySQL, et plus rien qui dépende de la
+//    prise en charge des requêtes préparées en SQL.
+$tidb = stripos((string) $pdo->query('SELECT VERSION()')->fetchColumn(), 'tidb') !== false;
+if ($tidb) {
+    echo "Serveur TiDB détecté.\n\n";
+}
+
+/** Rend l'instruction à exécuter, ou null pour la sauter. */
+$adapter = static function (string $instruction) use ($pdo, $tidb): ?string {
+    // Les lignes de commentaire qui précèdent l'instruction ne comptent pas.
+    $propre = trim((string) preg_replace('/^\s*--.*$/m', '', $instruction));
+    if ($tidb && preg_match('/^SET\s+default_storage_engine\b/i', $propre)) {
+        return null;
+    }
+    if (preg_match('/^PREPARE\s+(\w+)\s+FROM\s+(@\w+)$/i', $propre, $m)) {
+        return (string) $pdo->query('SELECT ' . $m[2])->fetchColumn();
+    }
+    if (preg_match('/^(EXECUTE|DEALLOCATE\s+PREPARE)\s+\w+$/i', $propre)) {
+        return null;
+    }
+    return $instruction;
+};
+
 // ── Exécution ───────────────────────────────────────────────────────────────
 
 $faites = 0;
 foreach ($instructions as $i => $instruction) {
     try {
-        executerInstruction($pdo, $instruction);
+        $aExecuter = $adapter($instruction);
+        if ($aExecuter !== null) {
+            executerInstruction($pdo, $aExecuter);
+        }
         $faites++;
     } catch (Throwable $e) {
         printf("ÉCHEC à l'instruction %d sur %d.\n\n", $i + 1, count($instructions));

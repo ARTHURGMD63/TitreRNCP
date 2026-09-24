@@ -1,0 +1,131 @@
+# ============================================================
+#  Construction de l'application mobile pour les tests.
+#
+#  À lancer à la main : onglet Actions → « Application mobile » →
+#  Run workflow. Deux fichiers sortent, à télécharger en bas de la page
+#  du run (« Artifacts ») :
+#
+#    linkee-android   Linkee.apk — s'installe directement sur un Android
+#                     (autoriser les « sources inconnues »).
+#    linkee-ios       Linkee.ipa — NON signé. Sideloadly le signe avec
+#                     l'identifiant Apple de la personne qui l'installe.
+#
+#  Aucun compte Expo ni Apple Developer n'est nécessaire : tout est
+#  construit ici, sur les machines de GitHub (gratuites pour un dépôt
+#  public, Mac compris).
+#
+#  À régler UNE fois : Settings → Secrets and variables → Actions →
+#  onglet « Variables » → New repository variable :
+#
+#    EXPO_PUBLIC_API_URL   https://linkee-xxxx.onrender.com
+#
+#  L'adresse publique du serveur, en https, sans barre finale. Elle est
+#  inscrite dans l'application au moment de la construction : la changer
+#  demande de relancer ce workflow. En http, iOS bloquerait les requêtes.
+# ============================================================
+
+name: Application mobile
+
+on:
+  workflow_dispatch:
+
+env:
+  EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Vérifier l'adresse du serveur
+        run: |
+          case "$EXPO_PUBLIC_API_URL" in
+            https://*) echo "Serveur : $EXPO_PUBLIC_API_URL" ;;
+            *) echo "::error::Renseigner la variable EXPO_PUBLIC_API_URL (https://…) dans Settings → Variables."; exit 1 ;;
+          esac
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - run: npm ci
+
+      # Génère le projet Android natif à partir d'app.json (dossier jetable,
+      # jamais versionné).
+      - run: npx expo prebuild --platform android --no-install
+
+      # Le gabarit d'Expo signe la version « release » avec la clé de
+      # débogage : l'APK s'installe tel quel sur un téléphone de test.
+      - name: Construire l'APK
+        run: ./gradlew assembleRelease --no-daemon
+        working-directory: mobile/android
+
+      - run: cp android/app/build/outputs/apk/release/app-release.apk Linkee.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linkee-android
+          path: mobile/Linkee.apk
+
+  ios:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Vérifier l'adresse du serveur
+        run: |
+          case "$EXPO_PUBLIC_API_URL" in
+            https://*) echo "Serveur : $EXPO_PUBLIC_API_URL" ;;
+            *) echo "::error::Renseigner la variable EXPO_PUBLIC_API_URL (https://…) dans Settings → Variables."; exit 1 ;;
+          esac
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - run: npm ci
+
+      # Génère le projet Xcode et installe les CocoaPods.
+      - run: npx expo prebuild --platform ios
+
+      # Archive SANS signature : c'est Sideloadly qui signera, avec
+      # l'identifiant Apple de la personne qui installe.
+      - name: Construire l'application
+        run: |
+          xcodebuild \
+            -workspace ios/Linkee.xcworkspace \
+            -scheme Linkee \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/Linkee.xcarchive \
+            archive \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+
+      # Un .ipa n'est qu'une archive zip contenant Payload/Linkee.app.
+      - name: Empaqueter le .ipa
+        run: |
+          mkdir -p Payload
+          cp -R build/Linkee.xcarchive/Products/Applications/Linkee.app Payload/
+          zip -qr Linkee.ipa Payload
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linkee-ios
+          path: mobile/Linkee.ipa

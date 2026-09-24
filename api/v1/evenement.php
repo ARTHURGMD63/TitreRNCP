@@ -10,6 +10,7 @@
 require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/uploads.php';
 require_once __DIR__ . '/../../includes/agregats.php';
+require_once __DIR__ . '/../../includes/sponsoring.php';
 
 apiExigerMethode('GET');
 
@@ -104,6 +105,9 @@ apiReponse([
         'is_flash'     => $flashEncours,
         'flash_expiry' => $e['flash_expiry'] !== null ? (string) $e['flash_expiry'] : null,
         'deja_inscrit' => ((int) $e['deja_inscrit']) > 0,
+        // La mention reste sur la fiche comme sur le web : un contenu payé
+        // s'annonce partout où il est lu.
+        'sponsorise'   => sponsoringActif($e),
 
         'photos' => array_map(
             static fn (array $p): array => [

@@ -15,7 +15,7 @@
  * lignes et n'a aucun moyen de les distinguer des vraies ensuite.
  *
  * Exemple :
- *     MYSQLDATABASE=studentlink_perf MYSQLPORT=3307 php outils/semer_charge.php
+ *     MYSQLDATABASE=linkee_perf MYSQLPORT=3307 php outils/semer_charge.php
  *
  * Options :
  *     --etudiants=N     défaut 5000

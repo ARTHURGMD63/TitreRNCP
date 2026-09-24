@@ -1,4 +1,4 @@
-# Mettre StudentLink en ligne, et l'application entre les mains de testeurs
+# Mettre Linkee en ligne, et l'application entre les mains de testeurs
 
 Deux choses distinctes, dans cet ordre : **le serveur** (l'API et la base, sans
 quoi aucun téléphone ne peut rien afficher), puis **la distribution** de
@@ -18,49 +18,75 @@ l'hébergeur, pas dans celles du poste de développement.
 | --- | --- |
 | `Dockerfile` | Apache + mod_php, OPcache, GD. Image vérifiée : 425 Mo |
 | `docker/entrypoint.sh` | Fait écouter Apache sur le `$PORT` imposé par la plateforme |
-| `includes/db.php` | Lit `MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`, `MYSQLPASSWORD`, `MYSQLDATABASE` |
-| `outils/installer.php` | Installe le schéma sur **n'importe quelle** base |
+| `includes/db.php` | Lit `MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`, `MYSQLPASSWORD`, `MYSQLDATABASE` ; TLS avec `MYSQL_SSL` / `MYSQL_SSL_CA` |
+| `outils/installer.php` | Installe le schéma sur **n'importe quelle** base, TiDB compris |
+| `.github/workflows/mobile.yml` | Construit Linkee.apk et Linkee.ipa (non signé) |
 
 Rien n'est à écrire en dur : la plateforme fournit les variables, le code les
 lit. C'est déjà le cas depuis la refonte de `includes/config.php`.
 
-### Les étapes
+### La voie gratuite : TiDB Cloud (base) + Render (serveur)
 
-**1. Créer le projet.** Sur Railway : *New Project → Deploy from GitHub repo*,
-choisir le dépôt. Railway détecte le `Dockerfile` et construit l'image.
+**TiDB Cloud Starter** (anciennement « Serverless ») est une base compatible
+MySQL, avec une offre gratuite sans carte bancaire. Le code tourne tel quel :
+seule l'adresse de la base change. Vérifié le 2026-09-24 : installation
+complète, puis parcours de toutes les pages (étudiant, partenaire, admin) et de
+l'API mobile avec le mode SQL de TiDB (`ONLY_FULL_GROUP_BY`, strict), sans
+une erreur.
 
-**2. Ajouter la base.** *New → Database → MySQL*. Railway crée les variables
-`MYSQL*` et les injecte dans le service web — `includes/db.php` les lit sans
-configuration supplémentaire.
+Deux différences avec MySQL, déjà prises en charge :
 
-**3. Installer le schéma.** Depuis un terminal Railway (ou en local, avec les
-variables de la base distante) :
+- **Connexion chiffrée obligatoire.** `includes/db.php` active TLS de lui-même
+  pour un hôte `*.tidbcloud.com` (et sur demande avec `MYSQL_SSL=1`), en
+  vérifiant le certificat avec les autorités du système.
+- **Pas de procédures stockées.** Seules les anciennes migrations v7 et v18 en
+  utilisent, et une installation neuve ne les rejoue pas. `outils/installer.php`
+  exécute directement les ajouts d'index que `db_setup.sql` prépare en SQL.
 
-```bash
-php outils/installer.php --etat    # ce que contient la base
-php outils/installer.php           # installe les 27 tables et le jeu de démo
+**1. Créer la base.** Sur [tidbcloud.com](https://tidbcloud.com) : créer un
+cluster *Starter* (région Frankfurt, la plus proche). Dans *Connect*, noter
+l'hôte (`gateway01.eu-central-1.prod.aws.tidbcloud.com`), le port `4000`,
+l'utilisateur (`xxxxxxxx.root`), et générer le mot de passe. Créer la base
+dans l'onglet *SQL Editor* :
+
+```sql
+CREATE DATABASE linkee CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-> **Pourquoi pas `db_setup.sql` directement.** Ses deux premières lignes sont
-> `CREATE DATABASE … studentlink;` et `USE studentlink;`. Sur un hébergeur, le
-> nom de la base est imposé — `railway` — et le compte n'a en général pas le
-> droit d'en créer une. Le fichier bascule alors sur une base inexistante, ou
-> pire, sur une autre base du même serveur qui, elle, existe. Diriger `mysql`
-> vers la bonne base ne suffit pas : le script bascule à la ligne 16 quoi qu'on
-> ait demandé sur la ligne de commande. `outils/installer.php` neutralise ces
-> deux lignes et exécute le reste sur la connexion déjà ouverte.
+**2. Installer le schéma** depuis ce PC (PowerShell, à la racine du projet) :
 
-**4. Poser les variables d'environnement** du service web :
+```powershell
+$env:MYSQLHOST = 'gateway01.eu-central-1.prod.aws.tidbcloud.com'
+$env:MYSQLPORT = '4000'
+$env:MYSQLUSER = 'xxxxxxxx.root'
+$env:MYSQLPASSWORD = 'le-mot-de-passe'
+$env:MYSQLDATABASE = 'linkee'
+$env:MYSQL_SSL_CA = 'C:\chemin\vers\isrgrootx1.pem'
+C:\wamp64\bin\php\php8.3.14\php.exe outils\installer.php
+```
+
+Windows n'a pas de fichier d'autorités de certification que PHP sache lire :
+télécharger le certificat racine indiqué par TiDB dans *Connect* (ISRG Root X1)
+et donner son chemin dans `MYSQL_SSL_CA`. Sur le serveur Linux (Render), rien
+à faire : celui du système est pris automatiquement.
+
+**3. Mettre le serveur en ligne.** Sur [render.com](https://render.com) :
+*New → Web Service → Build from a Git repository*, choisir le dépôt, runtime
+**Docker**, offre **Free**. Variables d'environnement :
 
 ```
 APP_ENV=production
+MYSQLHOST=gateway01.eu-central-1.prod.aws.tidbcloud.com
+MYSQLPORT=4000
+MYSQLUSER=xxxxxxxx.root
+MYSQLPASSWORD=le-mot-de-passe
+MYSQLDATABASE=linkee
 ```
 
-`APP_ENV=production` coupe l'affichage des erreurs détaillées et active le
-drapeau `secure` du cookie de session. À ne pas oublier : c'est la différence
-entre une trace d'erreur affichée au visiteur et une trace journalisée.
+Render construit l'image du `Dockerfile` et donne une adresse
+`https://linkee-xxxx.onrender.com`. Le site est à la racine de cette adresse.
 
-**5. Vérifier.** Railway attribue une URL en `https://…up.railway.app`.
+**4. Vérifier.**
 
 ```bash
 curl -s -o /dev/null -w "%{http_code}\n" https://VOTRE-URL/auth/login.php
@@ -69,10 +95,19 @@ curl -s -X POST https://VOTRE-URL/api/v1/login.php \
      -d '{"email":"arthur@uca.fr","password":"password"}'
 ```
 
-Le second doit renvoyer un jeton. S'il renvoie 401 avec `jeton_absent` sur les
-appels suivants, c'est qu'Apache ne transmet pas l'en-tête `Authorization` :
-`api/v1/.htaccess` s'en charge, et l'image active `mod_rewrite`, mais cela se
-vérifie en premier.
+Le second doit renvoyer un jeton.
+
+**Limite de l'offre gratuite de Render** : le service s'endort après 15
+minutes sans visite, et le premier appel suivant attend environ une minute.
+Suffisant pour des tests ; pas pour de vrais utilisateurs.
+
+### Autre voie : Railway
+
+*New Project → Deploy from GitHub repo*, puis *New → Database → MySQL* :
+Railway injecte les variables `MYSQL*` lui-même. Installer ensuite le schéma
+avec `php outils/installer.php` depuis un terminal Railway, et poser
+`APP_ENV=production`. Railway n'est plus gratuit au-delà de son crédit
+d'essai.
 
 ### Ce que l'hébergement change immédiatement
 
@@ -97,34 +132,60 @@ vrais utilisateurs à mettre leur photo.
 
 Deux voies, selon ce qu'on veut faire tester et à qui.
 
-### Voie A — Expo Go (gratuit, immédiat)
+### Voie A — Sideloadly (iPhone) et APK (Android), gratuit
 
-Chaque testeur installe **Expo Go** depuis l'App Store, puis ouvre un lien.
-Aucun compte développeur, aucun Mac, et les testeurs n'ont pas besoin d'être
-sur le même réseau.
+L'application est construite sur les machines de GitHub par le workflow
+`.github/workflows/mobile.yml` : aucun Mac, aucun compte payant.
+
+1. Dans le dépôt GitHub : *Settings → Secrets and variables → Actions →
+   Variables → New repository variable* : `EXPO_PUBLIC_API_URL` =
+   l'adresse Render, en https, sans barre finale.
+2. *Actions → Application mobile → Run workflow*. Compter une vingtaine de
+   minutes ; deux fichiers apparaissent en bas de la page du run :
+   `linkee-android` (Linkee.apk) et `linkee-ios` (Linkee.ipa, non signé).
+
+**Android** : envoyer l'APK aux testeurs ; à l'ouverture, autoriser
+l'installation depuis cette source. Aucune expiration.
+
+**iPhone avec Sideloadly** : brancher l'iPhone en USB au PC où tourne
+[Sideloadly](https://sideloadly.io) (iTunes et iCloud installés depuis le site
+d'Apple, pas depuis le Microsoft Store), glisser `Linkee.ipa`, saisir un
+identifiant Apple, *Start*. Sur l'iPhone : *Réglages → Général → VPN et
+gestion de l'appareil* → faire confiance au profil, puis activer le *Mode
+développeur* (iOS 16 et plus).
+
+Limites d'un identifiant Apple gratuit :
+
+- l'application **expire au bout de 7 jours** : il faut la réinstaller avec
+  Sideloadly (qui sait le refaire tout seul si le PC reste allumé, avec
+  l'option d'actualisation automatique) ;
+- **3 applications** installées ainsi par iPhone, au plus ;
+- chaque iPhone doit passer par un PC avec Sideloadly.
+
+L'adresse du serveur est inscrite dans l'application : la changer demande de
+relancer le workflow et de réinstaller.
+
+### Voie B — Expo Go (gratuit, sans installer l'application)
+
+Chaque testeur installe **Expo Go** depuis l'App Store ou le Play Store, puis
+ouvre un lien. Pas d'expiration à 7 jours, pas de câble : tous les modules
+utilisés par l'application sont inclus dans Expo Go.
 
 ```bash
 cd mobile
 npx eas-cli@latest login          # compte Expo gratuit
-npx eas-cli@latest update --branch preview --message "premiere version de test"
+npx eas-cli@latest update --branch preview --message "version de test"
 ```
 
-**Avant de publier**, renseigner l'adresse du serveur — sans quoi l'application
-cherchera le PC de développement :
+avec `EXPO_PUBLIC_API_URL=https://VOTRE-URL` dans `mobile/.env` avant de
+publier. Expo Go ne charge que la version du SDK d'Expo qu'il embarque : si
+l'App Store propose une version plus récente que celle du projet, il faudra
+mettre le projet à jour.
 
-```bash
-# mobile/.env
-EXPO_PUBLIC_API_URL=https://VOTRE-URL.up.railway.app
-```
+### Voie C — TestFlight (le vrai chemin vers l'App Store)
 
-Ce qu'Expo Go ne permet pas : les modules natifs qu'il n'embarque pas. Tout ce
-que l'application utilise aujourd'hui y est (trousseau sécurisé, SVG, QR), mais
-Apple Wallet et les notifications natives demanderont la voie B.
-
-### Voie B — TestFlight (le vrai chemin vers l'App Store)
-
-Nécessite le **compte développeur Apple (99 $/an)**. En revanche, **pas de
-Mac** : EAS construit l'application iOS dans le cloud depuis Windows.
+Nécessite le **compte développeur Apple (99 $/an)**, mais **pas de Mac** :
+EAS construit l'application iOS dans le cloud depuis Windows.
 
 ```bash
 cd mobile
@@ -133,20 +194,15 @@ npx eas-cli@latest submit --platform ios
 ```
 
 TestFlight accepte jusqu'à 10 000 testeurs, les builds restent valides 90
-jours, et l'installation se fait par simple lien — sans câble ni réinstallation
-tous les sept jours, contrairement au sideloading avec un compte gratuit.
-
-C'est aussi le passage obligé vers la publication : autant y aller directement
-plutôt que de faire un détour.
+jours, et l'installation se fait par simple lien.
 
 ---
 
 ## 3. Dans quel ordre
 
-1. **Railway** — sans serveur en ligne, rien d'autre n'est testable ailleurs
-   que sur le réseau local.
-2. **Expo Go** — pour faire essayer l'application dans la journée, sans
-   dépenser un euro.
+1. **TiDB Cloud puis Render** — sans serveur en ligne, rien d'autre n'est
+   testable ailleurs que sur le réseau local.
+2. **Le workflow « Application mobile »**, puis Sideloadly et l'APK.
 3. **Compte Apple et TestFlight** — quand le produit mérite d'être montré à des
    gens qui ne sont pas dans la confidence.
 4. **Le stockage des photos**, avant d'ouvrir à de vrais utilisateurs.

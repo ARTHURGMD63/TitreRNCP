@@ -35,6 +35,16 @@ header('X-Content-Type-Options: nosniff');
 $identite = sessionLectureSeule();
 $uid      = $identite['id'];
 
+// L'application mobile présente un jeton, pas de cookie : même pont que pour
+// les écritures (protegerEcritureApi()). Une requête de navigateur n'est pas
+// concernée — elle n'envoie jamais d'en-tête « Authorization: Bearer ».
+if ($uid === null && requeteAvecJeton()) {
+    require_once __DIR__ . '/../includes/api.php';
+    if (apiSessionDepuisJeton()) {
+        $uid = (int) $_SESSION['user_id'];
+    }
+}
+
 if ($uid === null) {
     // 401 et non 200 : le client sait alors qu'il doit cesser d'interroger
     // et renvoyer l'utilisateur vers la connexion, au lieu de boucler

@@ -18,11 +18,38 @@ require_once __DIR__ . '/config.php';
 installerGardesErreurs();
 
 define('DB_HOST', reglage('MYSQLHOST',     'host', 'localhost'));
-define('DB_NAME', reglage('MYSQLDATABASE', 'name', 'studentlink'));
+define('DB_NAME', reglage('MYSQLDATABASE', 'name', 'linkee'));
 define('DB_USER', reglage('MYSQLUSER',     'user', 'root'));
 define('DB_PASS', reglage('MYSQLPASSWORD', 'pass', ''));
 define('DB_PORT', reglage('MYSQLPORT',     'port', '3306'));
 define('DB_PERSISTANT', reglageBooleen('DB_PERSISTANT', 'persistant'));
+
+/*
+ * Connexion chiffrée (TLS), pour les bases hébergées qui l'exigent — TiDB
+ * Cloud refuse toute connexion en clair. MYSQL_SSL=1 active le chiffrement
+ * avec les autorités de certification du système ; MYSQL_SSL_CA donne un
+ * fichier précis. Un hôte *.tidbcloud.com l'active de lui-même : l'oublier
+ * donnerait un refus de connexion qui ne dit pas pourquoi.
+ *
+ * Le certificat du serveur est vérifié : chiffrer sans vérifier qui répond
+ * ne protège de rien.
+ */
+$optionsTls = [];
+$caTls = (string) reglage('MYSQL_SSL_CA', 'ssl_ca', '');
+if ($caTls === '' && (reglageBooleen('MYSQL_SSL', 'ssl') || str_ends_with(strtolower(DB_HOST), '.tidbcloud.com'))) {
+    foreach (['/etc/ssl/certs/ca-certificates.crt', '/etc/pki/tls/certs/ca-bundle.crt', '/etc/ssl/cert.pem'] as $bundle) {
+        if (is_file($bundle)) {
+            $caTls = $bundle;
+            break;
+        }
+    }
+}
+if ($caTls !== '') {
+    $optionsTls = [
+        PDO::MYSQL_ATTR_SSL_CA                 => $caTls,
+        PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => true,
+    ];
+}
 
 try {
     $pdo = new PDO(
@@ -61,7 +88,7 @@ try {
              * dans config.local.php.
              */
             PDO::ATTR_PERSISTENT         => DB_PERSISTANT,
-        ]
+        ] + $optionsTls
     );
 } catch (PDOException $e) {
     // Le message de PDO contient l'hôte et le nom de la base : il part dans
