@@ -29,6 +29,17 @@ final class ApiProtectionTest extends TestCase
         'stats.php',
     ];
 
+    /**
+     * Points d'API délibérément anonymes : aucune identité à vérifier, parce
+     * qu'il n'y a personne — pas encore de compte. Ils écrivent quand même
+     * (donc restent soumis à protegerEcritureApi() et à la garde posée avant
+     * tout accès à la base), mais requireLogin() n'a pas de sens pour un
+     * visiteur qui n'a justement pas encore de compte.
+     */
+    private const ANONYME = [
+        'liste_attente.php', // formulaire de la page d'accueil « bientôt disponible »
+    ];
+
     /** @return list<string> chemins absolus de tous les points d'API */
     private function pointsApi(): array
     {
@@ -117,6 +128,9 @@ final class ApiProtectionTest extends TestCase
         // Chaque point vérifie qui parle avant d'agir. Sans cette ligne, un
         // compte étudiant atteindrait le scan de check-in partenaire.
         foreach ($this->pointsApi() as $chemin) {
+            if (in_array(basename($chemin), self::ANONYME, true)) {
+                continue;
+            }
             $source = (string) file_get_contents($chemin);
 
             $this->assertMatchesRegularExpression(

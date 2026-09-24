@@ -835,6 +835,20 @@ CREATE TABLE IF NOT EXISTS notifications_lues (
 -- étrangères manquantes) : sans objet ici, tout ce fichier crée déjà ses
 -- tables en utf8mb4 / InnoDB avec leurs clés. Elle est seulement enregistrée.
 
+-- ═══════════════════════════════════════════════════════════════════════════
+--  migration v19 — liste d'attente du lancement
+--
+--  index.php affiche un compte à rebours et un formulaire d'e-mail avant
+--  l'ouverture publique. Voir db_migrations_v19.sql.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS liste_attente (
+    id        INT AUTO_INCREMENT PRIMARY KEY,
+    email     VARCHAR(190) NOT NULL,
+    cree_le   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY idx_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS schema_migrations (
     version     VARCHAR(20) NOT NULL,
     applique_le DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -843,4 +857,4 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 
 INSERT IGNORE INTO schema_migrations (version) VALUES
 ('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
-('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18');
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19');

@@ -6,6 +6,10 @@ date_default_timezone_set('Europe/Paris');
 
 require_once __DIR__ . '/security.php';
 
+// reglage() / reglageBooleen() : le mode « bientôt disponible » plus bas en
+// a besoin, et rien avant ce point ne garantit que config.php est chargé.
+require_once __DIR__ . '/config.php';
+
 // Le durcissement du cookie de session vit dans session.php : api/live.php a
 // besoin d'ouvrir la session sans charger tout ce fichier, et deux copies de
 // ces paramètres finiraient tôt ou tard par diverger.
@@ -22,6 +26,83 @@ require_once __DIR__ . '/icons.php';
 // Fabrication des URL. Extrait ici pour que l'API mobile puisse construire
 // ses liens sans demarrer de session ni charger les gardes de role.
 require_once __DIR__ . '/urls.php';
+
+/**
+ * Mode « bientôt disponible ».
+ *
+ * Avant le lancement public, seule la page d'accueil (compte à rebours et
+ * liste d'attente) doit être joignable. Un lien partagé trop tôt, une URL
+ * indexée par un moteur de recherche, ou quelqu'un qui tape /explore.php à
+ * la main ne doivent pas donner accès à une application qui n'a pas encore
+ * ouvert.
+ *
+ * Piloté par une variable d'environnement plutôt que codé en dur : couper
+ * l'interrupteur au lancement ne demande alors aucune modification de code,
+ * juste APP_COMING_SOON=0 (ou l'équivalent côté hébergeur mutualisé).
+ * Vrai par défaut — l'oubli d'activer la variable ne doit jamais laisser
+ * l'application ouverte avant l'heure.
+ */
+function modeBientotDisponible(): bool
+{
+    return reglageBooleen('APP_COMING_SOON', 'coming_soon', true);
+}
+
+/**
+ * Bloque l'accès direct aux pages de l'application pendant le mode
+ * « bientôt disponible ». Appelée automatiquement en bas de ce fichier : les
+ * pages qui chargent auth_check.php sont donc couvertes sans y penser à
+ * chaque fois, sur le même principe que setSecurityHeaders().
+ *
+ * Un administrateur connecté passe outre : c'est lui qui prépare le
+ * lancement (back-office, comptes de test), et lui seul a besoin d'entrer
+ * avant l'heure.
+ *
+ * La comparaison porte sur le chemin réel du fichier exécuté
+ * (SCRIPT_FILENAME), jamais sur l'URL : un hébergement mutualisé sert
+ * l'application depuis /TitreRNCP/, Render depuis la racine, et les deux
+ * doivent être couverts par la même liste, écrite une fois.
+ */
+function verifierGateBientotDisponible(): void
+{
+    // PHPUnit, outils/migrer.php, tout ce qui tourne en ligne de commande :
+    // jamais « le public ». Sans ce garde, le simple fait de charger
+    // auth_check.php dans un test (tests/Unit/AuthCheckTest.php, entre
+    // autres) déclenchait exit() en pleine collecte des tests, et la suite
+    // s'arrêtait sans le moindre message.
+    if (PHP_SAPI === 'cli' || !modeBientotDisponible() || ($_SESSION['user_type'] ?? null) === 'admin') {
+        return;
+    }
+
+    static $autorises = [
+        '/index.php',
+        '/auth/login.php',
+        '/mentions-legales.php',
+        '/confidentialite.php',
+        '/cgu.php',
+    ];
+
+    $racine  = dirname(__DIR__);
+    $reel    = realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? ''));
+    $relatif = $reel !== false ? str_replace('\\', '/', substr($reel, strlen($racine))) : '';
+
+    if (in_array($relatif, $autorises, true)) {
+        return;
+    }
+
+    // « /api/ » (site) et « /api/v1/ » (mobile) restent joignables : l'API
+    // mobile ne charge pas ce fichier (api/v1/_socle.php est indépendant),
+    // et les points d'écriture partagés (api/inscrire.php, api/inviter.php…)
+    // sont ceux que l'application mobile, déjà en test, utilise. Bloquer le
+    // *site* pendant le compte à rebours n'a pas à casser le développement
+    // mobile — seules les pages HTML sont concernées par cette page d'attente.
+    if (str_starts_with($relatif, '/api/')) {
+        return;
+    }
+
+    header('Location: ' . baseUrl('/'));
+    exit;
+}
+verifierGateBientotDisponible();
 
 /**
  * La page d'accueil d'un compte, selon son type.

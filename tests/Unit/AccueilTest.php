@@ -7,17 +7,18 @@ namespace Tests\Unit;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Le contrat de la page d'accueil publique.
+ * Le contrat de la page d'accueil publique — le compte à rebours.
  *
  * Comme pour ApiProtectionTest, ces vérifications relisent la source plutôt
  * que d'appeler la page : en intégration continue il n'y a ni serveur web ni
- * base MySQL, et ce qu'il faut empêcher est justement une modification future.
+ * base MySQL, et ce qu'il faut empêcher est justement une modification future
+ * qui romprait le contrat sans que rien ne le signale.
  *
- * Le mode de panne visé est précis. La bascule entre les deux publics repose
- * sur une correspondance de noms : un onglet porte `data-pour="x"`, le bloc
- * qu'il affiche porte `data-public="x"`. Le jour où l'un des deux est renommé
- * sans l'autre, le script masque les deux blocs et le visiteur reçoit une page
- * vide — sans la moindre erreur PHP pour le signaler.
+ * Avant le 2026-09-24, cette page basculait entre deux publics (étudiants /
+ * établissements) avec un sélecteur segmenté. Depuis, elle n'a plus qu'un
+ * rôle : annoncer le lancement et bloquer l'accès direct à l'application
+ * (voir includes/auth_check.php, verifierGateBientotDisponible()). Les
+ * anciens tests de bascule ont disparu avec la page qu'ils vérifiaient.
  */
 final class AccueilTest extends TestCase
 {
@@ -30,57 +31,77 @@ final class AccueilTest extends TestCase
         return $contenu;
     }
 
-    /** @return list<string> */
-    private static function valeurs(string $source, string $attribut): array
-    {
-        preg_match_all('/' . preg_quote($attribut, '/') . '="([a-z]+)"/', $source, $m);
-
-        return array_values(array_unique($m[1]));
-    }
-
-    public function testChaqueOngletAfficheUnBlocExistant(): void
+    /**
+     * Le compte à rebours affiche une date, pas un texte figé recopié à la
+     * main : sans data-lancement, le script ne peut plus calculer que « 42
+     * jours » n'importe quand.
+     */
+    public function testLeCompteAReboursPorteUneDateCalculee(): void
     {
         $source = self::source('index.php');
 
-        $publics = self::valeurs($source, 'data-public');
-        $onglets = self::valeurs($source, 'data-pour');
-
-        self::assertNotEmpty($publics, 'Aucun bloc de public dans la page.');
-        foreach ($onglets as $onglet) {
-            self::assertContains(
-                $onglet,
-                $publics,
-                "L'onglet « $onglet » ne correspond à aucun bloc data-public : la bascule "
-                . 'masquerait les deux publics et la page s\'afficherait vide.'
-            );
-        }
-    }
-
-    public function testLesDeuxPublicsSontPresents(): void
-    {
-        $publics = self::valeurs(self::source('index.php'), 'data-public');
-
-        self::assertEqualsCanonicalizing(['etudiants', 'etablissements'], $publics);
+        self::assertStringContainsString('data-lancement="', $source);
+        self::assertStringContainsString(
+            "reglage('APP_LAUNCH_DATE', 'lancement_date'",
+            $source,
+            'La date de lancement doit rester réglable sans modifier le code (variable ' .
+            "d'environnement), sur le même principe que includes/config.php."
+        );
     }
 
     /**
-     * Un public inconnu ne doit pas produire une page sans contenu : la valeur
-     * de l'URL est ramenée à l'un des deux blocs, jamais reprise telle quelle.
+     * Le compteur « Pass Fondateur » doit venir d'une vraie requête, jamais
+     * d'un chiffre écrit en dur : un compte à rebours marketing qui ment sur
+     * ses propres chiffres n'inspire pas confiance à des étudiants qui, eux,
+     * vont vérifier.
      */
-    public function testLePublicDeLUrlEstRameneAUneValeurConnue(): void
+    public function testLeCompteurFondateurLitLaVraieTable(): void
     {
         $source = self::source('index.php');
 
+        self::assertStringContainsString('FROM liste_attente', $source);
         self::assertStringContainsString(
-            "\$pour = (\$_GET['pour'] ?? '') === 'etablissements' ? 'etablissements' : 'etudiants';",
-            $source
+            'catch (Throwable $e)',
+            $source,
+            'La page doit rester affichable même si la base est injoignable : ' .
+            "c'est désormais la porte d'entrée entière du site."
         );
+    }
+
+    /**
+     * Le formulaire d'inscription poste vers le point d'API dédié, protégé
+     * par jeton CSRF comme tout point d'écriture (voir ApiProtectionTest).
+     */
+    public function testLeFormulaireEnvoieVersLApiDedie(): void
+    {
+        $source = self::source('index.php');
+
+        self::assertStringContainsString('/api/liste_attente.php', $source);
+        self::assertStringContainsString('enTetesJson()', $source);
+    }
+
+    /**
+     * Les liens légaux doivent rester accessibles : ce sont deux des
+     * quelques pages que le mode « bientôt disponible » laisse passer (voir
+     * includes/auth_check.php).
+     */
+    public function testLesLiensLegauxSontPresents(): void
+    {
+        $source = self::source('index.php');
+
+        self::assertStringContainsString('/mentions-legales.php', $source);
+        self::assertStringContainsString('/confidentialite.php', $source);
     }
 
     /**
      * Les appels à l'action côté établissements doivent ouvrir l'onglet
      * partenaire du formulaire : sans le paramètre, un gérant de bar atterrit
      * sur le formulaire étudiant et renseigne son école.
+     *
+     * auth/register.php lui-même reste inchangé par le mode « bientôt
+     * disponible » : il n'est simplement plus lié depuis la page d'accueil
+     * tant que le mode est actif, verifierGateBientotDisponible() le bloque
+     * comme le reste de l'application.
      */
     public function testLeFormulaireAccepteLOngletDemandeParLUrl(): void
     {
