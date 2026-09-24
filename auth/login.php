@@ -53,15 +53,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-<?php pageDebut('StudentLink — Connexion'); ?>
+<?php pageDebut('Linkee — Connexion'); ?>
 <div class="auth-page">
   <div class="auth-logo">
-    <div class="brand">StudentLink <em>/ Explorer</em></div>
+    <?= marqueLinkee() ?>
   </div>
 
   <h1 class="auth-headline titre-page">
-    <div class="display" style="font-size:var(--fs-9);">Content de</div>
-    <div class="display-italic" style="font-size:var(--fs-9);">te revoir.</div>
+    <div class="display" style="font-size:var(--fs-9);">Content de te</div>
+    <div class="display-italic" style="font-size:var(--fs-9);">revoir.</div>
   </h1>
 
   <?php if ($expiree && !$error): ?>
@@ -86,21 +86,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <label for="password">Mot de passe</label>
       <input type="password" id="password" name="password" autocomplete="current-password" placeholder="••••••••" required>
     </div>
-    <button type="submit" class="btn btn-primary btn-full" style="margin-top:8px;">
-      → Se connecter
+    <div class="auth-oubli">
+      <a href="<?= baseUrl('/auth/forgot.php') ?>">Mot de passe oublié ?</a>
+    </div>
+    <button type="submit" class="btn btn-primary btn-full">
+      Se connecter
     </button>
   </form>
-
-  <div class="auth-link" style="margin-top:12px;">
-    <a href="<?= baseUrl('/auth/forgot.php') ?>" style="font-size:var(--fs-3);color:var(--gris);">Mot de passe oublié ?</a>
-  </div>
 
   <div class="auth-link">
     Pas encore de compte ? <a href="<?= baseUrl('/auth/register.php') ?>">Créer un compte</a>
   </div>
 
-  <div style="margin-top:32px; padding:16px; background:rgba(0,0,0,0.05); border-radius:var(--radius); font-size:var(--fs-2); color:var(--gris);">
-    <strong>Comptes de démo :</strong><br>
+  <div class="auth-demo">
+    <strong>Comptes de démo</strong>
     Étudiant : arthur@uca.fr / password<br>
     Partenaire : jean@lebecquipique.fr / password
   </div>

@@ -63,7 +63,7 @@ function avatarHtml(?string $photo, string $prenom, int $taille = 48, string $fo
 
     return sprintf(
         '<div aria-hidden="true" style="%sbackground:%s;display:flex;align-items:center;justify-content:center;'
-        . 'font-family:var(--font-display);font-weight:var(--fw-display);color:var(--sur-media);font-size:%dpx;">%s</div>',
+        . 'font-family:var(--font-display);font-weight:var(--fw-display);color:var(--sur-lave);font-size:%dpx;">%s</div>',
         $base,
         $fond,
         $corps,

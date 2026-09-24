@@ -1,5 +1,5 @@
 # ============================================================
-#  StudentLink — ce qu'Apache ne doit jamais servir
+#  Linkee — ce qu'Apache ne doit jamais servir
 #
 #  Le serveur livrait le dépôt Git entier (`/.git/config` répondait 200
 #  avec son contenu), listait le contenu de `/includes/`, `/vendor/`,

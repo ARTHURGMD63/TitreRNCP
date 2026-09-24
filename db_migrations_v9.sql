@@ -1,5 +1,5 @@
 -- ============================================================
---  StudentLink — migration v9
+--  Linkee — migration v9
 --  Trace des rappels envoyés
 --
 --  Sans elle, un rappel serait renvoyé à chaque passage de la tâche

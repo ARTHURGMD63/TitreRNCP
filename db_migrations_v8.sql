@@ -1,8 +1,8 @@
 -- ============================================================
---  StudentLink — migration v8
+--  Linkee — migration v8
 --  Les badges cessent de stocker des emoji et l'ancienne palette
 --
---  La colonne « icon » contenait des emoji (🎉 🔥 👥 …) : dessinés par
+--  La colonne « icon » contenait des emoji (fête, flamme, personnes…) : dessinés par
 --  chaque système d'exploitation, insensibles à la couleur demandée, et
 --  désalignés de la grille typographique. Elle contient désormais une
 --  CLÉ d'icône, résolue en SVG par includes/icons.php.

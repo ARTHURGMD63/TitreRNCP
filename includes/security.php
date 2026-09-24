@@ -32,8 +32,10 @@ function setSecurityHeaders(): void {
         "Content-Security-Policy: " .
         "default-src 'self'; " .
         "script-src 'self' 'unsafe-inline'; " .   // bibliothèques auto-hébergées dans /assets/vendor
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " .
-        "font-src 'self' https://fonts.gstatic.com; " .
+        // Polices hébergées avec l'application (assets/fonts) : plus aucune
+        // origine tierce à autoriser pour les styles ni pour les polices.
+        "style-src 'self' 'unsafe-inline'; " .
+        "font-src 'self'; " .
         "img-src 'self' data: https:; " .
         "connect-src 'self'; " .
         "frame-ancestors 'none';"
@@ -376,12 +378,12 @@ function sendResetEmail(string $email, string $token, string $baseUrl): bool {
 
     return envoyerEmail(
         $email,
-        'StudentLink — Réinitialisation de votre mot de passe',
+        'Linkee — Réinitialisation de votre mot de passe',
         "Bonjour,\n\n"
         . "Cliquez sur ce lien pour réinitialiser votre mot de passe (valable 1 heure) :\n\n"
         . "$link\n\n"
         . "Si vous n'avez pas fait cette demande, ignorez cet e-mail : votre mot de passe "
         . "reste inchangé.\n\n"
-        . "L'équipe StudentLink"
+        . "L'équipe Linkee"
     );
 }

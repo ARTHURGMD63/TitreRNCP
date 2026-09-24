@@ -1,6 +1,6 @@
 #!/bin/sh
 # ============================================================
-#  StudentLink — amorçage du conteneur
+#  Linkee — amorçage du conteneur
 #
 #  Railway, Render et les plateformes du même genre imposent le port
 #  d'écoute par la variable PORT, décidée au démarrage. Apache, lui, lit

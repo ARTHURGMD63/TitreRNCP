@@ -31,7 +31,7 @@ final class UploadsTest extends TestCase
             require_once __DIR__ . '/../../includes/uploads.php';
         }
 
-        $this->dossier = sys_get_temp_dir() . '/studentlink_uploads_' . bin2hex(random_bytes(6));
+        $this->dossier = sys_get_temp_dir() . '/linkee_uploads_' . bin2hex(random_bytes(6));
         mkdir($this->dossier, 0777, true);
     }
 

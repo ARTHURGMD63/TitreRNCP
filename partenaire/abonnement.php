@@ -150,13 +150,13 @@ $formules  = formulesSouscriptibles($pdo);
 $restantes = placesFondateurRestantes($pdo);
 $actuelle  = abonnementChoisi($client) ? $client['offre'] : null;
 ?>
-<?php pageDebut('StudentLink — Abonnement'); ?>
+<?php pageDebut('Linkee — Abonnement', ['univers' => 'pro']); ?>
 <a href="#contenu" class="skip-nav">Aller au contenu</a>
 
 <div class="abo-page">
   <div class="abo-entete">
-    <div class="logo" style="margin-bottom:22px;">
-      StudentLink <em style="font-style:italic;color:var(--rouge);">/ Partenaires</em>
+    <div style="margin-bottom:22px;">
+      <?= marqueLinkee('pro') ?>
     </div>
     <h1 class="titre-page">
       <span class="display" style="font-size:var(--fs-9);">Choisis ta</span><br>
@@ -264,7 +264,7 @@ $actuelle  = abonnementChoisi($client) ? $client['offre'] : null;
       </label>
 
       <p class="abo-paiement">
-        Aucune donnée bancaire n'est demandée ici. L'équipe StudentLink te contacte pour la mise
+        Aucune donnée bancaire n'est demandée ici. L'équipe Linkee te contacte pour la mise
         en place du prélèvement avant la première échéance.
       </p>
 
@@ -274,8 +274,8 @@ $actuelle  = abonnementChoisi($client) ? $client['offre'] : null;
     </form>
 
     <p class="abo-bde">
-      Tu représentes un <strong>BDE ou une association étudiante</strong> ? StudentLink est gratuit,
-      définitivement. Écris-nous à <a href="mailto:contact@studentlink.app">contact@studentlink.app</a>
+      Tu représentes un <strong>BDE ou une association étudiante</strong> ? Linkee est gratuit,
+      définitivement. Écris-nous à <a href="mailto:contact@linkee.fr">contact@linkee.fr</a>
       et nous ouvrons l'accès sans formule payante.
     </p>
   </main>
@@ -285,14 +285,14 @@ $actuelle  = abonnementChoisi($client) ? $client['offre'] : null;
   .abo-page { max-width: 940px; margin: 0 auto; padding: 40px 22px 72px; }
   .abo-entete { margin-bottom: 32px; }
   .abo-intro { font-size: var(--fs-4); color: var(--gris-fonce); line-height: var(--lh-normal); margin-top: 16px; max-width: 62ch; }
-  .abo-titre-section { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-6); margin-bottom: 14px; }
+  .abo-titre-section { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-6); letter-spacing: var(--ls-display); margin-bottom: 14px; }
 
   .abo-actuelle {
     display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap;
-    background: var(--blanc); border: 1px solid var(--line-2); border-radius: var(--radius);
+    background: var(--blanc); border: 1px solid var(--gris-clair); border-radius: var(--radius);
     padding: 20px 22px; margin-bottom: 30px;
   }
-  .abo-actuelle-nom { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-7); }
+  .abo-actuelle-nom { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-7); letter-spacing: var(--ls-display); }
   .abo-actuelle-detail { font-size: var(--fs-3); color: var(--gris-fonce); margin-top: 2px; }
 
   .abo-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 22px; }
@@ -305,23 +305,23 @@ $actuelle  = abonnementChoisi($client) ? $client['offre'] : null;
   }
   .abo-carte-corps {
     display: flex; flex-direction: column; gap: 8px; height: 100%;
-    background: var(--blanc); border: 1px solid var(--line-2); border-radius: var(--radius);
+    background: var(--blanc); border: 1px solid var(--gris-clair); border-radius: var(--radius);
     padding: 22px; transition: border-color .15s ease, box-shadow .15s ease;
   }
   .abo-carte:hover .abo-carte-corps { border-color: var(--gris); }
   .abo-carte input:checked + .abo-carte-corps {
-    border-color: var(--rouge-deep); box-shadow: 0 0 0 1px var(--rouge-deep);
+    border-color: var(--rouge); box-shadow: 0 0 0 1px var(--rouge);
   }
-  .abo-carte input:focus-visible + .abo-carte-corps { outline: 2px solid var(--bleu); outline-offset: 2px; }
+  .abo-carte input:focus-visible + .abo-carte-corps { outline: 2px solid var(--rouge); outline-offset: 2px; }
   .abo-carte-entete { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
   .abo-carte-nom { font-weight: var(--fw-bold); font-size: var(--fs-5); }
-  .abo-carte-prix { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-9); line-height: var(--lh-display); }
+  .abo-carte-prix { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-9); line-height: var(--lh-display); letter-spacing: var(--ls-display); }
   .abo-carte-prix small { font-family: var(--font-sans); font-weight: var(--fw-semibold); font-size: var(--fs-2); color: var(--gris); }
   .abo-carte-note { font-size: var(--fs-3); color: var(--gris-fonce); }
   .abo-carte-detail { font-size: var(--fs-2); color: var(--gris); margin-top: auto; padding-top: 8px; border-top: 1px solid var(--gris-clair); }
 
   .abo-inclus {
-    background: var(--surface-2); border: 1px solid var(--line-2); border-radius: var(--radius);
+    background: var(--surface-2); border: 1px solid var(--gris-clair); border-radius: var(--radius-md);
     padding: 18px 20px; font-size: var(--fs-3); color: var(--gris-fonce); line-height: var(--lh-normal);
     margin-bottom: 20px;
   }

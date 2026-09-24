@@ -1,5 +1,5 @@
 -- ============================================================
---  StudentLink — Installation complète de la base de données
+--  Linkee — Installation complète de la base de données
 --  Import UNIQUE : crée la base, les 16 tables et un jeu de
 --  données de démonstration (événements toujours à venir).
 --
@@ -12,8 +12,8 @@
 --   • Partenaire : jean@lebecquipique.fr
 -- ============================================================
 
-CREATE DATABASE IF NOT EXISTS studentlink CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE studentlink;
+CREATE DATABASE IF NOT EXISTS linkee CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE linkee;
 
 -- ─── Moteur de stockage ─────────────────────────────────────────────────────
 --
@@ -233,8 +233,10 @@ CREATE TABLE IF NOT EXISTS badges (
     code VARCHAR(50) PRIMARY KEY,
     nom VARCHAR(100) NOT NULL,
     description VARCHAR(255),
-    icon VARCHAR(10),
-    couleur VARCHAR(20)
+    -- Largeurs de la v8 : un nom d'icône (« calendrier ») et une variable
+    -- CSS (« var(--sur-orange-clair) ») ne tenaient pas dans 10 et 20.
+    icon VARCHAR(32),
+    couleur VARCHAR(40)
 );
 
 CREATE TABLE IF NOT EXISTS user_badges (
@@ -288,16 +290,19 @@ CREATE TABLE IF NOT EXISTS invitations (
 
 -- ───────────────────────  CATALOGUE DE BADGES  ───────────────────────
 
+-- Icônes nommées (dessinées par icon(), includes/icons.php) et couleurs en
+-- jetons de la feuille : l'état de la migration v8, que ce fichier déclare
+-- appliquée. Avec des emoji, les pastilles de badge s'affichaient vides.
 INSERT IGNORE INTO badges (code, nom, description, icon, couleur) VALUES
-('first_event',   'Premier pas',      'Ton tout premier event',      '🎉', '#E0492B'),
-('five_events',   'Régulier',         '5 events à ton actif',        '🔥', '#EC8233'),
-('ten_events',    'Noctambule',       '10 events validés',           '🌙', '#4A40C2'),
-('first_squad',   'Team player',      'Rejoint ta première squad',   '🤝', '#EFB23A'),
-('five_squads',   'Social butterfly', '5 squads rejointes',          '🦋', '#E0492B'),
-('first_follow',  'Connecté',         'Suivi ta première personne',  '👥', '#4A40C2'),
-('reviewer',      'Critique',         'Laissé ton premier avis',     '⭐', '#EC8233'),
-('early_bird',    'Early bird',       'Inscrit 7j avant un event',   '🐦', '#EFB23A'),
-('saver_50',      'Économe',          '50€ économisés au total',     '💰', '#E0492B');
+('first_event',   'Premier pas',      'Ton tout premier event',      'trophee',   'var(--rouge)'),
+('five_events',   'Régulier',         '5 events à ton actif',        'flamme',    'var(--orange)'),
+('ten_events',    'Noctambule',       '10 events validés',           'lune',      'var(--bleu)'),
+('first_squad',   'Team player',      'Rejoint ta première squad',   'drapeau',   'var(--lime)'),
+('five_squads',   'Social butterfly', '5 squads rejointes',          'papillon',  'var(--rouge)'),
+('first_follow',  'Connecté',         'Suivi ta première personne',  'personnes', 'var(--bleu)'),
+('reviewer',      'Critique',         'Laissé ton premier avis',     'oiseau',    'var(--orange)'),
+('early_bird',    'Early bird',       'Inscrit 7j avant un event',   'etoile',    'var(--lime)'),
+('saver_50',      'Économe',          '50€ économisés au total',     'piece',     'var(--rouge)');
 
 -- ─────────────────────  DONNÉES DE DÉMONSTRATION  ─────────────────────
 -- Mot de passe (bcrypt) commun à tous les comptes : « password »
@@ -325,10 +330,10 @@ INSERT INTO etablissements (user_id, nom, type, adresse, ville) VALUES
 
 -- Événements toujours à venir grâce à NOW() + INTERVAL
 INSERT INTO evenements (etablissement_id, titre, description, type, style_musique, date_heure, quota, reduction, prix_normal, is_flash, flash_expiry, is_gratuit, lieu) VALUES
-(1, 'Happy Hour jusqu\'à minuit', 'Happy Hour prolongé exclusivement pour les membres StudentLink. Cocktails à moitié prix toute la soirée !', 'bar', 'generaliste',       NOW() + INTERVAL 2 HOUR,  80,  50, 10.00, 1, NOW() + INTERVAL 3 HOUR,  0, 'Place de Jaude, Clermont-Ferrand'),
+(1, 'Happy Hour jusqu\'à minuit', 'Happy Hour prolongé exclusivement pour les membres Linkee. Cocktails à moitié prix toute la soirée !', 'bar', 'generaliste',       NOW() + INTERVAL 2 HOUR,  80,  50, 10.00, 1, NOW() + INTERVAL 3 HOUR,  0, 'Place de Jaude, Clermont-Ferrand'),
 (1, 'Beer Pong Tournament',      'Tournoi de beer pong par équipes de 2. Entrée gratuite, 50€ de conso pour les gagnants.',                    'afterwork', 'generaliste', NOW() + INTERVAL 5 HOUR,  40,  0,  0.00,  1, NOW() + INTERVAL 4 HOUR,  1, 'Place de Jaude, Clermont-Ferrand'),
 (1, 'Mojito Night',              '-60% sur tous les cocktails tiki entre 19h et 22h. Ambiance tropicale, DJ set live.',                          'bar', 'house',       NOW() + INTERVAL 27 HOUR, 80,  60, 10.00, 1, NOW() + INTERVAL 24 HOUR, 0, 'Place de Jaude, Clermont-Ferrand'),
-(2, 'Soirée Étudiante',          'Entrée gratuite avant 1h avec ton pass StudentLink. DJ set toute la nuit.',                                   'boite', 'generaliste',     NOW() + INTERVAL 26 HOUR, 150, 100, 10.00, 0, NULL, 1, 'Montferrand, Clermont-Ferrand'),
+(2, 'Soirée Étudiante',          'Entrée gratuite avant 1h avec ton pass Linkee. DJ set toute la nuit.',                                   'boite', 'generaliste',     NOW() + INTERVAL 26 HOUR, 150, 100, 10.00, 0, NULL, 1, 'Montferrand, Clermont-Ferrand'),
 (1, 'After-work Jeudi',          'Bières à 2€, pintes à 3€ pour les étudiants munis de leur pass.',                                             'afterwork', 'pop', NOW() + INTERVAL 50 HOUR, 60,  30, 5.00,  0, NULL, 0, 'Place de Jaude, Clermont-Ferrand'),
 (1, 'Blind Test Géant',          'Blind test par équipes, lots à gagner, shooters offerts pour les gagnants.',                                 'bar', 'pop',       NOW() + INTERVAL 4 DAY,   60,  20, 12.00, 0, NULL, 0, 'Place de Jaude, Clermont-Ferrand'),
 (2, 'Latino Fever',              'Initiation salsa offerte à 22h30 puis reggaeton/latino jusqu\'au bout. Tequila à 4€.',                        'boite', 'latino',     NOW() + INTERVAL 5 DAY,   150, 30, 12.00, 0, NULL, 0, 'Montferrand, Clermont-Ferrand'),
@@ -382,7 +387,7 @@ INSERT INTO invitations (from_user_id, to_user_id, type, target_id, statut) VALU
 
 
 -- ============================================================
---  StudentLink — migration v14
+--  Linkee — migration v14
 --  Montée en charge : index manquants et flux de révisions
 --
 --  Cette migration ne change aucune fonctionnalité. Elle prépare la
@@ -519,7 +524,7 @@ ON DUPLICATE KEY UPDATE canal = canal;
 
 
 -- ============================================================
---  StudentLink — migration v15
+--  Linkee — migration v15
 --  Les centres d'intérêt deviennent indexables
 --
 --  Le problème, en une phrase : `users.interests` est une chaîne
@@ -778,13 +783,13 @@ SELECT e.id, e.nom, e.type, e.ville, e.adresse,
 --  Suivi des migrations
 --
 --  Ce fichier est un point de départ complet : il contient déjà le résultat
---  de toutes les migrations db_migrations_v4 à v16. Les enregistrer ici évite
+--  de toutes les migrations db_migrations_v4 à v18. Les enregistrer ici évite
 --  qu'`outils/migrer.php` ne propose de les rejouer sur une base neuve — ce
 --  qui échouerait sur v4, dont le contenu est intégré plus haut et qui n'est
 --  pas rejouable (« Nom du champ statut déjà utilisé »).
 --
 --  À partir d'ici, le cycle est simple : on ajoute un fichier
---  db_migrations_v17.sql, et `php outils/migrer.php` l'applique et
+--  db_migrations_v19.sql, et `php outils/migrer.php` l'applique et
 --  l'enregistre. Plus rien ne se pose à la main dans phpMyAdmin.
 --
 --  Pour une base créée AVANT l'existence de ce suivi :
@@ -813,6 +818,23 @@ CREATE TABLE IF NOT EXISTS api_tokens (
     INDEX idx_token_user (user_id, expire_le)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- ═══════════════════════════════════════════════════════════════════════════
+--  migration v17 — notifications lues (« Tout lire »)
+--
+--  Les notifications sont recomposées à chaque affichage : on ne retient que
+--  l'instant où l'étudiant a tout lu. Voir db_migrations_v17.sql.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS notifications_lues (
+    user_id INT NOT NULL PRIMARY KEY,
+    lues_le DATETIME NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- migration v18 (rattrapage latin1 → utf8mb4, MyISAM → InnoDB, clés
+-- étrangères manquantes) : sans objet ici, tout ce fichier crée déjà ses
+-- tables en utf8mb4 / InnoDB avec leurs clés. Elle est seulement enregistrée.
+
 CREATE TABLE IF NOT EXISTS schema_migrations (
     version     VARCHAR(20) NOT NULL,
     applique_le DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -821,4 +843,4 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 
 INSERT IGNORE INTO schema_migrations (version) VALUES
 ('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
-('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16');
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18');

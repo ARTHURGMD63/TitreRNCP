@@ -55,7 +55,7 @@ function configurationMail(): array
 {
     // Par défaut, l'expéditeur est construit sur l'hôte servi : c'est le seul
     // domaine dont on soit sûr qu'il désigne bien cette application. Un
-    // « noreply@studentlink.app » écrit en dur mentait dès que le site
+    // « noreply@linkee.app » écrit en dur mentait dès que le site
     // tournait ailleurs, et c'est précisément ce que SPF sanctionne.
     $hoteWeb = (string) ($_SERVER['HTTP_HOST'] ?? 'localhost');
     $domaine = preg_replace('/:\d+$/', '', $hoteWeb) ?: 'localhost';
@@ -64,7 +64,7 @@ function configurationMail(): array
 
     return [
         'expediteur'  => $expediteur,
-        'nom'         => reglage('MAIL_FROM_NOM', 'mail_from_nom', 'StudentLink'),
+        'nom'         => reglage('MAIL_FROM_NOM', 'mail_from_nom', 'Linkee'),
         // L'adresse d'enveloppe reçoit les rebonds. La même que l'expéditeur
         // par défaut : c'est ce qui aligne SPF sur le domaine annoncé.
         'retour'      => reglage('MAIL_RETURN_PATH', 'mail_return_path', $expediteur),
@@ -105,7 +105,7 @@ function nettoyerEntete(string $valeur): string
 /**
  * Encode un texte d'en-tête selon la RFC 2047 s'il contient du non-ASCII.
  *
- * « StudentLink — Réinitialisation de votre mot de passe » partait en UTF-8
+ * « Linkee — Réinitialisation de votre mot de passe » partait en UTF-8
  * brut. Un en-tête ne transporte que de l'ASCII : selon le client, le sujet
  * s'affichait avec des caractères de remplacement, et plusieurs filtres
  * anti-spam comptent un en-tête 8 bits comme signal négatif.

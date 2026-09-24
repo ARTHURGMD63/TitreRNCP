@@ -1,5 +1,5 @@
 -- ============================================================
---  StudentLink — migration v15
+--  Linkee — migration v15
 --  Les centres d'intérêt deviennent indexables
 --
 --  Le problème, en une phrase : `users.interests` est une chaîne

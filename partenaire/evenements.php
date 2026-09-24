@@ -43,14 +43,12 @@ $evenements = $stmt->fetchAll();
 
 $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Afterwork'];
 ?>
-<?php pageDebut('StudentLink — Mes événements'); ?>
+<?php pageDebut('Linkee — Mes événements', ['univers' => 'pro']); ?>
 <div class="partner-shell">
 
   <aside class="partner-sidebar">
     <div class="sidebar-brand">
-      <div style="font-family:var(--font-sans);font-weight:var(--fw-bold);font-size:var(--fs-5);color:#fff;">
-        StudentLink <em style="font-style:italic;color:var(--rouge);">/ Partenaires</em>
-      </div>
+      <?= marqueLinkee('pro') ?>
     </div>
     <nav class="sidebar-nav">
       <a href="<?= baseUrl('/partenaire/dashboard.php') ?>" class="sidebar-link">
@@ -69,10 +67,10 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
         <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Abonnement
       </a>
     </nav>
-    <div class="sidebar-venue" style="margin-top:48px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.1);">
+    <div class="sidebar-venue" style="margin-top:48px;padding-top:20px;border-top:1px solid var(--gris-clair);">
       <div class="sidebar-venue-name"><?= htmlspecialchars(mb_strtoupper($etab['nom'])) ?></div>
       <div class="sidebar-venue-city"><?= htmlspecialchars($etab['ville']) ?></div>
-      <a href="<?= baseUrl('/auth/logout.php') ?>" class="lien-action" style="margin-top:12px;font-size:var(--fs-2);color:rgba(255,255,255,0.4);text-decoration:none;">
+      <a href="<?= baseUrl('/auth/logout.php') ?>" class="lien-action" style="margin-top:12px;font-size:var(--fs-2);color:var(--gris);text-decoration:none;">
         → Déconnexion
       </a>
     </div>
@@ -82,7 +80,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
     <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:32px;">
       <div>
         <div class="label text-gris" style="margin-bottom:6px;">Gestion des événements</div>
-        <h1 class="titre-page" style="font-family:var(--font-display);font-size:var(--fs-9);font-weight:var(--fw-black);line-height:var(--lh-tight);">
+        <h1 class="titre-page" style="font-family:var(--font-display);font-size:var(--fs-9);font-weight:var(--fw-black);line-height:var(--lh-tight);letter-spacing:var(--ls-display);">
           Mes <?= count($evenements) ?> événement<?= count($evenements)>1?'s':'' ?>
         </h1>
       </div>
@@ -102,7 +100,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
       <div class="form-success">Événement mis à jour avec succès !</div>
     <?php endif; ?>
 
-    <div style="background:var(--blanc);border-radius:var(--radius);overflow:hidden;">
+    <div style="background:var(--blanc);border:1px solid var(--gris-clair);border-radius:var(--radius);overflow:hidden;">
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
       <table class="events-table">
         <thead>
@@ -121,7 +119,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
           <?php if (empty($evenements)): ?>
           <tr>
             <td colspan="8" style="text-align:center;padding:40px;color:var(--gris);">
-              Aucun événement. <a href="<?= baseUrl('/partenaire/create_event.php') ?>" style="color:var(--bleu);font-weight:var(--fw-semibold);">Créez-en un !</a>
+              Aucun événement. <a href="<?= baseUrl('/partenaire/create_event.php') ?>" style="color:var(--sur-rouge-clair);font-weight:var(--fw-semibold);">Créez-en un !</a>
             </td>
           </tr>
           <?php endif; ?>
@@ -155,7 +153,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
               <?php if ($isPast): ?>
                 <span style="color:var(--gris);font-size:var(--fs-2);font-weight:var(--fw-semibold);">Passé</span>
               <?php elseif ($isFull): ?>
-                <span style="color:var(--sur-rouge-clair);font-size:var(--fs-2);font-weight:var(--fw-semibold);">Complet</span>
+                <span style="color:var(--danger);font-size:var(--fs-2);font-weight:var(--fw-semibold);">Complet</span>
               <?php else: ?>
                 <span style="color:var(--succes);font-size:var(--fs-2);font-weight:var(--fw-semibold);">Actif</span>
               <?php endif; ?>

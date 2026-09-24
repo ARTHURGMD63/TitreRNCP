@@ -1,4 +1,4 @@
-# StudentLink
+# Linkee
 
 > Plateforme événementielle & sociale pour les étudiants de Clermont-Ferrand.
 
@@ -10,35 +10,35 @@
 
 ---
 
-## 🎯 Présentation
+## Présentation
 
-StudentLink connecte les étudiants aux établissements (bars, boîtes, restos) de leur ville via un système de **pass numériques** avec réductions exclusives.
+Linkee connecte les étudiants aux établissements (bars, boîtes, restos) de leur ville via un système de **pass numériques** avec réductions exclusives.
 
 | Rôle | Fonctionnalités |
 |------|----------------|
 | **Étudiant** | Explorer les events, s'inscrire, scanner son QR code, rejoindre des squads sportives, suivre des amis, collecter des badges XP |
 | **Partenaire** | Créer/gérer des événements, scanner les QR codes au check-in, consulter les stats (inscriptions, conversions, pics horaires) |
 
-## ✨ Fonctionnalités principales
+## Fonctionnalités principales
 
-- 🎟 **Wallet numérique** — pass QR code générés à l'inscription
-- 🔥 **Flash events** — offres limitées dans le temps avec compte à rebours
-- 🏃 **Squads sportives** — groupes par activité (running, vélo, muscu)
-- 👥 **Social** — suivre des étudiants, voir leurs activités
-- ⭐ **Avis** — notes 1-5★ et commentaires après check-in
-- 🏆 **Gamification** — XP, niveaux, 9 badges débloquables
-- 📊 **Analytics partenaire** — Chart.js (inscriptions/j, check-in/h, source école)
-- 🌙 **Dark mode** — persistant via localStorage
-- 🔒 **CSRF + Rate limiting + Forgot password** — sécurité OWASP Top 10
+- **Wallet numérique** — pass QR code générés à l'inscription
+- **Flash events** — offres limitées dans le temps avec compte à rebours
+- **Squads sportives** — groupes par activité (running, vélo, muscu)
+- **Social** — suivre des étudiants, voir leurs activités
+- **Avis** — notes 1 à 5 étoiles et commentaires après check-in
+- **Gamification** — XP, niveaux, 9 badges débloquables
+- **Analytics partenaire** — Chart.js (inscriptions/j, check-in/h, source école)
+- **Dark mode** — persistant via localStorage
+- **CSRF + Rate limiting + Forgot password** — sécurité OWASP Top 10
 
-## 🛠 Stack technique
+## Stack technique
 
 | Couche | Technologie |
 |--------|-------------|
 | Backend | PHP 8.3, PDO / MySQL |
 | Frontend | HTML5, CSS3 (custom properties), JS vanilla |
 | Charts | Chart.js 4 |
-| Styles | DM Sans + Playfair Display (Google Fonts) |
+| Styles | Charte Linkee : Unbounded, Instrument Sans, JetBrains Mono (hébergées dans `assets/fonts`) |
 | Tests | PHPUnit 10, PHPStan niveau 5 |
 | CI/CD | GitHub Actions (PHP 8.1 / 8.2 / 8.3) |
 | Déploiement | Docker (Apache + mod_php + OPcache) ou hébergement mutualisé |
@@ -47,7 +47,7 @@ StudentLink connecte les étudiants aux établissements (bars, boîtes, restos) 
 | Base de données | MySQL 8 (local : WAMP / Railway : MySQL plugin) |
 | PWA | Web App Manifest |
 
-## 🚀 Installation locale
+## Installation locale
 
 ### Prérequis
 - WAMP / XAMPP / Laragon (PHP ≥ 8.1, MySQL 8)
@@ -58,7 +58,7 @@ StudentLink connecte les étudiants aux établissements (bars, boîtes, restos) 
 
 **1. Placer le projet** dans le dossier web de WAMP, dans un dossier nommé **exactement** `TitreRNCP` :
 `C:\wamp64\www\TitreRNCP`
-> ⚠️ Le nom du dossier est important : en local, les liens internes utilisent le chemin `/TitreRNCP`.
+> Le nom du dossier est important : en local, les liens internes utilisent le chemin `/TitreRNCP`.
 
 **2. Créer la base de données** — une **seule** importation suffit (crée les 26 tables **et** un jeu de démonstration avec des événements toujours à venir, back-office fondateurs compris) :
 - **Via phpMyAdmin** (fourni avec WAMP) : ouvrir `http://localhost/phpmyadmin` → onglet **Importer** → choisir `db_setup.sql` → **Exécuter**.
@@ -108,7 +108,7 @@ En cas de doute, lancer `php outils/migrer.php` sans option : si la base est en 
 | Étudiant | arthur@uca.fr | password |
 | Partenaire | jean@lebecquipique.fr | password |
 
-## ☁️ Déploiement Railway
+## Déploiement Railway
 
 ```bash
 # Variables d'environnement Railway (configurées automatiquement)
@@ -120,7 +120,7 @@ git push origin main
 
 Le fichier `includes/db.php` détecte automatiquement l'environnement Railway via `$_ENV`.
 
-## 🧪 Tests
+## Tests
 
 ```bash
 # Lancer tous les tests
@@ -153,7 +153,7 @@ composer ci
 
 Les tests de type `ApiProtectionTest`, `SchemaTest` et `DepotTest` lisent les fichiers du projet plutôt que d'appeler du code : ils ne vérifient pas que les onze points d'API existants sont corrects — cela a été fait en conditions réelles — mais que **le douzième ne pourra pas être ajouté sans sa garde**.
 
-## 🗄 Schéma de base de données
+## Schéma de base de données
 
 Voir [`docs/MCD.md`](docs/MCD.md) pour le diagramme entité-relation complet.
 
@@ -168,7 +168,7 @@ users → inscriptions → evenements → etablissements
       → economies
 ```
 
-## 🔒 Sécurité
+## Sécurité
 
 Voir [`SECURITY.md`](SECURITY.md) pour la couverture OWASP Top 10 détaillée.
 
@@ -183,7 +183,7 @@ Points clés :
 - Headers HTTP : CSP, HSTS, X-Frame-Options
 - Session regeneration après auth
 
-## 📁 Structure du projet
+## Structure du projet
 
 ```
 TitreRNCP/
@@ -206,7 +206,7 @@ TitreRNCP/
 └── SECURITY.md
 ```
 
-## 📖 Documentation
+## Documentation
 
 | Document | Description |
 |----------|-------------|
@@ -222,7 +222,7 @@ TitreRNCP/
 | [`CHANGELOG.md`](CHANGELOG.md) | Historique des versions |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Guide de contribution |
 
-## 📄 Licence
+## Licence
 
 Projet propriétaire — Titre Professionnel Développeur Web et Web Mobile (DWWM), niveau 5.  
 © 2026 Arthur Gramond — tous droits réservés.

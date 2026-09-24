@@ -80,13 +80,13 @@ if ($encore) {
 $totalVue = $vue === 'abonnes' ? $nbAbonnes : $nbAbonnements;
 $titre    = $vue === 'abonnes' ? 'Abonnés' : 'Abonnements';
 ?>
-<?php pageDebut('StudentLink — ' . $titre, ['pwa' => true]); ?>
+<?php pageDebut('Linkee — ' . $titre, ['pwa' => true]); ?>
 <a href="#main-content" class="skip-nav">Aller au contenu principal</a>
 <div class="app-shell">
 
   <div class="page-header" style="padding-bottom:10px;">
     <a href="<?= baseUrl('/profil.php') ?>"
-       style="display:inline-flex;align-items:center;gap:6px;margin-bottom:14px;font-size:var(--fs-1);font-weight:var(--fw-bold);text-transform:uppercase;letter-spacing:var(--ls-wide);color:var(--gris-fonce);text-decoration:none;">
+       style="display:inline-flex;align-items:center;gap:6px;margin-bottom:14px;font-size:var(--fs-4);font-weight:var(--fw-semibold);color:var(--gris);text-decoration:none;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
       Mon profil
     </a>
@@ -98,11 +98,11 @@ $titre    = $vue === 'abonnes' ? 'Abonnés' : 'Abonnements';
 
     <h1 class="titre-page">
       <?php if ($vue === 'abonnes'): ?>
-        <div class="display" style="font-size:var(--fs-9);line-height:var(--lh-tight);">Ceux qui</div>
-        <div class="display-italic" style="font-size:var(--fs-9);line-height:var(--lh-tight);">te suivent.</div>
+        <div class="display" style="font-size:var(--fs-8);line-height:var(--lh-tight);">Ceux qui</div>
+        <div class="display-italic" style="font-size:var(--fs-8);line-height:var(--lh-tight);">te suivent.</div>
       <?php else: ?>
-        <div class="display" style="font-size:var(--fs-9);line-height:var(--lh-tight);">Ceux que</div>
-        <div class="display-italic" style="font-size:var(--fs-9);line-height:var(--lh-tight);">tu suis.</div>
+        <div class="display" style="font-size:var(--fs-8);line-height:var(--lh-tight);">Ceux que</div>
+        <div class="display-italic" style="font-size:var(--fs-8);line-height:var(--lh-tight);">tu suis.</div>
       <?php endif; ?>
     </h1>
   </div>
@@ -117,16 +117,16 @@ $titre    = $vue === 'abonnes' ? 'Abonnés' : 'Abonnements';
         <input type="text" name="q" value="<?= htmlspecialchars($q) ?>"
                placeholder="Chercher un nom ou une école..."
                aria-label="Chercher dans <?= $titre ?>"
-               style="width:100%;padding:14px 44px 14px 16px;border:1px solid var(--gris-clair);box-shadow:var(--shadow);font-size:var(--fs-4);outline:none;background:var(--blanc);">
+               class="recherche-annuaire">
         <button type="submit" aria-label="Chercher"
-                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--noir);cursor:pointer;">
+                style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--gris);cursor:pointer;">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </button>
       </div>
       <?php if ($q): ?>
         <div style="margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
-          <span style="font-size:var(--fs-2);font-weight:var(--fw-bold);color:var(--gris);"><?= count($personnes) ?><?= $encore ? '+' : '' ?> résultat<?= count($personnes) > 1 ? 's' : '' ?></span>
-          <a href="?type=<?= $vue ?>" style="font-size:var(--fs-1);font-weight:var(--fw-bold);color:var(--sur-rouge-clair);text-transform:uppercase;letter-spacing:var(--ls-wide);text-decoration:none;">Réinitialiser</a>
+          <span style="font-family:var(--font-mono);font-size:var(--fs-2);color:var(--gris);"><?= count($personnes) ?><?= $encore ? '+' : '' ?> résultat<?= count($personnes) > 1 ? 's' : '' ?></span>
+          <a href="?type=<?= $vue ?>" style="font-size:var(--fs-3);font-weight:var(--fw-bold);color:var(--sur-rouge-clair);text-decoration:none;">Réinitialiser</a>
         </div>
       <?php endif; ?>
     </form>
@@ -136,8 +136,9 @@ $titre    = $vue === 'abonnes' ? 'Abonnés' : 'Abonnements';
         <?php
           $fs      = $p['follow_statut'] ?? null;
           $libelle = $fs === 'accepted' ? icon('check', 'icon-sm') . ' Suivi' : ($fs === 'pending' ? 'En attente' : '+ Suivre');
-          $fond    = $fs === 'accepted' ? 'var(--noir)' : ($fs === 'pending' ? 'var(--surface-2)' : 'transparent');
-          $encre   = $fs === 'accepted' ? 'var(--blanc)' : ($fs === 'pending' ? 'var(--gris-fonce)' : 'var(--noir)');
+          // Mêmes couleurs que peindreBoutonSuivi() (app.js) après un clic.
+          $fond    = $fs === 'accepted' ? 'var(--surface-2)' : ($fs === 'pending' ? 'var(--surface-2)' : 'var(--rouge)');
+          $encre   = $fs === 'accepted' ? 'var(--noir)' : ($fs === 'pending' ? 'var(--gris-fonce)' : 'var(--sur-lave)');
         ?>
         <div class="ligne-personne">
           <a class="ligne-personne__lien" href="<?= baseUrl('/view_profile.php?id=' . (int)$p['id']) ?>">
@@ -181,9 +182,10 @@ $titre    = $vue === 'abonnes' ? 'Abonnés' : 'Abonnements';
 </div>
 
 <nav class="bottom-nav" aria-label="Navigation principale">
+  <span class="nav-marque" aria-hidden="true"><?= marqueLinkee() ?></span>
   <a href="<?= baseUrl('/explore.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
-    <span>Explore</span>
+    <span>Explorer</span>
   </a>
   <a href="<?= baseUrl('/squads.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
@@ -191,7 +193,7 @@ $titre    = $vue === 'abonnes' ? 'Abonnés' : 'Abonnements';
   </a>
   <a href="<?= baseUrl('/wallet.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg></span>
-    <span>Wallet</span>
+    <span>Pass</span>
   </a>
   <a href="<?= baseUrl('/profil.php') ?>" class="nav-item active" aria-current="page">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>

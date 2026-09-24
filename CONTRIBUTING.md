@@ -1,4 +1,4 @@
-# Contributing — StudentLink
+# Contributing — Linkee
 
 ## Workflow Git
 

@@ -1,4 +1,4 @@
-# Référence API — StudentLink
+# Référence API — Linkee
 
 Tous les endpoints JSON se trouvent dans `/api/`. Ils nécessitent une **session PHP active** (utilisateur connecté).
 

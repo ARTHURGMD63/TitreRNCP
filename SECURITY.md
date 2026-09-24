@@ -1,23 +1,23 @@
-# Politique de sécurité — StudentLink
+# Politique de sécurité — Linkee
 
 ## Versions supportées
 
 | Version | Supportée |
 |---------|-----------|
-| 1.x     | ✅        |
+| 1.x     | Oui |
 
 ---
 
 ## Signalement d'une vulnérabilité
 
-Si vous découvrez une faille de sécurité, contactez-nous à **security@studentlink.app**.  
+Si vous découvrez une faille de sécurité, contactez-nous à **security@linkee.app**.  
 Réponse sous 48h. Merci de ne pas publier la vulnérabilité publiquement avant correction.
 
 ---
 
 ## Mesures de sécurité implémentées
 
-### 🔒 Authentification & Sessions
+### Authentification & Sessions
 
 | Mesure | Implémentation |
 |--------|----------------|
@@ -31,7 +31,7 @@ Réponse sous 48h. Merci de ne pas publier la vulnérabilité publiquement avant
 | Expiration par inactivité | 1 h pour un compte `admin`, 30 jours pour les autres (`delaiInactivite()`) |
 | Longueur du mot de passe | 12 caractères pour un compte `admin`, 8 sinon (`longueurMinimaleMotDePasse()`) |
 
-### 🛡 Injections & XSS
+### Injections & XSS
 
 | Mesure | Implémentation |
 |--------|----------------|
@@ -41,7 +41,7 @@ Réponse sous 48h. Merci de ne pas publier la vulnérabilité publiquement avant
 | Whitelist des inputs | Intérêts validés contre une liste (`$allowedInterests`), types d'événements validés |
 | Bornes sur les entiers | `max()`/`min()` sur quotas, réductions, notes |
 
-### 🔑 CSRF
+### CSRF
 
 | Mesure | Implémentation |
 |--------|----------------|
@@ -63,12 +63,12 @@ Réponse sous 48h. Merci de ne pas publier la vulnérabilité publiquement avant
 > onze points d'écriture s'ouvraient d'un coup, sans que rien dans leur code ne
 > le signale.
 
-### 🔁 Redirections
+### Redirections
 
 | Mesure | Implémentation |
 |--------|----------------|
 | Retour après échec CSRF | `urlInterneOuDefaut()` : seuls le chemin, la requête et le fragment d'une URL du même hôte sont conservés |
-| Cas couverts | Hôte étranger, hôte qui commence pareil (`studentlink.example.evil.tld`), port différent, URL protocole-relatif (`//evil.tld`), `/\evil.tld`, chemin relatif |
+| Cas couverts | Hôte étranger, hôte qui commence pareil (`linkee.example.evil.tld`), port différent, URL protocole-relatif (`//evil.tld`), `/\evil.tld`, chemin relatif |
 
 > `csrfVerify()` renvoyait l'utilisateur vers `$_SERVER['HTTP_REFERER']` tel
 > quel. Cet en-tête est posé par le navigateur d'après la page précédente, qui
@@ -77,7 +77,7 @@ Réponse sous 48h. Merci de ne pas publier la vulnérabilité publiquement avant
 > visiteur sur son propre domaine, avec l'application comme caution. Couvert
 > par `tests/Unit/RedirectionTest.php`.
 
-### 🏠 Contrôle d'accès
+### Contrôle d'accès
 
 | Mesure | Implémentation |
 |--------|----------------|
@@ -86,7 +86,7 @@ Réponse sous 48h. Merci de ne pas publier la vulnérabilité publiquement avant
 | Séparation des rôles | Trois espaces cloisonnés : `/` étudiant, `/partenaire/*`, `/admin/*`. Une seule fonction décide de la destination (`accueilSelonType()`) |
 | Back-office | `/admin/*` réservé au type `admin`. Comptes créés en ligne de commande seulement (`outils/creer_admin.php`) : aucun formulaire web ne fabrique d'administrateur |
 
-### 🌐 Headers HTTP
+### Headers HTTP
 
 | Header | Valeur |
 |--------|--------|
@@ -97,7 +97,7 @@ Réponse sous 48h. Merci de ne pas publier la vulnérabilité publiquement avant
 | `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` (HTTPS uniquement) |
 | `Content-Security-Policy` | Whitelist sources autorisées (scripts, styles, polices, images) |
 
-### 📁 Exposition des fichiers
+### Exposition des fichiers
 
 | Mesure | Implémentation |
 |--------|----------------|
@@ -112,7 +112,7 @@ Réponse sous 48h. Merci de ne pas publier la vulnérabilité publiquement avant
 > Sur un hébergement qui l'interdit, reporter ces règles dans la configuration
 > du serveur — sinon elles sont silencieusement ignorées.
 
-### 🗄 Base de données
+### Base de données
 
 | Mesure | Implémentation |
 |--------|----------------|
@@ -120,7 +120,7 @@ Réponse sous 48h. Merci de ne pas publier la vulnérabilité publiquement avant
 | Clés étrangères | `ON DELETE CASCADE` pour maintenir l'intégrité référentielle |
 | Contraintes UNIQUE | Sur `avis(user_id, evenement_id)`, `users(email)`, etc. |
 
-### 📦 Déploiement
+### Déploiement
 
 | Mesure | Implémentation |
 |--------|----------------|
@@ -136,13 +136,13 @@ Réponse sous 48h. Merci de ne pas publier la vulnérabilité publiquement avant
 
 | OWASP | Risque | Statut |
 |-------|--------|--------|
-| A01 | Broken Access Control | ✅ IDOR fix, role checks |
-| A02 | Cryptographic Failures | ✅ bcrypt, HTTPS, tokens SHA-256 |
-| A03 | Injection | ✅ PDO prepared statements partout |
-| A04 | Insecure Design | ✅ Rate limiting, anti-enumeration forgot password |
-| A05 | Security Misconfiguration | ✅ Headers HTTP, CSP |
-| A06 | Vulnerable Components | ✅ PHPStan niveau 5, dépendances minimales |
-| A07 | Auth & Session Failures | ✅ Session regen, CSRF, rate limiting |
-| A08 | Software Integrity Failures | ✅ Pas de CDN non fiable |
-| A09 | Logging & Monitoring | ⚠️ Journal PHP via `logErreur()`, échecs d'envoi tracés — pas d'alerte automatique |
-| A10 | SSRF | ✅ Pas de requêtes HTTP sortantes côté serveur |
+| A01 | Broken Access Control | IDOR fix, role checks |
+| A02 | Cryptographic Failures | bcrypt, HTTPS, tokens SHA-256 |
+| A03 | Injection | PDO prepared statements partout |
+| A04 | Insecure Design | Rate limiting, anti-enumeration forgot password |
+| A05 | Security Misconfiguration | Headers HTTP, CSP |
+| A06 | Vulnerable Components | PHPStan niveau 5, dépendances minimales |
+| A07 | Auth & Session Failures | Session regen, CSRF, rate limiting |
+| A08 | Software Integrity Failures | Pas de CDN non fiable |
+| A09 | Logging & Monitoring | Partiel : journal PHP via `logErreur()`, échecs d'envoi tracés — pas d'alerte automatique |
+| A10 | SSRF | Pas de requêtes HTTP sortantes côté serveur |

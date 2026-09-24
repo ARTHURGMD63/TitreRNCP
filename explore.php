@@ -113,9 +113,9 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
   }
   .carte-suggestion {
     display: flex; flex-direction: column; align-items: center; gap: 8px;
-    background: var(--blanc); border: 1px solid var(--line-2);
-    border-radius: var(--radius); box-shadow: var(--shadow-xs);
-    padding: 12px 8px; text-align: center; min-width: 0;
+    background: var(--blanc); border: 1px solid var(--gris-clair);
+    border-radius: var(--radius-md); box-shadow: none;
+    padding: 14px 8px; text-align: center; min-width: 0;
   }
   .carte-suggestion__lien {
     display: flex; flex-direction: column; align-items: center; gap: 6px;
@@ -125,31 +125,50 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
   .carte-suggestion__motif {
     max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .carte-suggestion__nom { font-weight: var(--fw-bold); font-size: var(--fs-3); }
+  .carte-suggestion__nom { font-family: var(--font-display); font-weight: var(--fw-display); font-size: var(--fs-3); letter-spacing: var(--ls-tight); }
   .carte-suggestion__motif {
     font-size: var(--fs-1); font-weight: var(--fw-bold); color: var(--sur-rouge-clair);
   }
   .carte-suggestion__suivre {
-    width: 100%; min-height: var(--touch-min);
-    border: 1px solid var(--gris-clair); border-radius: var(--radius-pill);
-    font-size: var(--fs-1); font-weight: var(--fw-bold); cursor: pointer;
+    width: 100%; min-height: 36px;
+    border: 1px solid transparent; border-radius: var(--radius-pill);
+    font-size: var(--fs-3); font-weight: var(--fw-bold); cursor: pointer;
+  }
+  .filtre-annuaire {
+    width: 100%; padding: 11px 34px 11px 16px; border: 1px solid var(--line-2);
+    border-radius: var(--radius-pill); font-size: var(--fs-3); font-weight: var(--fw-semibold);
+    appearance: none; cursor: pointer;
+  }
+  .fermer-feuille {
+    background: none; border: 1px solid var(--line-2); border-radius: 50%;
+    width: 36px; height: 36px; flex-shrink: 0; cursor: pointer; color: var(--noir);
+  }
+  .surtitre-feuille {
+    font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium);
+    text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--sur-rouge-clair); margin-bottom: 6px;
   }
 
 </style>
-<?php pageDebut('StudentLink — Hub', ['pwa' => true, 'tete' => ob_get_clean()]); ?>
+<?php pageDebut('Linkee — Hub', ['pwa' => true, 'tete' => ob_get_clean()]); ?>
 <a href="#main-content" class="skip-nav">Aller au contenu principal</a>
 <div class="app-shell">
 
   <!-- Hub Header -->
   <div class="page-header" style="padding-bottom:10px;">
     <div class="entete-hub">
-      <div class="logo">
-        <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="15" y="20" width="50" height="30" rx="15" stroke="var(--noir)" stroke-width="10"/>
-          <rect x="35" y="50" width="50" height="30" rx="15" class="accent" stroke-width="10"/>
-          <circle cx="50" cy="50" r="6" fill="var(--noir)"/>
-        </svg>
-        StudentLink <em>/ Hub</em>
+      <div>
+        <p class="salut">Salut <?= htmlspecialchars((string) $user['prenom']) ?></p>
+        <?php if ($view === 'events'): ?>
+          <h1 class="titre-page">
+            <div class="display" style="font-size:var(--fs-8); line-height:var(--lh-tight);">Les bons plans</div>
+            <div class="display-italic" style="font-size:var(--fs-8); line-height:var(--lh-tight);">du moment.</div>
+          </h1>
+        <?php else: ?>
+          <h1 class="titre-page">
+            <div class="display" style="font-size:var(--fs-8); line-height:var(--lh-tight);">Trouve tes</div>
+            <div class="display-italic" style="font-size:var(--fs-8); line-height:var(--lh-tight);">futurs potes.</div>
+          </h1>
+        <?php endif; ?>
       </div>
 
       <!-- Cloche : tout ce qui vient d'arriver, là où l'on passe déjà. -->
@@ -160,32 +179,20 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
       </button>
     </div>
     
-    <div class="hub-toggle">
+    <div class="hub-toggle" style="margin-bottom:0;">
       <a href="?view=events" class="<?= $view==='events'?'active':'' ?>">Événements</a>
       <a href="?view=people" class="<?= $view==='people'?'active':'' ?>">Personnes</a>
     </div>
-
-    <?php if ($view === 'events'): ?>
-      <h1 class="titre-page">
-        <div class="display" style="font-size:var(--fs-9); line-height:var(--lh-tight);">Les bons plans</div>
-        <div class="display-italic" style="font-size:var(--fs-9); line-height:var(--lh-tight);">du moment.</div>
-      </h1>
-    <?php else: ?>
-      <h1 class="titre-page">
-        <div class="display" style="font-size:var(--fs-9); line-height:var(--lh-tight);">Trouve tes</div>
-        <div class="display-italic" style="font-size:var(--fs-9); line-height:var(--lh-tight);">futurs potes.</div>
-      </h1>
-    <?php endif; ?>
   </div>
 
-  <main id="main-content" class="page-content page-grid" style="padding-top:20px;">
+  <main id="main-content" class="page-content page-grid" style="padding-top:12px;">
 
     <?php if ($view === 'events'): ?>
       <!-- Event Filters (Pills) -->
-      <div class="filter-scroll bleed" role="group" aria-label="Filtrer les événements" style="margin-bottom: 24px;">
+      <div class="filter-scroll bleed" role="group" aria-label="Filtrer les événements" style="margin-bottom: 20px;">
         <a href="<?= $lienFiltre(['type' => 'all']) ?>" class="pill <?= $filter==='all'?'active':'' ?>" <?= $filter==='all'?'aria-current="true"':'' ?>>Tout</a>
         <a href="<?= $lienFiltre(['type' => 'pour-moi']) ?>" class="pill <?= $filter==='pour-moi'?'active':'' ?>" <?= $filter==='pour-moi'?'aria-current="true"':'' ?> style="<?= $filter==='pour-moi'?'':'border-color:var(--sur-rouge-clair);color:var(--sur-rouge-clair);' ?>">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:text-bottom;margin-right:4px;"><path d="M12 3l1.912 5.813h6.111l-4.943 3.591 1.887 5.804-4.967-3.607-4.967 3.607 1.887-5.804-4.943-3.591h6.111z"></path></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:text-bottom;margin-right:2px;"><path d="M12 3l1.912 5.813h6.111l-4.943 3.591 1.887 5.804-4.967-3.607-4.967 3.607 1.887-5.804-4.943-3.591h6.111z"></path></svg>
           Pour moi
         </a>
         <a href="<?= $lienFiltre(['type' => 'bar']) ?>"   class="pill <?= $filter==='bar'?'active':'' ?>"   <?= $filter==='bar'?'aria-current="true"':'' ?>>Bars</a>
@@ -264,16 +271,16 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
 
             <a href="view_event.php?id=<?= $e['id'] ?>" style="text-decoration:none; color:inherit; display:block;">
               <?php if ($firstCard): ?>
-              <div style="margin-top:14px;padding:10px 14px;background:rgba(0,0,0,0.25);border-radius:var(--radius-sm);display:flex;align-items:center;gap:10px;">
-                <svg width="16" height="16" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                <span style="font-size:var(--fs-1);font-weight:var(--fw-bold);color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:var(--ls-wide);">Commence dans</span>
-                <span class="event-countdown" data-ts="<?= strtotime($e['date_heure']) ?>" style="font-size:var(--fs-6);font-weight:var(--fw-black);color:#fff;letter-spacing:var(--ls-display);font-family:var(--font-sans);">--:--:--</span>
+              <div style="margin-top:14px;padding:12px 16px;background:#111013;border-radius:var(--radius-md);display:flex;align-items:center;gap:10px;">
+                <svg width="16" height="16" fill="none" stroke="rgba(245,241,232,0.6)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span style="font-family:var(--font-mono);font-size:var(--fs-1);font-weight:var(--fw-medium);color:rgba(245,241,232,0.7);text-transform:uppercase;letter-spacing:var(--ls-label);">Commence dans</span>
+                <span class="event-countdown" data-ts="<?= strtotime($e['date_heure']) ?>" style="margin-left:auto;font-size:var(--fs-6);font-weight:var(--fw-semibold);color:#F5F1E8;font-family:var(--font-mono);font-variant-numeric:tabular-nums;">--:--:--</span>
               </div>
               <?php $firstCard = false; endif; ?>
             </a>
             
             <?php if ($friends): ?>
-              <div style="margin-top:8px;font-size:var(--fs-1);font-weight:var(--fw-bold);color:rgba(255,255,255,0.9);display:flex;align-items:center;gap:4px;">
+              <div style="margin-top:8px;font-size:var(--fs-3);font-weight:var(--fw-semibold);color:inherit;display:flex;align-items:center;gap:4px;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 <?= implode(', ', array_slice($friends['prenoms'], 0, 2)) ?><?= $friends['nb']>2?' +'.($friends['nb']-2):'' ?> y vont
               </div>
@@ -283,21 +290,21 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
               <div>
                 <?php if ((int) $e['reduction'] > 0): ?>
                   <div class="event-reduction">-<?= (int) $e['reduction'] ?>%</div>
-                  <div style="font-size:var(--fs-1);opacity:0.8;"><?= $e['is_gratuit'] ? 'entrée gratuite' : 'sur conso' ?></div>
+                  <div style="font-size:var(--fs-3);opacity:0.85;"><?= $e['is_gratuit'] ? 'entrée gratuite' : 'sur conso' ?></div>
                 <?php else: ?>
                   <div class="event-reduction"><?= $e['is_gratuit'] ? 'Gratuit' : 'Soirée' ?></div>
-                  <div style="font-size:var(--fs-1);opacity:0.8;">sans remise</div>
+                  <div style="font-size:var(--fs-3);opacity:0.85;">sans remise</div>
                 <?php endif; ?>
               </div>
               <button class="btn btn-outline-blanc btn-join-event" data-event-id="<?= $e['id'] ?>" <?= $e['deja_inscrit']?'disabled':'' ?>>
                 <?= $e['deja_inscrit'] ? icon('check','icon-sm').' Inscrit' : 'Je fonce' ?>
               </button>
             </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; margin-bottom:4px; font-size:var(--fs-1); font-weight:var(--fw-bold); color:rgba(255,255,255,0.9); text-transform:uppercase; letter-spacing:var(--ls-wide);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; margin-bottom:6px; font-family:var(--font-mono); font-size:var(--fs-1); font-weight:var(--fw-semibold); color:inherit; text-transform:uppercase; letter-spacing:var(--ls-label);">
               <span>Remplissage</span>
               <span data-live="pct"><?= $pct ?>%</span>
             </div>
-            <div class="progress-bar" style="margin-top:0;background:rgba(0,0,0,0.2);">
+            <div class="progress-bar" style="margin-top:0;background:rgba(17,16,19,0.2);">
               <div class="progress-bar-fill" data-live="jauge" style="width:<?= $pct ?>%;background:var(--blanc);"></div>
             </div>
           </div>
@@ -326,8 +333,8 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
               <a class="event-lieu" href="view_event.php?id=<?= $e['id'] ?>" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:8px;min-width:0;">
                 <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?= htmlspecialchars($e['etablissement_nom']) ?></span>
                 <?php if ($e['etab_nb_avis'] > 0): ?>
-                  <span class="with-icon" style="color:var(--sur-lime-clair);font-weight:var(--fw-bold);font-size:var(--fs-2);gap:4px;flex-shrink:0;"><?= icon('etoile', 'icon-sm') ?><?= $e['etab_note'] ?></span>
-                  <span style="color:var(--gris);font-size:var(--fs-1);flex-shrink:0;">(<?= $e['etab_nb_avis'] ?>)</span>
+                  <span class="with-icon" style="color:var(--sur-orange-clair);font-weight:var(--fw-bold);font-size:var(--fs-3);gap:4px;flex-shrink:0;"><?= icon('etoile', 'icon-sm') ?><?= $e['etab_note'] ?></span>
+                  <span style="color:var(--gris);font-size:var(--fs-3);flex-shrink:0;">(<?= $e['etab_nb_avis'] ?>)</span>
                 <?php endif; ?>
               </a>
               <button class="btn-follow-etab btn-suivre-lieu" data-etab-id="<?= $e['etab_id'] ?>" data-following="<?= $isFollowedEtab?'1':'0' ?>"
@@ -337,7 +344,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
             </div>
             
             <?php if ($friends): ?>
-              <div style="font-size:var(--fs-1);font-weight:var(--fw-bold);color:var(--sur-rouge-clair);margin-top:8px;display:flex;align-items:center;gap:4px;">
+              <div style="font-size:var(--fs-3);font-weight:var(--fw-semibold);color:var(--sur-rouge-clair);margin-top:8px;display:flex;align-items:center;gap:4px;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 <?= implode(', ', array_slice($friends['prenoms'], 0, 2)) ?> y vont
               </div>
@@ -348,22 +355,22 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
             </div>
 
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-              <div style="font-size:var(--fs-1);font-weight:var(--fw-bold);"><span data-live="inscrits"><?= (int) $e['nb_inscrits'] ?></span>/<?= (int) $e['quota'] ?> places</div>
+              <div style="font-size:var(--fs-3);color:var(--gris);"><span data-live="inscrits"><?= (int) $e['nb_inscrits'] ?></span>/<?= (int) $e['quota'] ?> places</div>
               <div style="display:flex;gap:6px;">
                 <button type="button" class="btn-ouvrir-invitation"
                         data-invite-type="event"
                         data-invite-cible="<?= $e['id'] ?>"
                         data-invite-nom="<?= htmlspecialchars($e['titre'], ENT_QUOTES) ?>"
-                        style="background:none;border:1px solid var(--gris-clair);padding:7px 10px;font-size:var(--fs-1);font-weight:var(--fw-display);cursor:pointer;display:flex;align-items:center;gap:4px;">
+                        style="background:none;border:1.5px solid var(--line-2);border-radius:var(--radius-pill);padding:8px 14px;font-size:var(--fs-3);font-weight:var(--fw-bold);color:var(--noir);cursor:pointer;display:flex;align-items:center;gap:5px;">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
                   Inviter
                 </button>
-                <button class="btn btn-primary btn-join-event" data-event-id="<?= $e['id'] ?>" style="padding:8px 16px;font-size:var(--fs-2);" <?= $e['deja_inscrit']?'disabled':'' ?>>
+                <button class="btn btn-primary btn-join-event" data-event-id="<?= $e['id'] ?>" style="padding:8px 18px;font-size:var(--fs-3);" <?= $e['deja_inscrit']?'disabled':'' ?>>
                   <?= $e['deja_inscrit'] ? icon('check','icon-sm').' Inscrit' : 'Rejoindre' ?>
                 </button>
               </div>
             </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; margin-bottom:4px; font-size:var(--fs-1); font-weight:var(--fw-bold); color:var(--noir); text-transform:uppercase; letter-spacing:var(--ls-wide);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; margin-bottom:6px; font-family:var(--font-mono); font-size:var(--fs-1); font-weight:var(--fw-medium); color:var(--gris); text-transform:uppercase; letter-spacing:var(--ls-label);">
               <span>Taux d'inscription</span>
               <span data-live="pct"><?= $pct ?>%</span>
             </div>
@@ -391,8 +398,8 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
         <!-- Search -->
         <div style="position:relative;margin-bottom:14px;">
           <input type="text" name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Chercher un nom ou une passion..."
-                 style="width:100%;padding:14px 16px;border:1px solid var(--gris-clair);box-shadow:var(--shadow);font-size:var(--fs-4);outline:none;background:var(--blanc);">
-          <button type="submit" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--noir);">
+                 class="recherche-annuaire">
+          <button type="submit" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--gris);">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           </button>
         </div>
@@ -400,35 +407,35 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
         <!-- Filter row -->
         <div style="display:flex;gap:8px;margin-bottom:20px;">
           <div style="flex:1;position:relative;">
-            <select name="ecole" onchange="this.form.submit()"
-                    style="width:100%;padding:10px 32px 10px 12px;border:1px solid var(--gris-clair);background:<?= $filterEcole?'var(--noir)':'var(--blanc)' ?>;color:<?= $filterEcole?'var(--blanc)':'var(--noir)' ?>;font-size:var(--fs-2);font-weight:var(--fw-bold);appearance:none;cursor:pointer;">
+            <select name="ecole" onchange="this.form.submit()" class="filtre-annuaire"
+                    style="background:<?= $filterEcole?'var(--noir)':'transparent' ?>;color:<?= $filterEcole?'var(--bg)':'var(--noir)' ?>;border-color:<?= $filterEcole?'var(--noir)':'var(--line-2)' ?>;">
               <option value="">Toutes les écoles</option>
               <?php foreach ($allEcoles as $e): ?>
                 <option value="<?= htmlspecialchars($e) ?>" <?= $filterEcole===$e?'selected':'' ?>><?= htmlspecialchars($e) ?></option>
               <?php endforeach; ?>
             </select>
-            <svg style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="<?= $filterEcole?'white':'var(--noir)' ?>" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            <svg style="position:absolute;right:14px;top:50%;transform:translateY(-50%);pointer-events:none;" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="<?= $filterEcole?'var(--bg)':'var(--noir)' ?>" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
 
           <?php if (!empty($allInterests)): ?>
           <div style="flex:1;position:relative;">
-            <select name="interest" onchange="this.form.submit()"
-                    style="width:100%;padding:10px 32px 10px 12px;border:1px solid var(--gris-clair);background:<?= ($filterInterest||$filtreCommeMoi)?'var(--bleu)':'var(--blanc)' ?>;color:<?= ($filterInterest||$filtreCommeMoi)?'var(--blanc)':'var(--noir)' ?>;font-size:var(--fs-2);font-weight:var(--fw-bold);appearance:none;cursor:pointer;">
+            <select name="interest" onchange="this.form.submit()" class="filtre-annuaire"
+                    style="background:<?= ($filterInterest||$filtreCommeMoi)?'var(--noir)':'transparent' ?>;color:<?= ($filterInterest||$filtreCommeMoi)?'var(--bg)':'var(--noir)' ?>;border-color:<?= ($filterInterest||$filtreCommeMoi)?'var(--noir)':'var(--line-2)' ?>;">
               <option value="">Tous les intérêts</option>
               <?php if ($myInterests): ?>
-                <option value="<?= FILTRE_MES_INTERETS ?>" <?= $filtreCommeMoi?'selected':'' ?>>★ Comme moi</option>
+                <option value="<?= FILTRE_MES_INTERETS ?>" <?= $filtreCommeMoi?'selected':'' ?>>Comme moi</option>
               <?php endif; ?>
               <?php foreach ($allInterests as $int): ?>
                 <option value="<?= htmlspecialchars($int) ?>" <?= $filterInterest===$int?'selected':'' ?>>#<?= htmlspecialchars($int) ?></option>
               <?php endforeach; ?>
             </select>
-            <svg style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="<?= ($filterInterest||$filtreCommeMoi)?'white':'var(--noir)' ?>" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            <svg style="position:absolute;right:14px;top:50%;transform:translateY(-50%);pointer-events:none;" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="<?= ($filterInterest||$filtreCommeMoi)?'var(--bg)':'var(--noir)' ?>" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
           <?php endif; ?>
         </div>
 
         <?php if ($interetsManquants): ?>
-          <div style="background:var(--alerte-clair);color:var(--alerte);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:16px;font-size:var(--fs-3);font-weight:var(--fw-semibold);">
+          <div style="background:var(--alerte-clair);color:var(--alerte);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:16px;font-size:var(--fs-3);font-weight:var(--fw-semibold);">
             Tu n'as pas encore de centres d'intérêt.
             <a href="<?= baseUrl('/profil.php#champ-interets') ?>" style="color:inherit;font-weight:var(--fw-bold);">Ajoute-les depuis ton profil →</a>
           </div>
@@ -436,8 +443,8 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
 
         <?php if ($filterEcole || $filterInterest || $q): ?>
           <div style="margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:var(--fs-2);font-weight:var(--fw-bold);color:var(--gris);"><?= count($students) ?> résultat<?= count($students)>1?'s':'' ?></span>
-            <a href="?view=people" style="font-size:var(--fs-1);font-weight:var(--fw-bold);color:var(--sur-rouge-clair);text-transform:uppercase;letter-spacing:var(--ls-wide);text-decoration:none;">Réinitialiser</a>
+            <span style="font-family:var(--font-mono);font-size:var(--fs-2);color:var(--gris);"><?= count($students) ?> résultat<?= count($students)>1?'s':'' ?></span>
+            <a href="?view=people" style="font-size:var(--fs-3);font-weight:var(--fw-bold);color:var(--sur-rouge-clair);text-decoration:none;">Réinitialiser</a>
           </div>
         <?php endif; ?>
       </form>
@@ -468,7 +475,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
                   <span class="carte-suggestion__motif"><?= htmlspecialchars($motif) ?></span>
                 </a>
                 <button class="btn-follow-user carte-suggestion__suivre" data-user-id="<?= (int)$sg['id'] ?>" data-etat="none"
-                        style="background:transparent;color:var(--noir);">+ Suivre</button>
+                        style="background:var(--rouge);color:var(--sur-lave);">+ Suivre</button>
               </article>
             <?php endforeach; ?>
           </div>
@@ -481,8 +488,9 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
           <?php
             $fs = $s['follow_statut'] ?? null;
             $libelle = $fs === 'accepted' ? icon('check','icon-sm').' Suivi' : ($fs === 'pending' ? 'En attente' : '+ Suivre');
-            $fond    = $fs === 'accepted' ? 'var(--noir)' : ($fs === 'pending' ? 'var(--surface-2)' : 'transparent');
-            $encre   = $fs === 'accepted' ? 'var(--blanc)' : ($fs === 'pending' ? 'var(--gris-fonce)' : 'var(--noir)');
+            // Mêmes couleurs que peindreBoutonSuivi() (app.js) après un clic.
+            $fond    = $fs === 'accepted' ? 'var(--surface-2)' : ($fs === 'pending' ? 'var(--surface-2)' : 'var(--rouge)');
+            $encre   = $fs === 'accepted' ? 'var(--noir)' : ($fs === 'pending' ? 'var(--gris-fonce)' : 'var(--sur-lave)');
           ?>
           <div class="ligne-personne">
             <a class="ligne-personne__lien" href="<?= baseUrl('/view_profile.php?id=' . (int)$s['id']) ?>">
@@ -533,80 +541,18 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
       <div class="modal-handle"></div>
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px;">
         <div>
-          <div style="font-size:var(--fs-1);font-weight:var(--fw-bold);text-transform:uppercase;letter-spacing:var(--ls-label);color:var(--sur-rouge-clair);margin-bottom:4px;">Notifications</div>
+          <div class="surtitre-feuille">Notifications</div>
           <div class="display" style="font-size:var(--fs-6);">
             <?= $notifs['aTraiter'] ? (int) $notifs['aTraiter'] . ' à traiter' : 'Quoi de neuf' ?>
           </div>
+          <a href="<?= baseUrl('/notifications.php') ?>" class="lien-action" style="margin-top:2px;font-size:var(--fs-3);font-weight:var(--fw-bold);color:var(--sur-rouge-clair);text-decoration:none;">Tout voir →</a>
         </div>
-        <button type="button" data-modal-close aria-label="Fermer"
-                style="background:none;border:1px solid var(--line-2);border-radius:var(--radius-bouton);width:36px;height:36px;flex-shrink:0;cursor:pointer;"><?= icon('croix', 'icon-sm') ?></button>
+        <button type="button" data-modal-close aria-label="Fermer" class="fermer-feuille"><?= icon('croix', 'icon-sm') ?></button>
       </div>
 
       <div class="notif-liste" id="liste-notifs">
         <?php foreach ($notifs['items'] as $n): ?>
-          <?php if ($n['type'] === 'demande'): $d = $n['acteur']; ?>
-            <div class="notif-item notif-item--demande">
-              <a href="<?= baseUrl('/view_profile.php?id=' . (int)$d['id']) ?>" class="notif-item__lien">
-                <?= avatarHtml($d['photo'] ?? null, $d['prenom'], 38) ?>
-                <span class="notif-item__corps">
-                  <span class="notif-item__texte">
-                    <strong><?= htmlspecialchars($d['prenom'] . ' ' . mb_substr((string)$d['nom'], 0, 1) . '.') ?></strong>
-                    demande à te suivre
-                  </span>
-                  <span class="notif-item__date"><?= htmlspecialchars(depuisQuand((string)$n['ts'])) ?></span>
-                </span>
-              </a>
-              <div class="notif-item__actions">
-                <button class="btn-accept-follow notif-oui" data-user-id="<?= (int)$d['id'] ?>">Accepter</button>
-                <button class="btn-decline-follow notif-non" data-user-id="<?= (int)$d['id'] ?>">Refuser</button>
-              </div>
-            </div>
-
-          <?php elseif ($n['type'] === 'invitation'): $inv = $n['invit']; ?>
-            <div class="notif-item carte-invitation">
-              <div class="notif-item__lien">
-                <?= avatarHtml($inv['from_photo'] ?? null, $inv['from_prenom'], 38, $inv['cible_type'] === 'event' ? 'var(--rouge)' : 'var(--bleu)') ?>
-                <span class="notif-item__corps">
-                  <span class="notif-item__texte">
-                    <strong><?= htmlspecialchars($inv['from_prenom'] . ' ' . mb_substr((string)$inv['from_nom'], 0, 1) . '.') ?></strong>
-                    t'invite à <em><?= htmlspecialchars($inv['cible_nom'] ?? 'une sortie') ?></em>
-                  </span>
-                  <span class="notif-item__date"><?= htmlspecialchars(depuisQuand((string)$n['ts'])) ?></span>
-                </span>
-              </div>
-              <div class="notif-item__actions">
-                <button type="button" class="btn-accept-invite notif-oui" data-id="<?= (int)$inv['id'] ?>">Accepter</button>
-                <button type="button" class="btn-decline-invite notif-non" data-id="<?= (int)$inv['id'] ?>">Refuser</button>
-              </div>
-            </div>
-
-          <?php elseif ($n['type'] === 'ami'): $a = $n['activite']; ?>
-            <a class="notif-item notif-item__lien" href="<?= $a['cible_type'] === 'event'
-                  ? baseUrl('/view_event.php?id=' . (int)$a['cible_id'])
-                  : baseUrl('/squads.php') ?>">
-              <?= avatarHtml($a['photo'] ?? null, $a['prenom'], 38, $a['cible_type'] === 'event' ? 'var(--rouge)' : 'var(--lime)') ?>
-              <span class="notif-item__corps">
-                <span class="notif-item__texte">
-                  <strong><?= htmlspecialchars($a['prenom']) ?></strong>
-                  <?= $a['cible_type'] === 'event' ? 'va à' : 'rejoint' ?>
-                  <em><?= htmlspecialchars($a['cible_nom']) ?></em>
-                </span>
-                <span class="notif-item__date"><?= htmlspecialchars($a['lieu'] . ' · ' . depuisQuand((string)$n['ts'])) ?></span>
-              </span>
-            </a>
-
-          <?php else: $e = $n['event']; ?>
-            <a class="notif-item notif-item__lien" href="<?= baseUrl('/view_event.php?id=' . (int)$e['id']) ?>">
-              <span class="notif-item__vignette"><?= icon('calendrier', 'icon-sm') ?></span>
-              <span class="notif-item__corps">
-                <span class="notif-item__texte">
-                  Nouveau chez <strong><?= htmlspecialchars($e['lieu']) ?></strong> :
-                  <em><?= htmlspecialchars($e['titre']) ?></em>
-                </span>
-                <span class="notif-item__date"><?= htmlspecialchars(dateFr($e['date_heure'], 'j M') . ' · ' . depuisQuand((string)$n['ts'])) ?></span>
-              </span>
-            </a>
-          <?php endif; ?>
+          <?= notificationHtml($n) ?>
         <?php endforeach; ?>
 
         <?php if (!$notifs['items']): ?>
@@ -625,21 +571,20 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
       <div class="modal-handle"></div>
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:20px;">
         <div>
-          <div style="font-size:var(--fs-1);font-weight:var(--fw-bold);text-transform:uppercase;letter-spacing:var(--ls-label);color:var(--sur-rouge-clair);margin-bottom:4px;">Inviter un ami</div>
+          <div class="surtitre-feuille">Inviter un ami</div>
           <div class="display" id="invite-target-name" style="font-size:var(--fs-6);"></div>
         </div>
-        <button type="button" data-modal-close aria-label="Fermer"
-                style="background:none;border:1px solid var(--line-2);border-radius:var(--radius-bouton);width:36px;height:36px;flex-shrink:0;cursor:pointer;"><?= icon('croix', 'icon-sm') ?></button>
+        <button type="button" data-modal-close aria-label="Fermer" class="fermer-feuille"><?= icon('croix', 'icon-sm') ?></button>
       </div>
       <div id="invite-user-list" style="display:flex;flex-direction:column;gap:10px;">
         <?php foreach ($following as $f): ?>
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px;background:var(--blanc);border:1px solid var(--gris-clair);border-radius:var(--radius);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;background:var(--blanc);border:1px solid var(--gris-clair);border-radius:var(--radius-md);">
           <div style="display:flex;align-items:center;gap:12px;min-width:0;">
             <?= avatarHtml($f['photo'] ?? null, $f['prenom'], 40) ?>
             <div style="font-weight:var(--fw-bold);font-size:var(--fs-4);"><?= htmlspecialchars($f['prenom'] . ' ' . mb_substr($f['nom'], 0, 1) . '.') ?></div>
           </div>
           <button type="button" class="btn-send-invite" data-user-id="<?= $f['id'] ?>"
-                  style="background:var(--noir);color:var(--blanc);border:1px solid transparent;border-radius:var(--radius-pill);padding:9px 16px;font-size:var(--fs-1);font-weight:var(--fw-bold);cursor:pointer;text-transform:uppercase;white-space:nowrap;">
+                  style="background:var(--noir);color:var(--blanc);border:1px solid transparent;border-radius:var(--radius-pill);padding:9px 18px;font-size:var(--fs-3);font-weight:var(--fw-bold);cursor:pointer;white-space:nowrap;">
             Inviter
           </button>
         </div>
@@ -658,9 +603,10 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
 
 <!-- Navigation -->
 <nav class="bottom-nav" aria-label="Navigation principale">
+  <span class="nav-marque" aria-hidden="true"><?= marqueLinkee() ?></span>
   <a href="<?= baseUrl('/explore.php') ?>" class="nav-item active" aria-current="page">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
-    <span>Explore</span>
+    <span>Explorer</span>
   </a>
   <a href="<?= baseUrl('/squads.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
@@ -668,7 +614,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
   </a>
   <a href="<?= baseUrl('/wallet.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg></span>
-    <span>Wallet</span>
+    <span>Pass</span>
   </a>
   <a href="<?= baseUrl('/profil.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>

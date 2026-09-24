@@ -12,7 +12,7 @@ Usage :
     python docs/generate_qr.py                            # URL par defaut
     python docs/generate_qr.py https://exemple.fr out.svg
 
-IMPORTANT — le domaine studentlink.fr n'est pas encore reserve (cf.
+IMPORTANT — le domaine linkee.fr n'est pas encore reserve (cf.
 docs/fondateurs/SL-09). Regenerer le QR des que l'adresse publique est fixee,
 puis reexporter les PDF des flyers et des affiches.
 
@@ -364,7 +364,7 @@ class QrCode(object):
             light_rect = '<rect width="%d" height="%d" fill="%s"/>' % (dim, dim, light)
         return (
             '<?xml version="1.0" encoding="UTF-8"?>\n'
-            '<!-- QR code StudentLink - genere par docs/generate_qr.py -->\n'
+            '<!-- QR code Linkee - genere par docs/generate_qr.py -->\n'
             '<!-- Contenu : %s -->\n'
             '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" '
             'shape-rendering="crispEdges" role="img" aria-label="QR code vers %s">'
@@ -373,8 +373,8 @@ class QrCode(object):
 
 
 def main():
-    url = sys.argv[1] if len(sys.argv) > 1 else 'https://studentlink.fr'
-    out = sys.argv[2] if len(sys.argv) > 2 else 'docs/qr_studentlink.svg'
+    url = sys.argv[1] if len(sys.argv) > 1 else 'https://linkee.fr'
+    out = sys.argv[2] if len(sys.argv) > 2 else 'docs/qr_linkee.svg'
     qr = QrCode(url, 'Q')
     with open(out, 'w', encoding='utf-8') as f:
         f.write(qr.to_svg(url=url))

@@ -39,24 +39,16 @@ $typeLabels = ['running'=>'Running','velo'=>'Vélo','muscu'=>'Muscu','autre'=>'A
 $niveauLabels = ['tous'=>'Tous niveaux','debutant'=>'Débutant','inter'=>'Inter.','avance'=>'Avancé'];
 
 ?>
-<?php pageDebut('StudentLink — Squads', ['pwa' => true]); ?>
+<?php pageDebut('Linkee — Squads', ['pwa' => true]); ?>
 <a href="#main-content" class="skip-nav">Aller au contenu principal</a>
-<div class="app-shell">
+<!-- univers-sport : les squads portent le dôme (charte), pas la lave. -->
+<div class="app-shell univers-sport">
 
   <!-- Header -->
   <div class="page-header">
-    <div class="logo" style="margin-bottom:20px;">
-      <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="15" y="20" width="50" height="30" rx="15" stroke="var(--noir)" stroke-width="10"/>
-        <rect x="35" y="50" width="50" height="30" rx="15" class="accent" stroke-width="10"/>
-        <circle cx="50" cy="50" r="6" fill="var(--noir)"/>
-      </svg>
-      StudentLink <em>/ Squads</em>
-    </div>
     <h1 class="titre-page">
-      <div class="display" style="font-size:var(--fs-9);">Ne cours</div>
-      <div class="display" style="font-size:var(--fs-9);">plus</div>
-      <div class="display-italic" style="font-size:var(--fs-9);">seul·e.</div>
+      <div class="display" style="font-size:var(--fs-8);line-height:var(--lh-tight);">Ne cours plus</div>
+      <div class="display-italic" style="font-size:var(--fs-8);line-height:var(--lh-tight);">seul·e.</div>
     </h1>
   </div>
 
@@ -71,13 +63,13 @@ $niveauLabels = ['tous'=>'Tous niveaux','debutant'=>'Débutant','inter'=>'Inter.
 
   <main id="main-content" class="page-content page-grid">
     <!-- Suggestion banner -->
-    <div class="banner-card" style="background:var(--lime);color:var(--sur-media-encre);margin-bottom:16px;">
-      <div class="banner-icon">
+    <div class="banner-card" style="background:var(--blanc);color:var(--noir);border:1px solid var(--gris-clair);margin-bottom:16px;">
+      <div class="banner-icon" style="color:var(--sur-bleu-clair);">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
       </div>
       <div class="banner-text">
         <strong>3 squads pour ton niveau</strong><br>
-        <span style="font-size:var(--fs-2);opacity:0.7;">Running inter. · &lt; 5 min à pied</span>
+        <span style="font-size:var(--fs-3);color:var(--gris);">Running inter. · &lt; 5 min à pied</span>
       </div>
     </div>
 
@@ -144,7 +136,7 @@ $niveauLabels = ['tous'=>'Tous niveaux','debutant'=>'Débutant','inter'=>'Inter.
           <button class="squad-cta squad-cta-accent btn-join-squad"
                   data-squad-id="<?= $s['id'] ?>"
                   data-quota="<?= $s['quota'] ?>">
-            JE REJOINS
+            Rejoindre
           </button>
         <?php endif; ?>
       </div>
@@ -163,20 +155,20 @@ $niveauLabels = ['tous'=>'Tous niveaux','debutant'=>'Débutant','inter'=>'Inter.
 <div class="modal-overlay" id="modal-manage-squad">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div style="font-family:var(--font-display);font-size:var(--fs-7);font-weight:var(--fw-black);margin-bottom:20px;">
+    <div style="font-family:var(--font-display);font-size:var(--fs-7);font-weight:var(--fw-black);letter-spacing:var(--ls-display);margin-bottom:20px;">
       Gérer mon Squad
     </div>
     
     <div id="manage-squad-loading" style="text-align:center;padding:20px;">Chargement...</div>
     
     <div id="manage-squad-content" style="display:none;">
-      <h2 style="margin-bottom:12px;font-size:var(--fs-5);">Participants inscrits :</h2>
+      <h2 class="t-overline" style="margin-bottom:12px;">Participants inscrits</h2>
       <div id="squad-members-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px;">
         <!-- Injected via JS -->
       </div>
       
       <div class="section-divider"></div>
-      <button class="btn btn-primary btn-full mt-16 btn-delete-squad-from-modal" style="background:var(--rouge);color:var(--sur-media);" data-id="">Supprimer définitivement le Squad</button>
+      <button class="btn btn-primary btn-full mt-16 btn-delete-squad-from-modal" style="background:var(--alerte-vif);color:var(--sur-lave);" data-id="">Supprimer définitivement le Squad</button>
       <button type="button" class="btn btn-outline btn-full mt-8" data-modal-close>Fermer</button>
     </div>
   </div>
@@ -186,7 +178,7 @@ $niveauLabels = ['tous'=>'Tous niveaux','debutant'=>'Débutant','inter'=>'Inter.
 <div class="modal-overlay" id="modal-create-squad">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div style="font-family:var(--font-display);font-size:var(--fs-7);font-weight:var(--fw-black);margin-bottom:20px;">
+    <div style="font-family:var(--font-display);font-size:var(--fs-7);font-weight:var(--fw-black);letter-spacing:var(--ls-display);margin-bottom:20px;">
       Créer un squad
     </div>
 
@@ -243,9 +235,10 @@ $niveauLabels = ['tous'=>'Tous niveaux','debutant'=>'Débutant','inter'=>'Inter.
 
 <!-- Bottom Nav -->
 <nav class="bottom-nav" aria-label="Navigation principale">
+  <span class="nav-marque" aria-hidden="true"><?= marqueLinkee() ?></span>
   <a href="<?= baseUrl('/explore.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
-    <span>Explore</span>
+    <span>Explorer</span>
   </a>
   <a href="<?= baseUrl('/squads.php') ?>" class="nav-item active" aria-current="page">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
@@ -253,7 +246,7 @@ $niveauLabels = ['tous'=>'Tous niveaux','debutant'=>'Débutant','inter'=>'Inter.
   </a>
   <a href="<?= baseUrl('/wallet.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg></span>
-    <span>Wallet</span>
+    <span>Pass</span>
   </a>
   <a href="<?= baseUrl('/profil.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>

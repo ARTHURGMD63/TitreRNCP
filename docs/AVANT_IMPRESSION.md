@@ -9,13 +9,13 @@ comment distribuer ensuite sans se mettre en faute.
 
 | Fichier | Format | Pages | Usage |
 |---|---|---|---|
-| `Flyer_Bars_StudentLink.html` / `.pdf` | 111 × 154 mm (A6 + 3 mm de fond perdu) | 2 (recto, verso) | Le flyer à déposer dans les bars. C'est le fichier à envoyer à l'imprimeur. |
+| `Flyer_Bars_Linkee.html` / `.pdf` | 111 × 154 mm (A6 + 3 mm de fond perdu) | 2 (recto, verso) | Le flyer à déposer dans les bars. C'est le fichier à envoyer à l'imprimeur. |
 | `Flyer_Bars_Planche_A4.html` / `.pdf` | A4 | 2 (4 rectos, 4 versos) | Le même flyer à quatre exemplaires sur une A4, pour imprimer soi-même. Fichier **généré**, ne pas l'éditer. |
-| `Affiches_Rue_StudentLink.html` / `.pdf` | 303 × 426 mm (A3 + 3 mm de fond perdu) | 3 affiches | Les affiches. Trois accroches différentes, à alterner. |
-| `qr_studentlink.svg` | — | — | Le QR code, utilisé par tous les supports. |
+| `Affiches_Rue_Linkee.html` / `.pdf` | 303 × 426 mm (A3 + 3 mm de fond perdu) | 3 affiches | Les affiches. Trois accroches différentes, à alterner. |
+| `qr_linkee.svg` | — | — | Le QR code, utilisé par tous les supports. |
 | `generate_qr.py`, `generate_planche.py` | — | — | Les deux scripts qui régénèrent le QR et la planche A4. |
 
-Le dessin du flyer n'existe qu'à un seul endroit : `Flyer_Bars_StudentLink.html`.
+Le dessin du flyer n'existe qu'à un seul endroit : `Flyer_Bars_Linkee.html`.
 La planche A4 en est dérivée par script. Modifier le flyer, relancer
 `generate_planche.py`, réexporter les deux PDF — jamais l'inverse.
 
@@ -26,7 +26,7 @@ La planche A4 en est dérivée par script. Modifier le flyer, relancer
 Trois choses sont encore ouvertes dans les fichiers. Les deux premières
 bloquent l'impression.
 
-- [ ] **Le nom de domaine.** `studentlink.fr` n'est pas réservé (cf.
+- [ ] **Le nom de domaine.** `linkee.fr` n'est pas réservé (cf.
       `fondateurs/SL-09_Protection_Marque_PI_Juridique.md`). Il figure en
       toutes lettres sur les trois affiches et sur les deux faces du flyer.
       Le réserver **avant** d'imprimer : un flyer qui renvoie vers une adresse
@@ -62,10 +62,10 @@ python docs/generate_planche.py
 Puis réexporter les trois PDF (Chrome ou Edge en mode sans interface) :
 
 ```bash
-"C:/Program Files/Google/Chrome/Application/chrome.exe" --headless=new --disable-gpu --no-pdf-header-footer --run-all-compositor-stages-before-draw --virtual-time-budget=9000 --print-to-pdf="C:/wamp64/www/TitreRNCP/docs/Flyer_Bars_StudentLink.pdf" "file:///C:/wamp64/www/TitreRNCP/docs/Flyer_Bars_StudentLink.html"
+"C:/Program Files/Google/Chrome/Application/chrome.exe" --headless=new --disable-gpu --no-pdf-header-footer --run-all-compositor-stages-before-draw --virtual-time-budget=9000 --print-to-pdf="C:/wamp64/www/TitreRNCP/docs/Flyer_Bars_Linkee.pdf" "file:///C:/wamp64/www/TitreRNCP/docs/Flyer_Bars_Linkee.html"
 ```
 
-Les polices (Playfair Display, DM Sans) sont chargées depuis Google Fonts :
+Les polices (Unbounded, Instrument Sans, JetBrains Mono) sont chargées depuis Google Fonts :
 il faut être connecté au moment de l'export, sinon le PDF sort avec les
 polices de remplacement.
 
@@ -135,7 +135,7 @@ s'ajoute le coût du nettoyage. Certaines communes verbalisent activement.
 
 Les **panneaux d'affichage libre** que les communes doivent mettre à
 disposition (art. L.581-13) sont réservés à l'affichage d'opinion et aux
-**activités des associations sans but lucratif**. StudentLink est un projet
+**activités des associations sans but lucratif**. Linkee est un projet
 commercial : ces panneaux ne lui sont en principe pas ouverts, sauf si
 l'affiche est portée par une association partenaire (un BDE, par exemple) et
 annonce son événement.

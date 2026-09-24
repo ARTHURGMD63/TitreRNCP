@@ -1,5 +1,5 @@
 # ============================================================
-#  StudentLink — image de production
+#  Linkee — image de production
 #
 #  Ce qui remplaçait cette image jusqu'ici :
 #
@@ -64,8 +64,8 @@ RUN set -eux; \
 #  deflate : la compression. rewrite : réservé aux futures URL propres.
 RUN a2enmod rewrite headers expires deflate
 
-COPY docker/php.ini    /usr/local/etc/php/conf.d/studentlink.ini
-COPY docker/apache.conf /etc/apache2/conf-enabled/studentlink.conf
+COPY docker/php.ini    /usr/local/etc/php/conf.d/linkee.ini
+COPY docker/apache.conf /etc/apache2/conf-enabled/linkee.conf
 
 # AllowOverride All : sans cette ligne, Apache ignore purement et simplement
 # le .htaccess du projet — donc les règles de sécurité ET les en-têtes de
@@ -80,11 +80,11 @@ RUN printf '%s\n' \
 WORKDIR /var/www/html
 COPY . /var/www/html
 
-COPY docker/entrypoint.sh /usr/local/bin/studentlink-entrypoint
-RUN chmod +x /usr/local/bin/studentlink-entrypoint
+COPY docker/entrypoint.sh /usr/local/bin/linkee-entrypoint
+RUN chmod +x /usr/local/bin/linkee-entrypoint
 
 ENV PORT=8080
 EXPOSE 8080
 
-ENTRYPOINT ["studentlink-entrypoint"]
+ENTRYPOINT ["linkee-entrypoint"]
 CMD ["apache2-foreground"]

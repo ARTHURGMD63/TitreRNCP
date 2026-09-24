@@ -38,10 +38,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-<?php pageDebut('StudentLink — Nouveau mot de passe'); ?>
+<?php pageDebut('Linkee — Nouveau mot de passe'); ?>
 <div class="auth-page">
   <div class="auth-logo">
-    <div class="brand">StudentLink <em>/ Sécurité</em></div>
+    <a class="bouton-retour" href="<?= baseUrl('/auth/login.php') ?>" aria-label="Retour à la connexion"><?= icon('fleche-g') ?></a>
   </div>
 
   <h1 class="auth-headline titre-page">
@@ -50,11 +50,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </h1>
 
   <?php if ($success): ?>
-    <div style="background:var(--lime);color:var(--sur-media-encre);border:1px solid var(--gris-clair);box-shadow:var(--shadow);padding:20px;margin-bottom:24px;font-weight:var(--fw-bold);text-align:center;">
-      <span class="with-icon"><?= icon('valide', 'icon-sm') ?>Mot de passe mis à jour !</span>
+    <div class="encart-ok" role="status">
+      Mot de passe mis à jour !
     </div>
     <a href="<?= baseUrl('/auth/login.php') ?>" class="btn btn-primary btn-full">
-      → Se connecter
+      Se connecter
     </a>
 
   <?php elseif (!$email && !$_POST): ?>
@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div class="form-error"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
 
-    <p style="font-size:var(--fs-4);color:var(--gris);margin-bottom:24px;">
+    <p style="font-size:var(--fs-5);color:var(--gris-fonce);line-height:var(--lh-normal);margin-bottom:24px;">
       Choisis un nouveau mot de passe (8 caractères minimum).
     </p>
 
@@ -86,13 +86,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                placeholder="••••••••" minlength="8" required>
       </div>
       <button type="submit" class="btn btn-primary btn-full" style="margin-top:8px;">
-        → Enregistrer
+        Enregistrer
       </button>
     </form>
   <?php endif; ?>
 
   <div class="auth-link">
-    <a href="<?= baseUrl('/auth/login.php') ?>" style="font-size:var(--fs-3);">← Connexion</a>
+    <a href="<?= baseUrl('/auth/login.php') ?>" style="font-weight:var(--fw-medium);color:var(--gris);">Retour à la connexion</a>
   </div>
 </div>
 </body>

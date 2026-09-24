@@ -22,13 +22,13 @@ documentation. Trois raisons de les en sortir :
 
 | Fichier | Poids | Nature |
 | --- | --- | --- |
-| `StudentLink_Teaser.mp4` | 11,0 Mo | média |
-| `Presentation_StudentLink.pptx` | 7,8 Mo | diaporama |
-| `Presentation_StudentLink_v3.pptx` | 7,8 Mo | diaporama |
-| `Presentation_StudentLink_v2.pptx` | 5,4 Mo | diaporama |
-| `Diaporama_Soutenance_StudentLink.pptx` | 3,3 Mo | diaporama |
+| `Linkee_Teaser.mp4` | 11,0 Mo | média |
+| `Presentation_Linkee.pptx` | 7,8 Mo | diaporama |
+| `Presentation_Linkee_v3.pptx` | 7,8 Mo | diaporama |
+| `Presentation_Linkee_v2.pptx` | 5,4 Mo | diaporama |
+| `Diaporama_Soutenance_Linkee.pptx` | 3,3 Mo | diaporama |
 | `docs/*.pdf` (6 fichiers) | 8,1 Mo | **reconstructible** |
-| `Script_Oral_StudentLink.pdf` | 0,7 Mo | **reconstructible** |
+| `Script_Oral_Linkee.pdf` | 0,7 Mo | **reconstructible** |
 
 ## Ce qui reste versionné, et pourquoi
 
@@ -41,29 +41,27 @@ documentation. Trois raisons de les en sortir :
 
 ## Refaire les PDF
 
-Les six PDF de `docs/` sont des exports du HTML voisin, qui reste la seule
-source du dessin :
+Cinq des six PDF de `docs/` sont des exports du HTML voisin, qui reste la
+seule source du dessin :
 
 | PDF | Source |
 | --- | --- |
-| `Affiches_Rue_StudentLink.pdf` | `Affiches_Rue_StudentLink.html` |
-| `Charte_Graphique_StudentLink.pdf` | `Charte_Graphique_StudentLink.html` |
-| `Flyer_Bars_StudentLink.pdf` | `Flyer_Bars_StudentLink.html` |
-| `Flyer_Bars_Planche_A4.pdf` | `Flyer_Bars_StudentLink.html`, imposé par `generate_planche.py` |
-| `Plaquette_Etudiants_StudentLink.pdf` | `Plaquette_Etudiants_StudentLink.html` |
-| `Plaquette_Partenaires_StudentLink.pdf` | `Plaquette_Partenaires_StudentLink.html` |
+| `Affiches_Rue_Linkee.pdf` | `Affiches_Rue_Linkee.html` |
+| `Flyer_Bars_Linkee.pdf` | `Flyer_Bars_Linkee.html` |
+| `Flyer_Bars_Planche_A4.pdf` | `Flyer_Bars_Linkee.html`, imposé par `generate_planche.py` |
+| `Plaquette_Etudiants_Linkee.pdf` | `Plaquette_Etudiants_Linkee.html` |
+| `Plaquette_Partenaires_Linkee.pdf` | `Plaquette_Partenaires_Linkee.html` |
 
 Ouvrir le HTML dans un navigateur, puis « Imprimer → Enregistrer au format
 PDF ». Les feuilles de style portent déjà les règles `@page` (format, fond
 perdu, marges).
 
-La charte graphique a une étape de plus : son HTML est lui-même généré depuis
-les variables réelles de `assets/css/style.css`, pour qu'elle ne puisse pas
-mentir sur les couleurs du produit.
-
-```bash
-python docs/generate_charte.py
-```
+La charte graphique, `Charte_Graphique_Linkee.pdf`, est l'exception : c'est le
+document de marque Linkee v1.0 lui-même, fourni tel quel et sans source HTML.
+Il ne se régénère pas. À 2,5 Mo, il dépasse la limite des fichiers suivis
+(`tests/Unit/DepotTest.php`) : comme les diaporamas, il se dépose avec les
+livrables, pas dans le dépôt. Les couleurs, typographies et rayons qu'il
+définit sont ceux des jetons de `assets/css/style.css`.
 
 La planche A4 de flyers s'impose depuis le flyer unitaire :
 

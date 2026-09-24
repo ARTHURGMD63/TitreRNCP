@@ -1,6 +1,6 @@
 # Registre des traitements de données à caractère personnel
 
-StudentLink — établi le 16/09/2026 · Version 1 (projet)
+Linkee — établi le 16/09/2026 · Version 1 (projet)
 Rédigé par : Arthur Gramond
 Obligation : article 30 du RGPD. Ce registre doit être tenu à jour et présenté sur demande de la CNIL.
 

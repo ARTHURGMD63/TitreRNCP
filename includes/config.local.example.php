@@ -21,7 +21,7 @@ return [
     'host' => 'sqlXXX.infinityfree.com',
 
     // Nom imposé par l'hébergeur, préfixé par l'identifiant du compte.
-    'name' => 'if0_00000000_studentlink',
+    'name' => 'if0_00000000_linkee',
 
     'user' => 'if0_00000000',
     'pass' => 'a-remplacer',
@@ -52,7 +52,7 @@ return [
     // Adresse annoncee dans « De : ». Doit appartenir au domaine sur lequel
     // SPF et DKIM sont publies, sinon DMARC echoue malgre tout.
     'mail_from'     => 'noreply@votre-domaine.fr',
-    'mail_from_nom' => 'StudentLink',
+    'mail_from_nom' => 'Linkee',
 
     // Adresse qui recoit les rebonds. Une boite que personne ne releve ne
     // sert a rien : c'est la qu'on apprend qu'une adresse est morte.

@@ -15,15 +15,19 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
     top: calc(env(safe-area-inset-top, 0px) + 16px);
     right: 20px;
     z-index: 10;
-    background: none;
+    /* Posé sur des aplats différents d'un écran à l'autre : une pastille
+       basalte le garde lisible partout. */
+    background: rgba(17,16,19,.6);
     border: none;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-mono);
     font-size: var(--fs-1);
-    font-weight: var(--fw-display);
-    color: var(--gris);
+    font-weight: var(--fw-medium);
+    color: #F5F1E8;
     text-transform: uppercase;
     letter-spacing: var(--ls-label);
     cursor: pointer;
-    padding: 8px;
+    padding: 8px 14px;
   }
 
   .onb-slides {
@@ -51,8 +55,11 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
     overflow: hidden;
   }
 
+  /* Aplats de la charte : lave (marque), surface, dôme (sport), volt (pass).
+     Le visuel s'arrondit en bas comme la maquette 01. */
+  .onb-visual { border-radius: 0 0 var(--radius-xl) var(--radius-xl); color: var(--sur-lave); }
   .slide-1 .onb-visual { background: var(--rouge); }
-  .slide-2 .onb-visual { background: var(--noir); }
+  .slide-2 .onb-visual { background: var(--blanc); }
   .slide-3 .onb-visual { background: var(--bleu); }
   .slide-4 .onb-visual { background: var(--lime); }
 
@@ -71,43 +78,46 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
     width: 96px;
     height: 96px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.4);
+    background: rgba(17,16,19,0.1);
+    border: 1px solid rgba(17,16,19,0.25);
     display: flex;
     align-items: center;
     justify-content: center;
   }
+  .onb-big-icon svg { stroke: #111013; }
+  /* Écran 1 : les deux anneaux de la marque, basalte et craie, sur la lave. */
+  .onb-anneaux { width: 190px; height: auto; }
 
-  .slide-4 .onb-big-icon { background: rgba(0,0,0,0.1); border-color: rgba(0,0,0,0.2); }
-  .slide-4 .onb-big-icon svg { stroke: var(--noir); }
-
-  /* Floating stat pills */
+  /* Pilules flottantes (« -30 % ce soir », « 1200+ étudiants ») :
+     basalte en haut, craie en bas, comme la maquette 01. */
   .onb-stat {
-    background: var(--blanc);
-    border-radius: var(--radius);
-    border: 1px solid var(--gris-clair);
-    box-shadow: var(--shadow-sm);
+    background: #111013;
+    color: #F5F1E8;
+    border-radius: var(--radius-md);
+    border: none;
+    box-shadow: none;
     padding: 10px 16px;
     display: flex;
     align-items: center;
     gap: 10px;
     position: absolute;
   }
+  .stat-br { background: #F5F1E8; color: #111013; }
 
   .onb-stat-num {
     font-family: var(--font-display);
-    font-size: var(--fs-7);
+    font-size: var(--fs-6);
     font-weight: var(--fw-black);
-    color: var(--noir);
+    letter-spacing: var(--ls-display);
+    color: inherit;
     line-height: var(--lh-display);
   }
 
   .onb-stat-label {
-    font-size: var(--fs-1);
-    font-weight: var(--fw-bold);
-    color: var(--gris-fonce);
-    text-transform: uppercase;
-    letter-spacing: var(--ls-wide);
+    font-size: var(--fs-2);
+    font-weight: var(--fw-semibold);
+    color: inherit;
+    opacity: .8;
     line-height: var(--lh-snug);
   }
 
@@ -116,27 +126,30 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
 
   /* Mockup cards inside visual */
   .onb-mock-card {
-    background: var(--blanc);
-    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--noir);
+    border-radius: var(--radius-md);
     border: 1px solid var(--gris-clair);
-    box-shadow: var(--shadow);
-    padding: 12px 16px;
-    width: 200px;
+    box-shadow: none;
+    padding: 14px 16px;
+    width: 210px;
   }
 
   .onb-mock-card .mc-tag {
+    font-family: var(--font-mono);
     font-size: var(--fs-1);
-    font-weight: var(--fw-display);
+    font-weight: var(--fw-medium);
     text-transform: uppercase;
     letter-spacing: var(--ls-label);
-    color: var(--rouge);
+    color: var(--sur-rouge-clair);
     margin-bottom: 4px;
   }
 
   .onb-mock-card .mc-title {
     font-family: var(--font-display);
-    font-size: var(--fs-6);
+    font-size: var(--fs-5);
     font-weight: var(--fw-black);
+    letter-spacing: var(--ls-display);
     color: var(--noir);
     margin-bottom: 6px;
   }
@@ -151,12 +164,10 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
     display: inline-block;
     border-radius: var(--radius-pill);
     background: var(--rouge);
-    color: var(--sur-media);
-    font-size: var(--fs-1);
-    font-weight: var(--fw-display);
-    padding: 3px 8px;
-    text-transform: uppercase;
-    letter-spacing: var(--ls-wide);
+    color: var(--sur-lave);
+    font-size: var(--fs-2);
+    font-weight: var(--fw-bold);
+    padding: 3px 10px;
     margin-top: 8px;
   }
 
@@ -170,31 +181,40 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
   }
 
   .onb-tag {
+    font-family: var(--font-mono);
     font-size: var(--fs-1);
-    font-weight: var(--fw-display);
+    font-weight: var(--fw-medium);
     letter-spacing: var(--ls-label);
     text-transform: uppercase;
-    color: var(--rouge);
-    margin-bottom: 8px;
+    color: var(--sur-rouge-clair);
+    margin-bottom: 10px;
   }
 
-  .slide-3 .onb-tag { color: var(--bleu); }
-  .slide-4 .onb-tag { color: var(--noir); }
+  .slide-3 .onb-tag { color: var(--sur-bleu-clair); }
+  .slide-4 .onb-tag { color: var(--sur-lime-clair); }
 
   .onb-title {
     font-family: var(--font-display);
     font-size: var(--fs-8);
     font-weight: var(--fw-black);
+    letter-spacing: var(--ls-display);
     color: var(--noir);
-    line-height: var(--lh-display);
+    line-height: var(--lh-tight);
     margin-bottom: 14px;
   }
 
-  .onb-title em { font-style: italic; color: var(--rouge); }
-  .slide-3 .onb-title em { color: var(--bleu); }
+  /* h1.titre-page remet la police à « inherit » (style.css) : sans ce
+     sélecteur plus précis, le titre retombait en police de texte. */
+  h1.onb-title.titre-page {
+    font-family: var(--font-display); font-size: var(--fs-8); font-weight: var(--fw-black);
+    letter-spacing: var(--ls-display); line-height: var(--lh-tight); margin-bottom: 14px;
+  }
+  .onb-title em { font-style: normal; color: var(--sur-rouge-clair); }
+  .slide-3 .onb-title em { color: var(--sur-bleu-clair); }
+  .slide-4 .onb-title em { color: var(--sur-lime-clair); }
 
   .onb-desc {
-    font-size: var(--fs-4);
+    font-size: var(--fs-5);
     color: var(--gris-fonce);
     line-height: var(--lh-relaxed);
   }
@@ -205,7 +225,7 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-top: 1px solid var(--gris-clair);
+    border-top: none;
     background: var(--bg);
     flex-shrink: 0;
   }
@@ -214,24 +234,23 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
 
   .onb-dot {
     width: 8px; height: 8px; border-radius: var(--radius-pill);
-    background: var(--gris-clair);
-    border: 1.5px solid var(--gris);
+    background: var(--line-2);
+    border: none;
     transition: all 280ms ease;
   }
 
-  .onb-dot.active { background: var(--rouge); border-color: var(--rouge); width: 24px; }
+  .onb-dot.active { background: var(--rouge); width: 24px; }
 
+  /* « Suivant » : l'action principale, donc la pilule lave. */
   .onb-btn {
-    background: var(--noir);
-    color: var(--blanc);
+    background: var(--rouge);
+    color: var(--sur-lave);
     border-radius: var(--radius-pill);
-    border: 1px solid var(--gris-clair);
-    box-shadow: var(--shadow-sm);
-    padding: 13px 22px;
-    font-size: var(--fs-2);
-    font-weight: var(--fw-display);
-    text-transform: uppercase;
-    letter-spacing: var(--ls-wide);
+    border: 1px solid var(--rouge);
+    box-shadow: none;
+    padding: 14px 26px;
+    font-size: var(--fs-5);
+    font-weight: var(--fw-bold);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -239,9 +258,9 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
     transition: box-shadow 100ms, transform 100ms;
   }
 
-  .onb-btn:active { box-shadow: none; transform: translate(2px, 2px); }
+  .onb-btn:active { transform: scale(0.98); }
 </style>
-<?php pageDebut('Bienvenue — StudentLink', ['pwa' => true, 'viewport' => 'width=device-width, initial-scale=1.0, viewport-fit=cover', 'tete' => ob_get_clean()]); ?>
+<?php pageDebut('Bienvenue — Linkee', ['pwa' => true, 'viewport' => 'width=device-width, initial-scale=1.0, viewport-fit=cover', 'tete' => ob_get_clean()]); ?>
 <div class="onb-wrapper">
 
   <button class="onb-skip" onclick="finish()">Passer</button>
@@ -258,12 +277,10 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
           </div>
         </div>
         <div class="onb-visual-inner">
-          <div class="onb-big-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-              <polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-          </div>
+          <svg class="onb-anneaux" viewBox="0 0 52 32" fill="none" aria-hidden="true">
+            <circle cx="16" cy="18" r="12" stroke="#111013" stroke-width="4.5"/>
+            <circle cx="34" cy="14" r="12" stroke="#F5F1E8" stroke-width="4.5"/>
+          </svg>
         </div>
         <div class="onb-stat stat-br">
           <div>
@@ -273,7 +290,7 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
         </div>
       </div>
       <div class="onb-text">
-        <div class="onb-tag">StudentLink</div>
+        <div class="onb-tag">Bienvenue sur Linkee</div>
         <h1 class="onb-title titre-page">La vie étudiante<br>à prix <em>réduit.</em></h1>
         <div class="onb-desc">Bars, boîtes, restos — accède aux meilleures sorties de ta ville avec des réductions exclusives réservées aux étudiants.</div>
       </div>
@@ -293,7 +310,7 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
             <div class="mc-tag">Boîte · Vendredi</div>
             <div class="mc-title">Soirée Étudiante</div>
             <div class="mc-meta">Le Baromètre — 23h</div>
-            <div class="onb-mock-badge" style="background:var(--bleu);">Entrée gratuite</div>
+            <div class="onb-mock-badge" style="background:var(--bleu);color:var(--sur-lave);">Entrée gratuite</div>
           </div>
         </div>
       </div>
@@ -308,12 +325,12 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
     <div class="onb-slide slide-3">
       <div class="onb-visual">
         <div class="onb-stat stat-tl" style="flex-direction:column;gap:2px;padding:10px 14px;">
-          <div class="onb-stat-num" style="color:var(--bleu);">12</div>
+          <div class="onb-stat-num">12</div>
           <div class="onb-stat-label">squads<br>actifs</div>
         </div>
         <div class="onb-visual-inner">
           <div class="onb-big-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#111013" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
               <circle cx="9" cy="7" r="4"/>
               <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
@@ -322,7 +339,7 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
           </div>
         </div>
         <div class="onb-stat stat-br" style="flex-direction:column;gap:2px;padding:10px 14px;">
-          <div class="onb-stat-num" style="color:var(--bleu);">3</div>
+          <div class="onb-stat-num">3</div>
           <div class="onb-stat-label">sports<br>dispo</div>
         </div>
       </div>
@@ -340,34 +357,34 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
           <div class="onb-mock-card" style="width:100%;">
             <div style="display:flex;align-items:center;justify-content:space-between;">
               <div style="display:flex;align-items:center;gap:10px;">
-                <div style="width:36px;height:36px;background:var(--bleu);border:1px solid var(--gris-clair);display:flex;align-items:center;justify-content:center;font-weight:var(--fw-bold);font-size:var(--fs-4);color:var(--sur-media);flex-shrink:0;">L</div>
+                <div style="width:36px;height:36px;background:var(--bleu);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:var(--fw-display);font-size:var(--fs-4);color:var(--sur-lave);flex-shrink:0;">L</div>
                 <div><div style="font-weight:var(--fw-bold);font-size:var(--fs-4);color:var(--noir);">Léa M.</div><div style="font-size:var(--fs-1);color:var(--gris);">SIGMA · M1</div></div>
               </div>
-              <span style="font-size:var(--fs-1);background:var(--noir);color:var(--blanc);padding:4px 8px;font-weight:var(--fw-bold);">+ SUIVRE</span>
+              <span style="font-size:var(--fs-2);background:var(--rouge);color:var(--sur-lave);padding:5px 12px;border-radius:var(--radius-pill);font-weight:var(--fw-bold);">+ Suivre</span>
             </div>
             <div style="margin-top:8px;display:flex;gap:4px;">\
-              <span style="font-size:var(--fs-1);background:var(--bleu-clair);color:var(--bleu);border:1px solid var(--bleu);padding:2px 6px;font-weight:var(--fw-bold);">#muscu</span>
-              <span style="font-size:var(--fs-1);background:var(--bleu-clair);color:var(--bleu);border:1px solid var(--bleu);padding:2px 6px;font-weight:var(--fw-bold);">#boites</span>
+              <span style="font-size:var(--fs-2);color:var(--noir);border:1px solid var(--line-2);border-radius:var(--radius-pill);padding:2px 9px;font-weight:var(--fw-medium);">#muscu</span>
+              <span style="font-size:var(--fs-2);color:var(--noir);border:1px solid var(--line-2);border-radius:var(--radius-pill);padding:2px 9px;font-weight:var(--fw-medium);">#boites</span>
             </div>
           </div>
           <div class="onb-mock-card" style="width:100%;">
             <div style="display:flex;align-items:center;justify-content:space-between;">
               <div style="display:flex;align-items:center;gap:10px;">
-                <div style="width:36px;height:36px;background:var(--rouge);border:1px solid var(--gris-clair);display:flex;align-items:center;justify-content:center;font-weight:var(--fw-bold);font-size:var(--fs-4);color:var(--sur-media);flex-shrink:0;">A</div>
+                <div style="width:36px;height:36px;background:var(--rouge);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:var(--fw-display);font-size:var(--fs-4);color:var(--sur-lave);flex-shrink:0;">A</div>
                 <div><div style="font-weight:var(--fw-bold);font-size:var(--fs-4);color:var(--noir);">Arthur M.</div><div style="font-size:var(--fs-1);color:var(--gris);">UCA · L2</div></div>
               </div>
-              <span style="font-size:var(--fs-1);background:var(--noir);color:var(--blanc);padding:4px 8px;font-weight:var(--fw-bold);">+ SUIVRE</span>
+              <span style="font-size:var(--fs-2);background:var(--rouge);color:var(--sur-lave);padding:5px 12px;border-radius:var(--radius-pill);font-weight:var(--fw-bold);">+ Suivre</span>
             </div>
             <div style="margin-top:8px;display:flex;gap:4px;">
-              <span style="font-size:var(--fs-1);background:var(--bleu-clair);color:var(--bleu);border:1px solid var(--bleu);padding:2px 6px;font-weight:var(--fw-bold);">#running</span>
-              <span style="font-size:var(--fs-1);background:var(--bleu-clair);color:var(--bleu);border:1px solid var(--bleu);padding:2px 6px;font-weight:var(--fw-bold);">#bars</span>
+              <span style="font-size:var(--fs-2);color:var(--noir);border:1px solid var(--line-2);border-radius:var(--radius-pill);padding:2px 9px;font-weight:var(--fw-medium);">#running</span>
+              <span style="font-size:var(--fs-2);color:var(--noir);border:1px solid var(--line-2);border-radius:var(--radius-pill);padding:2px 9px;font-weight:var(--fw-medium);">#bars</span>
             </div>
           </div>
         </div>
       </div>
       <div class="onb-text">
-        <div class="onb-tag" style="color:var(--orange);">Rencontres</div>
-        <h1 class="onb-title titre-page">Trouve tes<br>futurs <em style="color:var(--orange);">potes.</em></h1>
+        <div class="onb-tag" style="color:var(--sur-orange-clair);">Rencontres</div>
+        <h1 class="onb-title titre-page">Trouve tes<br>futurs <em style="color:var(--sur-orange-clair);">potes.</em></h1>
         <div class="onb-desc">Découvre des étudiants qui partagent tes intérêts, vont aux mêmes événements que toi — et abonne-toi pour rester connecté.</div>
       </div>
     </div>
@@ -377,17 +394,17 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
       <div class="onb-visual">
         <div class="onb-visual-inner">
           <div class="onb-big-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--noir)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#111013" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
               <line x1="1" y1="10" x2="23" y2="10"/>
             </svg>
           </div>
-          <div class="onb-mock-card" style="background:var(--noir);border-color:var(--noir);">
-            <div class="mc-tag" style="color:var(--lime);">Ton pass</div>
-            <div class="mc-title" style="color:var(--blanc);"><?= htmlspecialchars($prenom) ?></div>
-            <div class="mc-meta" style="color:var(--gris);">Happy Hour · Ce soir</div>
-            <div style="margin-top:10px;background:var(--blanc);height:48px;width:48px;display:flex;align-items:center;justify-content:center;">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--noir)" stroke-width="1.5">
+          <div class="onb-mock-card" style="background:var(--rouge);border-color:var(--rouge);border-radius:var(--radius);">
+            <div class="mc-tag" style="color:var(--sur-lave);">linkee pass</div>
+            <div class="mc-title" style="color:var(--sur-lave);"><?= htmlspecialchars($prenom) ?></div>
+            <div class="mc-meta" style="color:rgba(17,16,19,.75);">Happy Hour · Ce soir</div>
+            <div style="margin-top:10px;background:#FFFFFF;height:48px;width:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#111013" stroke-width="1.5">
                 <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
                 <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/>
               </svg>

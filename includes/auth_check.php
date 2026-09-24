@@ -124,14 +124,28 @@ function isLoggedIn(): bool {
  * Sans la balise theme-color, la barre du navigateur restait claire au-dessus
  * d'une application sombre. Elle est posée ici parce que cette fonction est
  * déjà le point unique inclus par les 21 pages.
+ *
+ * Charte Linkee : l'app étudiant est « la nuit » — basalte par défaut, le
+ * choix enregistré dans « Moi » restant respecté. L'espace partenaire et le
+ * back-office sont « le jour » : $fixe = 'light' les tient en craie quel que
+ * soit le thème stocké par le navigateur, et data-theme-fixe le signale à
+ * app.js, qui réapplique sinon le thème stocké.
  */
-function themeBootScript(): string {
-    return '<meta name="theme-color" content="#F3EEE3">'
+function themeBootScript(?string $fixe = null): string {
+    if ($fixe === 'light' || $fixe === 'dark') {
+        return '<meta name="theme-color" content="' . ($fixe === 'dark' ? '#111013' : '#F5F1E8') . '">'
+             . '<script>(function(){'
+             . 'var d=document.documentElement;'
+             . 'd.setAttribute("data-theme","' . $fixe . '");'
+             . 'd.setAttribute("data-theme-fixe","' . $fixe . '");'
+             . '})();</script>';
+    }
+    return '<meta name="theme-color" content="#111013">'
          . '<script>(function(){'
-         . 'var t=localStorage.getItem("theme")||"light";'
+         . 'var t=localStorage.getItem("theme")||"dark";'
          . 'document.documentElement.setAttribute("data-theme",t);'
          . 'var m=document.head.querySelector("meta[name=theme-color]");'
-         . 'if(m)m.setAttribute("content",t==="dark"?"#16130F":"#F3EEE3");'
+         . 'if(m)m.setAttribute("content",t==="dark"?"#111013":"#F5F1E8");'
          . '})();</script>';
 }
 

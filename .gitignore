@@ -35,7 +35,7 @@ package-lock.json
 # pas scanner. Elles ne sont pas des dependances Composer et n'ont rien a
 # faire ici.
 /vendor/
-# composer.lock N'EST PAS ignore, et c'est deliberé : StudentLink est une
+# composer.lock N'EST PAS ignore, et c'est deliberé : Linkee est une
 # application, pas une bibliotheque. Le lock fige les versions exactes de
 # PHPUnit et PHPStan ; sans lui, « composer install » se comporte comme un
 # « composer update » et la CI peut valider le code contre des versions
@@ -100,5 +100,5 @@ includes/config.local.php
 
 # PDF reconstructibles depuis le HTML versionné de docs/
 docs/*.pdf
-# et depuis Script_Oral_StudentLink.docx
-Script_Oral_StudentLink.pdf
+# et depuis Script_Oral_Linkee.docx
+Script_Oral_Linkee.pdf

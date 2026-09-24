@@ -24,7 +24,7 @@ final class MailTest extends TestCase
         if (!function_exists('entetesMail')) {
             require_once __DIR__ . '/../../includes/mail.php';
         }
-        $_SERVER['HTTP_HOST'] = 'studentlink.example';
+        $_SERVER['HTTP_HOST'] = 'linkee.example';
     }
 
     protected function tearDown(): void
@@ -36,9 +36,9 @@ final class MailTest extends TestCase
     private function config(array $surcharge = []): array
     {
         return $surcharge + [
-            'expediteur'  => 'noreply@studentlink.example',
-            'nom'         => 'StudentLink',
-            'retour'      => 'rebonds@studentlink.example',
+            'expediteur'  => 'noreply@linkee.example',
+            'nom'         => 'Linkee',
+            'retour'      => 'rebonds@linkee.example',
             'transport'   => 'mail',
             'hote'        => '',
             'port'        => 587,
@@ -57,7 +57,7 @@ final class MailTest extends TestCase
 
     public function testUnSujetAccentueEstEncodeSelonLaRfc2047(): void
     {
-        // « StudentLink — Réinitialisation… » partait en UTF-8 brut. Un
+        // « Linkee — Réinitialisation… » partait en UTF-8 brut. Un
         // en-tête ne transporte que de l'ASCII : selon le client, le sujet
         // s'affichait en caractères de remplacement, et plusieurs filtres
         // comptent un en-tête 8 bits comme signal négatif.
@@ -69,7 +69,7 @@ final class MailTest extends TestCase
 
     public function testLeSujetEncodeSeRelitALIdentique(): void
     {
-        $original = 'StudentLink — Réinitialisation de votre mot de passe (à faire aujourd\'hui)';
+        $original = 'Linkee — Réinitialisation de votre mot de passe (à faire aujourd\'hui)';
 
         $this->assertSame($original, mb_decode_mimeheader(encoderEntete($original)));
     }
@@ -135,14 +135,14 @@ final class MailTest extends TestCase
         // celui de la machine.
         $id = entetesMail($this->config(), 'Rappel')['Message-ID'];
 
-        $this->assertMatchesRegularExpression('/^<[^@>]+@studentlink\.example>$/', $id);
+        $this->assertMatchesRegularExpression('/^<[^@>]+@linkee\.example>$/', $id);
     }
 
     public function testDeuxMessagesNOntJamaisLeMemeIdentifiant(): void
     {
         $this->assertNotSame(
-            identifiantMessage('noreply@studentlink.example'),
-            identifiantMessage('noreply@studentlink.example')
+            identifiantMessage('noreply@linkee.example'),
+            identifiantMessage('noreply@linkee.example')
         );
     }
 
@@ -152,15 +152,15 @@ final class MailTest extends TestCase
         // une adresse morte reste sollicitée indéfiniment.
         $entetes = entetesMail($this->config(), 'Rappel');
 
-        $this->assertSame('<rebonds@studentlink.example>', $entetes['Return-Path']);
+        $this->assertSame('<rebonds@linkee.example>', $entetes['Return-Path']);
     }
 
     public function testLeNomAffichéAccentuéEstEncodé(): void
     {
-        $entetes = entetesMail($this->config(['nom' => 'StudentLink Équipe']), 'Rappel');
+        $entetes = entetesMail($this->config(['nom' => 'Linkee Équipe']), 'Rappel');
 
         $this->assertMatchesRegularExpression('/^[\x20-\x7E\r\n]*$/', $entetes['From']);
-        $this->assertStringContainsString('<noreply@studentlink.example>', $entetes['From']);
+        $this->assertStringContainsString('<noreply@linkee.example>', $entetes['From']);
     }
 
     public function testLaDateEstAuFormatRfc(): void
@@ -193,18 +193,18 @@ final class MailTest extends TestCase
 
     public function testLExpediteurParDefautSuitLeDomaineServi(): void
     {
-        // Un « noreply@studentlink.app » écrit en dur mentait dès que le site
+        // Un « noreply@linkee.app » écrit en dur mentait dès que le site
         // tournait ailleurs — et c'est exactement ce que SPF sanctionne.
         $config = configurationMail();
 
-        $this->assertSame('noreply@studentlink.example', $config['expediteur']);
+        $this->assertSame('noreply@linkee.example', $config['expediteur']);
     }
 
     public function testLePortDuDomaineNeFinitPasDansLAdresse(): void
     {
-        $_SERVER['HTTP_HOST'] = 'studentlink.example:8443';
+        $_SERVER['HTTP_HOST'] = 'linkee.example:8443';
 
-        $this->assertSame('noreply@studentlink.example', configurationMail()['expediteur']);
+        $this->assertSame('noreply@linkee.example', configurationMail()['expediteur']);
     }
 
     public function testLeTransportParDefautEstLaFonctionMail(): void

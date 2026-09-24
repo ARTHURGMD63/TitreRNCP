@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($age === null) {
         $error = 'Merci d’indiquer une date de naissance valide.';
     } elseif ($age < 18) {
-        $error = 'StudentLink est réservée aux personnes majeures : '
+        $error = 'Linkee est réservée aux personnes majeures : '
                . 'l’inscription n’est pas possible avant 18 ans.';
     } elseif ($age > 120) {
         $error = 'Cette date de naissance ne semble pas correcte.';
@@ -118,15 +118,15 @@ if (!in_array($selectedType, ['etudiant', 'partenaire'], true)) {
 // Une erreur de formulaire ne doit pas effacer les étiquettes déjà choisies.
 $interetsChoisis = filtrerInterets($_POST['interests'] ?? []);
 ?>
-<?php pageDebut('StudentLink — Inscription'); ?>
+<?php pageDebut('Linkee — Inscription'); ?>
 <div class="auth-page" style="padding-top:24px;">
   <div class="auth-logo">
-    <div class="brand">StudentLink <em>/ Inscription</em></div>
+    <?= marqueLinkee() ?>
   </div>
 
   <h1 class="auth-headline titre-page">
-    <div class="display" style="font-size:var(--fs-8);">Rejoins</div>
-    <div class="display-italic" style="font-size:var(--fs-8);">la communauté.</div>
+    <div class="display" style="font-size:var(--fs-8);">Rejoins la</div>
+    <div class="display-italic" style="font-size:var(--fs-8);">communauté.</div>
   </h1>
 
   <div class="type-toggle" style="margin-bottom:24px;">
@@ -181,7 +181,7 @@ $interetsChoisis = filtrerInterets($_POST['interests'] ?? []);
              value="<?= htmlspecialchars($_POST['date_naissance'] ?? '') ?>"
              aria-describedby="aide-naissance" required>
       <p class="aide-champ" id="aide-naissance">
-        StudentLink donne accès à des soirées en bar et en discothèque :
+        Linkee donne accès à des soirées en bar et en discothèque :
         l’inscription est réservée aux personnes majeures.
       </p>
     </div>
@@ -254,7 +254,7 @@ $interetsChoisis = filtrerInterets($_POST['interests'] ?? []);
     </label>
 
     <button type="submit" class="btn btn-primary btn-full" style="margin-top:14px;">
-      → Créer mon compte
+      Créer mon compte
     </button>
   </form>
 

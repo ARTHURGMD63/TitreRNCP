@@ -2,27 +2,27 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>StudentLink — Plaquette partenaires</title>
+<title>Linkee — Plaquette partenaires</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700..900;1,700..900&family=DM+Sans:opsz,wght@9..40,400..700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
-   Plaquette partenaires StudentLink
+   Plaquette partenaires Linkee
    Les couleurs et la typographie sont celles de la charte
    graphique de l'application : un prospect qui ouvre l'app
    apres avoir lu ce document doit reconnaitre la meme marque.
    ============================================================ */
 :root{
-  --bg:#F3EEE3; --blanc:#FFFFFF; --surface-2:#FBF8F1;
-  --noir:#1C1916; --gris-fonce:#5B554C; --gris:#6E6860;
-  --gris-clair:#EAE3D6; --line-2:#DED6C6;
-  --rouge:#E0492B; --rouge-deep:#BB3619; --rouge-clair:#FBE7E1;
-  --bleu:#4A40C2; --bleu-deep:#332A92; --bleu-clair:#ECE9FA;
-  --lime:#EFB23A; --lime-deep:#8E6414; --lime-clair:#FBF0D6;
-  --orange:#EC8233;
-  --font-display:'Playfair Display',Georgia,'Times New Roman',serif;
-  --font-sans:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --bg:#F5F1E8; --blanc:#FFFFFF; --surface-2:#EFEAE0;
+  --noir:#111013; --gris-fonce:#4B4751; --gris:#67626D;
+  --gris-clair:#E8E2D6; --line-2:#DCD5C7;
+  --rouge:#FF5424; --rouge-deep:#B8350D; --rouge-clair:#FFE3D9;
+  --bleu:#5B8CFF; --bleu-deep:#2A56C0; --bleu-clair:#E3EBFF;
+  --lime:#C8F547; --lime-deep:#4D6B00; --lime-clair:#EEF9CF;
+  --orange:#FFC23D;
+  --font-display:'Unbounded','Arial Black',sans-serif;
+  --font-sans:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
 }
 @page{ size:A4 landscape; margin:0; }
 *{ box-sizing:border-box; margin:0; padding:0; }
@@ -47,7 +47,7 @@ body{
   font-size:6.5pt; letter-spacing:.14em; text-transform:uppercase; color:var(--gris);
   border-top:1px solid var(--line-2); padding-top:3mm;
 }
-.sombre .folio{ color:rgba(243,238,227,.45); border-top-color:rgba(243,238,227,.18); }
+.sombre .folio{ color:rgba(245,241,232,.45); border-top-color:rgba(245,241,232,.18); }
 
 .kicker{
   font-size:7pt; font-weight:700; letter-spacing:.2em; text-transform:uppercase;
@@ -55,18 +55,18 @@ body{
 }
 .sombre .kicker{ color:var(--rouge); }
 
-h1{ font-family:var(--font-display); font-weight:900; font-size:42pt; line-height:.98;
+h1{ font-family:var(--font-display); font-weight:800; font-size:42pt; line-height:.98;
     letter-spacing:-.02em; }
-h1 em{ font-style:italic; color:var(--rouge); display:block; }
-h2{ font-family:var(--font-display); font-weight:900; font-size:26pt; line-height:1.02;
+h1 em{ font-style:normal; color:var(--rouge); display:block; }
+h2{ font-family:var(--font-display); font-weight:800; font-size:26pt; line-height:1.02;
     letter-spacing:-.018em; margin-bottom:5mm; }
-h2 em{ font-style:italic; color:var(--rouge); }
+h2 em{ font-style:normal; color:var(--rouge); }
 h3{ font-family:var(--font-sans); font-weight:700; font-size:11pt; letter-spacing:-.01em;
     margin-bottom:2mm; }
 .lede{ font-size:11.5pt; line-height:1.5; color:var(--gris-fonce); max-width:150mm; }
-.sombre .lede{ color:rgba(243,238,227,.82); }
+.sombre .lede{ color:rgba(245,241,232,.82); }
 p{ color:var(--gris-fonce); }
-.sombre p{ color:rgba(243,238,227,.78); }
+.sombre p{ color:rgba(245,241,232,.78); }
 strong{ color:var(--noir); font-weight:700; }
 .sombre strong{ color:var(--bg); }
 
@@ -74,19 +74,19 @@ strong{ color:var(--noir); font-weight:700; }
 .logo{ display:flex; align-items:center; gap:3mm; font-weight:700; font-size:13pt;
        letter-spacing:-.01em; }
 .logo svg{ width:9mm; height:9mm; flex:0 0 auto; }
-.logo em{ font-family:var(--font-display); font-style:italic; color:var(--rouge);
+.logo em{ font-family:var(--font-display); font-style:normal; color:var(--rouge);
           font-weight:800; }
 
 /* ── Cadre telephone ─────────────────────────────────────── */
 .phone{
   position:relative; width:50mm; border:1.4mm solid var(--noir); border-radius:7mm;
   background:var(--noir); overflow:hidden;
-  box-shadow:0 6mm 16mm rgba(28,25,22,.18);
+  box-shadow:0 6mm 16mm rgba(17,16,19,.18);
 }
 .phone img{ display:block; width:100%; }
 .phone.court img{ margin-bottom:-1px; }
 
-.capture{ border-radius:3mm; overflow:hidden; box-shadow:0 3mm 10mm rgba(28,25,22,.14);
+.capture{ border-radius:3mm; overflow:hidden; box-shadow:0 3mm 10mm rgba(17,16,19,.14);
           border:1px solid var(--line-2); background:var(--blanc); }
 .capture img{ display:block; width:100%; }
 .legende{ font-size:7.5pt; color:var(--gris); letter-spacing:.02em; margin-top:2.5mm;
@@ -97,7 +97,7 @@ strong{ color:var(--noir); font-weight:700; }
 .deux{ display:grid; grid-template-columns:1fr 1fr; gap:12mm; }
 
 .constat{ border-top:2px solid var(--noir); padding-top:4mm; }
-.constat .num{ font-family:var(--font-display); font-size:30pt; font-weight:900;
+.constat .num{ font-family:var(--font-display); font-size:30pt; font-weight:800;
                color:var(--rouge); line-height:1; margin-bottom:2mm; }
 .constat h3{ font-size:12pt; line-height:1.25; margin-bottom:3mm; }
 .constat p{ font-size:9pt; line-height:1.55; }
@@ -116,13 +116,13 @@ strong{ color:var(--noir); font-weight:700; }
   padding:6mm 7mm;
 }
 .encart.rouge{ background:var(--rouge); border-color:var(--rouge); color:var(--blanc); }
-.encart.rouge p, .encart.rouge strong{ color:rgba(255,255,255,.92); }
+.encart.rouge p, .encart.rouge strong{ color:rgba(17,16,19,.92); }
 .encart.creme{ background:var(--surface-2); }
-.encart .chiffre{ font-family:var(--font-display); font-weight:900; font-size:34pt;
+.encart .chiffre{ font-family:var(--font-display); font-weight:800; font-size:34pt;
                   line-height:1; letter-spacing:-.02em; }
 .encart .ch-label{ font-size:7pt; letter-spacing:.16em; text-transform:uppercase;
                    color:var(--gris); margin-bottom:2mm; }
-.encart.rouge .ch-label{ color:rgba(255,255,255,.7); }
+.encart.rouge .ch-label{ color:rgba(17,16,19,.7); }
 
 .puces{ list-style:none; }
 .puces li{ position:relative; padding-left:6mm; margin-bottom:3mm; font-size:9.5pt;
@@ -131,7 +131,7 @@ strong{ color:var(--noir); font-weight:700; }
   content:''; position:absolute; left:0; top:1.8mm;
   width:2.4mm; height:2.4mm; border-radius:50%; background:var(--rouge);
 }
-.sombre .puces li{ color:rgba(243,238,227,.8); }
+.sombre .puces li{ color:rgba(245,241,232,.8); }
 
 .qr-faq{ display:grid; grid-template-columns:1fr 1fr; gap:6mm 10mm; }
 .qr-faq h3{ font-size:9.5pt; color:var(--noir); margin-bottom:1.5mm; }
@@ -159,19 +159,15 @@ strong{ color:var(--noir); font-weight:700; }
   <div style="display:grid; grid-template-columns:1.25fr .75fr; height:100%;">
     <div style="padding:20mm 0 14mm 20mm; display:flex; flex-direction:column;">
       <div class="logo" style="color:var(--bg);">
-        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="15" y="20" width="50" height="30" rx="15" stroke="#F3EEE3" stroke-width="10"/>
-          <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
-          <circle cx="50" cy="50" r="6" fill="#F3EEE3"/>
-        </svg>
-        StudentLink <em>/ Partenaires</em>
+        <svg viewBox="0 0 52 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:auto;" aria-hidden="true"><circle cx="16" cy="16" r="12.5" stroke="#FF5424" stroke-width="5"/><circle cx="36" cy="16" r="12.5" stroke="#F5F1E8" stroke-width="5"/><path d="M 28.45 14.91 A 12.5 12.5 0 0 1 24.03 25.58" stroke="#FF5424" stroke-width="5"/></svg>
+        <span style="font-family:var(--font-display);font-weight:800;letter-spacing:-.045em;">link<span style="color:#FF5424;">ee</span></span> <em style="font-family:var(--font-display);font-weight:400;font-style:normal;letter-spacing:-.03em;color:#8A858F;">pro</em>
       </div>
 
       <div style="margin-top:auto;">
         <div class="kicker">Bars · Restaurants · Discothèques · Hôtels · BDE · Associations</div>
         <h1>Vos soirées creuses<em>ont un public.</em></h1>
         <p class="lede" style="margin-top:8mm; max-width:118mm;">
-          StudentLink amène des étudiants clermontois dans votre établissement
+          Linkee amène des étudiants clermontois dans votre établissement
           les soirs où votre salle est vide — et vous dit combien sont
           <strong>réellement venus</strong>.
         </p>
@@ -179,7 +175,7 @@ strong{ color:var(--noir); font-weight:700; }
 
       <div style="margin-top:12mm; display:flex; gap:14mm; font-size:7pt;
                   letter-spacing:.14em; text-transform:uppercase;
-                  color:rgba(243,238,227,.5); border-top:1px solid rgba(243,238,227,.18);
+                  color:rgba(245,241,232,.5); border-top:1px solid rgba(245,241,232,.18);
                   padding-top:5mm; width:118mm;">
         <span>Clermont-Ferrand</span>
         <span>Plaquette partenaires</span>
@@ -188,10 +184,10 @@ strong{ color:var(--noir); font-weight:700; }
     </div>
 
     <div style="position:relative; overflow:hidden; background:
-         radial-gradient(120% 90% at 30% 10%, #3A322B 0%, #1C1916 60%);">
+         radial-gradient(120% 90% at 30% 10%, #242127 0%, #111013 60%);">
       <div class="phone" style="position:absolute; top:24mm; left:12mm; width:64mm;
                                 border-color:#000; box-shadow:0 10mm 26mm rgba(0,0,0,.5);">
-        <img src="mockups/feed.png" alt="Le fil des soirées dans l'application StudentLink">
+        <img src="mockups/feed.png" alt="Le fil des soirées dans l'application Linkee">
       </div>
     </div>
   </div>
@@ -228,17 +224,17 @@ strong{ color:var(--noir); font-weight:700; }
   </div>
 
   <div class="encart rouge" style="margin-top:12mm; display:flex; align-items:center; gap:8mm;">
-    <div style="font-family:var(--font-display); font-style:italic; font-weight:900;
+    <div style="font-family:var(--font-display); font-style:normal; font-weight:800;
                 font-size:17pt; line-height:1.15; color:#fff; flex:1;">
       Le problème n'est pas de trouver des étudiants.<br>
       C'est de savoir lesquels viennent, et de le prouver.
     </div>
   </div>
 
-  <div class="folio"><span>StudentLink · Plaquette partenaires</span><span>2</span></div>
+  <div class="folio"><span>Linkee · Plaquette partenaires</span><span>2</span></div>
 </section>
 
-<!-- ══════════════ 3. CE QU'EST STUDENTLINK ══════════════ -->
+<!-- ══════════════ 3. CE QU'EST LINKEE ══════════════ -->
 <section class="page">
   <div class="kicker">La réponse</div>
   <h2>L'application où les étudiants de Clermont<br>
@@ -269,7 +265,7 @@ strong{ color:var(--noir); font-weight:700; }
     </div>
   </div>
 
-  <div class="folio"><span>StudentLink · Plaquette partenaires</span><span>3</span></div>
+  <div class="folio"><span>Linkee · Plaquette partenaires</span><span>3</span></div>
 </section>
 
 <!-- ══════════════ 4. COMMENT ÇA SE PASSE ══════════════ -->
@@ -323,13 +319,13 @@ strong{ color:var(--noir); font-weight:700; }
     </div>
   </div>
 
-  <div class="folio"><span>StudentLink · Plaquette partenaires</span><span>4</span></div>
+  <div class="folio"><span>Linkee · Plaquette partenaires</span><span>4</span></div>
 </section>
 
 <!-- ══════════════ 5. LE CHIFFRE ══════════════ -->
 <section class="page">
   <div class="kicker">Ce que personne d'autre ne vous donne</div>
-  <h2>« Inscrits » n'est pas « venus ».<br><em>StudentLink compte les deux.</em></h2>
+  <h2>« Inscrits » n'est pas « venus ».<br><em>Linkee compte les deux.</em></h2>
 
   <div style="display:grid; grid-template-columns:.95fr 1.05fr; gap:14mm; margin-top:9mm;
               align-items:start;">
@@ -378,7 +374,7 @@ strong{ color:var(--noir); font-weight:700; }
     </div>
   </div>
 
-  <div class="folio"><span>StudentLink · Plaquette partenaires</span><span>5</span></div>
+  <div class="folio"><span>Linkee · Plaquette partenaires</span><span>5</span></div>
 </section>
 
 <!-- ══════════════ 6. QUI VIENT ══════════════ -->
@@ -422,14 +418,14 @@ strong{ color:var(--noir); font-weight:700; }
         <p style="font-size:9pt;">
           <strong>Vous ne récupérez pas un fichier d'étudiants.</strong>
           Vous voyez qui s'est inscrit à vos soirées et des statistiques
-          agrégées sur votre salle. Les comptes, eux, restent chez StudentLink :
+          agrégées sur votre salle. Les comptes, eux, restent chez Linkee :
           c'est ce qui permet aux étudiants de s'inscrire sans se méfier.
         </p>
       </div>
     </div>
   </div>
 
-  <div class="folio"><span>StudentLink · Plaquette partenaires</span><span>6</span></div>
+  <div class="folio"><span>Linkee · Plaquette partenaires</span><span>6</span></div>
 </section>
 
 <!-- ══════════════ 7. LE GROUPE ══════════════ -->
@@ -447,7 +443,7 @@ strong{ color:var(--noir); font-weight:700; }
 
     <div style="padding-top:2mm;">
       <p style="font-size:11pt; line-height:1.6;">
-        C'est la différence entre une application de bons plans et StudentLink :
+        C'est la différence entre une application de bons plans et Linkee :
         personne ne décide seul de sortir un mardi. On y va parce qu'un ami y va.
       </p>
 
@@ -485,13 +481,13 @@ strong{ color:var(--noir); font-weight:700; }
   </div>
 
   <div style="margin-top:10mm; border-top:2px solid var(--noir); padding-top:5mm;
-              font-family:var(--font-display); font-style:italic; font-weight:900;
+              font-family:var(--font-display); font-style:normal; font-weight:800;
               font-size:15pt; line-height:1.2; letter-spacing:-.01em; max-width:200mm;">
     Vous ne remplissez pas une salle un étudiant à la fois.<br>
     Vous la remplissez par tables de quatre.
   </div>
 
-  <div class="folio"><span>StudentLink · Plaquette partenaires</span><span>7</span></div>
+  <div class="folio"><span>Linkee · Plaquette partenaires</span><span>7</span></div>
 </section>
 
 <!-- ══════════════ 8. L'ORDINATEUR ══════════════ -->
@@ -518,7 +514,7 @@ strong{ color:var(--noir); font-weight:700; }
     </div>
   </div>
 
-  <div class="folio"><span>StudentLink · Plaquette partenaires</span><span>8</span></div>
+  <div class="folio"><span>Linkee · Plaquette partenaires</span><span>8</span></div>
 </section>
 
 <!-- ══════════════ 9. LE TERRAIN ══════════════ -->
@@ -534,13 +530,13 @@ strong{ color:var(--noir); font-weight:700; }
         marche se sait en deux jours.
       </p>
       <p style="margin-top:6mm; font-size:10pt;">
-        À l'échelle du pays, 3 012 800 étudiants. StudentLink commence par le
+        À l'échelle du pays, 3 012 800 étudiants. Linkee commence par le
         bassin clermontois, parce qu'un réseau ne se construit pas partout à
         la fois.
       </p>
 
-      <div style="margin-top:9mm; border-top:1px solid rgba(243,238,227,.2); padding-top:6mm;">
-        <p style="font-size:9pt; color:rgba(243,238,227,.6);">
+      <div style="margin-top:9mm; border-top:1px solid rgba(245,241,232,.2); padding-top:6mm;">
+        <p style="font-size:9pt; color:rgba(245,241,232,.6);">
           Sources : effectifs étudiants de l'agglomération clermontoise et
           effectifs nationaux de l'enseignement supérieur.
         </p>
@@ -548,18 +544,18 @@ strong{ color:var(--noir); font-weight:700; }
     </div>
 
     <div>
-      <div class="encart" style="background:rgba(243,238,227,.06); border-color:rgba(243,238,227,.18);">
-        <div class="ch-label" style="color:rgba(243,238,227,.55);">Ce qu'il faut savoir</div>
+      <div class="encart" style="background:rgba(245,241,232,.06); border-color:rgba(245,241,232,.18);">
+        <div class="ch-label" style="color:rgba(245,241,232,.55);">Ce qu'il faut savoir</div>
         <h3 style="color:var(--bg); font-size:13pt; margin-top:2mm;">
-          StudentLink démarre.
+          Linkee démarre.
         </h3>
-        <p style="margin-top:3mm; font-size:9.5pt; color:rgba(243,238,227,.78);">
+        <p style="margin-top:3mm; font-size:9.5pt; color:rgba(245,241,232,.78);">
           Nous ne vous vendons pas une audience déjà constituée : nous la
           construisons, établissement par établissement, à Clermont-Ferrand.
           Les premiers partenaires ne paient pas pour de la visibilité — ils
           en obtiennent, parce qu'ils sont les seuls sur la carte.
         </p>
-        <p style="margin-top:4mm; font-size:9.5pt; color:rgba(243,238,227,.78);">
+        <p style="margin-top:4mm; font-size:9.5pt; color:rgba(245,241,232,.78);">
           C'est aussi pour ça que l'offre de lancement est ce qu'elle est, et
           qu'elle ne durera pas.
         </p>
@@ -567,7 +563,7 @@ strong{ color:var(--noir); font-weight:700; }
     </div>
   </div>
 
-  <div class="folio"><span>StudentLink · Plaquette partenaires</span><span>9</span></div>
+  <div class="folio"><span>Linkee · Plaquette partenaires</span><span>9</span></div>
 </section>
 
 <!-- ══════════════ 10. L'OFFRE ══════════════ -->
@@ -592,7 +588,7 @@ strong{ color:var(--noir); font-weight:700; }
         <p style="font-size:9pt;">
           <strong>Aucun engagement de durée.</strong> Vous publiez quand vous
           voulez, vous arrêtez quand vous voulez. Aucune exclusivité :
-          StudentLink ne vous interdit rien.
+          Linkee ne vous interdit rien.
         </p>
       </div>
     </div>
@@ -631,7 +627,7 @@ strong{ color:var(--noir); font-weight:700; }
     </div>
   </div>
 
-  <div class="folio"><span>StudentLink · Plaquette partenaires</span><span>10</span></div>
+  <div class="folio"><span>Linkee · Plaquette partenaires</span><span>10</span></div>
 </section>
 
 <!-- ══════════════ 11. LES QUESTIONS ══════════════ -->
@@ -661,7 +657,7 @@ strong{ color:var(--noir); font-weight:700; }
     </div>
     <div>
       <h3>Que deviennent les données des étudiants ?</h3>
-      <p>Elles restent chez StudentLink. Vous voyez la liste des inscrits à vos
+      <p>Elles restent chez Linkee. Vous voyez la liste des inscrits à vos
          soirées et des statistiques agrégées sur votre salle. Vous ne
          récupérez pas de fichier d'adresses, et c'est justement ce qui fait
          que les étudiants s'inscrivent.</p>
@@ -669,7 +665,7 @@ strong{ color:var(--noir); font-weight:700; }
     <div>
       <h3>Est-ce que c'est exclusif ?</h3>
       <p>Non. Vous continuez vos affiches, votre Instagram, vos partenariats
-         BDE. StudentLink s'ajoute, ne remplace rien et ne vous interdit rien.</p>
+         BDE. Linkee s'ajoute, ne remplace rien et ne vous interdit rien.</p>
     </div>
     <div>
       <h3>Et si personne ne vient ?</h3>
@@ -689,18 +685,14 @@ strong{ color:var(--noir); font-weight:700; }
     </p>
   </div>
 
-  <div class="folio"><span>StudentLink · Plaquette partenaires</span><span>11</span></div>
+  <div class="folio"><span>Linkee · Plaquette partenaires</span><span>11</span></div>
 </section>
 
 <!-- ══════════════ 12. CONTACT ══════════════ -->
 <section class="page sombre" style="display:flex; flex-direction:column;">
   <div class="logo" style="color:var(--bg);">
-    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="15" y="20" width="50" height="30" rx="15" stroke="#F3EEE3" stroke-width="10"/>
-      <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
-      <circle cx="50" cy="50" r="6" fill="#F3EEE3"/>
-    </svg>
-    StudentLink <em>/ Partenaires</em>
+    <svg viewBox="0 0 52 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:auto;" aria-hidden="true"><circle cx="16" cy="16" r="12.5" stroke="#FF5424" stroke-width="5"/><circle cx="36" cy="16" r="12.5" stroke="#F5F1E8" stroke-width="5"/><path d="M 28.45 14.91 A 12.5 12.5 0 0 1 24.03 25.58" stroke="#FF5424" stroke-width="5"/></svg>
+    <span style="font-family:var(--font-display);font-weight:800;letter-spacing:-.045em;">link<span style="color:#FF5424;">ee</span></span> <em style="font-family:var(--font-display);font-weight:400;font-style:normal;letter-spacing:-.03em;color:#8A858F;">pro</em>
   </div>
 
   <div style="margin-top:12mm;">
@@ -712,20 +704,20 @@ strong{ color:var(--noir); font-weight:700; }
   </div>
 
   <div class="trois" style="margin-top:12mm; gap:12mm;">
-    <div style="border-top:1px solid rgba(243,238,227,.25); padding-top:4mm;">
-      <div style="font-family:var(--font-display); font-weight:900; font-size:15pt;
+    <div style="border-top:1px solid rgba(245,241,232,.25); padding-top:4mm;">
+      <div style="font-family:var(--font-display); font-weight:800; font-size:15pt;
                   color:var(--rouge);">Cette semaine</div>
       <p style="font-size:9pt; margin-top:2mm;">Vingt minutes ensemble : on crée
         votre établissement, vos photos, votre première soirée.</p>
     </div>
-    <div style="border-top:1px solid rgba(243,238,227,.25); padding-top:4mm;">
-      <div style="font-family:var(--font-display); font-weight:900; font-size:15pt;
+    <div style="border-top:1px solid rgba(245,241,232,.25); padding-top:4mm;">
+      <div style="font-family:var(--font-display); font-weight:800; font-size:15pt;
                   color:var(--rouge);">La semaine suivante</div>
       <p style="font-size:9pt; margin-top:2mm;">Vous regardez le compteur monter,
         vous scannez les pass à l'entrée.</p>
     </div>
-    <div style="border-top:1px solid rgba(243,238,227,.25); padding-top:4mm;">
-      <div style="font-family:var(--font-display); font-weight:900; font-size:15pt;
+    <div style="border-top:1px solid rgba(245,241,232,.25); padding-top:4mm;">
+      <div style="font-family:var(--font-display); font-weight:800; font-size:15pt;
                   color:var(--rouge);">Le lendemain</div>
       <p style="font-size:9pt; margin-top:2mm;">Vous avez un taux de présence.
         À vous de dire si ça valait le coup.</p>
@@ -745,9 +737,9 @@ strong{ color:var(--noir); font-weight:700; }
       </p>
     </div>
 
-    <div style="border-left:1px solid rgba(243,238,227,.2); padding-left:12mm;">
-      <div class="ch-label" style="color:rgba(243,238,227,.55);">Votre contact</div>
-      <div style="font-family:var(--font-display); font-weight:900; font-size:17pt;
+    <div style="border-left:1px solid rgba(245,241,232,.2); padding-left:12mm;">
+      <div class="ch-label" style="color:rgba(245,241,232,.55);">Votre contact</div>
+      <div style="font-family:var(--font-display); font-weight:800; font-size:17pt;
                   color:var(--bg); margin-top:2mm;">Arthur Gramond</div>
       <div style="margin-top:4mm; display:flex; flex-direction:column;
                   align-items:flex-start; gap:2.5mm;">
@@ -758,7 +750,7 @@ strong{ color:var(--noir); font-weight:700; }
     </div>
   </div>
 
-  <div class="folio"><span>StudentLink · Clermont-Ferrand · Septembre 2026</span><span>12</span></div>
+  <div class="folio"><span>Linkee · Clermont-Ferrand · Septembre 2026</span><span>12</span></div>
 </section>
 
 </body>

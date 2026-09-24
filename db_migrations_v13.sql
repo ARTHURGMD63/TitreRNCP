@@ -1,5 +1,5 @@
 -- ============================================================
---  StudentLink — migration v13
+--  Linkee — migration v13
 --  Style de musique d'un événement
 --
 --  « Où sortir ce soir » se décide autant sur la musique que sur le

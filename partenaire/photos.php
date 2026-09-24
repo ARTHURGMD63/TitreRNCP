@@ -111,7 +111,7 @@ $photos = $stmt->fetchAll();
     background: var(--blanc);
     border-radius: var(--radius);
     border: 1px solid var(--gris-clair);
-    box-shadow: var(--shadow-lg);
+    box-shadow: none;
     padding: 32px;
     max-width: 640px;
   }
@@ -119,16 +119,19 @@ $photos = $stmt->fetchAll();
     font-family: var(--font-display);
     font-weight: var(--fw-black);
     font-size: var(--fs-6);
+    letter-spacing: var(--ls-display);
     margin: 28px 0 14px;
     padding-bottom: 8px;
     border-bottom: 1px solid var(--gris-clair);
   }
   .form-section-title:first-child { margin-top: 0; }
   .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
-  .form-group label { font-size: var(--fs-1); font-weight: var(--fw-display); text-transform: uppercase; letter-spacing: var(--ls-wide); }
+  .form-group label { font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium); text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--gris); }
   .form-group input {
     border: 1px solid var(--gris-clair);
-    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    color: var(--noir);
+    padding: 12px 16px;
     font-family: var(--font-sans);
     font-size: var(--fs-4);
     background: var(--blanc);
@@ -142,12 +145,12 @@ $photos = $stmt->fetchAll();
     background: var(--danger-clair);
     color: var(--danger);
     border: 1px solid var(--danger);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     padding: 14px 18px;
     margin-bottom: 24px;
     font-size: var(--fs-4);
   }
-  .form-errors li { margin: 4px 0; color: var(--rouge); font-weight: var(--fw-semibold); }
+  .form-errors li { margin: 4px 0; color: var(--danger); font-weight: var(--fw-semibold); }
 
   .photo-grid {
     display: grid;
@@ -157,9 +160,9 @@ $photos = $stmt->fetchAll();
   }
   .photo-item {
     background: var(--blanc);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     border: 1px solid var(--gris-clair);
-    box-shadow: var(--shadow-sm);
+    box-shadow: none;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -176,47 +179,46 @@ $photos = $stmt->fetchAll();
   .photo-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; }
   .photo-actions button {
     font-family: var(--font-sans);
-    font-size: var(--fs-1);
-    font-weight: var(--fw-display);
-    text-transform: uppercase;
-    letter-spacing: var(--ls-wide);
-    padding: 8px 12px;
+    font-size: var(--fs-3);
+    font-weight: var(--fw-bold);
+    padding: 8px 14px;
     min-height: 34px;
-    border: 1px solid var(--noir);
-    background: var(--blanc);
+    border: 1.5px solid var(--noir);
+    border-radius: var(--radius-pill);
+    background: transparent;
     color: var(--noir);
     cursor: pointer;
   }
-  .photo-actions button.danger { border-color: var(--rouge); color: var(--rouge); }
+  .photo-actions button.danger { border-color: var(--danger); color: var(--danger); }
   .cover-flag {
     display: inline-block;
+    font-family: var(--font-mono);
     font-size: var(--fs-1);
-    font-weight: var(--fw-display);
+    font-weight: var(--fw-medium);
     text-transform: uppercase;
-    letter-spacing: var(--ls-wide);
+    letter-spacing: var(--ls-label);
     background: var(--noir);
-    color: var(--blanc);
+    color: var(--bg);
     border-radius: var(--radius-pill);
     padding: 4px 11px;
     align-self: flex-start;
   }
   .empty-state {
     background: var(--blanc);
-    border: 1px dashed var(--gris-clair);
+    border: 1px dashed var(--line-2);
+    border-radius: var(--radius);
     padding: 40px 24px;
     text-align: center;
     color: var(--gris);
     margin-top: 24px;
   }
 </style>
-<?php pageDebut('StudentLink — Photos de l\'établissement', ['tete' => ob_get_clean()]); ?>
+<?php pageDebut('Linkee — Photos de l\'établissement', ['univers' => 'pro', 'tete' => ob_get_clean()]); ?>
 <div class="partner-shell">
 
   <aside class="partner-sidebar">
     <div class="sidebar-brand">
-      <div style="font-family:var(--font-sans);font-weight:var(--fw-bold);font-size:var(--fs-5);color:#fff;">
-        StudentLink <em style="font-style:italic;color:var(--rouge);">/ Partenaires</em>
-      </div>
+      <?= marqueLinkee('pro') ?>
     </div>
     <nav class="sidebar-nav">
       <a href="<?= baseUrl('/partenaire/dashboard.php') ?>" class="sidebar-link">
@@ -240,10 +242,10 @@ $photos = $stmt->fetchAll();
         Abonnement
       </a>
     </nav>
-    <div style="margin-top:auto;padding:20px;border-top:1px solid rgba(255,255,255,0.1);">
-      <div style="font-weight:var(--fw-bold);font-size:var(--fs-3);color:#fff;"><?= htmlspecialchars(mb_strtoupper($etab['nom'])) ?></div>
-      <div style="font-size:var(--fs-1);color:rgba(255,255,255,0.4);margin-top:2px;"><?= htmlspecialchars($etab['ville']) ?></div>
-      <a href="<?= baseUrl('/auth/logout.php') ?>" class="lien-action" style="margin-top:12px;font-size:var(--fs-2);color:rgba(255,255,255,0.4);text-decoration:none;">→ Déconnexion</a>
+    <div style="margin-top:auto;padding:20px;border-top:1px solid var(--gris-clair);">
+      <div class="sidebar-venue-name"><?= htmlspecialchars(mb_strtoupper($etab['nom'])) ?></div>
+      <div style="font-size:var(--fs-1);color:var(--gris);margin-top:2px;"><?= htmlspecialchars($etab['ville']) ?></div>
+      <a href="<?= baseUrl('/auth/logout.php') ?>" class="lien-action" style="margin-top:12px;font-size:var(--fs-2);color:var(--gris);text-decoration:none;">→ Déconnexion</a>
     </div>
   </aside>
 

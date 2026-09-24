@@ -1,4 +1,4 @@
-# Diagrammes UML — StudentLink
+# Diagrammes UML — Linkee
 
 ---
 
@@ -6,9 +6,9 @@
 
 ```mermaid
 graph TD
-    Etudiant([👤 Étudiant])
-    Partenaire([🏢 Partenaire])
-    Visiteur([👁 Visiteur])
+    Etudiant([Étudiant])
+    Partenaire([Partenaire])
+    Visiteur([Visiteur])
 
     subgraph Auth
         UC1[S'inscrire]
@@ -187,7 +187,7 @@ sequenceDiagram
     reset.php->>security.php: consumeResetToken(token, newPassword)
     security.php->>DB: UPDATE password_resets SET used=1
     security.php->>DB: UPDATE users SET password=bcrypt(newPassword)
-    reset.php-->>Utilisateur: "Mot de passe mis à jour ✅"
+    reset.php-->>Utilisateur: "Mot de passe mis à jour"
 ```
 
 ---

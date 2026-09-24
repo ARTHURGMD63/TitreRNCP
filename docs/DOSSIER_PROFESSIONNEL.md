@@ -1,4 +1,4 @@
-# Dossier Professionnel — StudentLink
+# Dossier Professionnel — Linkee
 
 **Auteur** : Arthur Gramond
 **Formation** : Concepteur Développeur d'Applications — 2ème année, Hesias
@@ -10,7 +10,7 @@
 
 ## 1.1 Origine du projet
 
-StudentLink est né d'une observation simple, tirée de mon quotidien d'étudiant.
+Linkee est né d'une observation simple, tirée de mon quotidien d'étudiant.
 
 Comme la plupart de mes camarades, je sors régulièrement — bars, soirées, afterworks, sessions sport. Et à chaque fois, c'est le même schéma : un groupe WhatsApp qui s'agite, quelqu'un qui cherche sur Instagram, un autre qui demande si "c'est payant", un troisième qui veut savoir si "c'est cher" — et au final, certains restent chez eux parce que l'info est arrivée trop tard ou parce que le prix les a refroidis.
 
@@ -20,7 +20,7 @@ On veut se retrouver. On veut faire des trucs ensemble. Mais on veut aussi payer
 
 ## 1.2 Contexte local
 
-Clermont-Ferrand compte **42 500 étudiants** répartis entre l'UCA, SIGMA Clermont, l'INP Ingénieurs, l'IFSI, Hesias et d'autres établissements. À l'échelle nationale, la France recense **3 012 800 étudiants** — un marché considérable, dont StudentLink adresse en premier lieu le bassin clermontois avant toute logique de déploiement national. C'est une ville étudiante à part entière, avec une vie nocturne et sportive réelle — mais sans outil numérique dédié à cette communauté.
+Clermont-Ferrand compte **42 500 étudiants** répartis entre l'UCA, SIGMA Clermont, l'INP Ingénieurs, l'IFSI, Hesias et d'autres établissements. À l'échelle nationale, la France recense **3 012 800 étudiants** — un marché considérable, dont Linkee adresse en premier lieu le bassin clermontois avant toute logique de déploiement national. C'est une ville étudiante à part entière, avec une vie nocturne et sportive réelle — mais sans outil numérique dédié à cette communauté.
 
 Les établissements (bars, boîtes, restos, afterworks) communiquent avec des flyers, Instagram et des groupes Facebook qui tombent dans l'oubli. Ils organisent des soirées sans savoir combien de personnes vont venir. Ils n'ont aucune donnée sur leur audience. Et les étudiants, de leur côté, passent à côté d'offres qui leur seraient pourtant destinées.
 
@@ -30,15 +30,15 @@ C'est ce décalage — entre une offre qui existe et une audience qui ne la trou
 
 > **Comment permettre aux étudiants de se retrouver facilement, de profiter d'offres exclusives dans les établissements locaux, et de s'organiser entre eux — le tout depuis une seule application pensée pour eux ?**
 
-## 1.4 Solution : StudentLink
+## 1.4 Solution : Linkee
 
-J'ai conçu et développé **StudentLink**, une plateforme web mobile-first qui s'adresse aux deux côtés du problème :
+J'ai conçu et développé **Linkee**, une plateforme web mobile-first qui s'adresse aux deux côtés du problème :
 
 - Pour les **étudiants** : découvrir les événements du moment, obtenir des réductions exclusives via un pass numérique QR code, rejoindre des groupes sportifs (squads), suivre ses amis et être récompensé pour son engagement (système XP, niveaux, badges).
 
 - Pour les **établissements partenaires** : créer des événements en quelques clics, suivre les inscriptions en temps réel, valider les entrées par scan QR code et analyser leur audience via un tableau de bord avec graphiques.
 
-L'idée centrale est simple : **les étudiants veulent se retrouver et payer moins cher. Les établissements veulent remplir leurs salles et connaître leur public. StudentLink connecte les deux.**
+L'idée centrale est simple : **les étudiants veulent se retrouver et payer moins cher. Les établissements veulent remplir leurs salles et connaître leur public. Linkee connecte les deux.**
 
 ## 1.5 Périmètre du projet
 
@@ -50,7 +50,7 @@ L'idée centrale est simple : **les étudiants veulent se retrouver et payer moi
 | Squads sportives (running, vélo, muscu) | Messagerie instantanée |
 | Système de follow et réseau social étudiant | Vidéos / stories |
 | Gamification (XP, niveaux, 9 badges) | IA de recommandation avancée |
-| Avis et notes 1-5★ après check-in | |
+| Avis et notes 1 à 5 étoiles après check-in | |
 | Analytics partenaire (Chart.js) | |
 | Dark mode, PWA installable | |
 
@@ -86,7 +86,7 @@ Arthur sort régulièrement — au moins deux fois par semaine. Il est souvent c
 > *"On est tous dans la même situation — on veut sortir, se retrouver, faire des trucs. Mais on veut pas non plus claquer 30€ à chaque soirée. Y'a clairement un truc qui manque."*
 
 **Scénario d'usage**
-Arthur ouvre StudentLink en sortant de cours le jeudi après-midi. Il voit un Flash Event — "Happy Hour jusqu'à minuit, cocktails à -50%" — qui expire dans 44 minutes. Il s'inscrit directement, reçoit son QR code dans son wallet, envoie une invitation à deux amis via l'app. Ils arrivent ensemble au bar, présentent leur QR code, entrent sans queue. À la fin de la soirée, Arthur laisse un avis 4★ depuis son wallet et débloque le badge "Critique".
+Arthur ouvre Linkee en sortant de cours le jeudi après-midi. Il voit un Flash Event — "Happy Hour jusqu'à minuit, cocktails à -50%" — qui expire dans 44 minutes. Il s'inscrit directement, reçoit son QR code dans son wallet, envoie une invitation à deux amis via l'app. Ils arrivent ensemble au bar, présentent leur QR code, entrent sans queue. À la fin de la soirée, Arthur laisse un avis 4/5 depuis son wallet et débloque le badge "Critique".
 
 ---
 
@@ -200,7 +200,7 @@ Jean organise des soirées thématiques deux fois par mois. Il communique via sa
 | F14 | Accéder à ses pass actifs avec QR code scannable | MUST |
 | F15 | Historique des pass passés (checkin, annulé) | MUST |
 | F16 | Montant total économisé grâce aux réductions | SHOULD |
-| F17 | Laisser un avis 1-5★ + commentaire après check-in validé | SHOULD |
+| F17 | Laisser un avis 1 à 5 étoiles + commentaire après check-in validé | SHOULD |
 
 ### Module Social
 | ID | Fonctionnalité | Priorité |
@@ -289,12 +289,12 @@ Jean organise des soirées thématiques deux fois par mois. Il communique via sa
 Jean, gérant du Bec qui Pique, se retrouve un jeudi soir à 21h avec un bar à moitié vide. Il veut déclencher une affluence rapidement, sans dépenser en communication.
 
 **Côté partenaire**
-1. Jean ouvre son dashboard StudentLink
+1. Jean ouvre son dashboard Linkee
 2. Il crée un **Flash Event** : "Happy Hour jusqu'à minuit — cocktails à -50%", quota 80 personnes, expiration dans 45 minutes
 3. L'événement apparaît immédiatement dans l'app avec un badge FLASH et un compte à rebours orange
 
 **Côté étudiant**
-1. Arthur ouvre StudentLink en sortant de cours
+1. Arthur ouvre Linkee en sortant de cours
 2. Le Flash Event est en tête de liste — "44:23 restantes"
 3. Il s'inscrit en un clic, reçoit son QR code dans son wallet
 4. Il partage l'event à deux amis via la fonction Inviter
@@ -325,14 +325,14 @@ Lucas est arrivé à Clermont en septembre. Il aimerait faire du running mais ne
 - La squad se reforme 2 semaines plus tard
 
 **Ce que ça illustre**
-StudentLink n'est pas uniquement une app de sorties nocturnes. C'est un outil de lien social au quotidien, y compris pour des étudiants qui ne savent pas encore comment s'intégrer dans leur nouvelle ville.
+Linkee n'est pas uniquement une app de sorties nocturnes. C'est un outil de lien social au quotidien, y compris pour des étudiants qui ne savent pas encore comment s'intégrer dans leur nouvelle ville.
 
 ---
 
 ## Étude de cas 3 — L'Analytics : comprendre son audience pour mieux cibler
 
 **Contexte**
-Marie, gérante du Baromètre, organise des soirées depuis 6 mois sur StudentLink. Elle sent que certaines soirées fonctionnent mieux que d'autres mais ne comprend pas pourquoi.
+Marie, gérante du Baromètre, organise des soirées depuis 6 mois sur Linkee. Elle sent que certaines soirées fonctionnent mieux que d'autres mais ne comprend pas pourquoi.
 
 **Ce qu'elle découvre dans le dashboard**
 - Le graphique **Inscriptions par jour** montre un pic systématique le mercredi et jeudi
@@ -353,13 +353,13 @@ Marie, gérante du Baromètre, organise des soirées depuis 6 mois sur StudentLi
 ## Étude de cas 4 — Les Avis : la note qui rassure les indécis
 
 **Contexte**
-Un étudiant qui ne connaît pas encore le Bec qui Pique hésite à s'inscrire. Il voit une note de 4,2★ affichée sur la card de l'événement.
+Un étudiant qui ne connaît pas encore le Bec qui Pique hésite à s'inscrire. Il voit une note de 4,2/5 affichée sur la card de l'événement.
 
 **D'où vient cette note ?**
-Arthur, après sa soirée check-inée, a vu apparaître dans son wallet le bouton "★ Laisser un avis". Il a donné 4★ et écrit un commentaire. Ce retour a été intégré à la note moyenne de l'établissement, visible par tous les étudiants sur la page Explore.
+Arthur, après sa soirée check-inée, a vu apparaître dans son wallet le lien "Laisser un avis". Il a donné 4/5 et écrit un commentaire. Ce retour a été intégré à la note moyenne de l'établissement, visible par tous les étudiants sur la page Explore.
 
 **Ce que ça change**
-- L'indécis voit 4,2★ + 12 avis → il s'inscrit
+- L'indécis voit 4,2/5 + 12 avis → il s'inscrit
 - Jean reçoit un retour concret sur sa soirée, sans avoir à solliciter quoi que ce soit
 - L'écosystème se nourrit des utilisateurs actifs pour bénéficier à tous les autres
 
@@ -381,7 +381,7 @@ L'application est mobile-first, les interactions sont majoritairement des calls 
 
 ## Sessions PHP plutôt que JWT
 
-StudentLink est une web app avec rendu serveur, pas une API REST publique. Les sessions PHP avec `session_regenerate_id()` sont parfaitement adaptées à ce modèle, plus simples à sécuriser dans ce contexte, et éliminent le risque de fuite de token côté client inhérent aux JWT.
+Linkee est une web app avec rendu serveur, pas une API REST publique. Les sessions PHP avec `session_regenerate_id()` sont parfaitement adaptées à ce modèle, plus simples à sécuriser dans ce contexte, et éliminent le risque de fuite de token côté client inhérent aux JWT.
 
 ---
 
@@ -414,4 +414,4 @@ La page principale agrégeait plusieurs données corrélées (note moyenne, insc
 
 ## Conclusion
 
-StudentLink prouve qu'un besoin simple — se retrouver entre étudiants et payer moins cher — peut donner naissance à une plateforme technique complète, sécurisée et documentée. Ce projet est pour moi la concrétisation de deux années de formation : pas une app fictive, mais une réponse réelle à un problème que je vis moi-même chaque semaine.
+Linkee prouve qu'un besoin simple — se retrouver entre étudiants et payer moins cher — peut donner naissance à une plateforme technique complète, sécurisée et documentée. Ce projet est pour moi la concrétisation de deux années de formation : pas une app fictive, mais une réponse réelle à un problème que je vis moi-même chaque semaine.

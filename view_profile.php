@@ -77,13 +77,11 @@ $upcomingEvents = $stmtEv->fetchAll();
 <?php ob_start(); ?>
 <style>
   .profile-header-bg {
-    background: var(--bleu);
-    height: 160px;
-    margin-left: calc(var(--gutter) * -1);
-    margin-right: calc(var(--gutter) * -1);
-    margin-top: -20px;
+    /* Maquette 12 : pas de bandeau, le rond de retour puis l'avatar dôme. */
+    background: transparent;
+    padding-top: 36px;
     position: relative;
-    border-bottom: 1px solid var(--gris-clair);
+    display: flex; flex-direction: column; align-items: flex-start; gap: 22px;
   }
   .profile-avatar-large {
     width: 100px;
@@ -106,27 +104,32 @@ $upcomingEvents = $stmtEv->fetchAll();
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
-    margin: 60px 0 24px;
+    margin: 16px 0 20px;
   }
   .stat-card {
     background: var(--blanc);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     border: 1px solid var(--gris-clair);
-    box-shadow: var(--shadow);
-    padding: 12px;
-    text-align: center;
+    box-shadow: none;
+    padding: 14px;
+    text-align: left;
   }
   .section-card {
     background: var(--blanc);
     border-radius: var(--radius);
     border: 1px solid var(--gris-clair);
-    box-shadow: var(--shadow);
+    box-shadow: none;
     padding: 20px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
+  }
+  .titre-section-profil {
+    font-family: var(--font-mono); font-weight: var(--fw-medium); font-size: var(--fs-1);
+    text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--gris); margin-bottom: 14px;
   }
   /* .interest-pill vit desormais dans style.css : deux copies d'une meme
-     etiquette finissaient par diverger. La marge reste locale a cette page. */
-  .interest-pill { margin: 0 6px 8px 0; }
+     etiquette finissaient par diverger. La marge reste locale a cette page ;
+     ici les passions d'un autre sont en contour (maquette 12). */
+  .interest-pill { margin: 0 6px 8px 0; background: transparent; color: var(--noir); border: 1px solid var(--line-2); }
   .event-strip {
     display: flex;
     align-items: center;
@@ -135,15 +138,16 @@ $upcomingEvents = $stmtEv->fetchAll();
     border-bottom: 1px solid var(--gris-clair);
   }
   .event-strip:last-child { border-bottom: none; }
+  .event-strip__barre { width: 4px; height: 30px; border-radius: 2px; background: var(--rouge); flex-shrink: 0; }
 </style>
-<?php pageDebut($u['prenom'] . ' — StudentLink', ['pwa' => true, 'tete' => ob_get_clean()]); ?>
+<?php pageDebut($u['prenom'] . ' — Linkee', ['pwa' => true, 'tete' => ob_get_clean()]); ?>
 <div class="app-shell">
 
   <main id="main-content" class="page-content">
     
     <!-- Header -->
     <div class="profile-header-bg">
-      <a href="javascript:history.back()" aria-label="Retour" style="position:absolute; top:60px; left:20px; background:var(--blanc); width:36px; height:36px; border-radius:50%; border:1px solid var(--gris-clair); display:flex; align-items:center; justify-content:center; color:var(--noir); box-shadow:var(--shadow-sm);">
+      <a href="javascript:history.back()" aria-label="Retour" class="bouton-retour">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
       </a>
       <?= avatarHtml($u['photo'] ?? null, $u['prenom'], 100, 'var(--bleu)') ?>
@@ -154,20 +158,20 @@ $upcomingEvents = $stmtEv->fetchAll();
       <div style="grid-column: span 2;">
         <h1 class="titre-page">
           <div class="display" style="font-size:var(--fs-8); line-height:var(--lh-display);"><?= htmlspecialchars($u['prenom']) ?></div>
-          <div class="display-italic" style="font-size:var(--fs-8); line-height:var(--lh-display);"><?= htmlspecialchars($u['nom']) ?></div>
+          <div class="display-italic" style="font-size:var(--fs-8); line-height:var(--lh-display); color:inherit;"><?= htmlspecialchars($u['nom']) ?></div>
         </h1>
-        <div style="font-weight:var(--fw-bold); text-transform:uppercase; font-size:var(--fs-1); color:var(--gris); margin-top:8px; letter-spacing:var(--ls-wide);">
-          <?= htmlspecialchars($u['ecole']) ?> · PROMO <?= htmlspecialchars($u['promo']) ?>
+        <div style="font-size:var(--fs-3); color:var(--gris); margin-top:8px;">
+          <?= htmlspecialchars($u['ecole']) ?> · Promo <?= htmlspecialchars($u['promo']) ?>
         </div>
       </div>
       
       <div class="stat-card">
-        <div style="font-family:var(--font-display); font-weight:var(--fw-black); font-size:var(--fs-7);"><?= $u['nb_followers'] ?></div>
-        <div style="font-size:var(--fs-1); font-weight:var(--fw-bold); text-transform:uppercase; opacity:0.6;">Abonnés</div>
+        <div style="font-family:var(--font-display); font-weight:var(--fw-black); font-size:var(--fs-7); letter-spacing:var(--ls-display);"><?= $u['nb_followers'] ?></div>
+        <div class="t-overline">Abonnés</div>
       </div>
       <div class="stat-card">
-        <div style="font-family:var(--font-display); font-weight:var(--fw-black); font-size:var(--fs-7);"><?= $u['nb_following'] ?></div>
-        <div style="font-size:var(--fs-1); font-weight:var(--fw-bold); text-transform:uppercase; opacity:0.6;">Abonnements</div>
+        <div style="font-family:var(--font-display); font-weight:var(--fw-black); font-size:var(--fs-7); letter-spacing:var(--ls-display);"><?= $u['nb_following'] ?></div>
+        <div class="t-overline">Abonnements</div>
       </div>
     </div>
 
@@ -178,12 +182,17 @@ $upcomingEvents = $stmtEv->fetchAll();
         FOLLOW_PENDING  => 'DEMANDE ENVOYÉE · ANNULER',
         FOLLOW_NONE     => '+ DEMANDER À SUIVRE',
       ][$etatSuivi];
+      // Mêmes couleurs que peindreBoutonSuivi() (app.js) après un clic.
       $fondSuivi = [
-        FOLLOW_ACCEPTED => 'var(--noir)',
+        FOLLOW_ACCEPTED => 'var(--surface-2)',
         FOLLOW_PENDING  => 'var(--surface-2)',
-        FOLLOW_NONE     => 'var(--bleu)',
+        FOLLOW_NONE     => 'var(--rouge)',
       ][$etatSuivi];
-      $encreSuivi = $etatSuivi === FOLLOW_PENDING ? 'var(--gris-fonce)' : 'var(--blanc)';
+      $encreSuivi = [
+        FOLLOW_ACCEPTED => 'var(--noir)',
+        FOLLOW_PENDING  => 'var(--gris-fonce)',
+        FOLLOW_NONE     => 'var(--sur-lave)',
+      ][$etatSuivi];
     ?>
     <button class="btn btn-primary btn-full btn-follow-user"
             data-user-id="<?= $u['id'] ?>"
@@ -204,17 +213,17 @@ $upcomingEvents = $stmtEv->fetchAll();
 
     <!-- Mutual Section -->
     <?php if (!empty($commonSquads)): ?>
-    <div class="section-card" style="background:var(--lime-clair); border-color:var(--noir);">
-      <div style="font-weight:var(--fw-bold); font-size:var(--fs-3); text-transform:uppercase; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+    <div class="section-card">
+      <div style="font-weight:var(--fw-bold); font-size:var(--fs-4); color:var(--sur-lime-clair); margin-bottom:10px; display:flex; align-items:center; gap:8px;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
         En commun
       </div>
-      <div style="font-size:var(--fs-3); font-weight:var(--fw-semibold);">
-        Vous faites partie de **<?= count($commonSquads) ?> Squads** ensemble. 
+      <div style="font-size:var(--fs-4); color:var(--gris-fonce);">
+        Vous faites partie de <strong style="color:var(--noir);"><?= count($commonSquads) ?> Squads</strong> ensemble. 
       </div>
       <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:6px;">
         <?php foreach ($commonSquads as $cs): ?>
-          <span style="font-size:var(--fs-1); background:var(--blanc); padding:2px 8px; border:1px solid var(--gris-clair); font-weight:var(--fw-bold);"><?= mb_strtoupper($cs['type']) ?></span>
+          <span style="font-size:var(--fs-2); background:var(--bleu); color:var(--sur-lave); padding:4px 12px; border-radius:var(--radius-pill); font-weight:var(--fw-bold);"><?= mb_strtoupper($cs['type']) ?></span>
         <?php endforeach; ?>
       </div>
     </div>
@@ -222,7 +231,7 @@ $upcomingEvents = $stmtEv->fetchAll();
 
     <!-- Interests -->
     <div class="section-card">
-      <div style="font-weight:var(--fw-bold); font-size:var(--fs-3); text-transform:uppercase; margin-bottom:16px;">Ses Passions</div>
+      <div class="titre-section-profil">Ses passions</div>
       <?php if (empty($interests)): ?>
         <div style="font-size:var(--fs-3); color:var(--gris);">Cet étudiant n'a pas encore ajouté d'intérêts.</div>
       <?php else: ?>
@@ -236,7 +245,7 @@ $upcomingEvents = $stmtEv->fetchAll();
 
     <!-- Upcoming Activity -->
     <div class="section-card">
-      <div style="font-weight:var(--fw-bold); font-size:var(--fs-3); text-transform:uppercase; margin-bottom:16px;">Ses prochaines sorties</div>
+      <div class="titre-section-profil">Ses prochaines sorties</div>
       <?php if (!$peutVoirActivite): ?>
         <div style="display:flex; align-items:flex-start; gap:12px;">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gris)" stroke-width="2" stroke-linecap="round" style="flex-shrink:0; margin-top:2px;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -253,10 +262,10 @@ $upcomingEvents = $stmtEv->fetchAll();
       <?php else: ?>
         <?php foreach ($upcomingEvents as $ev): ?>
           <div class="event-strip">
-            <div style="width:10px; height:10px; border-radius:50%; background:var(--rouge); border:1px solid var(--gris-clair);"></div>
+            <div class="event-strip__barre"></div>
             <div style="flex:1;">
               <div style="font-weight:var(--fw-bold); font-size:var(--fs-3);"><?= htmlspecialchars($ev['titre']) ?></div>
-              <div style="font-size:var(--fs-1); color:var(--gris);"><?= htmlspecialchars($ev['etablissement_nom']) ?> · <?= dateFr($ev['date_heure'], 'j M') ?></div>
+              <div style="font-size:var(--fs-2); color:var(--gris);"><?= htmlspecialchars($ev['etablissement_nom']) ?> · <?= dateFr($ev['date_heure'], 'j M') ?></div>
             </div>
           </div>
         <?php endforeach; ?>
@@ -268,9 +277,10 @@ $upcomingEvents = $stmtEv->fetchAll();
 </div>
 
 <nav class="bottom-nav nav-ordinateur" aria-label="Navigation principale">
+  <span class="nav-marque" aria-hidden="true"><?= marqueLinkee() ?></span>
   <a href="<?= baseUrl('/explore.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
-    <span>Explore</span>
+    <span>Explorer</span>
   </a>
   <a href="<?= baseUrl('/squads.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
@@ -278,7 +288,7 @@ $upcomingEvents = $stmtEv->fetchAll();
   </a>
   <a href="<?= baseUrl('/wallet.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg></span>
-    <span>Wallet</span>
+    <span>Pass</span>
   </a>
   <a href="<?= baseUrl('/profil.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>

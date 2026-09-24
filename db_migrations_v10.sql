@@ -1,5 +1,5 @@
 -- ============================================================
---  StudentLink — migration v10
+--  Linkee — migration v10
 --  Date de naissance et acceptation des CGU
 --
 --  Les CGU annoncent une application « réservée aux étudiants

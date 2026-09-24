@@ -51,6 +51,12 @@ $friends = $stmtF->fetchAll();
 
 $pct = $e['quota'] > 0 ? round($e['nb_inscrits'] / $e['quota'] * 100) : 0;
 $isFlash = $e['is_flash'] && strtotime($e['flash_expiry'] ?? '') > time();
+
+// Encre du hero selon son fond : craie sur la photo voilée, basalte sur
+// l'aplat lave d'un flash, encre du thème sur la surface de repli.
+$heroPhoto = !empty($venuePhotos);
+$heroEncre = $heroPhoto ? '#F5F1E8' : ($isFlash ? 'var(--sur-lave)' : 'var(--noir)');
+$heroAccent = $heroPhoto ? '#FF5424' : ($isFlash ? 'inherit' : 'var(--sur-rouge-clair)');
 ?>
 <?php ob_start(); ?>
 <style>
@@ -60,12 +66,16 @@ $isFlash = $e['is_flash'] && strtotime($e['flash_expiry'] ?? '') > time();
   .event-hero {
     position: relative;
     isolation: isolate;
-    color: var(--sur-media);
+    color: <?= $heroEncre ?>;
     padding: 120px 20px 32px;
     margin-left: calc(var(--gutter) * -1);
     margin-right: calc(var(--gutter) * -1);
     margin-top: -20px;
-    background: <?= $isFlash ? 'var(--rouge)' : 'var(--bleu)' ?>;
+    /* Repli sans photo : la surface rayée des maquettes (« photo du lieu »),
+       ou l'aplat lave pour un flash. */
+    background: <?= $isFlash
+        ? 'var(--rouge)'
+        : 'repeating-linear-gradient(135deg, var(--blanc) 0 22px, var(--surface-2) 22px 44px)' ?>;
     border-radius: 0 0 var(--radius-xl) var(--radius-xl);
     overflow: hidden;
   }
@@ -77,26 +87,32 @@ $isFlash = $e['is_flash'] && strtotime($e['flash_expiry'] ?? '') > time();
   .event-hero-scrim {
     position: absolute; inset: 0; z-index: -1;
     background: linear-gradient(to top,
-      rgba(12,10,8,.92) 0%, rgba(12,10,8,.72) 32%,
-      rgba(12,10,8,.34) 62%, rgba(12,10,8,.18) 100%);
+      rgba(17,16,19,.94) 0%, rgba(17,16,19,.74) 32%,
+      rgba(17,16,19,.34) 62%, rgba(17,16,19,.18) 100%);
   }
   .event-hero .hero-eyebrow {
-    font-weight: var(--fw-bold); text-transform: uppercase;
+    font-family: var(--font-mono); font-weight: var(--fw-medium); text-transform: uppercase;
     font-size: var(--fs-2); letter-spacing: var(--ls-label);
-    opacity: .85; margin-bottom: 10px;
+    color: <?= $heroAccent ?>; margin-bottom: 10px;
   }
+  /* « -40 % » : la pilule lave de la maquette ; basalte sur un hero déjà lave. */
   .event-badge-large {
-    background: rgba(255,255,255,.14);
-    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,.28);
-    color: var(--sur-media);
-    padding: 8px 18px;
+    background: <?= $isFlash && !$heroPhoto ? '#111013' : 'var(--rouge)' ?>;
+    border: none;
+    color: <?= $isFlash && !$heroPhoto ? '#F5F1E8' : 'var(--sur-lave)' ?>;
+    padding: 8px 20px;
     border-radius: var(--radius-pill);
     font-family: var(--font-display);
     font-weight: var(--fw-black);
     font-size: var(--fs-7);
+    letter-spacing: var(--ls-display);
     display: inline-block;
     margin-top: 18px;
+  }
+  .ev-section {
+    display: flex; align-items: center; gap: 7px;
+    font-family: var(--font-mono); font-weight: var(--fw-medium); font-size: var(--fs-1);
+    text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--gris); margin-bottom: 12px;
   }
   .info-grid {
     display: grid;
@@ -124,18 +140,18 @@ $isFlash = $e['is_flash'] && strtotime($e['flash_expiry'] ?? '') > time();
   .info-box {
     background: var(--blanc);
     border: 1px solid var(--gris-clair);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-xs);
-    padding: 14px;
+    border-radius: var(--radius-md);
+    box-shadow: none;
+    padding: 16px;
   }
   .info-box .info-label {
     display: flex; align-items: center; gap: 7px;
-    font-size: var(--fs-1); font-weight: var(--fw-bold);
-    text-transform: uppercase; letter-spacing: var(--ls-wide);
+    font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium);
+    text-transform: uppercase; letter-spacing: var(--ls-label);
     color: var(--gris); margin-bottom: 8px;
   }
 </style>
-<?php pageDebut($e['titre'] . ' — StudentLink', ['pwa' => true, 'tete' => ob_get_clean()]); ?>
+<?php pageDebut($e['titre'] . ' — Linkee', ['pwa' => true, 'tete' => ob_get_clean()]); ?>
 <div class="app-shell">
 
   <main id="main-content" class="page-content">
@@ -147,10 +163,20 @@ $isFlash = $e['is_flash'] && strtotime($e['flash_expiry'] ?? '') > time();
         <div class="event-hero-scrim"></div>
       <?php endif; ?>
 
-      <a href="javascript:history.back()" aria-label="Retour"
-         style="position:absolute; top:56px; left:20px; z-index:2; background:rgba(255,255,255,.18); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); width:40px; height:40px; border-radius:50%; border:1px solid rgba(255,255,255,.3); display:flex; align-items:center; justify-content:center; color:var(--sur-media);">
+      <a href="javascript:history.back()" aria-label="Retour" class="bouton-retour bouton-retour--media"
+         style="position:absolute; top:56px; left:20px; z-index:2;">
         <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
       </a>
+
+      <!-- Partager (maquette 07) : feuille de partage du téléphone, ou copie
+           du lien. N'écrit rien : app.js ne fait qu'ouvrir la feuille. -->
+      <button type="button" class="bouton-partager"
+              data-partager-titre="<?= htmlspecialchars($e['titre'], ENT_QUOTES) ?>"
+              data-partager-texte="<?= htmlspecialchars($e['titre'] . ' — ' . $e['etablissement_nom'] . ' · ' . dateFr($e['date_heure'], 'D j M'), ENT_QUOTES) ?>"
+              style="position:absolute; top:56px; right:20px; z-index:2;">
+        <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Partager
+      </button>
 
       <div class="hero-eyebrow">
         <?= mb_strtoupper($e['etab_type']) ?> · <?= dateFr($e['date_heure'], 'D j M') ?><?php
@@ -167,7 +193,7 @@ $isFlash = $e['is_flash'] && strtotime($e['flash_expiry'] ?? '') > time();
       <?php endif; ?>
       <h1 class="titre-page">
         <div class="display" style="font-size:var(--fs-9); line-height:var(--lh-display);"><?= htmlspecialchars($e['titre']) ?></div>
-        <div class="display-italic" style="font-size:var(--fs-8); color:var(--sur-media); margin-top:4px;"><?= htmlspecialchars($e['etablissement_nom']) ?></div>
+        <div class="display-italic" style="font-size:var(--fs-7); color:inherit; opacity:.85; margin-top:6px;"><?= htmlspecialchars($e['etablissement_nom']) ?></div>
       </h1>
       
       <?php if ((int) $e['reduction'] > 0): ?>
@@ -188,9 +214,9 @@ $isFlash = $e['is_flash'] && strtotime($e['flash_expiry'] ?? '') > time();
           <svg class="icon" viewBox="0 0 24 24" style="color:var(--gris-fonce);" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           <span><?= $e['nb_inscrits'] ?> / <?= $e['quota'] ?> inscrits</span>
         </div>
-        <div style="font-weight:var(--fw-bold); font-size:var(--fs-4); color:var(--sur-rouge-clair);"><?= $pct ?>%</div>
+        <div style="font-family:var(--font-mono); font-weight:var(--fw-semibold); font-size:var(--fs-4); color:var(--sur-rouge-clair);"><?= $pct ?>%</div>
       </div>
-      <div class="progress-bar" style="height:10px; background:var(--gris-clair);">
+      <div class="progress-bar" style="height:8px; background:var(--gris-clair);">
         <div class="progress-bar-fill dark" style="width:<?= $pct ?>%;"></div>
       </div>
 
@@ -199,11 +225,11 @@ $isFlash = $e['is_flash'] && strtotime($e['flash_expiry'] ?? '') > time();
 
       <!-- Description -->
       <div style="margin-top:32px;">
-        <div class="with-icon" style="font-weight:var(--fw-bold); font-size:var(--fs-3); text-transform:uppercase; color:var(--gris); margin-bottom:12px; letter-spacing:var(--ls-wide);">
+        <div class="ev-section">
           <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
           À propos de l'événement
         </div>
-        <div style="font-size:var(--fs-5); line-height:var(--lh-relaxed); color:var(--noir);">
+        <div style="font-size:var(--fs-5); line-height:var(--lh-relaxed); color:var(--gris-fonce);">
           <?= nl2br(htmlspecialchars($e['description'])) ?>
         </div>
       </div>
@@ -212,7 +238,7 @@ $isFlash = $e['is_flash'] && strtotime($e['flash_expiry'] ?? '') > time();
       <!-- Photos de l'établissement -->
       <?php if (!empty($venuePhotos)): ?>
       <div style="margin-top:32px;">
-        <div class="with-icon" style="font-weight:var(--fw-bold); font-size:var(--fs-3); text-transform:uppercase; color:var(--gris); margin-bottom:16px; letter-spacing:var(--ls-wide);">
+        <div class="ev-section">
           <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
           Le lieu en photos
         </div>
@@ -222,9 +248,9 @@ $isFlash = $e['is_flash'] && strtotime($e['flash_expiry'] ?? '') > time();
               <img src="<?= venuePhotoUrl($vp['fichier']) ?>"
                    alt="<?= htmlspecialchars($vp['legende'] ?? ('Photo de ' . $e['etablissement_nom'])) ?>"
                    loading="lazy"
-                   style="height:180px; width:auto; max-width:280px; object-fit:cover; display:block; border:1px solid var(--gris-clair); box-shadow:var(--shadow-sm);">
+                   style="height:180px; width:auto; max-width:280px; object-fit:cover; display:block; border-radius:var(--radius-md);">
               <?php if (!empty($vp['legende'])): ?>
-                <figcaption style="font-size:var(--fs-1); color:var(--gris); margin-top:6px; max-width:280px;">
+                <figcaption style="font-size:var(--fs-2); color:var(--gris); margin-top:6px; max-width:280px;">
                   <?= htmlspecialchars($vp['legende']) ?>
                 </figcaption>
               <?php endif; ?>
@@ -237,12 +263,12 @@ $isFlash = $e['is_flash'] && strtotime($e['flash_expiry'] ?? '') > time();
       <!-- Friends -->
       <?php if (!empty($friends)): ?>
       <div style="margin-top:32px;">
-        <div style="font-weight:var(--fw-bold); font-size:var(--fs-3); text-transform:uppercase; color:var(--gris); margin-bottom:16px;">Tes potes qui y vont</div>
+        <div class="ev-section">Tes potes qui y vont</div>
         <div style="display:flex; flex-wrap:wrap; gap:10px;">
           <?php foreach ($friends as $f): ?>
-            <a href="view_profile.php?id=<?= $f['id'] ?>" style="display:flex; align-items:center; gap:8px; background:var(--blanc); border:1px solid var(--gris-clair); padding:6px 12px; text-decoration:none; color:inherit; box-shadow:var(--shadow-sm);">
+            <a href="view_profile.php?id=<?= $f['id'] ?>" style="display:flex; align-items:center; gap:8px; background:var(--blanc); border:1px solid var(--gris-clair); border-radius:var(--radius-pill); padding:5px 14px 5px 5px; text-decoration:none; color:inherit;">
               <?= avatarHtml($f['photo'] ?? null, $f['prenom'], 24) ?>
-              <span style="font-size:var(--fs-2); font-weight:var(--fw-bold);"><?= htmlspecialchars($f['prenom']) ?></span>
+              <span style="font-size:var(--fs-3); font-weight:var(--fw-semibold);"><?= htmlspecialchars($f['prenom']) ?></span>
             </a>
           <?php endforeach; ?>
         </div>
@@ -259,16 +285,16 @@ $isFlash = $e['is_flash'] && strtotime($e['flash_expiry'] ?? '') > time();
             <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             Date &amp; heure
           </div>
-          <div style="font-weight:var(--fw-bold); font-size:var(--fs-3);"><?= dateFr($e['date_heure'], 'j M Y') ?></div>
-          <div style="font-weight:var(--fw-bold); font-size:var(--fs-3);"><?= date('H\hi', strtotime($e['date_heure'])) ?></div>
+          <div style="font-weight:var(--fw-bold); font-size:var(--fs-4);"><?= dateFr($e['date_heure'], 'j M Y') ?></div>
+          <div style="font-family:var(--font-mono); font-size:var(--fs-4); color:var(--gris-fonce);"><?= date('H\hi', strtotime($e['date_heure'])) ?></div>
         </div>
         <div class="info-box">
           <div class="info-label">
             <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
             Lieu
           </div>
-          <div style="font-weight:var(--fw-bold); font-size:var(--fs-3);"><?= htmlspecialchars($e['etablissement_nom']) ?></div>
-          <div style="font-size:var(--fs-1); color:var(--gris);"><?= htmlspecialchars($e['ville']) ?></div>
+          <div style="font-weight:var(--fw-bold); font-size:var(--fs-4);"><?= htmlspecialchars($e['etablissement_nom']) ?></div>
+          <div style="font-size:var(--fs-3); color:var(--gris);"><?= htmlspecialchars($e['ville']) ?></div>
         </div>
       </div>
 
@@ -276,9 +302,9 @@ $isFlash = $e['is_flash'] && strtotime($e['flash_expiry'] ?? '') > time();
       <div class="ev-cta" style="margin:40px 0 60px;">
         <button class="btn btn-primary btn-full btn-join-event" 
                 data-event-id="<?= $e['id'] ?>" 
-                style="padding:20px; font-size:var(--fs-6); <?= $e['deja_inscrit']?'background:var(--noir);':'' ?>"
+                style="padding:18px; font-size:var(--fs-5);"
                 <?= $e['deja_inscrit']?'disabled':'' ?>>
-          <?= $e['deja_inscrit'] ? icon('check','icon-sm').' TU ES INSCRIT·E' : 'REJOINDRE L\'ÉVÉNEMENT' ?>
+          <?= $e['deja_inscrit'] ? icon('check','icon-sm').' Tu es inscrit·e' : 'Rejoindre l\'événement' ?>
         </button>
       </div>
       </aside>
@@ -290,9 +316,10 @@ $isFlash = $e['is_flash'] && strtotime($e['flash_expiry'] ?? '') > time();
 </div>
 
 <nav class="bottom-nav nav-ordinateur" aria-label="Navigation principale">
+  <span class="nav-marque" aria-hidden="true"><?= marqueLinkee() ?></span>
   <a href="<?= baseUrl('/explore.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
-    <span>Explore</span>
+    <span>Explorer</span>
   </a>
   <a href="<?= baseUrl('/squads.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
@@ -300,7 +327,7 @@ $isFlash = $e['is_flash'] && strtotime($e['flash_expiry'] ?? '') > time();
   </a>
   <a href="<?= baseUrl('/wallet.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg></span>
-    <span>Wallet</span>
+    <span>Pass</span>
   </a>
   <a href="<?= baseUrl('/profil.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>

@@ -3,18 +3,21 @@ require_once __DIR__ . '/includes/page.php'; ?>
 <?php ob_start(); ?>
 <style>
   .legal-page { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
-  .legal-page h1 { font-family:var(--font-display); font-weight:var(--fw-black); font-size:var(--fs-9); margin-bottom:32px; }
-  .legal-page h2 { font-family:var(--font-display); font-weight:var(--fw-black); font-size:var(--fs-6); margin:32px 0 12px; }
+  .legal-page h1 { font-family:var(--font-display); font-weight:var(--fw-black); font-size:var(--fs-9); letter-spacing:var(--ls-display); line-height:var(--lh-tight); margin-bottom:32px; }
+  .legal-page h2 { font-family:var(--font-display); font-weight:var(--fw-black); font-size:var(--fs-6); letter-spacing:var(--ls-display); margin:32px 0 12px; }
   .legal-page p, .legal-page li { line-height:var(--lh-relaxed); margin-bottom:10px; }
   .legal-page ul { padding-left: 22px; margin-bottom: 16px; }
-  .legal-page a.back { color:var(--gris); font-size:var(--fs-3); text-decoration:none; }
+  .legal-page a.back { color:var(--gris); font-size:var(--fs-4); text-decoration:none; }
+  .legal-page a:not(.back) { color:var(--sur-rouge-clair); }
+  .legal-page p, .legal-page li { color:var(--gris-fonce); }
+  .legal-page strong { color:var(--noir); }
 </style>
-<?php pageDebut('StudentLink — Politique de confidentialité', ['tete' => ob_get_clean()]); ?>
+<?php pageDebut('Linkee — Politique de confidentialité', ['tete' => ob_get_clean()]); ?>
 <div class="legal-page">
   <a href="javascript:history.back()" class="back">← Retour</a>
   <h1>Politique de confidentialité</h1>
 
-  <p>Chez StudentLink, nous prenons la protection de tes données personnelles très au sérieux. Cette politique explique comment nous collectons, utilisons et protégeons tes informations, conformément au Règlement Général sur la Protection des Données (RGPD).</p>
+  <p>Chez Linkee, nous prenons la protection de tes données personnelles très au sérieux. Cette politique explique comment nous collectons, utilisons et protégeons tes informations, conformément au Règlement Général sur la Protection des Données (RGPD).</p>
 
   <h2>1. Données collectées</h2>
   <ul>
@@ -42,17 +45,17 @@ require_once __DIR__ . '/includes/page.php'; ?>
   <h2>5. Destinataires</h2>
   <p>Tes données sont accessibles uniquement par :</p>
   <ul>
-    <li>L'équipe StudentLink</li>
+    <li>L'équipe Linkee</li>
     <li>Les partenaires pour les events auxquels tu t'inscris (prénom, nom, école, promo)</li>
     <li>L'hébergeur (serveur local, Clermont-Ferrand)</li>
   </ul>
   <p>Aucune donnée n'est vendue à des tiers.</p>
 
   <h2>6. Tes droits (RGPD)</h2>
-  <p>Tu disposes d'un droit d'accès, de rectification, d'effacement, de limitation, de portabilité et d'opposition. Pour les exercer : contact@studentlink.fr</p>
+  <p>Tu disposes d'un droit d'accès, de rectification, d'effacement, de limitation, de portabilité et d'opposition. Pour les exercer : contact@linkee.fr</p>
 
   <h2>7. Cookies</h2>
-  <p>StudentLink utilise uniquement un cookie de session pour te maintenir connecté. Aucun cookie publicitaire ou de tracking n'est déposé.</p>
+  <p>Linkee utilise uniquement un cookie de session pour te maintenir connecté. Aucun cookie publicitaire ou de tracking n'est déposé.</p>
 
   <h2>8. Sécurité</h2>
   <p>Les mots de passe sont hachés avec bcrypt. Les échanges sont chiffrés en HTTPS. Les sessions sont régénérées à chaque connexion pour éviter les détournements.</p>

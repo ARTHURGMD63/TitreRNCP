@@ -1,5 +1,5 @@
 -- ============================================================
---  StudentLink — migration v6
+--  Linkee — migration v6
 --  Rôle d'administration et traitement des signalements
 --
 --  Les signalements (table user_reports, migration v4) s'empilaient

@@ -36,7 +36,7 @@ final class AuthCheckTest extends TestCase
     {
         $reference = baseUrl('/explore.php');
 
-        foreach (['localhost', '127.0.0.1:8080', '192.168.1.82:8080', 'studentlink.example.com'] as $hote) {
+        foreach (['localhost', '127.0.0.1:8080', '192.168.1.82:8080', 'linkee.example.com'] as $hote) {
             $_SERVER['HTTP_HOST'] = $hote;
             $this->assertSame($reference, baseUrl('/explore.php'), "l'hôte « $hote » a changé le préfixe");
         }
@@ -104,15 +104,29 @@ final class AuthCheckTest extends TestCase
     }
 
     /**
-     * La barre d'état doit suivre le thème : claire par défaut, sombre quand
-     * l'utilisateur a choisi le thème sombre.
+     * La barre d'état doit suivre le thème : sombre (basalte) par défaut —
+     * l'app étudiant est « la nuit » dans la charte Linkee —, claire (craie)
+     * quand l'utilisateur a choisi le thème clair.
      */
     public function testThemeBootScriptColorsTheStatusBar(): void
     {
         $script = themeBootScript();
-        $this->assertStringContainsString('content="#F3EEE3"', $script, 'valeur claire par défaut');
-        $this->assertStringContainsString('#16130F', $script, 'valeur sombre appliquée au besoin');
+        $this->assertStringContainsString('content="#111013"', $script, 'valeur sombre par défaut');
+        $this->assertStringContainsString('||"dark"', $script, 'thème sombre en l\'absence de choix');
+        $this->assertStringContainsString('#F5F1E8', $script, 'valeur claire appliquée au besoin');
         $this->assertStringContainsString('meta[name=theme-color]', $script);
+    }
+
+    /**
+     * L'espace partenaire et le back-office restent en craie : le thème
+     * stocké par le navigateur n'y est pas lu.
+     */
+    public function testThemeBootScriptFixeIgnoreLeThemeStocke(): void
+    {
+        $script = themeBootScript('light');
+        $this->assertStringStartsWith('<meta name="theme-color" content="#F5F1E8">', $script);
+        $this->assertStringNotContainsString('localStorage', $script);
+        $this->assertStringContainsString('data-theme-fixe', $script);
     }
 
     /**

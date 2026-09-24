@@ -2,18 +2,18 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>StudentLink — Planche A4, 4 flyers</title>
+<title>Linkee — Planche A4, 4 flyers</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700..900;1,700..900&family=DM+Sans:opsz,wght@9..40,400..700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
    FICHIER GENERE — ne pas modifier a la main.
-   Source : docs/Flyer_Bars_StudentLink.html
+   Source : docs/Flyer_Bars_Linkee.html
    Regenerer : python docs/generate_planche.py
    ============================================================ */
 /* ============================================================
-   Flyer StudentLink — A6 recto/verso, à déposer sur les tables
+   Flyer Linkee — A6 recto/verso, à déposer sur les tables
    et les comptoirs des bars.
 
    FORMAT — la page fait 111 × 154 mm : un A6 (105 × 148) plus
@@ -33,18 +33,18 @@
    Le verso, sur fond papier, se lit une fois le flyer en main.
    ============================================================ */
 :root{
-  --bg:#F3EEE3; --blanc:#FFFFFF; --surface-2:#FBF8F1;
-  --noir:#1C1916; --gris-fonce:#5B554C; --gris:#6E6860;
-  --line-2:#DED6C6;
-  --rouge:#E0492B; --rouge-deep:#BB3619; --rouge-clair:#FBE7E1;
-  --bleu-clair:#ECE9FA; --bleu-deep:#332A92;
-  --lime-clair:#FBF0D6; --lime-deep:#8E6414;
-  --font-display:'Playfair Display',Georgia,'Times New Roman',serif;
-  --font-sans:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --bg:#F5F1E8; --blanc:#FFFFFF; --surface-2:#EFEAE0;
+  --noir:#111013; --gris-fonce:#4B4751; --gris:#67626D;
+  --line-2:#DCD5C7;
+  --rouge:#FF5424; --rouge-deep:#B8350D; --rouge-clair:#FFE3D9;
+  --bleu-clair:#E3EBFF; --bleu-deep:#2A56C0;
+  --lime-clair:#EEF9CF; --lime-deep:#4D6B00;
+  --font-display:'Unbounded','Arial Black',sans-serif;
+  --font-sans:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
 }
 
 *{ box-sizing:border-box; margin:0; padding:0; }
-html,body{ background:#9A9288; }
+html,body{ background:#8A858F; }
 body{ font-family:var(--font-sans); color:var(--noir);
       -webkit-print-color-adjust:exact; print-color-adjust:exact; }
 
@@ -55,7 +55,7 @@ body{ font-family:var(--font-sans); color:var(--noir);
 /* Le fond couvre la page entière, fond perdu compris. */
 .fond{ position:absolute; inset:0; }
 .f-sombre .fond{ background:radial-gradient(125% 70% at 50% 104%,
-                 #3A322B 0%, #1C1916 62%); }
+                 #242127 0%, #111013 62%); }
 .f-clair  .fond{ background:var(--bg); }
 .f-sombre{ color:var(--bg); }
 
@@ -76,15 +76,15 @@ body{ font-family:var(--font-sans); color:var(--noir);
 .kicker{ font-size:6pt; font-weight:700; letter-spacing:.2em;
          text-transform:uppercase; color:var(--rouge); }
 
-h1{ font-family:var(--font-display); font-weight:900; font-size:25pt;
+h1{ font-family:var(--font-display); font-weight:800; font-size:25pt;
     line-height:.97; letter-spacing:-.022em; }
-h1 em{ font-style:italic; color:var(--rouge); display:block; }
-h2{ font-family:var(--font-display); font-weight:900; font-size:14.5pt;
+h1 em{ font-style:normal; color:var(--rouge); display:block; }
+h2{ font-family:var(--font-display); font-weight:800; font-size:14.5pt;
     line-height:1.05; letter-spacing:-.018em; }
-h2 em{ font-style:italic; color:var(--rouge); }
+h2 em{ font-style:normal; color:var(--rouge); }
 h3{ font-weight:700; font-size:8pt; letter-spacing:-.01em; }
 
-.lede{ font-size:8.4pt; line-height:1.48; color:rgba(243,238,227,.84); }
+.lede{ font-size:8.4pt; line-height:1.48; color:rgba(245,241,232,.84); }
 p{ font-size:7.4pt; line-height:1.48; color:var(--gris-fonce); }
 strong{ color:var(--noir); font-weight:700; }
 
@@ -93,14 +93,14 @@ strong{ color:var(--noir); font-weight:700; }
      width:25mm; height:25mm; flex:0 0 auto; }
 .qr img{ display:block; width:100%; height:100%; }
 .qr-ligne{ display:flex; align-items:center; gap:4mm; }
-.qr-appel{ font-family:var(--font-display); font-style:italic; font-weight:900;
+.qr-appel{ font-family:var(--font-display); font-style:normal; font-weight:800;
            font-size:12.5pt; line-height:1.12; letter-spacing:-.01em; }
 .adresse{ font-weight:700; font-size:8.6pt; color:var(--rouge); }
-.f-sombre .adresse{ color:#F3A58F; }
+.f-sombre .adresse{ color:#FF5424; }
 
 .bandeau{ display:flex; gap:3.5mm; font-size:5.6pt; font-weight:700;
           letter-spacing:.14em; text-transform:uppercase;
-          color:rgba(243,238,227,.5); }
+          color:rgba(245,241,232,.5); }
 .bandeau span{ white-space:nowrap; }
 
 /* ── téléphone ───────────────────────────────────────────── */
@@ -120,8 +120,8 @@ strong{ color:var(--noir); font-weight:700; }
 .encart{ background:var(--blanc); border:1px solid var(--line-2);
          border-radius:3mm; padding:3mm 3.4mm; }
 .encart.rouge{ background:var(--rouge); border-color:var(--rouge); }
-.encart.rouge p{ color:rgba(255,255,255,.94); }
-.encart.rouge strong{ color:#fff; }
+.encart.rouge p{ color:rgba(17,16,19,.94); }
+.encart.rouge strong{ color:#111013; }
 .etiquette{ display:inline-block; font-size:5.4pt; font-weight:700;
             letter-spacing:.14em; text-transform:uppercase;
             padding:.9mm 2.2mm; border-radius:99mm; }
@@ -158,7 +158,7 @@ html,body{ background:#FFFFFF; }
 .repere.h{ height:.2mm; width:5mm; }
 
 .note{ position:absolute; left:0; right:0; bottom:3.5mm; text-align:center;
-       font-family:'DM Sans',sans-serif; font-size:5.6pt; color:#6E6860;
+       font-family:'Instrument Sans',sans-serif; font-size:5.6pt; color:#67626D;
        letter-spacing:.04em; }
 </style>
 </head>
@@ -180,12 +180,8 @@ html,body{ background:#FFFFFF; }
 
   <div class="corps">
     <div class="logo" style="color:var(--bg);">
-      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="15" y="20" width="50" height="30" rx="15" stroke="#F3EEE3" stroke-width="10"/>
-        <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
-        <circle cx="50" cy="50" r="6" fill="#F3EEE3"/>
-      </svg>
-      StudentLink
+      <svg viewBox="0 0 52 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:auto;" aria-hidden="true"><circle cx="16" cy="16" r="12.5" stroke="#FF5424" stroke-width="5"/><circle cx="36" cy="16" r="12.5" stroke="#F5F1E8" stroke-width="5"/><path d="M 28.45 14.91 A 12.5 12.5 0 0 1 24.03 25.58" stroke="#FF5424" stroke-width="5"/></svg>
+      <span style="font-family:var(--font-display);font-weight:800;letter-spacing:-.045em;">link<span style="color:#FF5424;">ee</span></span>
     </div>
 
     <h1 style="margin-top:10mm;">Ce soir,<br>tu fais quoi&nbsp;?<em>Clermont a une réponse.</em></h1>
@@ -196,10 +192,10 @@ html,body{ background:#FFFFFF; }
     </p>
 
     <div class="qr-ligne" style="margin-top:auto; margin-bottom:5.5mm;">
-      <div class="qr"><img src="qr_studentlink.svg" alt="QR code vers studentlink.fr"></div>
+      <div class="qr"><img src="qr_linkee.svg" alt="QR code vers linkee.fr"></div>
       <div>
         <div class="qr-appel">Scanne.<br>C'est gratuit.</div>
-        <div class="adresse" style="margin-top:1.8mm;">studentlink.fr</div>
+        <div class="adresse" style="margin-top:1.8mm;">linkee.fr</div>
       </div>
     </div>
 
@@ -224,12 +220,8 @@ html,body{ background:#FFFFFF; }
 
   <div class="corps">
     <div class="logo" style="color:var(--bg);">
-      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="15" y="20" width="50" height="30" rx="15" stroke="#F3EEE3" stroke-width="10"/>
-        <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
-        <circle cx="50" cy="50" r="6" fill="#F3EEE3"/>
-      </svg>
-      StudentLink
+      <svg viewBox="0 0 52 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:auto;" aria-hidden="true"><circle cx="16" cy="16" r="12.5" stroke="#FF5424" stroke-width="5"/><circle cx="36" cy="16" r="12.5" stroke="#F5F1E8" stroke-width="5"/><path d="M 28.45 14.91 A 12.5 12.5 0 0 1 24.03 25.58" stroke="#FF5424" stroke-width="5"/></svg>
+      <span style="font-family:var(--font-display);font-weight:800;letter-spacing:-.045em;">link<span style="color:#FF5424;">ee</span></span>
     </div>
 
     <h1 style="margin-top:10mm;">Ce soir,<br>tu fais quoi&nbsp;?<em>Clermont a une réponse.</em></h1>
@@ -240,10 +232,10 @@ html,body{ background:#FFFFFF; }
     </p>
 
     <div class="qr-ligne" style="margin-top:auto; margin-bottom:5.5mm;">
-      <div class="qr"><img src="qr_studentlink.svg" alt="QR code vers studentlink.fr"></div>
+      <div class="qr"><img src="qr_linkee.svg" alt="QR code vers linkee.fr"></div>
       <div>
         <div class="qr-appel">Scanne.<br>C'est gratuit.</div>
-        <div class="adresse" style="margin-top:1.8mm;">studentlink.fr</div>
+        <div class="adresse" style="margin-top:1.8mm;">linkee.fr</div>
       </div>
     </div>
 
@@ -268,12 +260,8 @@ html,body{ background:#FFFFFF; }
 
   <div class="corps">
     <div class="logo" style="color:var(--bg);">
-      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="15" y="20" width="50" height="30" rx="15" stroke="#F3EEE3" stroke-width="10"/>
-        <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
-        <circle cx="50" cy="50" r="6" fill="#F3EEE3"/>
-      </svg>
-      StudentLink
+      <svg viewBox="0 0 52 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:auto;" aria-hidden="true"><circle cx="16" cy="16" r="12.5" stroke="#FF5424" stroke-width="5"/><circle cx="36" cy="16" r="12.5" stroke="#F5F1E8" stroke-width="5"/><path d="M 28.45 14.91 A 12.5 12.5 0 0 1 24.03 25.58" stroke="#FF5424" stroke-width="5"/></svg>
+      <span style="font-family:var(--font-display);font-weight:800;letter-spacing:-.045em;">link<span style="color:#FF5424;">ee</span></span>
     </div>
 
     <h1 style="margin-top:10mm;">Ce soir,<br>tu fais quoi&nbsp;?<em>Clermont a une réponse.</em></h1>
@@ -284,10 +272,10 @@ html,body{ background:#FFFFFF; }
     </p>
 
     <div class="qr-ligne" style="margin-top:auto; margin-bottom:5.5mm;">
-      <div class="qr"><img src="qr_studentlink.svg" alt="QR code vers studentlink.fr"></div>
+      <div class="qr"><img src="qr_linkee.svg" alt="QR code vers linkee.fr"></div>
       <div>
         <div class="qr-appel">Scanne.<br>C'est gratuit.</div>
-        <div class="adresse" style="margin-top:1.8mm;">studentlink.fr</div>
+        <div class="adresse" style="margin-top:1.8mm;">linkee.fr</div>
       </div>
     </div>
 
@@ -312,12 +300,8 @@ html,body{ background:#FFFFFF; }
 
   <div class="corps">
     <div class="logo" style="color:var(--bg);">
-      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="15" y="20" width="50" height="30" rx="15" stroke="#F3EEE3" stroke-width="10"/>
-        <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
-        <circle cx="50" cy="50" r="6" fill="#F3EEE3"/>
-      </svg>
-      StudentLink
+      <svg viewBox="0 0 52 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:auto;" aria-hidden="true"><circle cx="16" cy="16" r="12.5" stroke="#FF5424" stroke-width="5"/><circle cx="36" cy="16" r="12.5" stroke="#F5F1E8" stroke-width="5"/><path d="M 28.45 14.91 A 12.5 12.5 0 0 1 24.03 25.58" stroke="#FF5424" stroke-width="5"/></svg>
+      <span style="font-family:var(--font-display);font-weight:800;letter-spacing:-.045em;">link<span style="color:#FF5424;">ee</span></span>
     </div>
 
     <h1 style="margin-top:10mm;">Ce soir,<br>tu fais quoi&nbsp;?<em>Clermont a une réponse.</em></h1>
@@ -328,10 +312,10 @@ html,body{ background:#FFFFFF; }
     </p>
 
     <div class="qr-ligne" style="margin-top:auto; margin-bottom:5.5mm;">
-      <div class="qr"><img src="qr_studentlink.svg" alt="QR code vers studentlink.fr"></div>
+      <div class="qr"><img src="qr_linkee.svg" alt="QR code vers linkee.fr"></div>
       <div>
         <div class="qr-appel">Scanne.<br>C'est gratuit.</div>
-        <div class="adresse" style="margin-top:1.8mm;">studentlink.fr</div>
+        <div class="adresse" style="margin-top:1.8mm;">linkee.fr</div>
       </div>
     </div>
 
@@ -356,7 +340,7 @@ html,body{ background:#FFFFFF; }
     <i class="repere h" style="top:148.50mm; left:198.40mm;"></i>
     <i class="repere h" style="top:278.74mm; left:6.60mm;"></i>
     <i class="repere h" style="top:278.74mm; left:198.40mm;"></i>
-    <div class="note">StudentLink — flyer A6 réduit à 88 %. Couper sur les repères. Page 1 : recto — page 2 : verso. Impression recto-verso, reliure sur le grand côté.</div>
+    <div class="note">Linkee — flyer A6 réduit à 88 %. Couper sur les repères. Page 1 : recto — page 2 : verso. Impression recto-verso, reliure sur le grand côté.</div>
   </section>
 
   <!-- PAGE 2 — VERSO x4 -->
@@ -409,7 +393,7 @@ html,body{ background:#FFFFFF; }
              euros que tu n'as pas payés — soit une sortie de plus dans le mois.</p>
         </div>
       </div>
-      <div class="phone" style="width:24mm; height:33mm; box-shadow:0 2mm 6mm rgba(28,25,22,.16);">
+      <div class="phone" style="width:24mm; height:33mm; box-shadow:0 2mm 6mm rgba(17,16,19,.16);">
         <img src="mockups/p_feed.png" alt="Le fil des soirées">
       </div>
     </div>
@@ -418,19 +402,15 @@ html,body{ background:#FFFFFF; }
                               display:flex; align-items:flex-start; gap:3.5mm;">
       <div class="qr" style="width:18mm; height:18mm; padding:1.1mm;
                              border:1px solid var(--line-2);">
-        <img src="qr_studentlink.svg" alt="QR code vers studentlink.fr">
+        <img src="qr_linkee.svg" alt="QR code vers linkee.fr">
       </div>
       <div style="flex:1;">
         <div class="logo" style="font-size:8pt;">
-          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="15" y="20" width="50" height="30" rx="15" stroke="#1C1916" stroke-width="10"/>
-            <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
-            <circle cx="50" cy="50" r="6" fill="#1C1916"/>
-          </svg>
-          StudentLink
+          <svg viewBox="0 0 52 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:auto;" aria-hidden="true"><circle cx="16" cy="16" r="12.5" stroke="#FF5424" stroke-width="5"/><circle cx="36" cy="16" r="12.5" stroke="#111013" stroke-width="5"/><path d="M 28.45 14.91 A 12.5 12.5 0 0 1 24.03 25.58" stroke="#FF5424" stroke-width="5"/></svg>
+          <span style="font-family:var(--font-display);font-weight:800;letter-spacing:-.045em;">link<span style="color:#FF5424;">ee</span></span>
         </div>
         <p style="font-size:6.4pt; margin-top:1.2mm; line-height:1.4;">
-          <strong>studentlink.fr</strong> — depuis ton navigateur, puis
+          <strong>linkee.fr</strong> — depuis ton navigateur, puis
           «&nbsp;ajouter à l'écran d'accueil&nbsp;». Gratuit, réservé aux étudiants majeurs.
         </p>
         <p style="font-size:6pt; margin-top:1.4mm; color:var(--gris); line-height:1.35;">
@@ -490,7 +470,7 @@ html,body{ background:#FFFFFF; }
              euros que tu n'as pas payés — soit une sortie de plus dans le mois.</p>
         </div>
       </div>
-      <div class="phone" style="width:24mm; height:33mm; box-shadow:0 2mm 6mm rgba(28,25,22,.16);">
+      <div class="phone" style="width:24mm; height:33mm; box-shadow:0 2mm 6mm rgba(17,16,19,.16);">
         <img src="mockups/p_feed.png" alt="Le fil des soirées">
       </div>
     </div>
@@ -499,19 +479,15 @@ html,body{ background:#FFFFFF; }
                               display:flex; align-items:flex-start; gap:3.5mm;">
       <div class="qr" style="width:18mm; height:18mm; padding:1.1mm;
                              border:1px solid var(--line-2);">
-        <img src="qr_studentlink.svg" alt="QR code vers studentlink.fr">
+        <img src="qr_linkee.svg" alt="QR code vers linkee.fr">
       </div>
       <div style="flex:1;">
         <div class="logo" style="font-size:8pt;">
-          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="15" y="20" width="50" height="30" rx="15" stroke="#1C1916" stroke-width="10"/>
-            <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
-            <circle cx="50" cy="50" r="6" fill="#1C1916"/>
-          </svg>
-          StudentLink
+          <svg viewBox="0 0 52 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:auto;" aria-hidden="true"><circle cx="16" cy="16" r="12.5" stroke="#FF5424" stroke-width="5"/><circle cx="36" cy="16" r="12.5" stroke="#111013" stroke-width="5"/><path d="M 28.45 14.91 A 12.5 12.5 0 0 1 24.03 25.58" stroke="#FF5424" stroke-width="5"/></svg>
+          <span style="font-family:var(--font-display);font-weight:800;letter-spacing:-.045em;">link<span style="color:#FF5424;">ee</span></span>
         </div>
         <p style="font-size:6.4pt; margin-top:1.2mm; line-height:1.4;">
-          <strong>studentlink.fr</strong> — depuis ton navigateur, puis
+          <strong>linkee.fr</strong> — depuis ton navigateur, puis
           «&nbsp;ajouter à l'écran d'accueil&nbsp;». Gratuit, réservé aux étudiants majeurs.
         </p>
         <p style="font-size:6pt; margin-top:1.4mm; color:var(--gris); line-height:1.35;">
@@ -571,7 +547,7 @@ html,body{ background:#FFFFFF; }
              euros que tu n'as pas payés — soit une sortie de plus dans le mois.</p>
         </div>
       </div>
-      <div class="phone" style="width:24mm; height:33mm; box-shadow:0 2mm 6mm rgba(28,25,22,.16);">
+      <div class="phone" style="width:24mm; height:33mm; box-shadow:0 2mm 6mm rgba(17,16,19,.16);">
         <img src="mockups/p_feed.png" alt="Le fil des soirées">
       </div>
     </div>
@@ -580,19 +556,15 @@ html,body{ background:#FFFFFF; }
                               display:flex; align-items:flex-start; gap:3.5mm;">
       <div class="qr" style="width:18mm; height:18mm; padding:1.1mm;
                              border:1px solid var(--line-2);">
-        <img src="qr_studentlink.svg" alt="QR code vers studentlink.fr">
+        <img src="qr_linkee.svg" alt="QR code vers linkee.fr">
       </div>
       <div style="flex:1;">
         <div class="logo" style="font-size:8pt;">
-          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="15" y="20" width="50" height="30" rx="15" stroke="#1C1916" stroke-width="10"/>
-            <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
-            <circle cx="50" cy="50" r="6" fill="#1C1916"/>
-          </svg>
-          StudentLink
+          <svg viewBox="0 0 52 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:auto;" aria-hidden="true"><circle cx="16" cy="16" r="12.5" stroke="#FF5424" stroke-width="5"/><circle cx="36" cy="16" r="12.5" stroke="#111013" stroke-width="5"/><path d="M 28.45 14.91 A 12.5 12.5 0 0 1 24.03 25.58" stroke="#FF5424" stroke-width="5"/></svg>
+          <span style="font-family:var(--font-display);font-weight:800;letter-spacing:-.045em;">link<span style="color:#FF5424;">ee</span></span>
         </div>
         <p style="font-size:6.4pt; margin-top:1.2mm; line-height:1.4;">
-          <strong>studentlink.fr</strong> — depuis ton navigateur, puis
+          <strong>linkee.fr</strong> — depuis ton navigateur, puis
           «&nbsp;ajouter à l'écran d'accueil&nbsp;». Gratuit, réservé aux étudiants majeurs.
         </p>
         <p style="font-size:6pt; margin-top:1.4mm; color:var(--gris); line-height:1.35;">
@@ -652,7 +624,7 @@ html,body{ background:#FFFFFF; }
              euros que tu n'as pas payés — soit une sortie de plus dans le mois.</p>
         </div>
       </div>
-      <div class="phone" style="width:24mm; height:33mm; box-shadow:0 2mm 6mm rgba(28,25,22,.16);">
+      <div class="phone" style="width:24mm; height:33mm; box-shadow:0 2mm 6mm rgba(17,16,19,.16);">
         <img src="mockups/p_feed.png" alt="Le fil des soirées">
       </div>
     </div>
@@ -661,19 +633,15 @@ html,body{ background:#FFFFFF; }
                               display:flex; align-items:flex-start; gap:3.5mm;">
       <div class="qr" style="width:18mm; height:18mm; padding:1.1mm;
                              border:1px solid var(--line-2);">
-        <img src="qr_studentlink.svg" alt="QR code vers studentlink.fr">
+        <img src="qr_linkee.svg" alt="QR code vers linkee.fr">
       </div>
       <div style="flex:1;">
         <div class="logo" style="font-size:8pt;">
-          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="15" y="20" width="50" height="30" rx="15" stroke="#1C1916" stroke-width="10"/>
-            <rect x="35" y="50" width="50" height="30" rx="15" stroke="#E0492B" stroke-width="10"/>
-            <circle cx="50" cy="50" r="6" fill="#1C1916"/>
-          </svg>
-          StudentLink
+          <svg viewBox="0 0 52 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:auto;" aria-hidden="true"><circle cx="16" cy="16" r="12.5" stroke="#FF5424" stroke-width="5"/><circle cx="36" cy="16" r="12.5" stroke="#111013" stroke-width="5"/><path d="M 28.45 14.91 A 12.5 12.5 0 0 1 24.03 25.58" stroke="#FF5424" stroke-width="5"/></svg>
+          <span style="font-family:var(--font-display);font-weight:800;letter-spacing:-.045em;">link<span style="color:#FF5424;">ee</span></span>
         </div>
         <p style="font-size:6.4pt; margin-top:1.2mm; line-height:1.4;">
-          <strong>studentlink.fr</strong> — depuis ton navigateur, puis
+          <strong>linkee.fr</strong> — depuis ton navigateur, puis
           «&nbsp;ajouter à l'écran d'accueil&nbsp;». Gratuit, réservé aux étudiants majeurs.
         </p>
         <p style="font-size:6pt; margin-top:1.4mm; color:var(--gris); line-height:1.35;">
@@ -699,7 +667,7 @@ html,body{ background:#FFFFFF; }
     <i class="repere h" style="top:148.50mm; left:198.40mm;"></i>
     <i class="repere h" style="top:278.74mm; left:6.60mm;"></i>
     <i class="repere h" style="top:278.74mm; left:198.40mm;"></i>
-    <div class="note">StudentLink — flyer A6 réduit à 88 %. Couper sur les repères. Page 1 : recto — page 2 : verso. Impression recto-verso, reliure sur le grand côté.</div>
+    <div class="note">Linkee — flyer A6 réduit à 88 %. Couper sur les repères. Page 1 : recto — page 2 : verso. Impression recto-verso, reliure sur le grand côté.</div>
   </section>
 
 </body>

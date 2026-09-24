@@ -42,16 +42,14 @@ function adminHeader(PDO $pdo, string $page, string $titre, string $surtitre = '
     // pas seulement depuis la sienne : un signalement non traité est une
     // obligation de délai, pas une notification parmi d'autres.
     $nbSignalements = crmSignalementsEnAttente($pdo);
-    pageDebut('StudentLink — ' . $titre);
+    pageDebut('Linkee — ' . $titre, ['univers' => 'pro']);
     ?>
 <a href="#contenu" class="skip-nav">Aller au contenu</a>
 <div class="partner-shell">
 
   <aside class="partner-sidebar">
     <div class="sidebar-brand">
-      <div style="font-family:var(--font-sans);font-weight:var(--fw-bold);font-size:var(--fs-5);color:#fff;">
-        StudentLink <em style="font-style:italic;color:var(--rouge);">/ Interne</em>
-      </div>
+      <?= marqueLinkee('interne') ?>
     </div>
     <nav class="sidebar-nav" aria-label="Navigation du back-office">
       <?php foreach ($entrees as $code => [$libelle, $fichier, $trace]): ?>
@@ -64,7 +62,7 @@ function adminHeader(PDO $pdo, string $page, string $titre, string $surtitre = '
           </svg>
           <?= htmlspecialchars($libelle) ?>
           <?php if ($code === 'moderation' && $nbSignalements > 0): ?>
-            <span style="margin-left:auto;background:var(--rouge);color:#fff;border-radius:var(--radius-pill);
+            <span style="margin-left:auto;background:var(--rouge);color:var(--sur-lave);border-radius:var(--radius-pill);
                          font-size:var(--fs-1);font-weight:var(--fw-bold);padding:1px 8px;">
               <?= $nbSignalements ?><span class="sr-only"> signalements à traiter</span>
             </span>
@@ -76,7 +74,7 @@ function adminHeader(PDO $pdo, string $page, string $titre, string $surtitre = '
       <div class="sidebar-venue-name"><?= htmlspecialchars(trim(($moi['prenom'] ?? '') . ' ' . ($moi['nom'] ?? ''))) ?></div>
       <div class="sidebar-venue-city">Fondateur</div>
       <a href="<?= baseUrl('/auth/logout.php') ?>" class="lien-action"
-         style="margin-top:12px;display:inline-block;font-size:var(--fs-2);color:rgba(255,255,255,0.45);text-decoration:none;">→ Déconnexion</a>
+         style="margin-top:12px;display:inline-block;font-size:var(--fs-2);color:var(--gris);text-decoration:none;">→ Déconnexion</a>
     </div>
   </aside>
 

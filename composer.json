@@ -1,6 +1,6 @@
 {
-    "name": "studentlink/app",
-    "description": "StudentLink — Plateforme d'événements étudiants",
+    "name": "linkee/app",
+    "description": "Linkee — Plateforme d'événements étudiants",
     "type": "project",
     "license": "proprietary",
     "require": {

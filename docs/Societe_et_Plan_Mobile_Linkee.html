@@ -3,28 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>StudentLink — Structure de la société &amp; plan d'action mobile</title>
+<title>Linkee — Structure de la société &amp; plan d'action mobile</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700..900;1,700..900&family=DM+Sans:opsz,wght@9..40,400..700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
-   StudentLink — Document interne fondateurs (SL-16)
+   Linkee — Document interne fondateurs (SL-16)
    Couleurs et typographie : charte graphique de l'application.
    Navigation par onglets à l'écran ; à l'impression, tous les
    panneaux sont dépliés, chacun sur sa propre page.
    ============================================================ */
 :root{
-  --bg:#F3EEE3; --blanc:#FFFFFF; --surface-2:#FBF8F1;
-  --noir:#1C1916; --gris-fonce:#5B554C; --gris:#6E6860;
-  --gris-clair:#EAE3D6; --line-2:#DED6C6;
-  --rouge:#E0492B; --rouge-deep:#BB3619; --rouge-clair:#FBE7E1;
-  --bleu:#4A40C2; --bleu-deep:#332A92; --bleu-clair:#ECE9FA;
-  --lime:#EFB23A; --lime-deep:#8E6414; --lime-clair:#FBF0D6;
-  --orange:#EC8233; --orange-deep:#A75517; --orange-clair:#FCEBDB;
+  --bg:#F5F1E8; --blanc:#FFFFFF; --surface-2:#EFEAE0;
+  --noir:#111013; --gris-fonce:#4B4751; --gris:#67626D;
+  --gris-clair:#E8E2D6; --line-2:#DCD5C7;
+  --rouge:#FF5424; --rouge-deep:#B8350D; --rouge-clair:#FFE3D9;
+  --bleu:#5B8CFF; --bleu-deep:#2A56C0; --bleu-clair:#E3EBFF;
+  --lime:#C8F547; --lime-deep:#4D6B00; --lime-clair:#EEF9CF;
+  --orange:#FFC23D; --orange-deep:#8A5A00; --orange-clair:#FFF1D1;
   --succes:#1F6B34; --succes-clair:#E3F2E6;
-  --font-display:'Playfair Display',Georgia,'Times New Roman',serif;
-  --font-sans:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-display:'Unbounded','Arial Black',sans-serif;
+  --font-sans:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
   --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
 }
 *{ box-sizing:border-box; margin:0; padding:0; }
@@ -40,15 +40,15 @@ body{
 /* ── Couverture ─────────────────────────────────────────── */
 .cover{ padding:64px 0 34px; }
 .kicker{ font-size:11px; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--rouge); margin-bottom:18px; }
-.cover h1{ font-family:var(--font-display); font-weight:900; font-size:52px; line-height:.98; letter-spacing:-.02em; }
-.cover h1 em{ font-style:italic; color:var(--rouge); display:block; }
+.cover h1{ font-family:var(--font-display); font-weight:800; font-size:52px; line-height:.98; letter-spacing:-.02em; }
+.cover h1 em{ font-style:normal; color:var(--rouge); display:block; }
 .cover .chapeau{ margin-top:20px; font-size:17px; color:var(--gris-fonce); max-width:62ch; }
 .meta{ display:flex; flex-wrap:wrap; gap:8px 28px; margin-top:24px; font-size:12px;
        letter-spacing:.1em; text-transform:uppercase; color:var(--gris); font-weight:600; }
 
 /* ── Barre d'onglets ────────────────────────────────────── */
 .barre{
-  position:sticky; top:0; z-index:20; background:rgba(243,238,227,.94);
+  position:sticky; top:0; z-index:20; background:rgba(245,241,232,.94);
   backdrop-filter:saturate(180%) blur(12px); -webkit-backdrop-filter:saturate(180%) blur(12px);
   border-bottom:1px solid var(--line-2); margin-bottom:8px;
 }
@@ -72,7 +72,7 @@ body{
 .panneau:focus{ outline:none; }
 .p-tete{ padding-bottom:26px; border-bottom:2px solid var(--noir); margin-bottom:8px; }
 .p-tete .p-num{ font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--rouge); }
-.p-tete h2{ font-family:var(--font-display); font-weight:900; font-size:36px; line-height:1.02; letter-spacing:-.02em; margin-top:6px; }
+.p-tete h2{ font-family:var(--font-display); font-weight:800; font-size:36px; line-height:1.02; letter-spacing:-.02em; margin-top:6px; }
 .p-tete .p-intro{ margin-top:14px; color:var(--gris-fonce); max-width:68ch; }
 
 section{ margin-top:44px; }
@@ -135,12 +135,12 @@ td.num{ font-family:var(--mono); font-size:13px; }
 .journee{ background:var(--noir); color:var(--bg); border-radius:18px; padding:32px 34px; margin:28px 0; }
 .journee h3{ color:var(--bg); }
 .journee h3 .h-num{ color:var(--lime); }
-.journee p{ color:#C9C1B2; }
-.journee table{ background:transparent; border-color:#322C24; }
-.journee th{ background:#211D18; color:#8E8576; border-bottom-color:#322C24; }
-.journee td{ color:var(--bg); border-bottom-color:#322C24; }
-.journee code{ background:#211D18; border-color:#322C24; color:#C9C1B2; }
-.case{ display:inline-block; width:13px; height:13px; border:1.5px solid #6E6860; border-radius:3px; }
+.journee p{ color:#CFC9D3; }
+.journee table{ background:transparent; border-color:#2A272E; }
+.journee th{ background:#1C1A1F; color:#8A858F; border-bottom-color:#2A272E; }
+.journee td{ color:var(--bg); border-bottom-color:#2A272E; }
+.journee code{ background:#1C1A1F; border-color:#2A272E; color:#CFC9D3; }
+.case{ display:inline-block; width:13px; height:13px; border:1.5px solid #67626D; border-radius:3px; }
 
 /* ── Bas de page ────────────────────────────────────────── */
 .pied{ margin-top:64px; padding-top:22px; border-top:1px solid var(--line-2); }
@@ -187,7 +187,7 @@ td.num{ font-family:var(--mono); font-size:13px; }
     <div class="kicker">Document interne fondateurs · SL-16</div>
     <h1>Structure de la société<em>&amp; passage à l'application mobile</em></h1>
     <p class="chapeau">Ce que nous créons juridiquement, et ce que nous faisons à partir d'aujourd'hui pour que
-    StudentLink devienne une application qu'on télécharge et que les établissements clermontois paient.</p>
+    Linkee devienne une application qu'on télécharge et que les établissements clermontois paient.</p>
     <div class="meta">
       <span>Mercredi 16 septembre 2026</span>
       <span>Arthur Gramond · Étienne Florentino</span>
@@ -225,7 +225,7 @@ td.num{ font-family:var(--mono); font-size:13px; }
     <div class="t-wrap">
     <table>
       <tr><th style="width:30%">Élément</th><th>Décision</th><th style="width:24%">Statut</th></tr>
-      <tr><td><strong>Dénomination sociale</strong></td><td>StudentLink</td><td><span class="tag orange">Sous réserve d'antériorité</span></td></tr>
+      <tr><td><strong>Dénomination sociale</strong></td><td>Linkee</td><td><span class="tag orange">Sous réserve d'antériorité</span></td></tr>
       <tr><td><strong>Forme juridique</strong></td><td>SAS — société par actions simplifiée, deux associés</td><td><span class="tag vert">Acté</span></td></tr>
       <tr><td><strong>Objet social</strong></td><td>Édition et exploitation d'une plateforme numérique de mise en relation entre étudiants et établissements ; services associés de statistiques de fréquentation, de communication et de billetterie</td><td><span class="tag orange">À faire relire</span></td></tr>
       <tr><td><strong>Capital social</strong></td><td>1 000 €, intégralement libéré, divisé en 1 000 actions de 1 € — 500 € par associé</td><td><span class="tag vert">Acté</span></td></tr>
@@ -335,7 +335,7 @@ td.num{ font-family:var(--mono); font-size:13px; }
       <tr><th style="width:7%" class="mono">Art.</th><th style="width:21%">Objet</th><th>Ce que nous y inscrivons</th></tr>
       <tr><td class="mono">1</td><td><strong>Forme</strong></td><td>Société par actions simplifiée régie par les dispositions du Code de commerce applicables aux SAS et par les présents statuts.</td></tr>
       <tr><td class="mono">2</td><td><strong>Objet</strong></td><td>Édition et exploitation d'une plateforme numérique de mise en relation entre étudiants et établissements ; services de statistiques de fréquentation, de communication et de billetterie ; toutes opérations s'y rattachant. Rédaction volontairement large : ajouter le paiement en ligne plus tard ne doit pas imposer une modification statutaire.</td></tr>
-      <tr><td class="mono">3</td><td><strong>Dénomination</strong></td><td>StudentLink. Article bloqué tant que la recherche d'antériorité INPI et EUIPO n'est pas rendue — un nom de repli est identifié en parallèle.</td></tr>
+      <tr><td class="mono">3</td><td><strong>Dénomination</strong></td><td>Linkee. Article bloqué tant que la recherche d'antériorité INPI et EUIPO n'est pas rendue — un nom de repli est identifié en parallèle.</td></tr>
       <tr><td class="mono">4</td><td><strong>Siège social</strong></td><td>Clermont-Ferrand, au domicile d'un associé. Transfert décidé par le président dans le même département, par décision collective au-delà.</td></tr>
       <tr><td class="mono">5</td><td><strong>Durée</strong></td><td>99 ans à compter de l'immatriculation au registre du commerce et des sociétés.</td></tr>
       <tr><td class="mono">6</td><td><strong>Apports</strong></td><td>Apports en numéraire de 500 € par associé, intégralement libérés et déposés sur un compte bloqué avant signature. <strong>Apport en nature écarté</strong> : le code existant est transféré par un acte de cession de droits distinct, pour éviter un commissaire aux apports et une valorisation contestable.</td></tr>
@@ -358,7 +358,7 @@ td.num{ font-family:var(--mono); font-size:13px; }
     <div class="encadre">
       <h4>L'acte qu'il ne faut surtout pas oublier</h4>
       <p>La <strong>cession des droits d'auteur sur le code à la société</strong> est un acte séparé, signé le
-      jour de la création. Aujourd'hui, StudentLink appartient juridiquement à Arthur, pas au projet. C'est le
+      jour de la création. Aujourd'hui, Linkee appartient juridiquement à Arthur, pas au projet. C'est le
       seul risque du dossier capable de tout détruire d'un coup : sans cet acte, la société vend l'accès à un
       logiciel qu'elle ne possède pas. L'acte couvre le code, les bases de données, le design, la documentation
       et la marque une fois déposée.</p>
@@ -422,7 +422,7 @@ td.num{ font-family:var(--mono); font-size:13px; }
     de l'argent, et une présence en boutique sans rétention n'apporte rien. Cette réserve reste vraie et le plan
     ci-dessous en tient compte — <strong>le palier 1 est une PWA durcie, pas un store</strong>, et la
     publication en boutique n'est engagée qu'une fois l'installation et la rétention mesurées. Mais l'objectif
-    est assumé : un étudiant qui entend parler de StudentLink dans un bar cherche « StudentLink » sur son
+    est assumé : un étudiant qui entend parler de Linkee dans un bar cherche « Linkee » sur son
     téléphone, et doit trouver quelque chose à installer. Nous y allons, dans cet ordre.</p>
   </div>
 
@@ -650,7 +650,7 @@ td.num{ font-family:var(--mono); font-size:13px; }
     <div class="t-wrap">
     <table>
       <tr><th style="width:5%"></th><th class="mono" style="width:13%">Créneau</th><th>Action</th><th style="width:13%">Qui</th><th style="width:17%">Fini quand</th></tr>
-      <tr><td><span class="case"></span></td><td class="mono">9 h – 10 h</td><td><strong>Recherche d'antériorité « StudentLink »</strong> sur les bases INPI et EUIPO, classes 42 et 35. Trois noms de repli notés dans le même fichier.</td><td>Arthur</td><td>Résultat écrit et partagé</td></tr>
+      <tr><td><span class="case"></span></td><td class="mono">9 h – 10 h</td><td><strong>Recherche d'antériorité « Linkee »</strong> sur les bases INPI et EUIPO, classes 42 et 35. Trois noms de repli notés dans le même fichier.</td><td>Arthur</td><td>Résultat écrit et partagé</td></tr>
       <tr><td><span class="case"></span></td><td class="mono">10 h – 10 h 30</td><td><strong>Réserver le domaine</strong> en .fr, le .com en défensif, et <strong>les comptes Instagram et TikTok</strong>, même sans publier aujourd'hui.</td><td>Arthur</td><td>Accès consignés dans l'inventaire</td></tr>
       <tr><td><span class="case"></span></td><td class="mono">10 h 30 – 12 h</td><td><strong>Corriger le manifeste</strong> : <code>start_url</code> et <code>scope</code> relatifs, icônes 192 / 512 / maskable, <code>description</code>, <code>id</code>, <code>lang</code>. Vérifier l'invite d'installation sur un Android réel.</td><td>Arthur</td><td>L'app s'installe depuis un téléphone</td></tr>
       <tr><td><span class="case"></span></td><td class="mono">9 h – 12 h</td><td><strong>Liste nominative des 30 établissements cibles</strong> : nom, contact, soir creux, capacité, qui connaît qui. Les 5 premiers appelés dans la foulée.</td><td>Étienne</td><td>Tableau rempli, 5 contacts pris</td></tr>
@@ -728,7 +728,7 @@ td.num{ font-family:var(--mono); font-size:13px; }
     trame de statuts de l'onglet 02 est destinée à être reprise et relue par un professionnel du droit ; la
     signer en l'état serait une erreur.
   </p>
-  <p class="signature">StudentLink · SL-16 · Arthur Gramond &amp; Étienne Florentino</p>
+  <p class="signature">Linkee · SL-16 · Arthur Gramond &amp; Étienne Florentino</p>
 </div>
 
 </div>

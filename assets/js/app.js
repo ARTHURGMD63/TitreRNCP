@@ -1,4 +1,4 @@
-/* StudentLink — app.js */
+/* Linkee — app.js */
 
 // ─── Chemin d'installation ───────────────────────────────────────────────────
 //
@@ -29,9 +29,13 @@ const BASE = (function () {
 })();
 
 // Apply saved theme instantly (before first paint)
+// Basalte par defaut (charte Linkee : l'app etudiant est « la nuit »). Les
+// pages de l'espace pro portent data-theme-fixe : elles restent en craie,
+// quel que soit le theme choisi cote etudiant.
 (function(){
-  const t = localStorage.getItem('theme') || 'light';
-  document.documentElement.setAttribute('data-theme', t);
+  const d = document.documentElement;
+  const t = d.getAttribute('data-theme-fixe') || localStorage.getItem('theme') || 'dark';
+  d.setAttribute('data-theme', t);
 })();
 
 window.setTheme = function(theme) {
@@ -210,6 +214,33 @@ function initApp() {
     });
   });
 
+  // ─── Partager un événement ──────────────────────────────────────────
+  // Feuille de partage native quand le navigateur en a une (téléphones),
+  // sinon le lien est copié. Rien n'est envoyé au serveur.
+  document.querySelectorAll('.bouton-partager').forEach(btn => {
+    if (btn._init) return; btn._init = true;
+    btn.addEventListener('click', async () => {
+      const url = location.href.split('#')[0];
+      const donnees = { title: btn.dataset.partagerTitre || document.title, text: btn.dataset.partagerTexte || '', url };
+      if (navigator.share) {
+        try { await navigator.share(donnees); } catch { /* partage annulé : rien à signaler */ }
+        return;
+      }
+      let copie = false;
+      try { await navigator.clipboard.writeText(url); copie = true; } catch { /* essai suivant */ }
+      if (!copie) {
+        // Repli pour les navigateurs qui refusent l'API presse-papiers.
+        const zone = document.createElement('textarea');
+        zone.value = url; zone.setAttribute('readonly', '');
+        zone.style.position = 'fixed'; zone.style.opacity = '0';
+        document.body.appendChild(zone); zone.select();
+        try { copie = document.execCommand('copy'); } catch { copie = false; }
+        zone.remove();
+      }
+      showToast(copie ? 'Lien copié' : 'Impossible de copier le lien', copie ? 'success' : 'error');
+    });
+  });
+
   // QR Reveal
   if (typeof QRCode !== 'undefined') {
     document.querySelectorAll('.qr-body').forEach(qrBody => {
@@ -224,7 +255,7 @@ function initApp() {
           qrRevealText?.classList.add('hidden');
           qrBody.classList.add('revealed');
           new QRCode(qrCanvas, {
-            text: 'studentlink:' + qrCanvas.dataset.code,
+            text: 'linkee:' + qrCanvas.dataset.code,
             width: 200, height: 200,
             // Couleurs ecrites en dur, et surtout PAS prises dans le theme.
             //
@@ -238,7 +269,7 @@ function initApp() {
             //
             // Un QR code n'est pas un element d'interface : c'est une cible
             // optique. Il ne suit aucun theme.
-            colorDark: '#1C1916', colorLight: '#FFFFFF',
+            colorDark: '#111013', colorLight: '#FFFFFF',
             correctLevel: QRCode.CorrectLevel.H
           });
         });
@@ -464,8 +495,9 @@ function initApp() {
           const data = await res.json();
           if (data.success) {
             btn.innerHTML = COCHE + ' Envoyé';
-            btn.style.background = 'var(--succes)';
-            btn.style.color = '#fff';
+            // Volt a texte basalte : lisible dans les deux themes (15:1).
+            btn.style.background = 'var(--lime)';
+            btn.style.color = 'var(--sur-lave)';
             showToast(data.message || 'Invitation envoyée !', 'success');
           } else {
             btn.disabled = false; btn.textContent = 'Inviter';
@@ -586,16 +618,16 @@ function initApp() {
     new Chart(chartCtx, {
       type: 'line',
       data: { labels, datasets: [{ data: values, fill: true,
-        backgroundColor: jeton('--rouge-clair', '#FBE7E1'),
-        borderColor: jeton('--rouge', '#E0492B'),
+        backgroundColor: jeton('--rouge-clair', '#FFE3D9'),
+        borderColor: jeton('--rouge', '#FF5424'),
         borderWidth: 2, pointRadius: 0, tension: 0.4 }] },
       options: { responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
           x: { grid: { display: false },
-               ticks: { font: { size: 11 }, color: jeton('--gris-fonce', '#5B554C') } },
-          y: { grid: { color: jeton('--gris-clair', '#EAE3D6') },
-               ticks: { font: { size: 11 }, color: jeton('--gris-fonce', '#5B554C') }, beginAtZero: true } } }
+               ticks: { font: { size: 11, family: 'JetBrains Mono' }, color: jeton('--gris-fonce', '#4B4751') } },
+          y: { grid: { color: jeton('--gris-clair', '#E8E2D6') },
+               ticks: { font: { size: 11, family: 'JetBrains Mono' }, color: jeton('--gris-fonce', '#4B4751') }, beginAtZero: true } } }
     });
   }
 
@@ -758,19 +790,24 @@ function initApp() {
     accepted: { court: COCHE + ' Suivi',    long: COCHE + ' ABONNÉ' }
   };
 
+  // Maquette : « Suivre » est une pilule lave, « Suivi » une pilule neutre.
+  // Le bouton de suivi d'un lieu (sur les cartes) garde son contour : une
+  // pilule lave de plus sur chaque carte ferait plusieurs actions principales
+  // par ecran, ce que la charte exclut.
   function peindreBoutonSuivi(btn, etat) {
     const long = btn.classList.contains('btn-full');
+    const personne = long || btn.classList.contains('btn-follow-user');
     btn.dataset.etat = etat;
     btn.innerHTML = LIBELLES[etat][long ? 'long' : 'court'];
     if (etat === 'accepted') {
-      btn.style.background = 'var(--noir)';
-      btn.style.color = 'var(--blanc)';
+      btn.style.background = personne ? 'var(--surface-2)' : 'var(--noir)';
+      btn.style.color = personne ? 'var(--noir)' : 'var(--bg)';
     } else if (etat === 'pending') {
       btn.style.background = 'var(--surface-2)';
       btn.style.color = 'var(--gris-fonce)';
     } else {
-      btn.style.background = long ? 'var(--bleu)' : 'transparent';
-      btn.style.color = long ? 'var(--blanc)' : 'var(--noir)';
+      btn.style.background = personne ? 'var(--rouge)' : 'transparent';
+      btn.style.color = personne ? 'var(--sur-lave)' : 'var(--noir)';
     }
   }
 
@@ -1051,6 +1088,82 @@ if (document.readyState === 'loading') {
 
   let enCours = null;
 
+  /* ─── Préchargement ───
+   * Une page demandée au clic arrive après un aller-retour complet. Ici, la
+   * requête part dès l'intention : doigt posé (pointerdown précède le clic
+   * d'environ 100 ms sur téléphone), souris qui s'attarde sur un lien. Les
+   * onglets de la barre sont en plus préchargés au repos : passer de l'un à
+   * l'autre ne coûte alors plus rien.
+   *
+   * Une copie ne sert que VINGT secondes, et toute écriture (fetch autre que
+   * GET) les jette toutes : un pass pris sur le hub doit être dans « Pass ».
+   * notifications.php n'est jamais préchargée : l'ouvrir vaut lecture. */
+  const FRAICHEUR = 20000;
+  const prechargees = new Map();
+
+  function prechargeable(url) {
+    return interne(url) && url.href !== location.href && !/\/notifications\.php$/.test(url.pathname);
+  }
+
+  function telecharger(href, signal) {
+    return fetch(href, { signal, headers: { 'X-Requested-With': 'spa' }, credentials: 'same-origin' })
+      .then(async res => ({
+        ok: res.ok,
+        type: res.headers.get('content-type') || '',
+        redirected: res.redirected,
+        url: res.url,
+        html: res.ok ? await res.text() : ''
+      }));
+  }
+
+  function precharger(href) {
+    const url = new URL(href, location.href);
+    url.hash = '';
+    if (!prechargeable(url)) return;
+    const deja = prechargees.get(url.href);
+    if (deja && Date.now() - deja.t < FRAICHEUR) return;
+    const promesse = telecharger(url.href);
+    promesse.catch(() => prechargees.delete(url.href));
+    prechargees.set(url.href, { t: Date.now(), promesse });
+  }
+
+  function prendrePrechargee(href) {
+    const url = new URL(href, location.href);
+    url.hash = '';
+    const p = prechargees.get(url.href);
+    prechargees.delete(url.href);
+    return p && Date.now() - p.t < FRAICHEUR ? p.promesse : null;
+  }
+
+  // Toute écriture périme les copies.
+  const fetchOrigine = window.fetch.bind(window);
+  window.fetch = function (entree, options) {
+    const methode = ((options && options.method) || (entree instanceof Request ? entree.method : 'GET')).toUpperCase();
+    if (methode !== 'GET' && methode !== 'HEAD') prechargees.clear();
+    return fetchOrigine(entree, options);
+  };
+  document.addEventListener('submit', () => prechargees.clear(), true);
+
+  function lienDe(e) {
+    const a = e.target instanceof Element ? e.target.closest('a[href]') : null;
+    return a && !a.target && !a.hasAttribute('download') ? a : null;
+  }
+  document.addEventListener('pointerdown', e => { const a = lienDe(e); if (a) precharger(a.href); }, { passive: true });
+  let survol = null;
+  document.addEventListener('mouseover', e => {
+    const a = lienDe(e);
+    clearTimeout(survol);
+    if (a) survol = setTimeout(() => precharger(a.href), 65);
+  }, { passive: true });
+
+  function prechargerOnglets() {
+    const faire = () => document.querySelectorAll('.bottom-nav a.nav-item').forEach(a => precharger(a.href));
+    if ('requestIdleCallback' in window) requestIdleCallback(faire, { timeout: 2000 });
+    else setTimeout(faire, 600);
+  }
+  if (document.readyState === 'complete') prechargerOnglets();
+  else window.addEventListener('load', prechargerOnglets, { once: true });
+
   function interne(url) {
     return url.origin === location.origin
         && /\.php$/.test(url.pathname)
@@ -1064,20 +1177,27 @@ if (document.readyState === 'loading') {
     const cible = new URL(href, location.href);
     if (enCours) enCours.abort();
     enCours = new AbortController();
+    const signal = enCours.signal;
     barre.classList.add('active');
     document.body.setAttribute('aria-busy', 'true');
 
-    try {
-      const res = await fetch(cible.href, {
-        signal: enCours.signal,
-        headers: { 'X-Requested-With': 'spa' },
-        credentials: 'same-origin'
+    // L'onglet touché s'allume tout de suite, sans attendre la page.
+    const onglets = [...document.querySelectorAll('.bottom-nav a.nav-item')];
+    if (onglets.some(a => new URL(a.href, location.href).pathname === cible.pathname)) {
+      onglets.forEach(a => {
+        const vise = new URL(a.href, location.href).pathname === cible.pathname;
+        a.classList.toggle('active', vise);
+        if (vise) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
       });
-      if (!res.ok || !(res.headers.get('content-type') || '').includes('text/html')) {
+    }
+
+    try {
+      const res = await (prendrePrechargee(cible.href) || telecharger(cible.href, signal));
+      if (signal.aborted) return;
+      if (!res.ok || !res.type.includes('text/html')) {
         location.href = cible.href; return;
       }
-      const html = await res.text();
-      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const doc = new DOMParser().parseFromString(res.html, 'text/html');
       const coquille = doc.querySelector('.app-shell');
       const nav = doc.querySelector('.bottom-nav');
       if (!coquille) { location.href = cible.href; return; }
@@ -1108,12 +1228,17 @@ if (document.readyState === 'loading') {
       // navigation classique fait gratuitement et que le SPA doit refaire.
       const h = coquille.querySelector('h1, .display');
       if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); }
+      prechargerOnglets();
     } catch (e) {
       if (e.name !== 'AbortError') location.href = cible.href;
     } finally {
-      barre.classList.remove('active');
-      document.body.removeAttribute('aria-busy');
-      enCours = null;
+      // Une navigation remplacée par une plus récente ne touche plus à rien :
+      // c'est la nouvelle qui éteindra la barre de progression.
+      if (enCours && enCours.signal === signal) {
+        barre.classList.remove('active');
+        document.body.removeAttribute('aria-busy');
+        enCours = null;
+      }
     }
   }
 

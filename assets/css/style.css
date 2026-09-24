@@ -1,185 +1,212 @@
 /* ============================================================
-   StudentLink — Design System (Refonte « Refined Brutalism »)
-   Garde le vocabulaire de classes existant (--noir, --rouge, .card,
-   .btn, .pill, .event-card…) mais remappé vers une esthétique premium :
-   palette chaude harmonisée (coral / indigo / or), élévation douce
-   et stratifiée, radii arrondis, typographie éditoriale Playfair.
+   Linkee — Design System (charte graphique v1.0)
+   Basalte, lave, craie. Garde le vocabulaire de classes existant
+   (--noir, --rouge, .card, .btn, .pill, .event-card…) : seules les
+   valeurs changent, pour que les styles en ligne des pages suivent.
+
+   Deux univers, une seule feuille :
+   — l'app étudiant est « la nuit » : basalte par défaut, craie en option ;
+   — l'espace partenaire et le back-office sont « le jour » : craie,
+     toujours (pageDebut(..., ['univers' => 'pro'])).
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700..900;1,700..900&family=DM+Sans:opsz,wght@9..40,400..700&display=swap');
+/* ── Polices de la charte, hébergées avec l'application ─────────────────
+   Trois polices variables (toutes les graisses dans un seul fichier), jeu
+   latin, 112 Ko en tout, dans assets/fonts/. Elles étaient chargées depuis
+   Google Fonts par un @import : trois allers-retours en série vers un
+   serveur tiers avant le premier affichage, une dépendance réseau de plus,
+   et l'adresse IP de chaque visiteur transmise à Google. Ici elles viennent
+   du même serveur, en parallèle, et le service worker les garde hors ligne.
+   pageDebut() précharge les deux polices du premier écran.
+   Licence : SIL Open Font License 1.1 (les trois familles).             */
+@font-face {
+  font-family: 'Unbounded'; font-style: normal; font-weight: 200 900; font-display: swap;
+  src: url('../fonts/unbounded-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Instrument Sans'; font-style: normal; font-weight: 400 700; font-display: swap;
+  src: url('../fonts/instrument-sans-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'JetBrains Mono'; font-style: normal; font-weight: 100 800; font-display: swap;
+  src: url('../fonts/jetbrains-mono-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 
 :root {
-  /* Papier & encre */
-  --bg:          #F3EEE3;   /* papier chaud */
-  --blanc:       #FFFFFF;   /* surface principale — BASCULE en sombre, ce n'est pas « du blanc » */
-  --sur-media:   #FFFFFF;   /* texte CLAIR posé sur une photo ou un aplat de marque */
-  --sur-media-encre: #1C1916;   /* texte SOMBRE posé sur un aplat clair de marque (l'or) */
-  --surface-2:   #FBF8F1;   /* surface légèrement surélevée */
-  --noir:        #1C1916;   /* encre quasi-noire chaude */
-  --gris-fonce:  #5B554C;   /* texte secondaire */
-  --gris:        #6E6860;   /* texte tertiaire / légendes — 4.76:1 sur le papier */
-  --gris-clair:  #EAE3D6;   /* filet fin */
-  --line-2:      #DED6C6;   /* filet plus marqué */
+  /* ── Univers clair (craie) ─────────────────────────────────────────────
+     Les noms historiques sont gardés : --blanc désigne « la surface
+     principale » et --noir « l'encre », pas des couleurs littérales. Ils
+     basculent en thème sombre.                                          */
+  --bg:          #F5F1E8;   /* craie */
+  --blanc:       #FFFFFF;   /* surface : cartes, champs */
+  --sur-media:   #F5F1E8;   /* texte CLAIR posé sur une photo */
+  --sur-media-encre: #111013;   /* texte SOMBRE posé sur un aplat vif */
+  --surface-2:   #EFEAE0;   /* surface secondaire (état, pilule neutre) */
+  --noir:        #111013;   /* basalte — encre */
+  --gris-fonce:  #4B4751;   /* texte secondaire — 8:1 sur craie */
+  --gris:        #67626D;   /* texte tertiaire — 5.3:1 sur craie */
+  --gris-clair:  #E8E2D6;   /* filet fin (craie 2) */
+  --line-2:      #DCD5C7;   /* filet marqué */
 
-  /* Marque — trio analogue chaud (coral → ambre → or), ancré par un indigo froid */
-  --rouge:       #E0492B;   /* héros — coral chaud */
-  --rouge-deep:  #BB3619;
-  --bleu:        #4A40C2;   /* ancre froide — indigo-violet */
-  --bleu-deep:   #332A92;
-  --lime:        #EFB23A;   /* or chaud (remplace le citron) */
-  --lime-deep:   #8E6414;   /* 4.56:1 sur le papier */
-  --orange:      #EC8233;   /* orange chaud — pont coral/or */
-  --orange-deep: #A75517;   /* 4.56:1 sur sa teinte claire */
+  /* ── Marque ────────────────────────────────────────────────────────────
+     Lave : la marque et l'action principale. Dôme : sport, squads.
+     Volt : XP, badges, validé. Moutarde : restos, food.
+     Les anciens noms (--bleu, --lime, --orange) portent désormais ces
+     couleurs fonctionnelles.                                            */
+  --rouge:       #FF5424;   /* lave */
+  --rouge-deep:  #B8350D;   /* lave lisible sur craie — 5.2:1 */
+  --bleu:        #5B8CFF;   /* dôme */
+  --bleu-deep:   #2A56C0;
+  --lime:        #C8F547;   /* volt */
+  --lime-deep:   #4D6B00;
+  --orange:      #FFC23D;   /* moutarde */
+  --orange-deep: #8A5A00;
+  --alerte-vif:  #FF4D6A;   /* alerte — erreur, complet */
 
-  /* ── Couleurs de sens ───────────────────────────────────────────────────
-     Volontairement hors de la palette de marque. Le coral signe StudentLink :
-     il ne doit pas dire « erreur », sinon un message d'échec a exactement la
-     couleur du bouton d'action principal. Toutes les paires sont à 5.3:1 ou
-     plus, en thème clair comme en thème sombre.                          */
-  --succes:        #1F6B34;
-  --succes-clair:  #E3F2E6;
-  --danger:        #B3261E;
-  --danger-clair:  #FBE9E7;
+  /* Sur un aplat vif, le texte est toujours en basalte (charte : ≥ 5.9:1). */
+  --sur-lave:    #111013;
+
+  /* ── Couleurs de sens ── */
+  --succes:        #2D6A14;
+  --succes-clair:  #E6F4D6;
+  --danger:        #C4203F;
+  --danger-clair:  #FFE4E9;
   --alerte:        #8A5A00;
-  --alerte-clair:  #FFF3DC;
+  --alerte-clair:  #FFF1D1;
 
-  /* Texte posé sur une teinte claire — chaque paire vérifiée à 4.5:1 minimum.
-     Sans ces jetons, les badges empruntaient la couleur pure de la marque et
-     tombaient entre 2.2 et 3.4:1, bien en dessous du seuil.               */
+  /* Texte d'accent posé sur le fond ou sur une teinte claire — ≥ 4.5:1. */
   --sur-rouge-clair:  var(--rouge-deep);
   --sur-bleu-clair:   var(--bleu-deep);
   --sur-lime-clair:   var(--lime-deep);
   --sur-orange-clair: var(--orange-deep);
 
   /* Teintes (fonds doux) */
-  --rouge-clair: #FBE7E1;
-  --bleu-clair:  #ECE9FA;
-  --lime-clair:  #FBF0D6;
-  --orange-clair:#FCEBDB;
+  --rouge-clair: #FFE3D9;
+  --bleu-clair:  #E3EBFF;
+  --lime-clair:  #EEF9CF;
+  --orange-clair:#FFF1D1;
 
-  /* ── Typographie : familles ──────────────────────────────────────────
-     --font-display : titres, chiffres clés, signature de marque (700/800/900)
-     --font-sans    : tout le reste — UI, corps, labels (400/500/600/700)    */
-  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  --font-sans:    'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* ── Typographie : trois voix, trois rôles ─────────────────────────────
+     --font-display : Unbounded 600/800 — titres, événements, chiffres clés
+     --font-sans    : Instrument Sans 400-700 — texte, interfaces, boutons
+     --font-mono    : JetBrains Mono 400/600 — codes, horaires, XP,
+                      étiquettes (toujours en capitales)              */
+  --font-display: 'Unbounded', 'Arial Black', system-ui, sans-serif;
+  --font-sans:    'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
 
   /* ── Échelle typographique — base 16px, 10 crans, aucune valeur hors liste ── */
-  --fs-1:  0.6875rem;  /* 11px — micro-label capitales, badge, légende */
-  --fs-2:  0.75rem;    /* 12px — méta, sous-titre de liste */
-  --fs-3:  0.8125rem;  /* 13px — texte secondaire */
-  --fs-4:  0.875rem;   /* 14px — texte courant, bouton */
-  --fs-5:  1rem;       /* 16px — texte d'accent, champ de saisie (anti-zoom iOS) */
-  --fs-6:  1.25rem;    /* 20px — titre de carte */
+  --fs-1:  0.6875rem;  /* 11px — étiquette mono, badge */
+  --fs-2:  0.75rem;    /* 12px — étiquette mono, méta */
+  --fs-3:  0.8125rem;  /* 13px — légende */
+  --fs-4:  0.875rem;   /* 14px — texte d'interface, bouton compact */
+  --fs-5:  1rem;       /* 16px — corps, champ de saisie (anti-zoom iOS) */
+  --fs-6:  1.25rem;    /* 20px — titre 2 */
   --fs-7:  1.5rem;     /* 24px — titre de section */
-  --fs-8:  2rem;       /* 32px — chiffre clé, titre d'écran */
-  --fs-9:  2.5rem;     /* 40px — hero mobile */
-  --fs-10: 3rem;       /* 48px — hero desktop */
+  --fs-8:  2rem;       /* 32px — titre 1, chiffre clé */
+  --fs-9:  2.25rem;    /* 36px — titre d'écran mobile */
+  --fs-10: 3rem;       /* 48px — display */
 
-  /* ── Graisses ── (DM Sans chargé 400→700 : ne jamais demander 800/900 en sans) */
+  /* ── Graisses ── */
   --fw-regular:  400;
   --fw-medium:   500;
   --fw-semibold: 600;
   --fw-bold:     700;
-  --fw-display:  800;  /* Playfair uniquement */
-  --fw-black:    900;  /* Playfair uniquement */
+  --fw-display:  800;  /* Unbounded uniquement */
+  --fw-black:    800;  /* Unbounded : la charte plafonne à 800 */
 
   /* ── Interlignes ── */
-  --lh-display: 1;
-  --lh-tight:   1.15;
+  --lh-display: 1.04;
+  --lh-tight:   1.12;
   --lh-snug:    1.3;
   --lh-normal:  1.5;
   --lh-relaxed: 1.6;
 
-  /* ── Interlettrages ── */
-  --ls-display: -0.02em;
-  --ls-tight:   -0.01em;
+  /* ── Interlettrages ── Unbounded est large : on le resserre. */
+  --ls-display: -0.035em;
+  --ls-tight:   -0.02em;
   --ls-normal:  0;
   --ls-wide:    0.06em;
-  --ls-label:   0.14em;  /* capitales espacées */
+  --ls-label:   0.1em;   /* étiquettes mono en capitales */
 
-  /* Radii */
-  /* Un rayon pour les surfaces (--radius), un pour les contrôles
-     (--radius-bouton) : les deux sont courts et de la même famille, pour que
-     rien ne paraisse arbitraire. --radius-sm est réservé aux champs de saisie,
-     --radius-xl aux grandes surfaces pleine largeur (feuille modale, en-tête).
-     --radius-pill ne sert plus qu'à deux choses : les micro-étiquettes qu'on
-     ne clique pas (statut, type de lieu), trop petites pour qu'un rayon se
-     lise, et la barre de navigation flottante, qui est une forme.
-     Pour retrouver les boutons en gélule : --radius-bouton: 999px.
-     Pour retrouver les cartes très arrondies : --radius: 18px.
-     Ne pas introduire de valeur intermédiaire : c'est ce qui avait produit
-     quatre rayons de carte différents, dont des cartes carrées.            */
-  --radius:    12px;
-  --radius-sm: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 22px;
-  --radius-bouton: 10px;
+  /* ── Rayons : « tout est arrondi, comme l'anneau » ─────────────────────
+     8 champs et tags · 16 listes et vignettes · 24 cartes · 32 pass et
+     modales · pilule pour les boutons et les chips.                    */
+  --radius-xs: 8px;
+  --radius-sm: 12px;   /* champs de saisie */
+  --radius-md: 16px;   /* listes, vignettes */
+  --radius:    24px;   /* cartes */
+  --radius-lg: 24px;
+  --radius-xl: 32px;   /* pass, modales */
+  --radius-bouton: 999px;
   --radius-pill: 999px;
 
-  /* Élévation douce stratifiée */
-  --shadow-xs: 0 1px 2px rgba(28,25,22,.05);
-  --shadow-sm: 0 1px 2px rgba(28,25,22,.05), 0 3px 8px rgba(28,25,22,.05);
-  --shadow:    0 2px 4px rgba(28,25,22,.04), 0 10px 24px rgba(28,25,22,.08);
-  --shadow-lg: 0 6px 16px rgba(28,25,22,.07), 0 22px 48px rgba(28,25,22,.12);
+  /* ── Profondeur ────────────────────────────────────────────────────────
+     Pas d'ombre portée sur sombre : on superpose des surfaces plus claires.
+     En clair, une ombre à peine perceptible. Seul le pass actif reçoit un
+     halo lave (--halo-lave).                                           */
+  --shadow-xs: none;
+  --shadow-sm: 0 1px 2px rgba(17,16,19,.04);
+  --shadow:    0 1px 2px rgba(17,16,19,.04), 0 6px 18px rgba(17,16,19,.05);
+  --shadow-lg: 0 2px 6px rgba(17,16,19,.06), 0 16px 40px rgba(17,16,19,.10);
+  --halo-lave: 0 0 0 1px rgba(255,84,36,.25), 0 18px 60px -12px rgba(255,84,36,.55);
 
   /* Compat : ancienne variable bordure */
   --border: 1px solid var(--gris-clair);
 
   --nav-h: 78px;
 
-  /* ── Gouttiere horizontale ──────────────────────────────────────────────
-     Un seul jeton pour le retrait lateral du contenu. Tout ce qui doit
-     toucher le bord de l'ecran utilise .bleed, jamais une marge negative
-     ecrite a la main (c'est ce qui laissait un liseré de 2px).           */
-  --gutter: 22px;
+  /* ── Gouttière horizontale ──────────────────────────────────────────────
+     Un seul jeton pour le retrait latéral du contenu. Tout ce qui doit
+     toucher le bord de l'écran utilise .bleed, jamais une marge négative
+     écrite à la main.                                                   */
+  --gutter: 20px;
 
-  /* ── Icônes ─────────────────────────────────────────────────────────────
-     Principe emprunté aux SF Symbols : une icône se règle sur le texte
-     qu'elle accompagne — même taille optique, même couleur, même trait.
-     Une seule épaisseur pour toute l'application, trois tailles.        */
-  /* Cible tactile minimale : 44px (Apple HIG) / 48dp (Material).
+  /* ── Icônes : trait de 2px, bouts arrondis, grille 24px ────────────────
+     Cible tactile minimale : 44px (Apple HIG) / 48dp (Material).
      Les commandes compactes gardent leur taille visuelle mais voient leur
-     zone cliquable étendue par un pseudo-élément — c'est la zone qui compte,
-     pas le dessin. Les boutons isolés, eux, font vraiment 44px.          */
+     zone cliquable étendue par un pseudo-élément.                      */
   --touch-min: 44px;
 
-  --icon-stroke: 1.75;
-  --icon-sm: 16px;   /* accompagne --fs-1 / --fs-2 */
-  --icon-md: 20px;   /* accompagne --fs-3 / --fs-4 */
-  --icon-lg: 24px;   /* accompagne --fs-5 / --fs-6 */
+  --icon-stroke: 2;
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-lg: 24px;
 }
 
-/* ── Dark mode ──────────────────────────────────────────────────────────── */
+/* ── Univers sombre (basalte) — thème par défaut de l'app étudiant ────── */
 [data-theme="dark"] {
-  /* --sur-media n'est volontairement PAS redéfini : il doit rester blanc. */
-  --bg: #16130F;
-  --blanc: #211D18;
-  --surface-2: #1B1813;
-  --noir: #F3EEE3;
-  --gris-fonce: #C9C1B2;
-  --gris: #8E8576;
-  --gris-clair: #322C24;
-  --line-2: #3D362C;
-  --rouge-clair: #3A201A;
-  --bleu-clair: #1E1B36;
-  --lime-clair: #322A18;
-  --orange-clair: #33220F;
-  /* Sur fond sombre la teinte s'assombrit : le texte doit s'éclaircir,
-     sinon les badges retombent à 2.2:1. */
-  --succes:        #7FC99A;
-  --succes-clair:  #14261A;
-  --danger:        #F29384;
-  --danger-clair:  #2E1512;
-  --alerte:        #E0B25C;
-  --alerte-clair:  #2B2008;
-  --sur-rouge-clair:  #E5674F;
-  --sur-bleu-clair:   #827BD4;
-  --sur-lime-clair:   #BC8825;
-  --sur-orange-clair: #D98A45;
-  --shadow-xs: 0 1px 2px rgba(0,0,0,.4);
-  --shadow-sm: 0 1px 2px rgba(0,0,0,.4), 0 3px 8px rgba(0,0,0,.3);
-  --shadow:    0 2px 4px rgba(0,0,0,.4), 0 10px 24px rgba(0,0,0,.4);
-  --shadow-lg: 0 6px 16px rgba(0,0,0,.5), 0 22px 48px rgba(0,0,0,.5);
+  /* --sur-media et --sur-lave ne sont volontairement PAS redéfinis. */
+  --bg: #111013;          /* basalte */
+  --blanc: #1C1A1F;       /* surface */
+  --surface-2: #242127;   /* surface superposée */
+  --noir: #F5F1E8;        /* craie — encre */
+  --gris-fonce: #CFC9D3;  /* brume */
+  --gris: #8A858F;        /* pierre — 5.3:1 sur basalte */
+  --gris-clair: #2A272E;  /* ligne */
+  --line-2: #36323B;
+  --rouge-clair: #3A1B12;
+  --bleu-clair: #18223D;
+  --lime-clair: #273011;
+  --orange-clair: #33280F;
+  /* Sur basalte, les couleurs pures sont lisibles telles quelles. */
+  --succes:        #C8F547;
+  --succes-clair:  #273011;
+  --danger:        #FF4D6A;
+  --danger-clair:  #3A151D;
+  --alerte:        #FFC23D;
+  --alerte-clair:  #33280F;
+  --sur-rouge-clair:  #FF5424;
+  --sur-bleu-clair:   #5B8CFF;
+  --sur-lime-clair:   #C8F547;
+  --sur-orange-clair: #FFC23D;
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow:    none;
+  --shadow-lg: 0 18px 48px rgba(0,0,0,.5);
 }
 [data-theme="dark"] body { color: var(--noir); }
 [data-theme="dark"] img.logo-dark-invert { filter: invert(1); }
@@ -208,10 +235,10 @@ html { font-size: var(--fs-5); scroll-behavior: smooth; -webkit-text-size-adjust
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
 
-:focus-visible { outline: 2px solid var(--bleu); outline-offset: 2px; border-radius: 4px; }
+:focus-visible { outline: 2px solid var(--rouge); outline-offset: 2px; border-radius: 4px; }
 :focus:not(:focus-visible) { outline: none; }
 .btn:focus-visible, .nav-item:focus-visible, .pill:focus-visible, a:focus-visible {
-  outline: 2px solid var(--bleu); outline-offset: 2px;
+  outline: 2px solid var(--rouge); outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -225,10 +252,13 @@ html { font-size: var(--fs-5); scroll-behavior: smooth; -webkit-text-size-adjust
 /* will-change: transform faisait de .app-shell le bloc conteneur de ses
    descendants en position: fixed — une fenêtre modale placée dans la
    coquille se retrouvait cadrée sur la colonne, décalée de plusieurs
-   centaines de pixels au lieu de couvrir l'écran. Rien ne transforme jamais
-   .app-shell : seule son opacité varie pendant une navigation, et
-   will-change: opacity ne crée pas ce bloc conteneur. */
-.app-shell { will-change: opacity; }
+   centaines de pixels au lieu de couvrir l'écran.
+   will-change: opacity n'est pas plus sûr : il fait de .app-shell un
+   contexte d'empilement, si bien que les feuilles modales qu'elle contient
+   (z-index 200) restaient SOUS la barre d'onglets (z-index 100), posée à
+   côté. Le panneau des notifications était masqué par la barre sur
+   téléphone. Aucun will-change, donc : le fondu de navigation n'en a pas
+   besoin. */
 body { overflow-x: hidden; }
 * { -webkit-tap-highlight-color: transparent; }
 .nav-item { transition: color 120ms ease; }
@@ -240,25 +270,34 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  font-feature-settings: "ss01" on, "cv01" on;
 }
+/* Sans cette ligne, un <select> ou un <button> garde la police système. */
+input, select, textarea, button { font-family: inherit; }
 
 /* ─── Typographie ─── */
 .display {
   font-family: var(--font-display);
   font-weight: var(--fw-black); line-height: var(--lh-display); letter-spacing: var(--ls-display);
 }
-/* La couleur est héritée : sur fond clair le titre reste à l'encre, sur une
-   photo ou un aplat de marque il suit la couleur posée par le parent. Le rouge
-   ne sert plus qu'à ce qui se clique. */
+/* Seconde ligne d'un titre : la charte la signe en lave (« Content de te
+   revoir. »). Unbounded n'a pas d'italique : c'est la couleur qui porte
+   l'accent. Sur un aplat de couleur, le parent la repasse en inherit. */
 .display-italic {
   font-family: var(--font-display);
-  font-weight: var(--fw-display); font-style: italic; color: inherit; line-height: var(--lh-display); letter-spacing: var(--ls-tight);
+  font-weight: var(--fw-display); font-style: normal; color: var(--sur-rouge-clair); line-height: var(--lh-display); letter-spacing: var(--ls-display);
 }
+/* Étiquette : JetBrains Mono, toujours en capitales. */
 .label {
-  font-family: var(--font-sans);
-  font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-label); text-transform: uppercase;
+  font-family: var(--font-mono);
+  font-size: var(--fs-1); font-weight: var(--fw-medium); letter-spacing: var(--ls-label); text-transform: uppercase;
 }
+/* Unbounded est large : resserré partout où il est posé, y compris dans les
+   styles en ligne des pages (un interlettrage écrit en ligne l'emporte). */
+[style*="font-family:var(--font-display)"],
+[style*="font-family: var(--font-display)"] { letter-spacing: var(--ls-display); }
+
+/* Données : codes de pass, horaires, XP, statistiques. */
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
 /* Un titre de page est un <h1>, pas une suite de <div> : sans lui il n'existe
    aucun plan de page pour un lecteur d'ecran, et la navigation par titres — le
@@ -271,8 +310,9 @@ h1.titre-page {
 
 /* ── Roles typographiques ────────────────────────────────────────────────
    Toute nouvelle page doit piocher ici plutot que de redeclarer une taille.
-   Regle du systeme : la serif (--font-display) ne sert QUE aux titres et aux
-   chiffres cles ; tout le reste est en --font-sans, plafonne a 700.        */
+   Regle du systeme : Unbounded (--font-display) ne sert QUE aux titres et aux
+   chiffres cles ; les etiquettes et donnees sont en --font-mono ; tout le
+   reste est en --font-sans, plafonne a 700.                               */
 .t-hero {
   font-family: var(--font-display); font-weight: var(--fw-black);
   font-size: var(--fs-9); line-height: var(--lh-display); letter-spacing: var(--ls-display);
@@ -303,7 +343,7 @@ h1.titre-page {
   font-size: var(--fs-5); line-height: var(--lh-relaxed); letter-spacing: var(--ls-normal);
 }
 .t-meta {
-  font-family: var(--font-sans); font-weight: var(--fw-semibold);
+  font-family: var(--font-sans); font-weight: var(--fw-medium);
   font-size: var(--fs-2); line-height: var(--lh-snug); letter-spacing: var(--ls-normal);
   color: var(--gris-fonce);
 }
@@ -312,9 +352,9 @@ h1.titre-page {
   font-size: var(--fs-3); line-height: var(--lh-snug); color: var(--gris-fonce);
 }
 .t-overline {
-  font-family: var(--font-sans); font-weight: var(--fw-bold);
+  font-family: var(--font-mono); font-weight: var(--fw-medium);
   font-size: var(--fs-1); letter-spacing: var(--ls-label); text-transform: uppercase;
-  color: var(--gris-fonce);
+  color: var(--gris);
 }
 /* Les chiffres qui defilent ou s'alignent en colonne ne doivent pas danser */
 .t-metric, .value, .amount-value, .ps-value, .event-reduction,
@@ -322,8 +362,9 @@ h1.titre-page {
 
 /* ─── Icônes ─── */
 /* Toutes les icônes de l'app sont dessinées sur la grille 24×24 (style
-   Feather/Lucide). Normaliser ici évite de reprendre 61 balises une par une :
-   l'attribut stroke-width du SVG perd toujours face à la règle CSS.        */
+   Feather/Lucide). Charte : trait de 2px, bouts arrondis. Normaliser ici
+   évite de reprendre 61 balises une par une : l'attribut stroke-width du
+   SVG perd toujours face à la règle CSS.                                  */
 svg[viewBox="0 0 24 24"] {
   stroke-width: var(--icon-stroke);
   stroke-linecap: round;
@@ -353,29 +394,29 @@ svg[viewBox="0 0 24 24"] {
   padding-left: var(--gutter); padding-right: var(--gutter);
 }
 
-/* ─── Bottom Nav (flottante) ─── */
+/* ─── Bottom Nav (flottante) ───
+   Une pilule de surface, icône au-dessus du libellé ; l'onglet actif est
+   en gras, son icône en lave.                                           */
 .bottom-nav {
   position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
-  width: calc(100% - 28px); max-width: 412px; height: 62px;
-  background: rgba(28,25,22,.92); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  width: calc(100% - 32px); max-width: 408px; height: 64px;
+  background: var(--blanc); border: 1px solid var(--gris-clair);
   display: flex; align-items: center; justify-content: space-around;
   z-index: 100; border-radius: var(--radius-pill); box-shadow: var(--shadow-lg);
-  padding: 0 8px;
+  padding: 0 10px;
 }
 .nav-item {
   flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
-  text-decoration: none; color: rgba(243,238,227,.5); transition: color 0.15s;
+  text-decoration: none; color: var(--gris); transition: color 0.15s;
   padding: 8px 0; min-height: var(--touch-min); justify-content: center; position: relative;
 }
-.nav-item.active, .nav-item:hover { color: #fff; }
-.nav-item.active::before {
-  content: ''; position: absolute; top: -1px; width: 5px; height: 5px;
-  border-radius: 50%; background: var(--lime);
-}
+.nav-item.active, .nav-item:hover { color: var(--noir); }
+.nav-item.active span:last-child { font-weight: var(--fw-bold); }
 .nav-item span {
-  font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-wide); text-transform: uppercase;
+  font-size: var(--fs-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-normal);
 }
-.nav-icon { font-size: var(--fs-6); line-height: var(--lh-display); }
+.nav-icon { display: inline-flex; line-height: 1; }
+.nav-item.active .nav-icon { color: var(--rouge); }
 .nav-item svg { width: 21px; height: 21px; }
 
 /* Les pages de detail portent le rail uniquement sur ordinateur : sur
@@ -387,19 +428,19 @@ svg[viewBox="0 0 24 24"] {
   background: var(--blanc); border-radius: var(--radius); overflow: hidden;
   margin-bottom: 14px; border: 1px solid var(--gris-clair); box-shadow: var(--shadow-sm);
 }
-.card-rouge  { background: linear-gradient(155deg,#E85838,#C5371C); color: #fff; border: none; }
-/* Conservées pour les usages ponctuels, mais plus employées en grandes tuiles
-   côte à côte : une page n'a qu'un seul accent, et c'est le rouge. */
-.card-bleu   { background: linear-gradient(155deg,#5A50D2,#392FA0); color: #fff; border: none; }
-.card-lime   { background: linear-gradient(155deg,#F2BE55,#DA9C2C); color: var(--sur-media-encre); border: none; }
+.card-rouge  { background: var(--rouge); color: var(--sur-lave); border: none; }
+/* Aplats vifs : le texte y est toujours en basalte (charte, contraste ≥ 5.9:1).
+   Une page n'a qu'un seul accent, et c'est la lave. */
+.card-bleu   { background: var(--bleu); color: var(--sur-lave); border: none; }
+.card-lime   { background: var(--lime); color: var(--sur-lave); border: none; }
 /* Tuile chiffrée sobre : fond de surface, chiffre à l'encre, intitulé en gris. */
 .card-neutre {
   background: var(--blanc); color: var(--noir);
   border: 1px solid var(--line-2); box-shadow: var(--shadow-xs);
 }
 .card-neutre .ps-label, .card-neutre .label { color: var(--gris); }
-.card-noir   { background: linear-gradient(160deg,#26221E,#161310); color: #F3EEE3; border: none; }
-.card-orange { background: linear-gradient(155deg,#F0913E,#D86C1E); color: #fff; border: none; }
+.card-noir   { background: #111013; color: #F5F1E8; border: 1px solid #2A272E; }
+.card-orange { background: var(--orange); color: var(--sur-lave); border: none; }
 
 /* ─── Stat Cards ─── */
 .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 9px; margin-bottom: 14px; }
@@ -408,7 +449,7 @@ svg[viewBox="0 0 24 24"] {
   border: 1px solid var(--gris-clair); box-shadow: var(--shadow-sm); background: var(--blanc);
 }
 .stat-card .label { opacity: 0.7; margin-bottom: 6px; }
-.stat-card .value { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-8); line-height: var(--lh-display); }
+.stat-card .value { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-8); line-height: var(--lh-display); letter-spacing: var(--ls-display); }
 .stat-card .sub { font-size: var(--fs-1); margin-top: 4px; opacity: 0.7; }
 
 /* ─── Event Cards ─── */
@@ -416,56 +457,54 @@ svg[viewBox="0 0 24 24"] {
   border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; position: relative;
   border: 1px solid var(--gris-clair); box-shadow: var(--shadow);
 }
+/* La carte flash est un aplat lave : texte basalte, halo lave. */
 .event-card-flash {
-  background: linear-gradient(155deg,#E85838,#C5371C); color: #fff; padding: 22px;
-  border: none; box-shadow: 0 12px 34px -10px rgba(200,51,28,.55);
+  background: var(--rouge); color: var(--sur-lave); padding: 22px;
+  border: none; box-shadow: var(--halo-lave);
 }
 .event-card-flash .flash-badge {
-  display: inline-block; background: rgba(255,255,255,.2); color: #fff;
-  font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-wide); text-transform: uppercase;
+  display: inline-block; background: rgba(17,16,19,.12); color: var(--sur-lave);
+  font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-label); text-transform: uppercase;
   padding: 4px 10px; border-radius: var(--radius-pill); margin-bottom: 0;
 }
-.event-card-regular { background: var(--blanc); padding: 18px; }
+.event-card-flash .label { font-weight: var(--fw-semibold); }
+.event-card-regular { background: var(--blanc); padding: 20px; }
+/* « BAR · JEU 12 MARS » : l'étiquette mono de la charte. */
 .event-meta {
-  font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-wide); text-transform: uppercase;
+  font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium); letter-spacing: var(--ls-label); text-transform: uppercase;
   color: var(--gris); margin-bottom: 6px;
 }
 .event-title {
   font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-7);
-  line-height: var(--lh-display); letter-spacing: var(--ls-display); margin-bottom: 6px;
+  line-height: var(--lh-tight); letter-spacing: var(--ls-display); margin-bottom: 6px;
 }
-.event-lieu { font-size: var(--fs-2); color: var(--gris-fonce); margin-bottom: 12px; }
-.event-reduction { font-family: var(--font-display); font-size: var(--fs-8); font-weight: var(--fw-black); line-height: var(--lh-display); }
+.event-lieu { font-size: var(--fs-3); color: var(--gris-fonce); margin-bottom: 12px; }
+.event-card-flash .event-lieu { color: inherit; }
+.event-reduction { font-family: var(--font-display); font-size: var(--fs-8); font-weight: var(--fw-black); line-height: var(--lh-display); letter-spacing: var(--ls-display); }
 .event-places { font-size: var(--fs-2); margin-top: 6px; opacity: 0.8; }
 
 .progress-bar {
-  height: 6px; background: rgba(255,255,255,0.25); border-radius: var(--radius-pill);
+  height: 6px; background: rgba(17,16,19,.2); border-radius: var(--radius-pill);
   margin-top: 8px; overflow: hidden;
 }
-.progress-bar-fill { height: 100%; background: #fff; border-radius: var(--radius-pill); transition: width 0.5s cubic-bezier(.2,.8,.2,1); }
-.progress-bar-fill.dark { background: var(--sur-media-encre); }
+.progress-bar-fill { height: 100%; background: var(--sur-lave); border-radius: var(--radius-pill); transition: width 0.5s cubic-bezier(.2,.8,.2,1); }
+/* Sur une carte de surface, la jauge de remplissage porte la lave. */
+.progress-bar-fill.dark { background: var(--rouge); }
 .event-card-regular .progress-bar { background: var(--gris-clair); }
 
 /* ─── Type d'établissement : codage couleur ─────────────────────────────
    Le marqueur .type-<type> est posé sur les cartes depuis l'origine mais
    ne produisait rien. Registre volontairement discret : la couleur teinte
    la ligne de méta et une pastille, jamais le fond de la carte.          */
-.type-bar       { --accent: var(--bleu);        --accent-tint: var(--bleu-clair); }
-.type-boite     { --accent: var(--rouge);       --accent-tint: var(--rouge-clair); }
-.type-resto     { --accent: var(--orange-deep); --accent-tint: var(--orange-clair); }
-.type-afterwork { --accent: var(--lime-deep);   --accent-tint: var(--lime-clair); }
-
-[data-theme="dark"] .type-bar       { --accent: var(--sur-bleu-clair); }
-[data-theme="dark"] .type-boite     { --accent: var(--sur-rouge-clair); }
-[data-theme="dark"] .type-resto     { --accent: var(--sur-orange-clair); }
-[data-theme="dark"] .type-afterwork { --accent: var(--sur-lime-clair); }
+/* Charte : les soirées (bars, boîtes, afterworks) portent la lave, les restos
+   la moutarde. --sur-*-clair bascule seul entre les deux thèmes.        */
+.type-bar       { --accent: var(--sur-rouge-clair);  --accent-tint: var(--rouge-clair); }
+.type-boite     { --accent: var(--sur-rouge-clair);  --accent-tint: var(--rouge-clair); }
+.type-resto     { --accent: var(--sur-orange-clair); --accent-tint: var(--orange-clair); }
+.type-afterwork { --accent: var(--sur-rouge-clair);  --accent-tint: var(--rouge-clair); }
 
 .event-card-regular[class*="type-"] .event-meta { color: var(--accent); }
-.event-card-regular[class*="type-"] .event-meta::before {
-  content: ''; display: inline-block; width: 6px; height: 6px;
-  border-radius: 50%; background: var(--accent);
-  margin-right: 7px; vertical-align: 0.1em;
-}
+.event-card-regular[class*="type-"] .event-meta::before { content: none; }
 
 /* ─── Boutons ─── */
 /* Filet de sécurité : dans cette application un contrôle interactif est une
@@ -487,30 +526,39 @@ button, input[type="submit"], input[type="button"] {
   color: inherit;
   font-family: inherit;
 }
+/* Charte : primaire lave à texte basalte (un seul par écran), secondaire en
+   contour, tertiaire en texte lave. Pilule, 52px de haut en pleine largeur. */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  font-family: var(--font-sans); font-weight: var(--fw-bold); font-size: var(--fs-4); letter-spacing: var(--ls-normal);
-  padding: 13px 22px; min-height: var(--touch-min); border-radius: var(--radius-bouton); border: 1px solid transparent;
+  font-family: var(--font-sans); font-weight: var(--fw-bold); font-size: var(--fs-5); letter-spacing: var(--ls-normal);
+  padding: 13px 24px; min-height: var(--touch-min); border-radius: var(--radius-bouton); border: 1.5px solid transparent;
   cursor: pointer; text-decoration: none;
   transition: transform 0.12s ease, box-shadow 0.18s ease, background 0.18s ease, opacity 0.18s;
   white-space: nowrap;
 }
 .btn svg { width: 17px; height: 17px; }
 .btn:active { transform: translateY(1px) scale(0.99); }
-.btn-primary { background: var(--noir); color: var(--blanc); box-shadow: var(--shadow-sm); }
-.btn-primary:hover { box-shadow: var(--shadow); }
-/* Le coral pur ne donne que 4.07:1 avec du blanc : sous le seuil pour un
-   libellé de 14px. Le bouton prend donc la variante profonde (5.75:1) ;
-   --rouge reste la couleur de marque partout ailleurs. */
-.btn-rouge   { background: var(--rouge-deep); color: #fff; box-shadow: 0 6px 18px -6px rgba(187,54,25,.55); }
-.btn-bleu    { background: var(--bleu);  color: #fff; box-shadow: 0 6px 18px -6px rgba(74,64,194,.55); }
-.btn-lime    { background: var(--lime);  color: var(--sur-media-encre); box-shadow: 0 6px 18px -6px rgba(239,178,58,.5); }
-.btn-outline { background: var(--blanc); color: var(--noir); border: 1px solid var(--line-2); box-shadow: var(--shadow-xs); }
-.btn-outline:hover { border-color: var(--noir); }
-.btn-outline-blanc { background: rgba(255,255,255,.16); color: #fff; border: 1px solid rgba(255,255,255,.32); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
-.btn-full    { width: 100%; }
+.btn-primary { background: var(--rouge); color: var(--sur-lave); }
+.btn-primary:hover { filter: brightness(1.06); }
+/* Basalte sur lave : 5.9:1, au-dessus du seuil à toutes les tailles. */
+.btn-rouge   { background: var(--rouge); color: var(--sur-lave); }
+.btn-bleu    { background: var(--bleu);  color: var(--sur-lave); }
+.btn-lime    { background: var(--lime);  color: var(--sur-lave); }
+.btn-outline { background: transparent; color: var(--noir); border-color: var(--noir); }
+.btn-outline:hover { background: var(--surface-2); }
+/* Sur un aplat lave (carte flash) : la pilule basalte de la maquette (« Je fonce »). */
+.btn-outline-blanc { background: #111013; color: #F5F1E8; border-color: #111013; }
+/* Tertiaire : un lien d'action en lave. */
+.btn-texte   { background: none; color: var(--sur-rouge-clair); padding-left: 4px; padding-right: 4px; }
+.btn-full    { width: 100%; min-height: 52px; }
 .btn:hover   { opacity: 0.95; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+/* « Inscrit », « Complet » : un état, pas une action. La lave à demi effacée
+   donnait un brun sans contraste ; l'état sort donc de la couleur. */
+.btn-primary:disabled, .btn-rouge:disabled, .btn-bleu:disabled, .btn-lime:disabled {
+  background: var(--surface-2); color: var(--gris-fonce); border-color: var(--gris-clair); opacity: 1;
+}
+.btn-outline-blanc:disabled { background: rgba(17,16,19,.14); color: var(--sur-lave); border-color: transparent; opacity: 1; }
 
 /* ─── Zone tactile étendue ───────────────────────────────────────────────
    Une pilule de 36px reste visuellement juste, mais doit se laisser toucher
@@ -540,14 +588,14 @@ button, input[type="submit"], input[type="button"] {
 .btn-icon {
   display: inline-flex; align-items: center; justify-content: center;
   width: var(--touch-min); height: var(--touch-min);
-  border-radius: var(--radius-bouton); border: 1px solid var(--gris-clair);
+  border-radius: var(--radius-pill); border: 1px solid var(--gris-clair);
   background: var(--blanc); color: var(--gris-fonce);
   cursor: pointer; padding: 0; flex-shrink: 0;
   transition: background .16s ease, color .16s ease, border-color .16s ease;
 }
 .btn-icon:hover { border-color: var(--gris); color: var(--noir); }
-.btn-icon.danger { border-color: var(--rouge); color: var(--rouge); }
-.btn-icon.danger:hover { background: var(--rouge-clair); }
+.btn-icon.danger { border-color: var(--danger); color: var(--danger); }
+.btn-icon.danger:hover { background: var(--danger-clair); }
 
 /* ─── Filter Pills ─── */
 .filter-scroll {
@@ -555,15 +603,16 @@ button, input[type="submit"], input[type="button"] {
   scrollbar-width: none; -ms-overflow-style: none;
 }
 .filter-scroll::-webkit-scrollbar { display: none; }
+/* Chips : contour = filtre, pleine lave = catégorie sélectionnée. */
 .pill {
-  flex-shrink: 0; padding: 11px 17px; border-radius: var(--radius-bouton);
-  font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-normal); text-transform: none;
-  border: 1px solid var(--line-2); box-shadow: none; background: var(--blanc); color: var(--gris-fonce);
+  flex-shrink: 0; padding: 10px 17px; border-radius: var(--radius-pill);
+  font-size: var(--fs-4); font-weight: var(--fw-medium); letter-spacing: var(--ls-normal); text-transform: none;
+  border: 1px solid var(--line-2); box-shadow: none; background: transparent; color: var(--noir);
   cursor: pointer; transition: all 0.16s ease; white-space: nowrap; text-decoration: none;
   display: inline-flex; align-items: center; gap: 6px;
 }
-.pill:hover { border-color: var(--gris); color: var(--noir); }
-.pill.active { background: var(--noir); color: var(--blanc); border-color: var(--noir); }
+.pill:hover { border-color: var(--gris); }
+.pill.active { background: var(--rouge); color: var(--sur-lave); border-color: var(--rouge); font-weight: var(--fw-semibold); }
 .pill:active { transform: scale(0.98); }
 
 /* ─── Squad Cards ───────────────────────────────────────────
@@ -574,69 +623,53 @@ button, input[type="submit"], input[type="button"] {
    --blanc, ou --noir et --gris-fonce gardent leur contraste dans les deux
    themes, et --accent ne sert que la ou il est verifie a 4.5:1 minimum.   */
 .squad-card {
-  border-radius: var(--radius); padding: 18px 18px 18px 22px; margin-bottom: 14px; position: relative;
+  border-radius: var(--radius); padding: 20px; margin-bottom: 14px; position: relative;
   border: 1px solid var(--gris-clair); box-shadow: var(--shadow); background: var(--blanc);
   color: var(--noir);
   overflow: hidden;
   --accent: var(--noir);
   --accent-contraste: var(--blanc);
 }
-/* Le rail : la seule surface qui porte encore la couleur pleine. */
-.squad-card::before {
-  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-  background: var(--accent);
+/* Charte : tout ce qui est sport et squads porte le dôme. L'étiquette mono
+   (« RUNNING · MAR 07:00 ») prend la teinte lisible du thème, les aplats
+   (bouton, avatar) le dôme pur avec un texte basalte (6:1).            */
+.squad-running, .squad-velo, .squad-muscu, .squad-autre {
+  --accent: var(--sur-bleu-clair); --accent-plein: var(--bleu); --accent-contraste: var(--sur-lave);
 }
-.squad-running { --accent: var(--noir);        --accent-contraste: var(--blanc); }
-.squad-velo    { --accent: var(--bleu);        --accent-contraste: #fff; }         /* 7.5:1  */
-.squad-muscu   { --accent: var(--lime-deep);   --accent-contraste: #fff; }         /* 5.27:1 */
-.squad-autre   { --accent: var(--orange-deep); --accent-contraste: #fff; }         /* 5.25:1 */
-/* En theme sombre la teinte doit s'eclaircir, et son texte s'assombrir :
-   --sur-media-encre ne bascule pas, c'est exactement ce qu'il faut ici. */
-[data-theme="dark"] .squad-velo  { --accent: var(--sur-bleu-clair);   --accent-contraste: var(--sur-media-encre); }
-[data-theme="dark"] .squad-muscu { --accent: var(--sur-lime-clair);   --accent-contraste: var(--sur-media-encre); }
-[data-theme="dark"] .squad-autre { --accent: var(--sur-orange-clair); --accent-contraste: var(--sur-media-encre); }
 
 .squad-badge {
-  position: absolute; top: 14px; right: 14px; background: var(--surface-2);
+  position: absolute; top: 16px; right: 16px; background: transparent;
   color: var(--gris-fonce); border: 1px solid var(--line-2);
-  font-size: var(--fs-1); font-weight: var(--fw-bold); padding: 4px 10px; border-radius: var(--radius-pill);
-  letter-spacing: var(--ls-wide); text-transform: uppercase;
+  font-size: var(--fs-2); font-weight: var(--fw-medium); padding: 4px 10px; border-radius: var(--radius-pill);
 }
 .squad-type-label {
-  font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-label); text-transform: uppercase;
-  color: var(--accent); margin-bottom: 4px; padding-right: 96px;
-}
-/* Meme pastille que sur les cartes evenement : la couleur se repete,
-   elle ne s'invente pas une seconde grammaire ici. */
-.squad-type-label::before {
-  content: ''; display: inline-block; width: 6px; height: 6px;
-  border-radius: 50%; background: var(--accent);
-  margin-right: 7px; vertical-align: 0.1em;
+  font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium); letter-spacing: var(--ls-label); text-transform: uppercase;
+  color: var(--accent); margin-bottom: 6px; padding-right: 96px;
 }
 .squad-title {
   font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-6);
-  letter-spacing: var(--ls-tight); margin-bottom: 4px; padding-right: 70px; color: var(--noir);
+  line-height: var(--lh-tight); letter-spacing: var(--ls-display); margin-bottom: 6px; padding-right: 70px; color: var(--noir);
 }
-.squad-details { font-size: var(--fs-2); color: var(--gris-fonce); margin-bottom: 12px; }
+.squad-details { font-size: var(--fs-3); color: var(--gris-fonce); margin-bottom: 12px; }
 .squad-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 15px; border-top: 1px solid var(--gris-clair); }
 .avatar-stack { display: flex; }
 .avatar {
   width: 30px; height: 30px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-family: var(--font-display); font-size: var(--fs-1); font-weight: var(--fw-display);
-  margin-left: -10px; background: var(--bleu); color: var(--sur-media); box-shadow: 0 0 0 2.5px var(--blanc);
+  margin-left: -10px; background: var(--bleu); color: var(--sur-lave); box-shadow: 0 0 0 2.5px var(--blanc);
 }
 .avatar:first-child { margin-left: 0; }
-.avatar-accent { background: var(--accent); color: var(--accent-contraste); }
-.squad-count { font-size: var(--fs-3); font-weight: var(--fw-bold); margin-left: 9px; color: var(--gris-fonce); }
+.avatar-accent { background: var(--accent-plein, var(--accent)); color: var(--accent-contraste); }
+.squad-count { font-size: var(--fs-3); font-weight: var(--fw-medium); margin-left: 9px; color: var(--gris-fonce); }
 .squad-cta {
-  font-size: var(--fs-2); font-weight: var(--fw-bold); padding: 11px 17px; border-radius: var(--radius-pill);
-  cursor: pointer; border: 1px solid transparent; letter-spacing: var(--ls-normal); text-transform: none;
-  background: var(--noir); color: var(--blanc); transition: all 0.16s;
+  font-size: var(--fs-4); font-weight: var(--fw-bold); padding: 11px 18px; border-radius: var(--radius-pill);
+  cursor: pointer; border: 1.5px solid transparent; letter-spacing: var(--ls-normal); text-transform: none;
+  background: var(--noir); color: var(--bg); transition: all 0.16s;
   display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
 }
-.squad-cta-accent { background: var(--accent); color: var(--accent-contraste); }
-.squad-cta-gerer  { background: var(--orange-deep); color: #fff; }
+.squad-cta-accent { background: var(--accent-plein, var(--accent)); color: var(--accent-contraste); }
+.squad-cta-gerer  { background: transparent; color: var(--noir); border-color: var(--noir); }
 /* Rejoint / Complet : un etat, pas une action. Il sort de la couleur au lieu
    de garder un aplat de marque a demi efface par l'opacite du :disabled. */
 .squad-cta-etat {
@@ -649,22 +682,24 @@ button, input[type="submit"], input[type="button"] {
 
 /* ─── Wallet ─── */
 .wallet-amounts { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-bottom: 16px; }
-.amount-card { border-radius: var(--radius); padding: 17px; border: none; box-shadow: var(--shadow); }
-.amount-card .label { margin-bottom: 6px; opacity: 0.85; }
-.amount-value { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-8); line-height: var(--lh-display); }
+.amount-card { border-radius: var(--radius); padding: 18px; border: 1px solid var(--gris-clair); box-shadow: none; background: var(--blanc); }
+.amount-card .label { margin-bottom: 8px; opacity: 0.85; }
+.amount-value { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-8); line-height: var(--lh-display); letter-spacing: var(--ls-display); }
 .amount-sub { font-size: var(--fs-2); margin-top: 4px; opacity: 0.85; }
 
+/* Le pass : un aplat lave à 32px de rayon, seul élément à porter le halo. */
 .qr-wrapper {
-  background: var(--blanc); border-radius: var(--radius); overflow: hidden;
-  margin-bottom: 14px; border: 1px solid var(--gris-clair); box-shadow: var(--shadow);
+  background: var(--rouge); color: var(--sur-lave); border-radius: var(--radius-xl); overflow: hidden;
+  margin-bottom: 18px; border: none; box-shadow: var(--halo-lave);
 }
 .qr-header {
-  padding: 15px 17px; border-bottom: 1px dashed var(--line-2);
-  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 22px 14px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
 }
-.qr-name { font-size: var(--fs-3); font-weight: var(--fw-bold); letter-spacing: var(--ls-normal); }
+.qr-name { font-size: var(--fs-4); font-weight: var(--fw-bold); letter-spacing: var(--ls-normal); }
 .qr-body {
-  background: var(--rouge); padding: 34px 20px; text-align: center; cursor: pointer; user-select: none;
+  background: rgba(17,16,19,.1); margin: 0 18px 18px; border-radius: var(--radius);
+  padding: 34px 20px; text-align: center; cursor: pointer; user-select: none;
   min-height: 188px; display: grid; place-items: center;
 }
 /* Blanc écrit en dur, et non var(--blanc) : ce jeton désigne « la surface
@@ -674,12 +709,12 @@ button, input[type="submit"], input[type="button"] {
    repères d'angle. La bibliothèque n'en dessine aucune : elle vient d'ici, et
    doit donc rester de la couleur du fond du code, quel que soit le thème. */
 .qr-body.revealed { background: #FFFFFF; padding: 20px; }
-.qr-reveal-text { font-family: var(--font-display); font-style: italic; font-size: var(--fs-7); color: #fff; line-height: var(--lh-tight); }
+.qr-reveal-text { font-family: var(--font-display); font-weight: var(--fw-display); font-size: var(--fs-6); color: var(--sur-lave); line-height: var(--lh-tight); letter-spacing: var(--ls-display); }
 #qr-canvas { display: block; margin: 0 auto; }
 
 .pass-list-header {
   display: flex; align-items: center; justify-content: space-between; padding: 14px 0;
-  border-top: 1px solid var(--gris-clair); font-size: var(--fs-1); font-weight: var(--fw-bold);
+  border-top: 1px solid var(--gris-clair); font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium);
   letter-spacing: var(--ls-label); text-transform: uppercase; color: var(--gris);
 }
 .pass-item { padding: 13px 0; border-bottom: 1px solid var(--gris-clair); display: flex; align-items: center; gap: 13px; }
@@ -687,28 +722,28 @@ button, input[type="submit"], input[type="button"] {
 .pass-item-info { flex: 1; }
 .pass-item-name { font-size: var(--fs-4); font-weight: var(--fw-semibold); }
 .pass-item-sub  { font-size: var(--fs-2); color: var(--gris); margin-top: 2px; }
-.pass-item-eco  { font-size: var(--fs-4); font-weight: var(--fw-bold); color: var(--rouge); }
+.pass-item-eco  { font-family: var(--font-mono); font-size: var(--fs-4); font-weight: var(--fw-semibold); color: var(--sur-lime-clair); }
 
 /* ─── Formulaires ─── */
 .form-group { margin-bottom: 16px; }
 .form-group label {
-  display: block; font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-label);
+  display: block; font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium); letter-spacing: var(--ls-label);
   text-transform: uppercase; margin-bottom: 8px; color: var(--gris);
 }
 .form-group input, .form-group select, .form-group textarea {
-  width: 100%; padding: 14px 16px; border: 1.5px solid var(--line-2);
+  width: 100%; padding: 15px 18px; border: 1px solid var(--gris-clair);
   border-radius: var(--radius-sm); box-shadow: none;
   font-family: var(--font-sans); font-size: var(--fs-5); background: var(--blanc); color: var(--noir);
   transition: border-color 0.15s, box-shadow 0.15s; outline: none;
 }
 .form-group input::placeholder, .form-group textarea::placeholder { color: var(--gris); }
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-  border-color: var(--bleu); outline: none; box-shadow: 0 0 0 4px var(--bleu-clair);
+  border-color: var(--rouge); outline: none; box-shadow: 0 0 0 3px var(--rouge-clair);
 }
 .form-group textarea { resize: vertical; min-height: 80px; }
 /* Precision sous un champ : en casse normale, contrairement a l'etiquette. */
 .aide-champ {
-  margin: 7px 0 0; font-size: var(--fs-1); line-height: var(--lh-normal);
+  margin: 7px 0 0; font-family: var(--font-sans); font-size: var(--fs-2); line-height: var(--lh-normal);
   color: var(--gris); text-transform: none; letter-spacing: 0;
 }
 /* min-width: 0 sur les colonnes — sans quoi la rangée déborde.
@@ -747,7 +782,7 @@ button, input[type="submit"], input[type="button"] {
 /* Le focus clavier arrive sur l'input masque : c'est le label qui doit
    le montrer, sinon la navigation au clavier devient invisible. */
 .champ-fichier input[type="file"]:focus-visible + label.btn {
-  outline: 2px solid var(--bleu); outline-offset: 2px;
+  outline: 2px solid var(--rouge); outline-offset: 2px;
 }
 .champ-fichier .nom-fichier {
   font-size: var(--fs-2); color: var(--gris-fonce);
@@ -773,60 +808,77 @@ button, input[type="submit"], input[type="button"] {
 .case input[type="checkbox"]::before {
   content: ''; width: 10px; height: 10px; transform: scale(0);
   transition: transform .12s ease-in-out;
-  box-shadow: inset 1em 1em var(--sur-media);
+  box-shadow: inset 1em 1em var(--sur-lave);
   clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
 }
 .case input[type="checkbox"]:checked {
-  background: var(--rouge-deep); border-color: var(--rouge-deep);
+  background: var(--rouge); border-color: var(--rouge);
 }
 .case input[type="checkbox"]:checked::before { transform: scale(1); }
-.case input[type="checkbox"]:focus-visible { outline: 2px solid var(--bleu); outline-offset: 2px; }
+.case input[type="checkbox"]:focus-visible { outline: 2px solid var(--rouge); outline-offset: 2px; }
 
 /* ─── Auth Pages ─── */
 .auth-page {
   min-height: 100vh; display: grid; grid-template-columns: 1fr; align-items: center;
-  padding: 46px 24px; max-width: 440px; margin: 0 auto;
+  padding: 46px 24px; max-width: 460px; margin: 0 auto;
 }
-.auth-logo { margin-bottom: 38px; }
-.brand { font-family: var(--font-sans); font-weight: var(--fw-bold); font-size: var(--fs-6); letter-spacing: var(--ls-tight); color: var(--noir); }
-.brand em { font-style: italic; font-family: var(--font-display); color: var(--rouge); }
+.auth-logo { margin-bottom: 34px; }
+.brand { font-family: var(--font-display); font-weight: var(--fw-display); font-size: var(--fs-6); letter-spacing: var(--ls-display); color: var(--noir); }
+.brand em { font-style: normal; font-family: var(--font-sans); font-weight: var(--fw-regular); color: var(--gris); }
 .auth-headline { margin-bottom: 30px; }
+/* Lien tertiaire aligné à droite, sous le mot de passe (« Mot de passe oublié ? »). */
+.auth-oubli { display: flex; justify-content: flex-end; margin: -4px 0 18px; }
+.auth-oubli a {
+  display: inline-flex; align-items: center; min-height: var(--touch-min);
+  color: var(--sur-rouge-clair); font-weight: var(--fw-bold); font-size: var(--fs-4); text-decoration: none;
+}
+/* Comptes de démonstration : bloc de données, donc en mono. */
+.auth-demo {
+  margin-top: 32px; padding: 16px 18px; background: var(--blanc); border-radius: var(--radius-md);
+  font-family: var(--font-mono); font-size: var(--fs-2); line-height: 1.7; color: var(--gris);
+}
+.auth-demo strong { display: block; color: var(--noir); font-weight: var(--fw-medium); text-transform: uppercase; letter-spacing: var(--ls-label); margin-bottom: 4px; }
 
 .type-toggle {
   display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
-  border: 1px solid var(--line-2); border-radius: var(--radius-pill); overflow: hidden;
-  margin-bottom: 24px; padding: 4px; background: var(--blanc);
+  border: none; border-radius: var(--radius-pill); overflow: hidden;
+  margin-bottom: 24px; padding: 5px; background: var(--blanc);
 }
 .type-toggle-btn {
-  padding: 11px; font-size: var(--fs-3); font-weight: var(--fw-bold); text-align: center; cursor: pointer;
-  border: none; border-radius: var(--radius-pill); background: transparent; color: var(--gris-fonce);
+  padding: 12px; font-size: var(--fs-4); font-weight: var(--fw-semibold); text-align: center; cursor: pointer;
+  border: none; border-radius: var(--radius-pill); background: transparent; color: var(--gris);
   transition: all 0.18s;
 }
-.type-toggle-btn.active { background: var(--noir); color: var(--blanc); }
+.type-toggle-btn.active { background: var(--noir); color: var(--bg); }
 
 .auth-link { text-align: center; margin-top: 20px; font-size: var(--fs-4); color: var(--gris); }
-.auth-link a { color: var(--bleu); font-weight: var(--fw-bold); text-decoration: none; }
+.auth-link a { color: var(--noir); font-weight: var(--fw-bold); text-decoration: none; }
 
-/* ─── Partner Dashboard ─── */
+/* ─── Espace partenaire (« linkee pro ») ───
+   Charte : le jour pour les pros. Fond craie, barre latérale en surface
+   claire, tableaux et graphiques en basalte ; la lave ne sert qu'aux actions. */
 .partner-shell { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
 .partner-sidebar {
-  background: linear-gradient(160deg,#26221E,#161310); color: #F3EEE3; padding: 28px 22px;
+  background: var(--blanc); color: var(--noir); padding: 28px 18px;
+  border-right: 1px solid var(--gris-clair);
   position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  display: flex; flex-direction: column;
 }
-.sidebar-brand { margin-bottom: 42px; }
-.sidebar-nav { display: flex; flex-direction: column; gap: 5px; }
+.sidebar-brand { margin-bottom: 36px; padding: 0 6px; }
+.sidebar-nav { display: flex; flex-direction: column; gap: 4px; }
 .sidebar-link {
-  display: flex; align-items: center; gap: 11px; padding: 12px 14px; border-radius: var(--radius-sm);
-  color: rgba(243,238,227,.6); text-decoration: none; font-size: var(--fs-4); font-weight: var(--fw-semibold); transition: all 0.15s;
+  display: flex; align-items: center; gap: 11px; padding: 11px 14px; border-radius: var(--radius-pill);
+  color: var(--gris-fonce); text-decoration: none; font-size: var(--fs-4); font-weight: var(--fw-semibold); transition: all 0.15s;
 }
-.sidebar-link:hover, .sidebar-link.active { background: rgba(243,238,227,.12); color: #fff; }
+.sidebar-link:hover { background: var(--surface-2); color: var(--noir); }
+.sidebar-link.active { background: var(--noir); color: var(--bg); }
 .sidebar-link .icon { font-size: var(--fs-5); }
-.sidebar-venue { margin-top: auto; padding-top: 24px; border-top: 1px solid rgba(243,238,227,.12); }
+.sidebar-venue { margin-top: auto; padding: 24px 6px 0; border-top: 1px solid var(--gris-clair); }
 .sidebar-venue-name {
-  font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-label); text-transform: uppercase;
-  color: rgba(243,238,227,.5); margin-bottom: 3px;
+  font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium); letter-spacing: var(--ls-label); text-transform: uppercase;
+  color: var(--gris); margin-bottom: 3px;
 }
-.sidebar-venue-city { font-size: var(--fs-3); color: rgba(243,238,227,.8); }
+.sidebar-venue-city { font-size: var(--fs-3); color: var(--gris-fonce); }
 
 .partner-main { padding: 40px 48px; overflow-y: auto; background: var(--bg); }
 
@@ -852,13 +904,13 @@ button, input[type="submit"], input[type="button"] {
 /* Surface commune : un seul endroit ou regler le fond, le filet et l'ombre
    des blocs du back-office. */
 .admin-carte {
-  background: var(--blanc); border: 1px solid var(--line-2);
-  border-radius: var(--radius); padding: 22px;
+  background: var(--blanc); border: 1px solid var(--gris-clair);
+  border-radius: var(--radius); padding: 24px;
 }
 .admin-carte + .admin-carte { margin-top: 18px; }
 .admin-titre {
   font-family: var(--font-display); font-weight: var(--fw-black);
-  font-size: var(--fs-6); margin-bottom: 16px;
+  font-size: var(--fs-6); letter-spacing: var(--ls-display); margin-bottom: 16px;
 }
 
 /* Tuiles de chiffres. auto-fit plutot qu'un nombre de colonnes fixe : la
@@ -868,16 +920,16 @@ button, input[type="submit"], input[type="button"] {
   gap: 14px; margin-bottom: 26px;
 }
 .admin-tuile {
-  background: var(--blanc); border: 1px solid var(--line-2);
-  border-radius: var(--radius); box-shadow: var(--shadow-xs); padding: 18px 20px;
+  background: var(--blanc); border: 1px solid var(--gris-clair);
+  border-radius: var(--radius); box-shadow: none; padding: 20px 22px;
 }
 .admin-tuile dt {
-  font-size: var(--fs-1); font-weight: var(--fw-bold); text-transform: uppercase;
-  letter-spacing: var(--ls-label); color: var(--gris); margin-bottom: 6px;
+  font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium); text-transform: uppercase;
+  letter-spacing: var(--ls-label); color: var(--gris); margin-bottom: 8px;
 }
 .admin-tuile dd {
   font-family: var(--font-display); font-weight: var(--fw-black);
-  font-size: var(--fs-8); line-height: var(--lh-display); color: var(--noir);
+  font-size: var(--fs-8); line-height: var(--lh-display); letter-spacing: var(--ls-display); color: var(--noir);
 }
 /* Les deux <dd> d'une tuile n'ont pas le meme role : le premier porte le
    chiffre, le second la legende. Sans cette reprise, la legende heritait
@@ -906,11 +958,11 @@ button, input[type="submit"], input[type="button"] {
 .admin-filtre { display: flex; flex-direction: column; gap: 5px; }
 .admin-filtre.est-large { flex: 1 1 220px; min-width: 0; }
 .admin-filtre > label {
-  font-size: var(--fs-1); font-weight: var(--fw-bold); text-transform: uppercase;
-  letter-spacing: var(--ls-wide); color: var(--gris);
+  font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium); text-transform: uppercase;
+  letter-spacing: var(--ls-label); color: var(--gris);
 }
 .admin-filtre input, .admin-filtre select {
-  padding: 10px 14px; border: 1px solid var(--line-2); background: var(--blanc);
+  padding: 10px 14px; border: 1px solid var(--gris-clair); background: var(--blanc);
   color: var(--noir); font-family: var(--font-sans); font-size: var(--fs-4); width: 100%;
 }
 .admin-filtres .btn { flex-shrink: 0; }
@@ -941,19 +993,19 @@ button, input[type="submit"], input[type="button"] {
    s'inversait, et la piste de la jauge (un blanc translucide) disparaissait
    sur le fond clair du theme sombre. */
 .admin-northstar {
-  background: linear-gradient(160deg, #26221E, #161310); color: #F3EEE3;
+  background: #111013; color: #F5F1E8;
   border-radius: var(--radius); padding: 26px 28px; margin-bottom: 24px;
 }
 .admin-northstar-label {
-  font-size: var(--fs-1); font-weight: var(--fw-bold); text-transform: uppercase;
+  font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium); text-transform: uppercase;
   letter-spacing: var(--ls-label); opacity: .6; margin-bottom: 8px;
 }
 .admin-northstar-valeur {
   font-family: var(--font-display); font-weight: var(--fw-black);
-  font-size: var(--fs-10); line-height: var(--lh-display);
+  font-size: var(--fs-10); line-height: var(--lh-display); letter-spacing: var(--ls-display);
 }
 .admin-northstar-jauge {
-  height: 6px; background: rgba(243,238,227,.18); border-radius: var(--radius-pill);
+  height: 6px; background: rgba(245,241,232,.18); border-radius: var(--radius-pill);
   margin-top: 16px; overflow: hidden;
 }
 .admin-northstar-jauge > span { display: block; height: 100%; background: var(--lime); border-radius: var(--radius-pill); }
@@ -976,16 +1028,16 @@ button, input[type="submit"], input[type="button"] {
 .admin-graph { display: flex; align-items: flex-end; gap: 6px; height: 170px; }
 .admin-graph-mois { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .admin-graph-barres { display: flex; align-items: flex-end; justify-content: center; gap: 3px; height: 140px; width: 100%; }
-.admin-graph-barres > span { width: 42%; max-width: 16px; border-radius: 3px 3px 0 0; }
-.admin-graph-recette { background: var(--succes); }
-.admin-graph-depense { background: var(--rouge-deep); }
-.admin-graph-mois small { font-size: var(--fs-1); color: var(--gris); white-space: nowrap; }
-.admin-graph-mois.est-courant small { color: var(--noir); font-weight: var(--fw-bold); }
+.admin-graph-barres > span { width: 42%; max-width: 16px; border-radius: 6px 6px 0 0; }
+.admin-graph-recette { background: var(--noir); }
+.admin-graph-depense { background: var(--rouge); }
+.admin-graph-mois small { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--gris); white-space: nowrap; text-transform: uppercase; }
+.admin-graph-mois.est-courant small { color: var(--sur-rouge-clair); font-weight: var(--fw-semibold); }
 .admin-legende { display: flex; gap: 16px; font-size: var(--fs-2); color: var(--gris-fonce); flex-wrap: wrap; }
 .admin-legende span { display: inline-flex; align-items: center; gap: 6px; }
 .admin-legende i { width: 10px; height: 10px; border-radius: 2px; }
 
-.admin-tableau { background: var(--blanc); border: 1px solid var(--line-2); border-radius: var(--radius); overflow: hidden; }
+.admin-tableau { background: var(--blanc); border: 1px solid var(--gris-clair); border-radius: var(--radius); overflow: hidden; }
 .admin-tableau-defilant { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .admin-vide { text-align: center; padding: 40px; color: var(--gris); }
 
@@ -1000,19 +1052,26 @@ button, input[type="submit"], input[type="button"] {
 
 /* Encart de rappel des regles : du texte, pas un bloc d'alerte. */
 .admin-encart {
-  background: var(--surface-2); border: 1px solid var(--line-2); border-radius: var(--radius);
+  background: var(--surface-2); border: 1px solid var(--gris-clair); border-radius: var(--radius-md);
   padding: 18px 20px; font-size: var(--fs-2); color: var(--gris-fonce); line-height: var(--lh-normal);
 }
 .admin-encart strong { color: var(--noir); }
 .partner-header { margin-bottom: 32px; }
 .partner-header .event-label {
-  font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-label); text-transform: uppercase;
+  font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-regular); letter-spacing: var(--ls-normal);
   color: var(--gris); margin-bottom: 8px;
 }
 .partner-headline { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-10); line-height: var(--lh-display); letter-spacing: var(--ls-display); }
-/* Meme regle que .display-italic cote etudiant : l'italique porte l'accent,
-   pas la couleur. */
-.partner-headline em { font-style: italic; color: inherit; display: block; }
+/* Univers pro : la lave est réservée aux actions, la seconde ligne du titre
+   reste donc à l'encre (« Fréquentation » de la maquette). */
+.partner-headline em { font-style: normal; color: inherit; display: block; }
+/* h1.titre-page remet la police à « inherit » : sans ce sélecteur plus
+   précis, le titre du tableau de bord retombait en police de texte. */
+h1.titre-page.partner-headline {
+  font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-10);
+  line-height: var(--lh-display); letter-spacing: var(--ls-display);
+}
+@media (max-width: 900px) { h1.titre-page.partner-headline { font-size: var(--fs-9); } }
 
 .dashboard-grid { display: grid; grid-template-columns: 1fr 320px; gap: 22px; }
 .dashboard-left { display: flex; flex-direction: column; gap: 18px; }
@@ -1020,8 +1079,8 @@ button, input[type="submit"], input[type="button"] {
 
 .partner-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .partner-stat-card {
-  border-radius: var(--radius); padding: 18px 20px;
-  border: 1px solid var(--gris-clair); box-shadow: var(--shadow-xs);
+  border-radius: var(--radius); padding: 20px 22px;
+  border: 1px solid var(--gris-clair); box-shadow: none;
 }
 /* fond blanc uniquement si la carte ne porte pas un fond de couleur (.card-*) */
 .partner-stat-card:not(.card-rouge):not(.card-bleu):not(.card-lime):not(.card-noir):not(.card-orange) {
@@ -1030,49 +1089,50 @@ button, input[type="submit"], input[type="button"] {
 .partner-stat-card.card-rouge, .partner-stat-card.card-bleu,
 .partner-stat-card.card-noir, .partner-stat-card.card-orange { border: none; }
 .partner-stat-card .ps-label {
-  font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-label); text-transform: uppercase;
+  font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium); letter-spacing: var(--ls-label); text-transform: uppercase;
   margin-bottom: 10px; color: var(--gris);
 }
-.partner-stat-card .ps-value { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-9); line-height: var(--lh-display); }
+.partner-stat-card .ps-value { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-9); line-height: var(--lh-display); letter-spacing: var(--ls-display); }
 .partner-stat-card .ps-sub { font-size: var(--fs-2); margin-top: 6px; color: var(--gris-fonce); }
-/* Sur un aplat de marque, le gris des intitules tombe sous le seuil de
-   lisibilite : on repasse sur l'encre claire prevue pour ces fonds. */
+/* Sur un aplat vif, les intitulés passent en basalte adouci ; sur basalte,
+   en craie adoucie. */
 .partner-stat-card.card-rouge .ps-label, .partner-stat-card.card-bleu .ps-label,
-.partner-stat-card.card-orange .ps-label, .partner-stat-card.card-noir .ps-label,
+.partner-stat-card.card-orange .ps-label, .partner-stat-card.card-lime .ps-label,
 .partner-stat-card.card-rouge .ps-sub, .partner-stat-card.card-bleu .ps-sub,
-.partner-stat-card.card-orange .ps-sub, .partner-stat-card.card-noir .ps-sub {
-  color: rgba(255,255,255,.82);
+.partner-stat-card.card-orange .ps-sub, .partner-stat-card.card-lime .ps-sub {
+  color: rgba(17,16,19,.78);
 }
-.partner-stat-card.card-lime .ps-label, .partner-stat-card.card-lime .ps-sub {
-  color: var(--lime-deep);
+.partner-stat-card.card-noir .ps-label, .partner-stat-card.card-noir .ps-sub {
+  color: rgba(245,241,232,.72);
 }
 
-.chart-card { background: var(--blanc); border-radius: var(--radius); padding: 20px; border: 1px solid var(--gris-clair); box-shadow: var(--shadow-xs); }
+.chart-card { background: var(--blanc); border-radius: var(--radius); padding: 22px; border: 1px solid var(--gris-clair); box-shadow: none; }
 .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-.chart-label { font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-label); text-transform: uppercase; color: var(--gris); }
-.chart-trend { font-size: var(--fs-4); font-weight: var(--fw-bold); color: var(--rouge); }
+.chart-label { font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium); letter-spacing: var(--ls-label); text-transform: uppercase; color: var(--gris); }
+.chart-trend { font-size: var(--fs-4); font-weight: var(--fw-bold); color: var(--succes); }
 
+/* Panneau d'affirmation : basalte, comme les graphiques de la charte. */
 .salle-panel {
-  background: linear-gradient(155deg,#5A50D2,#392FA0); color: #fff; border-radius: var(--radius);
-  padding: 24px; border: none; box-shadow: var(--shadow);
+  background: #111013; color: #F5F1E8; border-radius: var(--radius);
+  padding: 24px; border: none; box-shadow: none;
 }
-.salle-panel .sp-label { font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-label); text-transform: uppercase; opacity: 0.8; margin-bottom: 12px; }
-.salle-panel .sp-title { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-8); line-height: var(--lh-display); margin-bottom: 4px; }
-.salle-panel .sp-title em { font-style: italic; color: var(--lime); }
+.salle-panel .sp-label { font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium); letter-spacing: var(--ls-label); text-transform: uppercase; opacity: 0.72; margin-bottom: 12px; }
+.salle-panel .sp-title { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-8); line-height: var(--lh-display); letter-spacing: var(--ls-display); margin-bottom: 4px; }
+.salle-panel .sp-title em { font-style: normal; color: var(--lime); }
 
 .school-bar { margin-top: 20px; }
 .school-row { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
 .school-name { font-size: var(--fs-2); flex: 1; opacity: 0.9; }
-.school-track { flex: 2; height: 6px; background: rgba(255,255,255,0.22); border-radius: var(--radius-pill); overflow: hidden; }
+.school-track { flex: 2; height: 6px; background: rgba(245,241,232,0.18); border-radius: var(--radius-pill); overflow: hidden; }
 .school-fill { height: 100%; border-radius: var(--radius-pill); }
-.school-pct { font-size: var(--fs-2); font-weight: var(--fw-bold); width: 32px; text-align: right; }
+.school-pct { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); width: 38px; text-align: right; }
 
 .conseil-card {
-  background: linear-gradient(160deg,#26221E,#161310); color: #F3EEE3; border-radius: var(--radius);
-  padding: 18px; font-size: var(--fs-3); line-height: var(--lh-normal); border: none; box-shadow: var(--shadow);
+  background: #111013; color: #F5F1E8; border-radius: var(--radius);
+  padding: 20px; font-size: var(--fs-3); line-height: var(--lh-normal); border: none; box-shadow: none;
 }
 .conseil-card strong {
-  font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-label); text-transform: uppercase;
+  font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-label); text-transform: uppercase;
   color: var(--lime); margin-right: 6px;
 }
 
@@ -1085,7 +1145,7 @@ button, input[type="submit"], input[type="button"] {
 .events-table { width: 100%; border-collapse: collapse; }
 
 .events-table th {
-  text-align: left; font-size: var(--fs-1); font-weight: var(--fw-bold);
+  text-align: left; font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium);
   letter-spacing: var(--ls-label); text-transform: uppercase; color: var(--gris);
   /* Le padding haut valait zero : le libelle de colonne se collait au bord
      du cadre, sans le moindre air, alors que les cellules en dessous
@@ -1111,7 +1171,7 @@ button, input[type="submit"], input[type="button"] {
   .events-table thead { display: none; }
   .events-table tr {
     background: var(--blanc); border: 1px solid var(--gris-clair);
-    border-radius: var(--radius); box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-md); box-shadow: none;
     padding: 4px 16px 10px; margin-bottom: 14px;
   }
   .events-table td {
@@ -1120,7 +1180,7 @@ button, input[type="submit"], input[type="button"] {
   }
   .events-table td::before {
     content: attr(data-label);
-    font-size: var(--fs-1); font-weight: var(--fw-bold);
+    font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium);
     letter-spacing: var(--ls-label); text-transform: uppercase;
     color: var(--gris); flex-shrink: 0;
   }
@@ -1139,13 +1199,14 @@ button, input[type="submit"], input[type="button"] {
 
 .badge {
   display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
-  border-radius: var(--radius-pill); font-size: var(--fs-1); font-weight: var(--fw-bold);
-  letter-spacing: var(--ls-wide); text-transform: uppercase;
+  border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-label); text-transform: uppercase;
 }
-.badge-bar       { background: var(--bleu-clair);   color: var(--sur-bleu-clair); }
+/* Soirées en lave, restos en moutarde (charte). */
+.badge-bar       { background: var(--rouge-clair);  color: var(--sur-rouge-clair); }
 .badge-boite     { background: var(--rouge-clair);  color: var(--sur-rouge-clair); }
 .badge-resto     { background: var(--orange-clair); color: var(--sur-orange-clair); }
-.badge-afterwork { background: var(--lime-clair);   color: var(--sur-lime-clair); }
+.badge-afterwork { background: var(--rouge-clair);  color: var(--sur-rouge-clair); }
 /* « Flash » est un état, pas une catégorie : il prend la teinte coral.
    Le seul cas où il se pose sur un fond coloré, c'est la carte flash
    elle-même — là, et là seulement, il passe en verre translucide.     */
@@ -1157,24 +1218,24 @@ button, input[type="submit"], input[type="button"] {
 /* Sur la carte flash, le fond est deja un aplat de marque : le badge passe
    en verre translucide, comme le reste des elements poses dessus. */
 .badge-sponsorise-media {
-  background: rgba(255,255,255,.18); color: #fff; border-color: rgba(255,255,255,.4);
-  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  background: rgba(17,16,19,.1); color: var(--sur-lave); border-color: rgba(17,16,19,.3);
 }
 .event-card-flash .badge-flash,
-.card-rouge .badge-flash { background: rgba(255,255,255,.2); color: #fff; }
+.card-rouge .badge-flash { background: rgba(17,16,19,.12); color: var(--sur-lave); }
 /* « Gratuit » est un fait, pas une catégorie : il ne doit surtout pas
    emprunter la teinte d'un type de lieu, sinon la couleur ment. */
-.badge-gratuit   { background: var(--noir); color: var(--blanc); }
+.badge-gratuit   { background: var(--noir); color: var(--bg); }
 
 /* ─── Modal / Sheet ─── */
 .modal-overlay {
-  position: fixed; inset: 0; background: rgba(20,17,14,.42); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  position: fixed; inset: 0; background: rgba(17,16,19,.6); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
   z-index: 200; display: flex; align-items: flex-end; justify-content: center;
   opacity: 0; pointer-events: none; transition: opacity 0.25s;
 }
 .modal-overlay.open { opacity: 1; pointer-events: all; }
 .modal-sheet {
   width: 100%; max-width: 440px; background: var(--bg); border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  border: 1px solid var(--gris-clair); border-bottom: none;
   padding: 12px 22px 36px; transform: translateY(100%);
   transition: transform 0.34s cubic-bezier(0.32, 0.72, 0, 1); max-height: 90vh; overflow-y: auto;
 }
@@ -1184,38 +1245,41 @@ button, input[type="submit"], input[type="button"] {
 /* ─── Toast ─── */
 .toast {
   position: fixed; bottom: calc(var(--nav-h) + 18px); left: 50%;
-  transform: translateX(-50%) translateY(14px); background: var(--noir); color: var(--blanc);
+  transform: translateX(-50%) translateY(14px); background: var(--noir); color: var(--bg);
   padding: 12px 20px; border-radius: var(--radius-pill); font-size: var(--fs-3); font-weight: var(--fw-semibold);
   z-index: 300; opacity: 0; pointer-events: none; transition: all 0.28s cubic-bezier(.2,.9,.3,1);
   white-space: nowrap; box-shadow: var(--shadow-lg);
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-.toast.success { background: var(--succes); color: #fff; }
-.toast.error   { background: var(--danger); color: #fff; }
+/* Validé en volt, erreur en alerte : aplats vifs, texte basalte. */
+.toast.success { background: var(--lime); color: var(--sur-lave); }
+.toast.error   { background: var(--alerte-vif); color: var(--sur-lave); }
 
 /* ─── Profil ─── */
+/* Maquette « Moi » : pas de bandeau, une surface à l'encre du thème, un
+   avatar lave aux initiales basalte. */
 .profil-header {
-  background: linear-gradient(160deg,#26221E,#161310); color: #F3EEE3;
-  padding: 28px 22px 32px; text-align: center; border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  background: transparent; color: var(--noir);
+  padding: 28px var(--gutter) 20px; text-align: left; border-radius: 0;
 }
 .profil-avatar {
   width: 72px; height: 72px; border-radius: 50%; background: var(--rouge);
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-display); font-size: var(--fs-7); font-weight: var(--fw-display); color: #fff;
-  margin: 0 auto 16px; box-shadow: 0 8px 22px -8px rgba(224,73,43,.7), 0 0 0 3px rgba(243,238,227,.14);
+  font-family: var(--font-display); font-size: var(--fs-7); font-weight: var(--fw-display); color: var(--sur-lave);
+  margin: 0 0 16px; box-shadow: none;
 }
-.profil-name { font-family: var(--font-display); font-size: var(--fs-7); font-weight: var(--fw-black); color: #F3EEE3; }
-.profil-school { font-size: var(--fs-3); color: rgba(243,238,227,.6); margin-top: 4px; }
+.profil-name { font-family: var(--font-display); font-size: var(--fs-7); font-weight: var(--fw-black); letter-spacing: var(--ls-display); color: var(--noir); }
+.profil-school { font-size: var(--fs-3); color: var(--gris); margin-top: 4px; }
 .profil-item {
   display: flex; align-items: center; justify-content: space-between;
   padding: 15px 0; border-bottom: 1px solid var(--gris-clair); font-size: var(--fs-5);
 }
-.profil-item a { color: var(--rouge); text-decoration: none; font-weight: var(--fw-semibold); }
+.profil-item a { color: var(--sur-rouge-clair); text-decoration: none; font-weight: var(--fw-semibold); }
 
 /* ─── Section Divider ─── */
 .section-divider { display: flex; align-items: center; gap: 12px; margin: 22px 0 14px; }
 .section-divider .sd-label {
-  font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-label); text-transform: uppercase;
+  font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium); letter-spacing: var(--ls-label); text-transform: uppercase;
   color: var(--gris); white-space: nowrap;
 }
 .section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--line-2); }
@@ -1240,8 +1304,8 @@ button, input[type="submit"], input[type="button"] {
 .event-lieu-rang .event-lieu { flex: 1; min-width: 0; }
 .btn-suivre-lieu {
   flex-shrink: 0; cursor: pointer;
-  border: 1px solid var(--gris-clair); border-radius: var(--radius-pill);
-  padding: 5px 11px; font-size: var(--fs-1); font-weight: var(--fw-bold);
+  border: 1.5px solid var(--line-2); border-radius: var(--radius-pill);
+  padding: 5px 12px; font-size: var(--fs-2); font-weight: var(--fw-bold);
   white-space: nowrap;
   /* Le serveur rend « + SUIVRE », le JavaScript réécrit « + Suivre » après un
      clic : la casse changeait sous les yeux. C'est la feuille qui tranche. */
@@ -1249,9 +1313,16 @@ button, input[type="submit"], input[type="button"] {
 }
 /* Sur la carte flash, le fond est un aplat de marque : le bouton y emprunte
    l'encre claire, comme les badges voisins. */
+/* Sur l'aplat lave, le script repeint le bouton avec les couleurs de surface
+   après chaque clic ; ici l'aplat impose les siennes. */
 .btn-suivre-lieu--media {
-  border-color: rgba(255,255,255,.5); color: #fff;
-  font-weight: var(--fw-display);
+  border-color: var(--sur-lave) !important; color: var(--sur-lave) !important;
+  background: rgba(17,16,19,.08) !important;
+  font-weight: var(--fw-bold);
+}
+.btn-suivre-lieu--media[data-etat="accepted"],
+.btn-suivre-lieu--media[data-following="1"]:not([data-etat]) {
+  background: #111013 !important; color: #F5F1E8 !important;
 }
 
 /* ─── Style de musique ───
@@ -1259,16 +1330,16 @@ button, input[type="submit"], input[type="button"] {
    le style informe, il ne concurrence pas le titre de la soirée. */
 .badge-musique {
   display: inline-flex; align-items: center; gap: 4px;
-  background: var(--surface-2); color: var(--gris-fonce);
+  background: transparent; color: var(--gris-fonce);
   border: 1px solid var(--line-2); border-radius: var(--radius-pill);
-  padding: 2px 9px; font-size: var(--fs-1); font-weight: var(--fw-bold);
+  padding: 2px 9px; font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium);
   text-transform: uppercase; letter-spacing: var(--ls-wide); white-space: nowrap;
 }
 /* Sur la carte flash, le fond est un aplat de marque : le badge y emprunte
    l'encre claire, comme la mention « Sponsorisé » voisine. */
 .badge-musique-media {
-  background: rgba(255,255,255,.18); color: var(--sur-media);
-  border-color: rgba(255,255,255,.34);
+  background: rgba(17,16,19,.1); color: var(--sur-lave);
+  border-color: rgba(17,16,19,.3);
 }
 .pill-musique { font-weight: var(--fw-semibold); }
 .pill-musique .icon { margin-right: 4px; }
@@ -1295,17 +1366,17 @@ button, input[type="submit"], input[type="button"] {
   position: absolute; top: -3px; right: -3px;
   min-width: 19px; height: 19px; padding: 0 5px;
   display: inline-flex; align-items: center; justify-content: center;
-  background: var(--rouge-deep); color: #fff;
+  background: var(--rouge); color: var(--sur-lave);
   border: 2px solid var(--bg); border-radius: var(--radius-pill);
-  font-size: var(--fs-1); font-weight: var(--fw-bold); line-height: 1;
+  font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-semibold); line-height: 1;
 }
 .cloche__pastille[hidden] { display: none; }
 
 .notif-liste { display: flex; flex-direction: column; gap: 8px; }
 .notif-item {
   display: flex; flex-direction: column; gap: 10px;
-  padding: 12px; border-radius: var(--radius);
-  border: 1px solid var(--line-2); background: var(--blanc);
+  padding: 14px; border-radius: var(--radius-md);
+  border: 1px solid var(--gris-clair); background: var(--blanc);
   text-decoration: none; color: inherit;
 }
 .notif-item__lien {
@@ -1320,8 +1391,8 @@ button, input[type="submit"], input[type="button"] {
 .notif-item__texte { font-size: var(--fs-3); line-height: var(--lh-snug); }
 .notif-item__texte em { font-style: italic; font-weight: var(--fw-semibold); }
 .notif-item__date {
-  font-size: var(--fs-1); color: var(--gris); font-weight: var(--fw-bold);
-  text-transform: uppercase; letter-spacing: var(--ls-wide);
+  font-size: var(--fs-2); color: var(--gris); font-weight: var(--fw-regular);
+  text-transform: none; letter-spacing: var(--ls-normal);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .notif-item__vignette {
@@ -1333,12 +1404,12 @@ button, input[type="submit"], input[type="button"] {
    étiraient la ligne sur trois hauteurs pour deux mots. */
 .notif-item__actions { display: flex; gap: 8px; }
 .notif-oui, .notif-non {
-  flex: 1; min-height: 38px; padding: 0 12px; cursor: pointer;
-  border-radius: var(--radius-pill); font-size: var(--fs-1);
-  font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: var(--ls-wide);
+  flex: 1; min-height: 40px; padding: 0 12px; cursor: pointer;
+  border-radius: var(--radius-pill); font-size: var(--fs-3);
+  font-weight: var(--fw-bold); text-transform: none; letter-spacing: var(--ls-normal);
 }
-.notif-oui { background: var(--noir); color: var(--blanc); border: 1px solid var(--noir); }
-.notif-non { background: none; color: var(--gris-fonce); border: 1px solid var(--line-2); }
+.notif-oui { background: var(--rouge); color: var(--sur-lave); border: 1px solid var(--rouge); }
+.notif-non { background: none; color: var(--noir); border: 1px solid var(--line-2); }
 /* État vide de la cloche.
    Il était en 13px et en --gris, c'est-à-dire réglé comme une légende posée à
    côté d'autre chose. Mais quand le panneau est vide, cette phrase EST le
@@ -1362,12 +1433,12 @@ button, input[type="submit"], input[type="button"] {
    segmentés iOS. */
 .hub-toggle {
   display: flex;
-  background: var(--surface-2);
-  padding: 4px;
-  border: 1px solid var(--line-2);
+  background: var(--blanc);
+  padding: 5px;
+  border: none;
   border-radius: var(--radius-pill);
-  margin-bottom: 24px;
-  box-shadow: var(--shadow-xs);
+  margin-bottom: 20px;
+  box-shadow: none;
 }
 .hub-toggle a {
   flex: 1;
@@ -1376,18 +1447,18 @@ button, input[type="submit"], input[type="button"] {
   justify-content: center;
   text-align: center;
   padding: 12px;
-  font-weight: var(--fw-display);
-  font-size: var(--fs-3);
-  text-transform: uppercase;
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-4);
+  text-transform: none;
   text-decoration: none;
-  color: var(--gris-fonce);
+  color: var(--gris);
   border-radius: var(--radius-pill);
   transition: background .18s ease, color .18s ease;
 }
 .hub-toggle a.active {
   background: var(--noir);
-  color: var(--blanc);
-  box-shadow: var(--shadow-sm);
+  color: var(--bg);
+  box-shadow: none;
 }
 /* Sur ordinateur, un controle segmente ne doit pas s'etirer sur toute la
    largeur : il garde la taille de son contenu, comme sur telephone. */
@@ -1404,9 +1475,9 @@ button, input[type="submit"], input[type="button"] {
 .liste-personnes { display: flex; flex-direction: column; gap: 10px; }
 .ligne-personne {
   display: flex; align-items: center; gap: 10px;
-  background: var(--blanc); border: 1px solid var(--line-2);
-  border-radius: var(--radius); box-shadow: var(--shadow-xs);
-  padding: 8px 10px 8px 12px;
+  background: var(--blanc); border: 1px solid var(--gris-clair);
+  border-radius: var(--radius-md); box-shadow: none;
+  padding: 10px 12px 10px 14px;
 }
 .ligne-personne__lien {
   display: flex; align-items: center; gap: 12px;
@@ -1418,10 +1489,9 @@ button, input[type="submit"], input[type="button"] {
 .ligne-personne__meta {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.ligne-personne__nom { font-weight: var(--fw-bold); font-size: var(--fs-3); }
+.ligne-personne__nom { font-family: var(--font-display); font-weight: var(--fw-display); font-size: var(--fs-4); letter-spacing: var(--ls-tight); }
 .ligne-personne__meta {
-  font-size: var(--fs-1); color: var(--gris); font-weight: var(--fw-bold);
-  text-transform: uppercase; letter-spacing: var(--ls-wide);
+  font-size: var(--fs-2); color: var(--gris); font-weight: var(--fw-regular);
 }
 /* Les points communs tiennent sur une ligne, tronquée au bord : les pastilles
    d'avant ajoutaient une deuxième rangée à chaque carte. Coupée net, la ligne
@@ -1435,15 +1505,16 @@ button, input[type="submit"], input[type="button"] {
           mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
 }
 .ligne-personne__affinites > * { white-space: nowrap; flex-shrink: 0; }
+/* « Squad en commun » : la pastille volt de la maquette. */
 .ligne-personne__squad {
   display: inline-flex; align-items: center; gap: 3px;
-  color: var(--sur-rouge-clair); text-transform: uppercase;
-  letter-spacing: var(--ls-wide);
+  background: var(--lime); color: var(--sur-lave);
+  padding: 1px 8px; border-radius: var(--radius-pill);
 }
 .ligne-personne__suivre {
-  flex-shrink: 0; min-height: var(--touch-min); padding: 0 14px;
-  border: 1px solid var(--gris-clair); border-radius: var(--radius-pill);
-  font-size: var(--fs-1); font-weight: var(--fw-bold); cursor: pointer;
+  flex-shrink: 0; min-height: 36px; padding: 0 16px;
+  border: 1px solid transparent; border-radius: var(--radius-pill);
+  font-size: var(--fs-3); font-weight: var(--fw-bold); cursor: pointer;
   white-space: nowrap;
 }
 .liste-personnes__vide {
@@ -1452,7 +1523,7 @@ button, input[type="submit"], input[type="button"] {
 }
 
 /* ─── Suggestion Banner ─── */
-.banner-card { border-radius: var(--radius); padding: 15px 17px; margin-bottom: 16px; display: flex; align-items: center; gap: 13px; box-shadow: var(--shadow-sm); }
+.banner-card { border-radius: var(--radius-md); padding: 16px 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 13px; box-shadow: none; }
 .banner-icon { font-size: var(--fs-6); flex-shrink: 0; }
 .banner-text { flex: 1; font-size: var(--fs-3); line-height: var(--lh-snug); font-weight: var(--fw-medium); }
 
@@ -1473,6 +1544,8 @@ button, input[type="submit"], input[type="button"] {
   .dashboard-grid { grid-template-columns: 1fr; }
   .partner-stat-grid { grid-template-columns: 1fr 1fr; }
   .partner-headline { font-size: var(--fs-9); }
+  .sidebar-brand { padding: 0; }
+  .partner-sidebar { border-right: none; border-bottom: 1px solid var(--gris-clair); }
 }
 
 /* ─── Barre de progression de navigation ─────────────────────────────────
@@ -1492,7 +1565,7 @@ button, input[type="submit"], input[type="button"] {
 
 /* ─── Spinner ─── */
 .spinner {
-  width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+  width: 20px; height: 20px; border: 2px solid currentColor; border-right-color: transparent; border-bottom-color: transparent;
   border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -1502,9 +1575,9 @@ button, input[type="submit"], input[type="button"] {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 /* ─── Utilities ─── */
-.text-rouge { color: var(--rouge); }
-.text-bleu  { color: var(--bleu); }
-.text-lime  { color: var(--lime-deep); }
+.text-rouge { color: var(--sur-rouge-clair); }
+.text-bleu  { color: var(--sur-bleu-clair); }
+.text-lime  { color: var(--sur-lime-clair); }
 .text-gris  { color: var(--gris); }
 .text-blanc { color: var(--blanc); }
 .font-medium { font-weight: var(--fw-medium); }
@@ -1518,12 +1591,12 @@ button, input[type="submit"], input[type="button"] {
 
 /* ─── Interests ─── */
 .interest-tag {
-  padding: 10px 15px; border: 1px solid var(--line-2); border-radius: var(--radius-pill);
-  background: var(--blanc); font-size: var(--fs-2); font-weight: var(--fw-semibold); color: var(--gris-fonce);
+  padding: 9px 15px; border: 1px solid var(--line-2); border-radius: var(--radius-pill);
+  background: transparent; font-size: var(--fs-3); font-weight: var(--fw-medium); color: var(--noir);
   transition: all 0.16s ease; box-shadow: none; user-select: none;
   display: inline-block;
 }
-.interest-tag.active { background: var(--bleu); color: #fff; border-color: var(--bleu); transform: none; box-shadow: none; }
+.interest-tag.active { background: var(--noir); color: var(--bg); border-color: var(--noir); transform: none; box-shadow: none; }
 .interest-tag:active { transform: scale(0.97); box-shadow: none; }
 
 /* Le sélecteur de centres d'intérêt.
@@ -1547,39 +1620,112 @@ button, input[type="submit"], input[type="button"] {
   position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer;
 }
 .interest-chip input:checked + .interest-tag {
-  background: var(--bleu); color: #fff; border-color: var(--bleu);
+  background: var(--noir); color: var(--bg); border-color: var(--noir);
 }
 .interest-chip input:focus-visible + .interest-tag {
-  outline: 2px solid var(--bleu); outline-offset: 2px;
+  outline: 2px solid var(--rouge); outline-offset: 2px;
 }
 /* Le repli : même gabarit qu'une étiquette, mais c'est un bouton. */
 .interest-plus {
   cursor: pointer; font-family: var(--font-sans); border-style: dashed;
-  color: var(--sur-bleu-clair); background: var(--bleu-clair); border-color: var(--bleu-clair);
+  color: var(--gris-fonce); background: transparent; border-color: var(--line-2);
   min-width: 46px;
 }
-.interest-plus:focus-visible { outline: 2px solid var(--bleu); outline-offset: 2px; }
+.interest-plus:focus-visible { outline: 2px solid var(--rouge); outline-offset: 2px; }
 
 /* Étiquette en lecture seule (profil, fiche d'un autre étudiant). Elle
    était définie dans le <style> de view_profile.php seulement : la page
    « Moi » ne pouvait pas la réutiliser sans la recopier. */
+/* Maquette « Moi » : les centres d'intérêt en pilule craie pleine. */
 .interest-pill {
-  display: inline-block; padding: 5px 12px;
-  background: var(--bleu-clair); color: var(--sur-bleu-clair);
+  display: inline-block; padding: 7px 14px;
+  background: var(--noir); color: var(--bg);
   border-radius: var(--radius-pill);
-  font-size: var(--fs-2); font-weight: var(--fw-bold);
+  font-size: var(--fs-3); font-weight: var(--fw-semibold);
 }
-a.interest-pill:hover { background: var(--bleu); color: #fff; }
+a.interest-pill:hover { background: var(--rouge); color: var(--sur-lave); }
 
-/* ─── Logo ─── */
+/* ─── Logo ───
+   Deux anneaux entrelacés (l'étudiant et le lieu) et le logotype « linkee »,
+   dont le double « ee » est en lave. Rendu par marqueLinkee() (includes/
+   marque.php) : ne jamais le recomposer dans une autre police.        */
 :root { --logo-accent: var(--rouge); }
+.marque {
+  display: inline-flex; align-items: center; gap: .42em;
+  font-size: var(--fs-6); color: var(--noir); text-decoration: none; line-height: 1;
+}
+.marque__anneaux { width: 1.62em; height: 1em; flex-shrink: 0; overflow: visible; }
+.marque__mot {
+  font-family: var(--font-display); font-weight: var(--fw-display);
+  letter-spacing: -0.045em; font-size: 1em; line-height: 1;
+}
+.marque__ee { color: var(--rouge); }
+.marque__suffixe {
+  font-family: var(--font-display); font-weight: var(--fw-regular);
+  letter-spacing: -0.03em; color: var(--gris); margin-left: .12em;
+}
 .logo {
   display: flex; align-items: center; gap: 10px;
-  font-family: var(--font-display); font-weight: var(--fw-display); font-style: italic; font-size: var(--fs-6); color: var(--noir);
+  font-family: var(--font-display); font-weight: var(--fw-display); font-size: var(--fs-6); color: var(--noir);
 }
 .logo-icon { width: 32px; height: 32px; flex-shrink: 0; }
 .logo-icon .accent { stroke: var(--logo-accent); }
-.logo em { color: var(--rouge); font-style: italic; margin-left: 4px; }
+.logo em { color: var(--rouge); font-style: normal; margin-left: 4px; }
+
+/* Univers sport (squads) : le dôme remplace la lave pour l'accent du titre,
+   la catégorie sélectionnée et l'action principale (maquettes 10 et 11). */
+.univers-sport .display-italic { color: var(--sur-bleu-clair); }
+.univers-sport .pill.active { background: var(--bleu); border-color: var(--bleu); color: var(--sur-lave); }
+.univers-sport .btn-primary { background: var(--bleu); color: var(--sur-lave); }
+
+/* En-tête des écrans étudiant (maquette : « Salut Arthur » puis le titre). */
+.salut { font-size: var(--fs-4); color: var(--gris); margin-bottom: 4px; }
+
+/* Recherche (annuaire, abonnements) : un champ en pilule, loupe à droite. */
+.recherche-annuaire {
+  width: 100%; padding: 14px 52px 14px 20px; border: 1px solid var(--gris-clair);
+  border-radius: var(--radius-pill); font-size: var(--fs-4); outline: none;
+  background: var(--blanc); color: var(--noir);
+}
+.recherche-annuaire:focus { border-color: var(--rouge); }
+
+/* Le logo en tête du rail ordinateur : absent de la barre du téléphone. */
+.nav-marque { display: none; text-decoration: none; }
+
+/* Retour : un rond de surface, flèche à l'encre (maquettes 04, 07, 11, 12). */
+.bouton-retour {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--touch-min); height: var(--touch-min); border-radius: 50%;
+  background: var(--blanc); color: var(--noir); text-decoration: none;
+  border: 1px solid var(--gris-clair); flex-shrink: 0;
+}
+.bouton-retour:hover { background: var(--surface-2); }
+/* Sur une photo ou un aplat, le rond passe en basalte. */
+.bouton-retour--media { background: #111013; color: #F5F1E8; border-color: #111013; }
+
+/* « Partager » posé sur une photo ou un aplat : la pilule basalte. */
+.bouton-partager {
+  display: inline-flex; align-items: center; gap: 7px; min-height: var(--touch-min);
+  padding: 0 18px; border-radius: var(--radius-pill); border: none; cursor: pointer;
+  background: #111013; color: #F5F1E8; font-size: var(--fs-4); font-weight: var(--fw-bold);
+}
+.bouton-partager:hover { background: #242127; }
+
+/* Confirmation : une surface et le point volt de la maquette. */
+.encart-ok {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: var(--blanc); border: 1px solid var(--gris-clair); border-radius: var(--radius-md);
+  padding: 16px 18px; margin-bottom: 24px; font-size: var(--fs-4); line-height: var(--lh-normal);
+}
+.encart-ok::before {
+  content: ''; width: 9px; height: 9px; border-radius: 50%; background: var(--lime);
+  flex-shrink: 0; margin-top: .45em;
+}
+.encart-info {
+  background: var(--surface-2); border: 1px dashed var(--line-2); border-radius: var(--radius-md);
+  padding: 16px; margin-bottom: 24px; font-size: var(--fs-3);
+}
+.encart-info a { color: var(--sur-rouge-clair); }
 
 /* ═══════════════════════════════════════════════════════════
    RESPONSIVE DESKTOP / TABLETTE
@@ -1665,23 +1811,25 @@ a.interest-pill:hover { background: var(--bleu); color: #fff; }
     width: 224px; max-width: none; height: auto;
     flex-direction: column; justify-content: flex-start; align-items: stretch;
     gap: 4px; padding: 22px 12px;
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
   }
+  /* Le logo en tête du rail : sur ordinateur, la marque a sa place. */
+  .nav-marque { display: flex; padding: 4px 16px 22px; font-size: var(--fs-5); }
 
   .nav-item {
     flex: 0 0 auto; flex-direction: row; align-items: center;
     justify-content: flex-start; gap: 13px;
-    padding: 12px 14px; border-radius: var(--radius-sm);
+    padding: 12px 16px; border-radius: var(--radius-pill);
     transition: background .16s ease, color .16s ease;
   }
   .nav-item span:last-child {
     font-size: var(--fs-4); font-weight: var(--fw-semibold);
     letter-spacing: var(--ls-normal); text-transform: none;
   }
-  .nav-item:hover { background: rgba(243,238,227,.08); color: #fff; }
-  .nav-item.active { background: rgba(243,238,227,.14); color: #fff; }
-  /* La pastille signalait l'onglet actif faute de place ; ici le fond suffit. */
-  .nav-item.active::before { display: none; }
+  .nav-item:hover { background: var(--surface-2); color: var(--noir); }
+  .nav-item.active { background: var(--noir); color: var(--bg); }
+  /* Sur le rail, le fond encre signale déjà l'onglet actif. */
+  .nav-item.active .nav-icon { color: inherit; }
 
   /* Plus de barre en bas, donc plus de reserve a lui garder. */
   .app-shell { padding-bottom: 48px; }

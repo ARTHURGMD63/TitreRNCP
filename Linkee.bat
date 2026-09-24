@@ -1,6 +1,6 @@
 @echo off
 rem ============================================================
-rem  StudentLink — lanceur
+rem  Linkee — lanceur
 rem
 rem  Double-cliquer sur ce fichier, ou sur le raccourci du Bureau.
 rem  Il ouvre une fenetre, verifie que tout est en place, affiche les
@@ -19,7 +19,7 @@ rem     de la machine n'est pas modifiee — c'est ce qui evite de la
 rem     desactiver globalement pour un seul script local.
 rem ============================================================
 
-title StudentLink
+title Linkee
 cd /d "%~dp0mobile"
 
 "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File "%~dp0mobile\demarrer.ps1"

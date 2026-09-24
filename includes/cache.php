@@ -66,7 +66,7 @@ function cacheDossier(): ?string
     }
     $verifie = true;
 
-    $candidat = rtrim(sys_get_temp_dir(), '/\\') . DIRECTORY_SEPARATOR . 'studentlink-cache';
+    $candidat = rtrim(sys_get_temp_dir(), '/\\') . DIRECTORY_SEPARATOR . 'linkee-cache';
     if (!is_dir($candidat) && !@mkdir($candidat, 0700, true) && !is_dir($candidat)) {
         // Sans dossier inscriptible, le cache se désactive silencieusement :
         // une page lente vaut mieux qu'une page en erreur.

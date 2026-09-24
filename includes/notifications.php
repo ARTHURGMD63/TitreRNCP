@@ -15,6 +15,8 @@
  */
 
 require_once __DIR__ . '/social.php';
+require_once __DIR__ . '/uploads.php';
+require_once __DIR__ . '/icons.php';
 
 /**
  * Fenêtre au-delà de laquelle une nouvelle n'en est plus une.
@@ -191,4 +193,118 @@ function notificationsEtudiant(PDO $pdo, int $uid, int $limite = 25): array
     usort($items, static fn(array $a, array $b): int => strcmp((string) $b['ts'], (string) $a['ts']));
 
     return ['items' => $items, 'aTraiter' => count($aTraiter)];
+}
+
+/**
+ * Rendu d'une notification — une seule écriture, partagée par la feuille de
+ * la cloche (explore.php) et la page Notifications (notifications.php).
+ *
+ * Le balisage est celui qui vivait dans explore.php, déplacé tel quel : les
+ * boutons Accepter / Refuser gardent leurs classes et leurs data-*, et app.js
+ * les branche sur n'importe quelle page.
+ *
+ * @param array<string,mixed> $n un élément de notificationsEtudiant()['items']
+ */
+function notificationHtml(array $n): string
+{
+    ob_start();
+?>
+          <?php if ($n['type'] === 'demande'): $d = $n['acteur']; ?>
+            <div class="notif-item notif-item--demande">
+              <a href="<?= baseUrl('/view_profile.php?id=' . (int)$d['id']) ?>" class="notif-item__lien">
+                <?= avatarHtml($d['photo'] ?? null, $d['prenom'], 38) ?>
+                <span class="notif-item__corps">
+                  <span class="notif-item__texte">
+                    <strong><?= htmlspecialchars($d['prenom'] . ' ' . mb_substr((string)$d['nom'], 0, 1) . '.') ?></strong>
+                    demande à te suivre
+                  </span>
+                  <span class="notif-item__date"><?= htmlspecialchars(depuisQuand((string)$n['ts'])) ?></span>
+                </span>
+              </a>
+              <div class="notif-item__actions">
+                <button class="btn-accept-follow notif-oui" data-user-id="<?= (int)$d['id'] ?>">Accepter</button>
+                <button class="btn-decline-follow notif-non" data-user-id="<?= (int)$d['id'] ?>">Refuser</button>
+              </div>
+            </div>
+
+          <?php elseif ($n['type'] === 'invitation'): $inv = $n['invit']; ?>
+            <div class="notif-item carte-invitation">
+              <div class="notif-item__lien">
+                <?= avatarHtml($inv['from_photo'] ?? null, $inv['from_prenom'], 38, $inv['cible_type'] === 'event' ? 'var(--rouge)' : 'var(--bleu)') ?>
+                <span class="notif-item__corps">
+                  <span class="notif-item__texte">
+                    <strong><?= htmlspecialchars($inv['from_prenom'] . ' ' . mb_substr((string)$inv['from_nom'], 0, 1) . '.') ?></strong>
+                    t'invite à <em><?= htmlspecialchars($inv['cible_nom'] ?? 'une sortie') ?></em>
+                  </span>
+                  <span class="notif-item__date"><?= htmlspecialchars(depuisQuand((string)$n['ts'])) ?></span>
+                </span>
+              </div>
+              <div class="notif-item__actions">
+                <button type="button" class="btn-accept-invite notif-oui" data-id="<?= (int)$inv['id'] ?>">Accepter</button>
+                <button type="button" class="btn-decline-invite notif-non" data-id="<?= (int)$inv['id'] ?>">Refuser</button>
+              </div>
+            </div>
+
+          <?php elseif ($n['type'] === 'ami'): $a = $n['activite']; ?>
+            <a class="notif-item notif-item__lien" href="<?= $a['cible_type'] === 'event'
+                  ? baseUrl('/view_event.php?id=' . (int)$a['cible_id'])
+                  : baseUrl('/squads.php') ?>">
+              <?= avatarHtml($a['photo'] ?? null, $a['prenom'], 38, $a['cible_type'] === 'event' ? 'var(--rouge)' : 'var(--lime)') ?>
+              <span class="notif-item__corps">
+                <span class="notif-item__texte">
+                  <strong><?= htmlspecialchars($a['prenom']) ?></strong>
+                  <?= $a['cible_type'] === 'event' ? 'va à' : 'rejoint' ?>
+                  <em><?= htmlspecialchars($a['cible_nom']) ?></em>
+                </span>
+                <span class="notif-item__date"><?= htmlspecialchars($a['lieu'] . ' · ' . depuisQuand((string)$n['ts'])) ?></span>
+              </span>
+            </a>
+
+          <?php else: $e = $n['event']; ?>
+            <a class="notif-item notif-item__lien" href="<?= baseUrl('/view_event.php?id=' . (int)$e['id']) ?>">
+              <span class="notif-item__vignette"><?= icon('calendrier', 'icon-sm') ?></span>
+              <span class="notif-item__corps">
+                <span class="notif-item__texte">
+                  Nouveau chez <strong><?= htmlspecialchars($e['lieu']) ?></strong> :
+                  <em><?= htmlspecialchars($e['titre']) ?></em>
+                </span>
+                <span class="notif-item__date"><?= htmlspecialchars(dateFr($e['date_heure'], 'j M') . ' · ' . depuisQuand((string)$n['ts'])) ?></span>
+              </span>
+            </a>
+          <?php endif; ?>
+<?php
+    return (string) ob_get_clean();
+}
+
+/**
+ * Instant où l'étudiant a tout lu, ou null s'il ne l'a jamais fait.
+ *
+ * Null aussi tant que la migration v17 n'est pas posée : la page s'affiche
+ * alors comme avant, tout en « nouveau », plutôt que de tomber en erreur.
+ */
+function notificationsLuesLe(PDO $pdo, int $uid): ?string
+{
+    try {
+        $stmt = $pdo->prepare("SELECT lues_le FROM notifications_lues WHERE user_id = ?");
+        $stmt->execute([$uid]);
+        $v = $stmt->fetchColumn();
+        return $v === false || $v === null ? null : (string) $v;
+    } catch (PDOException $e) {
+        return null;
+    }
+}
+
+/**
+ * Lecture des notifications : retient l'instant présent. Faux si la migration v17 manque.
+ */
+function marquerNotificationsLues(PDO $pdo, int $uid): bool
+{
+    try {
+        $stmt = $pdo->prepare("
+            INSERT INTO notifications_lues (user_id, lues_le) VALUES (?, NOW())
+            ON DUPLICATE KEY UPDATE lues_le = NOW()");
+        return $stmt->execute([$uid]);
+    } catch (PDOException $e) {
+        return false;
+    }
 }

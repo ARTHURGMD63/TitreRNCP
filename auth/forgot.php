@@ -39,10 +39,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-<?php pageDebut('StudentLink — Mot de passe oublié'); ?>
+<?php pageDebut('Linkee — Mot de passe oublié'); ?>
 <div class="auth-page">
   <div class="auth-logo">
-    <div class="brand">StudentLink <em>/ Sécurité</em></div>
+    <a class="bouton-retour" href="<?= baseUrl('/auth/login.php') ?>" aria-label="Retour à la connexion"><?= icon('fleche-g') ?></a>
   </div>
 
   <h1 class="auth-headline titre-page">
@@ -51,11 +51,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </h1>
 
   <?php if ($sent): ?>
-    <div style="background:var(--lime);color:var(--sur-media-encre);border:1px solid var(--gris-clair);box-shadow:var(--shadow);padding:20px;margin-bottom:24px;font-weight:var(--fw-bold);">
+    <div class="encart-ok" role="status">
       Si cet email est associé à un compte, tu recevras un lien de réinitialisation dans quelques minutes.
     </div>
     <?php if ($devLink): ?>
-      <div style="background:var(--bleu-clair);border:2px solid var(--bleu);padding:16px;margin-bottom:24px;font-size:var(--fs-3);">
+      <div class="encart-info">
         <strong class="with-icon"><?= icon('outil', 'icon-sm') ?>Mode dev — lien de réinitialisation :</strong><br>
         <a href="<?= htmlspecialchars($devLink) ?>" style="word-break:break-all;"><?= htmlspecialchars($devLink) ?></a>
       </div>
@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div class="form-error"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
 
-    <p style="font-size:var(--fs-4);color:var(--gris);margin-bottom:24px;">
+    <p style="font-size:var(--fs-5);color:var(--gris-fonce);line-height:var(--lh-normal);margin-bottom:24px;">
       Saisis ton adresse email. Si elle est associée à un compte, tu recevras un lien valable <strong>1 heure</strong>.
     </p>
 
@@ -77,13 +77,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                placeholder="arthur@uca.fr" required autofocus>
       </div>
       <button type="submit" class="btn btn-primary btn-full" style="margin-top:8px;">
-        → Envoyer le lien
+        Envoyer le lien
       </button>
     </form>
   <?php endif; ?>
 
   <div class="auth-link">
-    <a href="<?= baseUrl('/auth/login.php') ?>" style="font-size:var(--fs-3);">← Retour à la connexion</a>
+    <a href="<?= baseUrl('/auth/login.php') ?>" style="font-weight:var(--fw-medium);color:var(--gris);">Retour à la connexion</a>
   </div>
 </div>
 </body>

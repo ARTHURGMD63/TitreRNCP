@@ -112,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     background: var(--blanc);
     border-radius: var(--radius);
     border: 1px solid var(--gris-clair);
-    box-shadow: var(--shadow-lg);
+    box-shadow: none;
     padding: 32px;
     max-width: 640px;
   }
@@ -120,6 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     font-family: var(--font-display);
     font-weight: var(--fw-black);
     font-size: var(--fs-6);
+    letter-spacing: var(--ls-display);
     margin: 28px 0 14px;
     padding-bottom: 8px;
     border-bottom: 1px solid var(--gris-clair);
@@ -127,12 +128,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   .form-section-title:first-child { margin-top: 0; }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
-  .form-group label { font-size: var(--fs-1); font-weight: var(--fw-display); text-transform: uppercase; letter-spacing: var(--ls-wide); }
+  .form-group label { font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium); text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--gris); }
   .form-group input,
   .form-group select,
   .form-group textarea {
     border: 1px solid var(--gris-clair);
-    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    color: var(--noir);
+    padding: 12px 16px;
     font-family: var(--font-sans);
     font-size: var(--fs-4);
     background: var(--blanc);
@@ -150,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     gap: 13px;
     padding: 14px 16px;
     border: 1px solid var(--gris-clair);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     background: var(--blanc);
     margin-bottom: 12px;
     cursor: pointer;
@@ -170,14 +173,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   .toggle-row input[type=checkbox]::before {
     content: ''; width: 11px; height: 11px; transform: scale(0);
     transition: transform .12s ease-in-out;
-    box-shadow: inset 1em 1em var(--sur-media);
+    box-shadow: inset 1em 1em var(--sur-lave);
     clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
   }
   .toggle-row input[type=checkbox]:checked {
-    background: var(--rouge-deep); border-color: var(--rouge-deep);
+    background: var(--rouge); border-color: var(--rouge);
   }
   .toggle-row input[type=checkbox]:checked::before { transform: scale(1); }
-  .toggle-row input[type=checkbox]:focus-visible { outline: 2px solid var(--bleu); outline-offset: 2px; }
+  .toggle-row input[type=checkbox]:focus-visible { outline: 2px solid var(--rouge); outline-offset: 2px; }
   .toggle-row .toggle-label { font-weight: var(--fw-bold); font-size: var(--fs-4); }
   .toggle-row .toggle-desc { font-size: var(--fs-2); color: var(--gris); }
   .flash-extra, .sponsor-extra { display: none; margin-top: 12px; }
@@ -186,20 +189,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   .sponsor-grille { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
   .sponsor-choix {
     display: flex; align-items: flex-start; gap: 12px;
-    padding: 14px 16px; border: 1px solid var(--line-2); border-radius: var(--radius);
+    padding: 14px 16px; border: 1px solid var(--line-2); border-radius: var(--radius-md);
     background: var(--blanc); cursor: pointer; transition: border-color .15s ease;
   }
   .sponsor-choix:hover { border-color: var(--gris); }
-  .sponsor-choix:has(input:checked) { border-color: var(--rouge-deep); box-shadow: 0 0 0 1px var(--rouge-deep); }
-  .sponsor-choix input[type=radio] { margin-top: 3px; flex-shrink: 0; accent-color: var(--rouge-deep); }
+  .sponsor-choix:has(input:checked) { border-color: var(--rouge); box-shadow: 0 0 0 1px var(--rouge); }
+  .sponsor-choix input[type=radio] { margin-top: 3px; flex-shrink: 0; accent-color: var(--rouge); }
   .sponsor-choix .sc-nom { font-weight: var(--fw-bold); font-size: var(--fs-4); }
   .sponsor-choix .sc-desc { font-size: var(--fs-2); color: var(--gris); margin-top: 2px; }
   .sponsor-choix .sc-tarif {
     margin-left: auto; font-family: var(--font-display); font-weight: var(--fw-black);
-    font-size: var(--fs-6); white-space: nowrap;
+    font-size: var(--fs-6); letter-spacing: var(--ls-display); white-space: nowrap;
   }
   .sponsor-total {
-    margin-top: 14px; padding: 12px 16px; border-radius: var(--radius-sm);
+    margin-top: 14px; padding: 12px 16px; border-radius: var(--radius-md);
     background: var(--alerte-clair); color: var(--alerte);
     font-size: var(--fs-3); font-weight: var(--fw-semibold);
   }
@@ -207,21 +210,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     background: var(--danger-clair);
     color: var(--danger);
     border: 1px solid var(--danger);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     padding: 14px 18px;
     margin-bottom: 24px;
     font-size: var(--fs-4);
   }
-  .form-errors li { margin: 4px 0; color: var(--rouge); font-weight: var(--fw-semibold); }
+  .form-errors li { margin: 4px 0; color: var(--danger); font-weight: var(--fw-semibold); }
 </style>
-<?php pageDebut('StudentLink — Créer un événement', ['tete' => ob_get_clean()]); ?>
+<?php pageDebut('Linkee — Créer un événement', ['univers' => 'pro', 'tete' => ob_get_clean()]); ?>
 <div class="partner-shell">
 
   <aside class="partner-sidebar">
     <div class="sidebar-brand">
-      <div style="font-family:var(--font-sans);font-weight:var(--fw-bold);font-size:var(--fs-5);color:#fff;">
-        StudentLink <em style="font-style:italic;color:var(--rouge);">/ Partenaires</em>
-      </div>
+      <?= marqueLinkee('pro') ?>
     </div>
     <nav class="sidebar-nav">
       <a href="<?= baseUrl('/partenaire/dashboard.php') ?>" class="sidebar-link">
@@ -245,10 +246,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Abonnement
       </a>
     </nav>
-    <div style="margin-top:auto;padding:20px;border-top:1px solid rgba(255,255,255,0.1);">
-      <div style="font-weight:var(--fw-bold);font-size:var(--fs-3);color:#fff;"><?= htmlspecialchars(mb_strtoupper($etab['nom'])) ?></div>
-      <div style="font-size:var(--fs-1);color:rgba(255,255,255,0.4);margin-top:2px;"><?= htmlspecialchars($etab['ville']) ?></div>
-      <a href="<?= baseUrl('/auth/logout.php') ?>" class="lien-action" style="margin-top:12px;font-size:var(--fs-2);color:rgba(255,255,255,0.4);text-decoration:none;">→ Déconnexion</a>
+    <div style="margin-top:auto;padding:20px;border-top:1px solid var(--gris-clair);">
+      <div class="sidebar-venue-name"><?= htmlspecialchars(mb_strtoupper($etab['nom'])) ?></div>
+      <div style="font-size:var(--fs-1);color:var(--gris);margin-top:2px;"><?= htmlspecialchars($etab['ville']) ?></div>
+      <a href="<?= baseUrl('/auth/logout.php') ?>" class="lien-action" style="margin-top:12px;font-size:var(--fs-2);color:var(--gris);text-decoration:none;">→ Déconnexion</a>
     </div>
   </aside>
 

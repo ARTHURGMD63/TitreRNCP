@@ -33,6 +33,8 @@
 // change donc aucun ordre de chargement, il rend seulement la dépendance
 // explicite au lieu de la supposer.
 require_once __DIR__ . '/auth_check.php';
+// Le logo : toute page qui ouvre la coquille peut le dessiner.
+require_once __DIR__ . '/marque.php';
 
 /**
  * Ouvre la page : du doctype jusqu'au <body> inclus.
@@ -57,6 +59,10 @@ require_once __DIR__ . '/auth_check.php';
  *                          que passe le <style> propre à une page, capturé
  *                          par ob_start()/ob_get_clean() pour que le PHP
  *                          qu'il contient parfois soit évalué normalement.
+ *     'univers'  => string 'etudiant' (défaut) ou 'pro'. La charte Linkee
+ *                          donne « la nuit aux étudiants, le jour aux pros » :
+ *                          l'espace partenaire et le back-office restent en
+ *                          craie, quel que soit le thème choisi côté étudiant.
  */
 function pageDebut(string $titre, array $options = []): void
 {
@@ -65,6 +71,7 @@ function pageDebut(string $titre, array $options = []): void
     $scripts     = (array) ($options['scripts'] ?? []);
     $tete        = (string) ($options['tete'] ?? '');
     $description = (string) ($options['description'] ?? '');
+    $univers     = (string) ($options['univers'] ?? 'etudiant');
 
     echo "<!DOCTYPE html>\n";
     echo "<html lang=\"fr\">\n";
@@ -79,7 +86,7 @@ function pageDebut(string $titre, array $options = []): void
 
     // Avant la feuille de style : le thème est posé sur <html> par ce script
     // synchrone, sinon la page s'affiche en clair puis bascule en sombre.
-    echo themeBootScript() . "\n";
+    echo themeBootScript($univers === 'pro' ? 'light' : null) . "\n";
     echo metaCsrf() . "\n";
 
     // Le préfixe d'installation, pour que le JavaScript n'ait pas à le
@@ -87,19 +94,27 @@ function pageDebut(string $titre, array $options = []): void
     // et se trompait donc exactement dans les mêmes cas.
     echo metaBase() . "\n";
 
+    // Les deux polices du premier écran (titres, texte) sont préchargées : sans
+    // cela, le navigateur ne les découvre qu'après avoir lu la feuille, puis
+    // les @font-face. La mono (étiquettes) suit, sans bloquer.
+    foreach (['/assets/fonts/unbounded-latin.woff2', '/assets/fonts/instrument-sans-latin.woff2'] as $police) {
+        echo '<link rel="preload" href="' . htmlspecialchars(baseUrl($police), ENT_QUOTES) . "\" as=\"font\" type=\"font/woff2\" crossorigin>\n";
+    }
     echo '<link rel="stylesheet" href="' . htmlspecialchars(asset('/assets/css/style.css'), ENT_QUOTES) . "\">\n";
 
     // L'icône, sur toutes les pages. Elle manquait sur treize d'entre elles,
     // sans qu'aucune raison ne le justifie : un onglet sans icône se retrouve
-    // mal dans une barre qui en compte vingt.
-    echo '<link rel="icon" type="image/png" href="' . htmlspecialchars(baseUrl('/Logo.png'), ENT_QUOTES) . "\">\n";
+    // mal dans une barre qui en compte vingt. Par asset(), avec son empreinte :
+    // Apache la sert en cache « immutable » d'un an (.htaccess), et sans
+    // empreinte un changement de logo n'atteindrait jamais les visiteurs déjà venus.
+    echo '<link rel="icon" type="image/png" href="' . htmlspecialchars(asset('/Logo.png'), ENT_QUOTES) . "\">\n";
 
     if ($pwa) {
-        echo '<link rel="apple-touch-icon" href="' . htmlspecialchars(baseUrl('/Logo.png'), ENT_QUOTES) . "\">\n";
+        echo '<link rel="apple-touch-icon" href="' . htmlspecialchars(asset('/Logo.png'), ENT_QUOTES) . "\">\n";
         echo '<link rel="manifest" href="' . htmlspecialchars(baseUrl('/manifest.json'), ENT_QUOTES) . "\">\n";
         echo "<meta name=\"apple-mobile-web-app-capable\" content=\"yes\">\n";
         echo "<meta name=\"apple-mobile-web-app-status-bar-style\" content=\"black-translucent\">\n";
-        echo "<meta name=\"apple-mobile-web-app-title\" content=\"StudentLink\">\n";
+        echo "<meta name=\"apple-mobile-web-app-title\" content=\"Linkee\">\n";
     }
 
     foreach ($scripts as $script) {

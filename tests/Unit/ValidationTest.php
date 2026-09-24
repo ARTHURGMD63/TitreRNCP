@@ -91,7 +91,7 @@ final class ValidationTest extends TestCase
 
     public function testEmailValidationAcceptsValid(): void
     {
-        $this->assertNotFalse(filter_var('arthur@studentlink.fr', FILTER_VALIDATE_EMAIL));
+        $this->assertNotFalse(filter_var('arthur@linkee.fr', FILTER_VALIDATE_EMAIL));
         $this->assertNotFalse(filter_var('test+tag@uca.fr', FILTER_VALIDATE_EMAIL));
     }
 

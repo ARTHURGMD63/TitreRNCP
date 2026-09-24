@@ -1,11 +1,47 @@
 # Changelog
 
-Toutes les modifications notables de StudentLink sont documentées dans ce fichier.
+Toutes les modifications notables de Linkee sont documentées dans ce fichier.
 
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/),
 et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Added
+- **Linkee.** StudentLink devient Linkee : charte graphique v1.0 (basalte,
+  lave, craie ; Unbounded, Instrument Sans, JetBrains Mono) appliquée à tout
+  le web. L'app étudiant est sombre par défaut, l'espace partenaire et le
+  back-office restent clairs (`pageDebut(…, ['univers' => 'pro'])`). Le logo
+  se dessine par `marqueLinkee()` (`includes/marque.php`).
+- **Classement** (`classement.php`) : amis, école, Clermont. L'XP est celui
+  de la page « Moi » ; la liste globale est calculée une fois par minute et
+  mise en cache, l'XP de l'étudiant qui regarde reste en direct.
+- **Notifications en pleine page** (`notifications.php`), marquées lues à l'ouverture
+  (migration v17, table `notifications_lues`).
+- **XP, niveau et badges** de nouveau affichés sur « Moi ».
+- **Partager** un événement (feuille de partage native ou copie du lien).
+
+### Changed
+- **Polices hébergées avec l'application** (`assets/fonts/`, 112 Ko). Le
+  `@import` Google Fonts enchaînait trois allers-retours vers un serveur tiers
+  avant le premier affichage, et transmettait l'adresse IP des visiteurs à
+  Google. La CSP n'autorise plus aucune origine tierce pour styles et polices.
+- **Pass** : les QR codes portent désormais `linkee:` ; le scan accepte
+  toujours `studentlink:`, pour les pass déjà émis.
+- **Base par défaut** : `linkee` (au lieu de `studentlink`).
+
+### Fixed
+- **Emoji et caractères hors latin1 refusés** par une base créée avant
+  `utf8mb4` : 17 tables étaient restées en latin1, et un titre de squad, un
+  avis ou un nom contenant un emoji ou un « Ł » échouait (« Incorrect string
+  value »). La migration v18 les convertit, passe `invitations` en InnoDB et
+  pose six clés étrangères qui manquaient. Idempotente, sans effet sur une
+  base déjà conforme.
+- `db_setup.sql` créait `badges.icon` et `badges.couleur` aux largeurs
+  d'avant la v8.
+- Le logo (`Logo.png`) était servi sans empreinte de version alors qu'Apache
+  le met en cache un an : un changement de logo n'atteignait jamais les
+  visiteurs déjà venus.
 
 ### Changed
 - **Une seule coquille HTML, au lieu de vingt-quatre.** Le `<head>` était
@@ -234,7 +270,7 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 ### Added
 - **Une page d'accueil publique, avec le choix du public en tête.** La racine
   du site renvoyait vers le formulaire de connexion : rien n'expliquait ce
-  qu'est StudentLink, et un gérant de bar n'avait aucune raison d'aller plus
+  qu'est Linkee, et un gérant de bar n'avait aucune raison d'aller plus
   loin. `index.php` présente désormais le produit à ses deux publics —
   étudiants et établissements — derrière le même sélecteur segmenté que le hub
   de l'application. Les deux ne partagent presque rien (vocabulaire, arguments,
@@ -357,7 +393,7 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 - **Supports d'impression : flyer A6 pour les bars, affiches A3 pour la rue.**
   Le projet avait deux plaquettes A4 — un document qu'on lit assis, pas un
   support qu'on ramasse sur une table de bar ou qu'on croise à cinq mètres.
-  `docs/Flyer_Bars_StudentLink.html` et `docs/Affiches_Rue_StudentLink.html`
+  `docs/Flyer_Bars_Linkee.html` et `docs/Affiches_Rue_Linkee.html`
   reprennent la charte (papier chaud, coral, Playfair/DM Sans) aux formats et
   aux distances de lecture de l'affichage.
   - Les trois affiches ne sont pas trois déclinaisons d'une même accroche mais
@@ -382,7 +418,7 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
   régénéré depuis le flyer et jamais édité à la main — deux copies du même
   dessin finissent toujours par diverger.
 - **`docs/AVANT_IMPRESSION.md`** : ce qui reste à compléter avant un tirage
-  (le domaine `studentlink.fr` n'est pas réservé et figure en toutes lettres
+  (le domaine `linkee.fr` n'est pas réservé et figure en toutes lettres
   sur tous les supports), les spécifications à donner à l'imprimeur, la méthode
   de dépôt en bar, et le cadre légal de l'affichage — l'affichage sauvage
   relève des articles L.581-1 et suivants du code de l'environnement, et les
@@ -460,7 +496,7 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 - Les intérêts s'affichent sur la page « Moi » sous le nom, chaque étiquette
   menant à Explore filtré dessus. Ils n'existaient que dans le formulaire
   d'édition : il fallait ouvrir un formulaire pour lire sa propre fiche.
-- Filtre « ★ Comme moi » dans Explore › Personnes : les étudiants qui partagent
+- Filtre « Comme moi » dans Explore › Personnes : les étudiants qui partagent
   au moins un de mes intérêts, classés par nombre d'intérêts communs. Si je n'en
   ai déclaré aucun, l'option n'apparaît pas et l'URL directe explique pourquoi
   au lieu de rendre une liste vide.
@@ -682,7 +718,7 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 - Les étiquettes du sélecteur héritaient du `text-transform: uppercase` de
   `.form-group label` — elles sont des `<label>` — et sortaient en SORTIES,
   BOÎTES au milieu du formulaire d'inscription.
-- **Le QR code ne validait aucun pass.** Le pass est encodé `studentlink:<code>` mais
+- **Le QR code ne validait aucun pass.** Le pass est encodé `linkee:<code>` mais
   `api_scan.php` cherchait le texte décodé tel quel dans `inscriptions.qr_code`, qui ne
   contient que le code : tous les scans répondaient « Pass invalide ». Le préfixe est
   retiré côté serveur, et reste optionnel pour une saisie manuelle.
@@ -725,7 +761,7 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 
 ### Added
 - `partenaire/edit_event.php` — full edit form with CSRF protection, pre-populated fields, live stats bar (inscrits / check-in), flash toggle, ownership guard
-- ✏️ edit button in événements table linking to edit page
+- Edit button in événements table linking to edit page
 - `?updated=1` success banner after saving changes
 
 ## [1.5.0] - 2026-05-18
@@ -782,7 +818,7 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 - `CHANGELOG.md` et `CONTRIBUTING.md`
 - **Gamification** : système XP / niveaux / badges (9 badges débloquables)
 - **Dark mode** persistant via `localStorage` avec toggle dans le profil
-- **Avis & notes** 1-5★ après check-in d'un événement (`avis.php`)
+- **Avis & notes** 1 à 5 étoiles après check-in d'un événement (`avis.php`)
 - **Note moyenne** affichée sur les cartes d'événements dans `/explore.php`
 - **Pages légales** : Mentions légales, CGU, Politique de confidentialité (RGPD)
 - Module `includes/gamification.php` (helpers XP, niveau, badges)
@@ -797,7 +833,7 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 ### Added
 - **Gamification** : système XP / niveaux / badges (9 badges débloquables)
 - **Dark mode** persistant via `localStorage` avec toggle dans le profil
-- **Avis & notes** 1-5★ après check-in d'un événement (`avis.php`)
+- **Avis & notes** 1 à 5 étoiles après check-in d'un événement (`avis.php`)
 - **Note moyenne** affichée sur les cartes d'événements dans `/explore.php`
 - **Pages légales** : Mentions légales, CGU, Politique de confidentialité (RGPD)
 - Module `includes/gamification.php` (helpers XP, niveau, badges)

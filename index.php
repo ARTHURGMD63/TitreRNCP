@@ -1,6 +1,6 @@
 <?php
 /**
- * Page d'accueil publique — la vitrine de StudentLink.
+ * Page d'accueil publique — la vitrine de Linkee.
  *
  * Un visiteur qui tapait le nom de domaine tombait jusqu'ici sur un
  * formulaire de connexion : rien n'expliquait ce qu'est l'application, et un
@@ -68,11 +68,11 @@ $formules = [
 $sponsoDepart = (int) min(array_column(formulesSponsoring(), 'tarif'));
 
 $titres = [
-    'etudiants'      => 'StudentLink — La vie étudiante à prix réduit',
-    'etablissements' => 'StudentLink — Remplissez vos soirées creuses',
+    'etudiants'      => 'Linkee — La vie étudiante à prix réduit',
+    'etablissements' => 'Linkee — Remplissez vos soirées creuses',
 ];
 $description = $pour === 'etablissements'
-    ? 'StudentLink amène les étudiants de Clermont-Ferrand dans votre établissement : '
+    ? 'Linkee amène les étudiants de Clermont-Ferrand dans votre établissement : '
       . 'publiez une soirée, scannez les pass à l\'entrée, mesurez ce qu\'elle vous rapporte.'
     : 'Les soirées, les bons plans et les gens de ta ville au même endroit. Réserve ton '
       . 'pass, montre-le à l\'entrée, paie moins cher. Gratuit pour les étudiants.';
@@ -144,9 +144,9 @@ function lpEtape(int $rang, string $titre, string $texte): string
   .lp-section + .lp-section { border-top: 1px solid var(--gris-clair); }
   .lp-section__entete { max-width: 640px; margin-bottom: 32px; }
   .lp-surtitre {
-    display: block; font-size: var(--fs-1); font-weight: var(--fw-bold);
+    display: block; font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-medium);
     letter-spacing: var(--ls-label); text-transform: uppercase;
-    color: var(--rouge); margin-bottom: 12px;
+    color: var(--sur-rouge-clair); margin-bottom: 12px;
   }
   .lp-chapo {
     font-size: var(--fs-5); line-height: var(--lh-relaxed);
@@ -166,24 +166,24 @@ function lpEtape(int $rang, string $titre, string $texte): string
   .lp-chiffres { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 34px 0 0; }
   .lp-chiffre {
     background: var(--blanc); border: 1px solid var(--gris-clair);
-    border-radius: var(--radius); box-shadow: var(--shadow-xs); padding: 16px;
+    border-radius: var(--radius-md); box-shadow: none; padding: 16px;
   }
   .lp-chiffre dd {
     margin: 0; font-family: var(--font-display); font-weight: var(--fw-black);
-    font-size: var(--fs-8); line-height: var(--lh-display); font-variant-numeric: tabular-nums;
+    font-size: var(--fs-7); line-height: var(--lh-display); letter-spacing: var(--ls-display); font-variant-numeric: tabular-nums;
   }
   .lp-chiffre dt {
-    font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-wide);
-    text-transform: uppercase; color: var(--gris); line-height: var(--lh-snug); margin-top: 6px;
+    font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium); letter-spacing: var(--ls-label);
+    text-transform: uppercase; color: var(--gris); line-height: var(--lh-snug); margin-top: 8px;
   }
 
   /* ── Aperçu de l'application ── */
   .lp-apercu-cadre {
-    background: var(--surface-2); border: 1px solid var(--line-2);
-    border-radius: var(--radius-xl); padding: 18px; box-shadow: var(--shadow);
+    background: var(--blanc); border: 1px solid var(--gris-clair);
+    border-radius: var(--radius-xl); padding: 18px; box-shadow: none;
   }
   .lp-apercu-legende {
-    font-size: var(--fs-1); font-weight: var(--fw-bold); letter-spacing: var(--ls-label);
+    font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-medium); letter-spacing: var(--ls-label);
     text-transform: uppercase; color: var(--gris); margin: 0 0 12px;
   }
   .lp-apercu { display: flex; flex-direction: column; gap: 14px; }
@@ -193,16 +193,16 @@ function lpEtape(int $rang, string $titre, string $texte): string
   .lp-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(258px, 1fr)); gap: 16px; }
   .lp-carte {
     background: var(--blanc); border: 1px solid var(--gris-clair);
-    border-radius: var(--radius); box-shadow: var(--shadow-xs); padding: 22px;
+    border-radius: var(--radius); box-shadow: none; padding: 24px;
   }
   .lp-carte__icone {
     display: inline-flex; align-items: center; justify-content: center;
-    width: 40px; height: 40px; border-radius: var(--radius-sm);
+    width: 44px; height: 44px; border-radius: 50%;
     background: var(--rouge-clair); color: var(--sur-rouge-clair); margin-bottom: 14px;
   }
   .lp-carte__titre {
     font-family: var(--font-display); font-weight: var(--fw-black);
-    font-size: var(--fs-6); line-height: var(--lh-tight); margin: 0 0 8px;
+    font-size: var(--fs-5); line-height: var(--lh-tight); letter-spacing: var(--ls-display); margin: 0 0 8px;
   }
   .lp-carte__texte { margin: 0; font-size: var(--fs-4); line-height: var(--lh-relaxed); color: var(--gris-fonce); }
 
@@ -214,7 +214,7 @@ function lpEtape(int $rang, string $titre, string $texte): string
   .lp-etape { display: flex; gap: 14px; align-items: flex-start; }
   .lp-etape__rang {
     flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%;
-    background: var(--noir); color: var(--blanc);
+    background: var(--rouge); color: var(--sur-lave);
     display: flex; align-items: center; justify-content: center;
     font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-4);
   }
@@ -228,16 +228,16 @@ function lpEtape(int $rang, string $titre, string $texte): string
   }
   .lp-tarif {
     background: var(--blanc); border: 1px solid var(--gris-clair);
-    border-radius: var(--radius); box-shadow: var(--shadow-xs); padding: 24px;
+    border-radius: var(--radius); box-shadow: none; padding: 24px;
     display: flex; flex-direction: column; gap: 14px;
   }
   /* Une seule formule mise en avant : deux cartes « vedette » ne
      recommandent plus rien. */
-  .lp-tarif.est-vedette { border-color: var(--noir); box-shadow: var(--shadow); }
+  .lp-tarif.est-vedette { border: 2px solid var(--rouge); }
   .lp-tarif__entete { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-  .lp-tarif__nom { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-6); }
+  .lp-tarif__nom { font-family: var(--font-display); font-weight: var(--fw-black); font-size: var(--fs-6); letter-spacing: var(--ls-display); }
   .lp-tarif__prix {
-    font-family: var(--font-display); font-weight: var(--fw-black);
+    font-family: var(--font-display); font-weight: var(--fw-black); letter-spacing: var(--ls-display);
     font-size: var(--fs-8); line-height: var(--lh-display); text-align: right; white-space: nowrap;
   }
   .lp-tarif__prix small {
@@ -253,18 +253,20 @@ function lpEtape(int $rang, string $titre, string $texte): string
   .lp-tarif .btn { margin-top: auto; }
 
   /* ── Bandeau d'appel final ── */
+  /* Bandeau final : l'aplat lave de la marque, texte basalte. */
   .lp-bandeau {
-    background: linear-gradient(160deg, #26221E, #161310); color: #F3EEE3;
+    background: var(--rouge); color: var(--sur-lave);
     border-radius: var(--radius-xl); padding: 40px 28px; text-align: center;
+    box-shadow: var(--halo-lave);
   }
   .lp-bandeau h2 {
     font-family: var(--font-display); font-weight: var(--fw-black);
-    font-size: var(--fs-8); line-height: var(--lh-display); margin: 0 0 12px;
+    font-size: var(--fs-8); line-height: var(--lh-tight); letter-spacing: var(--ls-display); margin: 0 0 12px;
   }
-  .lp-bandeau p { margin: 0 auto 24px; max-width: 48ch; color: rgba(243,238,227,.78); line-height: var(--lh-relaxed); }
-  /* En thème sombre, le bandeau a presque la couleur du papier : sans ce
-     filet, il cesse d'être un bloc et redevient du fond. */
-  [data-theme="dark"] .lp-bandeau { border: 1px solid var(--line-2); }
+  .lp-bandeau p { margin: 0 auto 24px; max-width: 48ch; color: rgba(17,16,19,.8); line-height: var(--lh-relaxed); }
+  /* Sur la lave, l'action principale passe en basalte et la seconde en contour. */
+  .lp-bandeau .btn-rouge { background: #111013; color: #F5F1E8; }
+  .lp-bandeau .btn-outline-blanc { background: transparent; color: var(--sur-lave); border-color: var(--sur-lave); }
   .lp-bandeau__actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
 
   /* ── Pied de page ── */
@@ -297,14 +299,7 @@ function lpEtape(int $rang, string $titre, string $texte): string
 <header class="lp-entete">
   <div class="lp-conteneur">
     <div class="lp-entete__rangee">
-      <a href="<?= baseUrl('/') ?>" class="logo" style="text-decoration:none;">
-        <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <rect x="15" y="20" width="50" height="30" rx="15" stroke="var(--noir)" stroke-width="10"/>
-          <rect x="35" y="50" width="50" height="30" rx="15" class="accent" stroke-width="10"/>
-          <circle cx="50" cy="50" r="6" fill="var(--noir)"/>
-        </svg>
-        StudentLink
-      </a>
+      <?= marqueLinkee('', baseUrl('/')) ?>
       <div class="lp-entete__actions">
         <a href="<?= baseUrl('/auth/login.php') ?>" class="lp-entete__connexion">Se connecter</a>
         <a class="btn btn-primary" data-inscription
@@ -337,7 +332,7 @@ function lpEtape(int $rang, string $titre, string $texte): string
         <span class="lp-surtitre">Pour les étudiants</span>
         <h1 class="titre-page lp-hero__titre">
           <span class="display" style="font-size:inherit;">La vie étudiante</span><br>
-          <span class="display-italic" style="font-size:inherit;color:var(--rouge);">à prix réduit.</span>
+          <span class="display-italic" style="font-size:inherit;">à prix réduit.</span>
         </h1>
         <p class="lp-chapo">
           Les soirées, les bons plans et les gens de ta ville, au même endroit.
@@ -350,11 +345,11 @@ function lpEtape(int $rang, string $titre, string $texte): string
         </div>
         <p class="lp-mention">
           Gratuit, sans engagement, sans carte bancaire. Réservé aux personnes
-          majeures : StudentLink donne accès à des soirées en bar et en discothèque.
+          majeures : Linkee donne accès à des soirées en bar et en discothèque.
         </p>
 
         <dl class="lp-chiffres">
-          <div class="lp-chiffre"><dd style="color:var(--rouge);">−50 %</dd><dt>sur tes sorties</dt></div>
+          <div class="lp-chiffre"><dd style="color:var(--sur-rouge-clair);">−50 %</dd><dt>sur tes sorties</dt></div>
           <div class="lp-chiffre"><dd>0 €</dd><dt>pour les étudiants</dt></div>
           <div class="lp-chiffre"><dd style="color:var(--sur-bleu-clair);">2 min</dd><dt>pour réserver</dt></div>
         </dl>
@@ -436,7 +431,7 @@ function lpEtape(int $rang, string $titre, string $texte): string
     <div class="lp-conteneur">
       <div class="lp-bandeau">
         <h2>Prêt à sortir pour moins cher ?</h2>
-        <p>StudentLink est gratuit pour les étudiants, sans engagement et sans carte bancaire.</p>
+        <p>Linkee est gratuit pour les étudiants, sans engagement et sans carte bancaire.</p>
         <div class="lp-bandeau__actions">
           <a class="btn btn-rouge" href="<?= baseUrl('/auth/register.php') ?>">Créer mon compte</a>
           <a class="btn btn-outline-blanc" href="?pour=etablissements" data-pour="etablissements">Je représente un établissement</a>
@@ -456,7 +451,7 @@ function lpEtape(int $rang, string $titre, string $texte): string
         <span class="lp-surtitre">Pour les établissements</span>
         <h1 class="titre-page lp-hero__titre">
           <span class="display" style="font-size:inherit;">Remplissez vos</span><br>
-          <span class="display-italic" style="font-size:inherit;color:var(--rouge);">soirées creuses.</span>
+          <span class="display-italic" style="font-size:inherit;">soirées creuses.</span>
         </h1>
         <p class="lp-chapo">
           Bars, restaurants, discothèques, afterworks : publiez une offre, elle part
@@ -634,14 +629,7 @@ function lpEtape(int $rang, string $titre, string $texte): string
 <footer class="lp-pied">
   <div class="lp-conteneur">
     <div class="lp-pied__rangee">
-      <div class="logo" style="font-size:var(--fs-5);">
-        <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:26px;height:26px;">
-          <rect x="15" y="20" width="50" height="30" rx="15" stroke="var(--noir)" stroke-width="10"/>
-          <rect x="35" y="50" width="50" height="30" rx="15" class="accent" stroke-width="10"/>
-          <circle cx="50" cy="50" r="6" fill="var(--noir)"/>
-        </svg>
-        StudentLink
-      </div>
+      <?= marqueLinkee() ?>
       <nav class="lp-pied__liens" aria-label="Liens de bas de page">
         <a href="?pour=etudiants" data-pour="etudiants">Étudiants</a>
         <a href="?pour=etablissements" data-pour="etablissements">Établissements</a>
@@ -652,7 +640,7 @@ function lpEtape(int $rang, string $titre, string $texte): string
       </nav>
     </div>
     <p class="lp-pied__mention">
-      StudentLink — plateforme événementielle et sociale pour les étudiants de
+      Linkee — plateforme événementielle et sociale pour les étudiants de
       Clermont-Ferrand. Accès réservé aux personnes majeures. © <?= date('Y') ?>
     </p>
   </div>

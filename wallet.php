@@ -78,38 +78,30 @@ $moisFr = ['January'=>'Janvier','February'=>'Février','March'=>'Mars','April'=>
            'September'=>'Septembre','October'=>'Octobre','November'=>'Novembre','December'=>'Décembre'];
 $currentMonth = mb_strtoupper($moisFr[date('F')] ?? date('F'));
 ?>
-<?php pageDebut('StudentLink — Wallet', ['pwa' => true]); ?>
+<?php pageDebut('Linkee — Pass', ['pwa' => true]); ?>
 <a href="#main-content" class="skip-nav">Aller au contenu principal</a>
 <div class="app-shell">
 
   <!-- Header -->
   <div class="page-header">
-    <div class="logo" style="margin-bottom:20px;">
-      <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="15" y="20" width="50" height="30" rx="15" stroke="var(--noir)" stroke-width="10"/>
-        <rect x="35" y="50" width="50" height="30" rx="15" class="accent" stroke-width="10"/>
-        <circle cx="50" cy="50" r="6" fill="var(--noir)"/>
-      </svg>
-      StudentLink <em>/ Wallet</em>
-    </div>
     <h1 class="titre-page">
-      <div class="display" style="font-size:var(--fs-9);">Ton pass,</div>
-      <div class="display-italic" style="font-size:var(--fs-9);">en poche.</div>
+      <div class="display" style="font-size:var(--fs-8);line-height:var(--lh-tight);">Ton pass,</div>
+      <div class="display-italic" style="font-size:var(--fs-8);line-height:var(--lh-tight);">en poche.</div>
     </h1>
   </div>
 
   <main id="main-content" class="page-content">
     <!-- Amount cards -->
     <div class="wallet-amounts">
-      <div class="amount-card card-rouge">
-        <div class="label"><?= $currentMonth ?></div>
-        <div class="amount-value"><?= number_format($ecoMois, 0, ',', ' ') ?>€</div>
-        <div class="amount-sub">économisé ce mois</div>
+      <div class="amount-card">
+        <div class="label" style="color:var(--gris);"><?= $currentMonth ?></div>
+        <div class="amount-value" style="color:var(--sur-lime-clair);"><?= number_format($ecoMois, 0, ',', ' ') ?>€</div>
+        <div class="amount-sub" style="color:var(--gris);">économisé ce mois</div>
       </div>
       <div class="amount-card card-neutre">
         <div class="label">Total année</div>
         <div class="amount-value"><?= number_format($ecoAnnee, 0, ',', ' ') ?>€</div>
-        <div class="amount-sub">depuis janvier</div>
+        <div class="amount-sub" style="color:var(--gris);">depuis janvier</div>
       </div>
     </div>
 
@@ -127,18 +119,18 @@ $currentMonth = mb_strtoupper($moisFr[date('F')] ?? date('F'));
       <div class="qr-wrapper" style="flex:0 0 88%; scroll-snap-align:center; opacity:0.6; filter:grayscale(1); position:relative;">
         <div class="qr-header">
           <div>
-            <div class="label" style="font-size:var(--fs-1);color:var(--gris);margin-bottom:2px;">Pass étudiant · <?= $idx + 1 ?>/<?= count($passes) ?></div>
+            <div class="label" style="font-size:var(--fs-1);color:inherit;opacity:.8;margin-bottom:4px;">Pass étudiant · <?= $idx + 1 ?>/<?= count($passes) ?></div>
             <div class="qr-name">Pass invalide</div>
           </div>
-          <button class="btn-cancel-pass" data-id="<?= $activePass['id'] ?>" style="background:none;border:none;cursor:pointer;color:var(--sur-rouge-clair);font-weight:var(--fw-black);font-size:var(--fs-6);line-height:var(--lh-display);display:flex;align-items:center;justify-content:center;width:24px;height:24px;margin-top:-4px;" title="Supprimer ce pass"><?= icon('croix', 'icon-sm') ?></button>
+          <button class="btn-cancel-pass" data-id="<?= $activePass['id'] ?>" style="background:rgba(17,16,19,.12);border:none;border-radius:50%;cursor:pointer;color:var(--sur-lave);display:flex;align-items:center;justify-content:center;width:32px;height:32px;flex-shrink:0;" title="Supprimer ce pass"><?= icon('croix', 'icon-sm') ?></button>
         </div>
-        <div class="qr-body" style="background:#ccc; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px; cursor:default;">
+        <div class="qr-body" style="background:rgba(17,16,19,.12); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px; cursor:default;">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
           <div style="font-family:var(--font-display);font-weight:var(--fw-black);font-size:var(--fs-5);color:#555;text-align:center;">Événement<br>supprimé</div>
         </div>
-        <div style="padding:12px 16px;">
-          <div style="font-size:var(--fs-2);font-weight:var(--fw-bold);color:var(--gris);">Cet événement n'existe plus</div>
-          <div style="font-size:var(--fs-1);color:var(--gris);margin-top:2px;">Tu peux supprimer ce pass</div>
+        <div style="padding:0 22px 20px;">
+          <div style="font-size:var(--fs-4);font-weight:var(--fw-bold);">Cet événement n'existe plus</div>
+          <div style="font-size:var(--fs-3);opacity:.75;margin-top:2px;">Tu peux supprimer ce pass</div>
         </div>
       </div>
 
@@ -147,12 +139,12 @@ $currentMonth = mb_strtoupper($moisFr[date('F')] ?? date('F'));
       <div class="qr-wrapper" style="flex:0 0 88%; scroll-snap-align:center;">
         <div class="qr-header">
           <div>
-            <div class="label" style="font-size:var(--fs-1);color:var(--gris);margin-bottom:2px;">Pass étudiant · <?= $idx + 1 ?>/<?= count($passes) ?></div>
+            <div class="label" style="font-size:var(--fs-1);color:inherit;opacity:.8;margin-bottom:4px;">Pass étudiant · <?= $idx + 1 ?>/<?= count($passes) ?> · Actif</div>
             <!-- mb_* et non [0]/strtoupper : l'indexation prend un octet, pas une
                  lettre, et « Émile » sortait en caractère cassé sur le pass. -->
             <div class="qr-name"><?= htmlspecialchars(mb_strtoupper($user['prenom'] . ' ' . mb_substr((string)$user['nom'], 0, 1) . '.')) ?></div>
           </div>
-          <button class="btn-cancel-pass" data-id="<?= $activePass['id'] ?>" style="background:none;border:none;cursor:pointer;color:var(--sur-rouge-clair);font-weight:var(--fw-black);font-size:var(--fs-6);line-height:var(--lh-display);display:flex;align-items:center;justify-content:center;width:24px;height:24px;margin-top:-4px;" title="Annuler ce pass"><?= icon('croix', 'icon-sm') ?></button>
+          <button class="btn-cancel-pass" data-id="<?= $activePass['id'] ?>" style="background:rgba(17,16,19,.12);border:none;border-radius:50%;cursor:pointer;color:var(--sur-lave);display:flex;align-items:center;justify-content:center;width:32px;height:32px;flex-shrink:0;" title="Annuler ce pass"><?= icon('croix', 'icon-sm') ?></button>
         </div>
 
         <div class="qr-body">
@@ -162,11 +154,11 @@ $currentMonth = mb_strtoupper($moisFr[date('F')] ?? date('F'));
           <div class="qr-canvas" data-code="<?= htmlspecialchars($activePass['qr_code']) ?>"></div>
         </div>
 
-        <div style="padding:12px 16px;">
-          <div style="font-size:var(--fs-2);font-weight:var(--fw-bold);color:var(--noir);">
+        <div style="padding:0 22px 20px;">
+          <div style="font-size:var(--fs-5);font-weight:var(--fw-bold);">
             <?= htmlspecialchars($activePass['etablissement_nom']) ?> — <?= htmlspecialchars($activePass['titre']) ?>
           </div>
-          <div style="font-size:var(--fs-1);color:var(--gris);margin-top:2px;">
+          <div style="font-size:var(--fs-3);opacity:.8;margin-top:2px;">
             <?= dateFr($activePass['date_heure'], 'D j M · H\hi') ?> ·
             <?php if ($activePass['reduction'] > 0): ?>
               -<?= $activePass['reduction'] ?>%
@@ -179,13 +171,13 @@ $currentMonth = mb_strtoupper($moisFr[date('F')] ?? date('F'));
       <?php endforeach; ?>
     </div>
     <?php else: ?>
-    <div style="background:var(--blanc);border-radius:var(--radius);padding:32px;text-align:center;margin-bottom:12px;border:1px solid var(--gris-clair);box-shadow:var(--shadow);">
+    <div style="background:var(--blanc);border-radius:var(--radius);padding:32px;text-align:center;margin-bottom:12px;border:1px solid var(--gris-clair);">
       <div style="display:flex;justify-content:center;margin-bottom:16px;color:var(--gris);">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z"></path><line x1="13" y1="5" x2="13" y2="19"></line></svg>
       </div>
       <div style="font-weight:var(--fw-semibold);margin-bottom:6px;">Aucun pass actif</div>
       <div style="font-size:var(--fs-3);color:var(--gris);margin-bottom:16px;">Inscris-toi à un événement pour obtenir ton pass.</div>
-      <a href="<?= baseUrl('/explore.php') ?>" class="btn btn-primary">→ Explorer les événements</a>
+      <a href="<?= baseUrl('/explore.php') ?>" class="btn btn-primary">Explorer les événements</a>
     </div>
     <?php endif; ?>
 
@@ -197,27 +189,27 @@ $currentMonth = mb_strtoupper($moisFr[date('F')] ?? date('F'));
     
     <div class="wallet-carousel">
       <?php foreach ($mySquads as $idx => $sq): ?>
-      <div style="flex:0 0 88%; scroll-snap-align:center; background:var(--lime);color:var(--sur-media-encre); border:1px solid var(--gris-clair); box-shadow:var(--shadow); display:flex; flex-direction:column; overflow:hidden;">
-        <div style="padding:16px; border-bottom: 1px solid var(--gris-clair); display:flex; justify-content:space-between; align-items:flex-start;">
+      <div style="flex:0 0 88%; scroll-snap-align:center; background:var(--blanc);color:var(--noir); border:1px solid var(--gris-clair); border-left:4px solid var(--bleu); border-radius:var(--radius-md); display:flex; flex-direction:column; overflow:hidden;">
+        <div style="padding:16px 16px 8px; display:flex; justify-content:space-between; align-items:flex-start;">
           <div>
-            <div style="font-size:var(--fs-1);font-weight:var(--fw-bold);text-transform:uppercase;letter-spacing:var(--ls-wide);margin-bottom:4px;">Session <?= htmlspecialchars($sq['type']) ?></div>
-            <div style="font-family:var(--font-display);font-weight:var(--fw-black);font-size:var(--fs-7);line-height:var(--lh-tight);color:var(--noir);"><?= htmlspecialchars($sq['titre']) ?></div>
+            <div style="font-family:var(--font-mono);font-size:var(--fs-1);font-weight:var(--fw-medium);text-transform:uppercase;letter-spacing:var(--ls-label);color:var(--sur-bleu-clair);margin-bottom:4px;">Session <?= htmlspecialchars($sq['type']) ?></div>
+            <div style="font-family:var(--font-display);font-weight:var(--fw-black);font-size:var(--fs-6);line-height:var(--lh-tight);letter-spacing:var(--ls-display);color:var(--noir);"><?= htmlspecialchars($sq['titre']) ?></div>
           </div>
           <div style="display:flex; align-items:center; gap:8px;">
-            <div style="color:var(--noir);">
+            <div style="color:var(--sur-bleu-clair);">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
             </div>
             <button class="btn-leave-squad" data-id="<?= $sq['id'] ?>" style="background:none;border:none;cursor:pointer;color:var(--noir);font-weight:var(--fw-black);font-size:var(--fs-6);line-height:var(--lh-display);display:flex;align-items:center;justify-content:center;width:24px;height:24px;margin-top:-2px;" title="Quitter ce groupe"><?= icon('croix', 'icon-sm') ?></button>
           </div>
         </div>
-        <div style="padding:16px; background:var(--lime);color:var(--sur-media-encre);">
+        <div style="padding:0 16px 16px;">
           <div style="font-size:var(--fs-4);font-weight:var(--fw-bold);margin-bottom:6px;color:var(--noir);">
             <?= dateFr($sq['date_heure'], 'D j M · H\hi') ?>
           </div>
-          <div style="font-size:var(--fs-2);margin-bottom:6px;color:var(--noir);">
+          <div style="font-size:var(--fs-3);margin-bottom:6px;color:var(--gris-fonce);">
             <span class="with-icon"><?= icon('epingle', 'icon-sm') ?><?= htmlspecialchars($sq['lieu']) ?></span>
           </div>
-          <div style="font-size:var(--fs-2);font-weight:var(--fw-medium);color:var(--noir);">
+          <div style="font-size:var(--fs-3);font-weight:var(--fw-medium);color:var(--gris);">
             Organisé par <?= htmlspecialchars($sq['createur_prenom']) ?> · Niveau : <?= htmlspecialchars($sq['niveau']) ?>
           </div>
         </div>
@@ -237,10 +229,11 @@ $currentMonth = mb_strtoupper($moisFr[date('F')] ?? date('F'));
     // lieu. Avant, elle tournait par index et ne voulait rien dire, alors que
     // la même pastille servait de statut dans l'historique juste en dessous.
     $couleurType = [
-        'bar'       => 'var(--bleu)',
+        // Charte : les soirées en lave, les restos en moutarde.
+        'bar'       => 'var(--rouge)',
         'boite'     => 'var(--rouge)',
         'resto'     => 'var(--orange)',
-        'afterwork' => 'var(--lime)',
+        'afterwork' => 'var(--rouge)',
     ];
     foreach ($passes as $p): ?>
     <div class="pass-item">
@@ -267,12 +260,12 @@ $currentMonth = mb_strtoupper($moisFr[date('F')] ?? date('F'));
       $canReview = $p['statut'] === 'checkin';
     ?>
     <div class="pass-item" style="opacity:<?= $canReview ? '1' : '0.5' ?>;">
-      <div class="pass-dot" style="background:<?= $canReview ? 'var(--succes)' : 'var(--gris)' ?>;"></div>
+      <div class="pass-dot" style="background:<?= $canReview ? 'var(--lime)' : 'var(--gris)' ?>;"></div>
       <div class="pass-item-info">
         <div class="pass-item-name"><?= htmlspecialchars($p['etablissement_nom']) ?></div>
         <div class="pass-item-sub"><?= htmlspecialchars($p['titre']) ?> · <?= dateFr($p['date_heure'], 'D j M') ?></div>
         <?php if ($canReview): ?>
-          <a href="<?= baseUrl('/avis.php?event_id=' . $p['evenement_id']) ?>" style="display:inline-block;margin-top:6px;font-size:var(--fs-1);font-weight:var(--fw-display);text-transform:uppercase;letter-spacing:var(--ls-wide);color:var(--bleu);text-decoration:none;">Laisser un avis →</a>
+          <a href="<?= baseUrl('/avis.php?event_id=' . $p['evenement_id']) ?>" style="display:inline-block;margin-top:6px;font-size:var(--fs-3);font-weight:var(--fw-bold);color:var(--sur-rouge-clair);text-decoration:none;">Laisser un avis →</a>
         <?php endif; ?>
       </div>
       <div class="pass-item-eco" style="color:var(--gris);">
@@ -297,9 +290,10 @@ $currentMonth = mb_strtoupper($moisFr[date('F')] ?? date('F'));
 
 <!-- Bottom Nav -->
 <nav class="bottom-nav" aria-label="Navigation principale">
+  <span class="nav-marque" aria-hidden="true"><?= marqueLinkee() ?></span>
   <a href="<?= baseUrl('/explore.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
-    <span>Explore</span>
+    <span>Explorer</span>
   </a>
   <a href="<?= baseUrl('/squads.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
@@ -307,7 +301,7 @@ $currentMonth = mb_strtoupper($moisFr[date('F')] ?? date('F'));
   </a>
   <a href="<?= baseUrl('/wallet.php') ?>" class="nav-item active" aria-current="page">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg></span>
-    <span>Wallet</span>
+    <span>Pass</span>
   </a>
   <a href="<?= baseUrl('/profil.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>

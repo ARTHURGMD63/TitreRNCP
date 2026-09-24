@@ -160,7 +160,7 @@ adminHeader($pdo, 'clients', 'Clients', count($clients) . ' ' . pluriel(count($c
     <tbody>
       <?php if (empty($clients)): ?>
         <tr><td colspan="7" class="admin-vide">
-          Aucun client ne correspond. <a href="<?= baseUrl('/admin/clients.php') ?>" style="color:var(--bleu);font-weight:var(--fw-semibold);">Tout afficher</a>
+          Aucun client ne correspond. <a href="<?= baseUrl('/admin/clients.php') ?>" style="color:var(--sur-rouge-clair);font-weight:var(--fw-semibold);">Tout afficher</a>
         </td></tr>
       <?php endif; ?>
       <?php foreach ($clients as $c):

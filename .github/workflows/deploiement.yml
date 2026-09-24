@@ -11,7 +11,7 @@
 #    FTP_USERNAME   if0_00000000
 #    FTP_PASSWORD   (mot de passe FTP du panneau)
 #    DB_HOST        sqlXXX.infinityfree.com
-#    DB_NAME        if0_00000000_studentlink
+#    DB_NAME        if0_00000000_linkee
 #    DB_USER        if0_00000000
 #    DB_PASSWORD    (mot de passe de la base)
 #

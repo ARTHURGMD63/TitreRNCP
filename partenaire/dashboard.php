@@ -106,15 +106,13 @@ $eventDayNum = $event ? date('j', strtotime($event['date_heure'])) : date('j');
 $eventType = $event ? mb_strtoupper($event['titre']) : 'HAPPY HOUR';
 $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
 ?>
-<?php pageDebut('StudentLink — Dashboard Partenaire', ['scripts' => ['/assets/vendor/chart.umd.min.js', '/assets/vendor/html5-qrcode.min.js']]); ?>
+<?php pageDebut('Linkee — Dashboard Partenaire', ['univers' => 'pro', 'scripts' => ['/assets/vendor/chart.umd.min.js', '/assets/vendor/html5-qrcode.min.js']]); ?>
 <div class="partner-shell">
 
   <!-- Sidebar -->
   <aside class="partner-sidebar">
     <div class="sidebar-brand">
-      <div style="font-family:var(--font-sans);font-weight:var(--fw-bold);font-size:var(--fs-5);color:#fff;">
-        StudentLink <em style="font-style:italic;color:var(--rouge);">/ Partenaires</em>
-      </div>
+      <?= marqueLinkee('pro') ?>
     </div>
 
     <nav class="sidebar-nav">
@@ -135,10 +133,10 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
       </a>
     </nav>
 
-    <div class="sidebar-venue" style="margin-top:48px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.1);">
+    <div class="sidebar-venue" style="margin-top:48px;padding-top:20px;border-top:1px solid var(--gris-clair);">
       <div class="sidebar-venue-name"><?= htmlspecialchars(mb_strtoupper($etab['nom'] ?? '')) ?></div>
       <div class="sidebar-venue-city"><?= htmlspecialchars($etab['ville'] ?? 'Clermont-Ferrand') ?></div>
-      <a href="<?= baseUrl('/auth/logout.php') ?>" class="lien-action" style="margin-top:12px;font-size:var(--fs-2);color:rgba(255,255,255,0.4);text-decoration:none;">
+      <a href="<?= baseUrl('/auth/logout.php') ?>" class="lien-action" style="margin-top:12px;font-size:var(--fs-2);color:var(--gris);text-decoration:none;">
         → Déconnexion
       </a>
     </div>
@@ -157,7 +155,7 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
             <em>en route.</em>
           </h1>
         </div>
-        <div style="text-align:right;font-size:var(--fs-2);color:var(--gris);font-weight:var(--fw-semibold);letter-spacing:var(--ls-wide);text-transform:uppercase;padding-top:8px;">
+        <div style="text-align:right;font-family:var(--font-mono);font-size:var(--fs-2);color:var(--gris);font-weight:var(--fw-medium);letter-spacing:var(--ls-label);text-transform:uppercase;padding-top:8px;">
           <?= htmlspecialchars(mb_strtoupper($etab['nom'])) ?><br>
           <span style="font-weight:var(--fw-regular);">· <?= htmlspecialchars(mb_strtoupper($etab['ville'])) ?></span>
         </div>
@@ -169,13 +167,13 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
 
         <!-- Stat Cards -->
         <div class="partner-stat-grid">
-          <div class="partner-stat-card card-rouge">
+          <div class="partner-stat-card">
             <div class="ps-label">Inscrits</div>
             <div class="ps-value" id="live-inscrits"
                  data-live-event="<?= (int) ($event['id'] ?? 0) ?>" data-live="inscrits"><?= $nbInscrits ?></div>
-            <div class="ps-sub">+<?= max(0, $nbInscrits - 2) ?> en 1h</div>
+            <div class="ps-sub" style="color:var(--succes);font-weight:var(--fw-bold);">+<?= max(0, $nbInscrits - 2) ?> en 1h</div>
           </div>
-          <div class="partner-stat-card" style="background:var(--blanc);border:2px solid var(--gris-clair);">
+          <div class="partner-stat-card">
             <div class="ps-label" style="color:var(--gris);">Check-in</div>
             <div class="ps-value"><?= $nbCheckin ?></div>
             <div class="ps-sub" style="color:var(--gris);">Ouvre <?= $ouverture ?></div>
@@ -214,18 +212,18 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
         <div class="chart-card">
           <div class="chart-header">
             <span class="chart-label">Dernières inscriptions</span>
-            <span style="font-size:var(--fs-2);color:var(--gris);"><?= $nbTotal ?> total</span>
+            <span style="font-family:var(--font-mono);font-size:var(--fs-2);color:var(--gris);"><?= $nbTotal ?> total</span>
           </div>
           <?php foreach ($recents as $r): ?>
           <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--gris-clair);">
-            <div style="width:32px;height:32px;border-radius:50%;background:var(--bleu);display:flex;align-items:center;justify-content:center;font-size:var(--fs-2);font-weight:var(--fw-bold);color:#fff;flex-shrink:0;">
+            <div style="width:32px;height:32px;border-radius:50%;background:var(--bleu);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:var(--fs-2);font-weight:var(--fw-display);color:var(--sur-lave);flex-shrink:0;">
               <?= mb_strtoupper(mb_substr($r['prenom'],0,1).mb_substr($r['nom'],0,1)) ?>
             </div>
             <div style="flex:1;">
               <div style="font-size:var(--fs-4);font-weight:var(--fw-semibold);"><?= htmlspecialchars($r['prenom'].' '.$r['nom']) ?></div>
-              <div style="font-size:var(--fs-1);color:var(--gris);"><?= htmlspecialchars($r['ecole'] ?? '—') ?> · <?= htmlspecialchars($r['promo'] ?? '—') ?></div>
+              <div style="font-size:var(--fs-2);color:var(--gris);"><?= htmlspecialchars($r['ecole'] ?? '—') ?> · <?= htmlspecialchars($r['promo'] ?? '—') ?></div>
             </div>
-            <div style="font-size:var(--fs-1);color:var(--gris);"><?= date('H\hi', strtotime($r['created_at'])) ?></div>
+            <div style="font-family:var(--font-mono);font-size:var(--fs-2);color:var(--gris);"><?= date('H\hi', strtotime($r['created_at'])) ?></div>
           </div>
           <?php endforeach; ?>
         </div>
@@ -263,7 +261,7 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
         <!-- Quick actions -->
         <div style="display:flex;flex-direction:column;gap:8px;">
           <?php if ($event): ?>
-          <button class="btn btn-rouge btn-full" id="btn-start-scan" style="margin-bottom:8px;font-size:var(--fs-4);padding:16px;">
+          <button class="btn btn-outline btn-full" id="btn-start-scan">
             <?= icon('appareil', 'icon-sm') ?> Scanner un Pass
           </button>
           <?php endif; ?>
@@ -283,9 +281,9 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
 
 <!-- Scanner Modal -->
 <div class="modal-overlay" id="modal-scanner">
-  <div class="modal-sheet" style="background:var(--noir);color:var(--blanc);">
+  <div class="modal-sheet" style="background:var(--noir);color:var(--blanc);border-color:var(--noir);">
     <div class="modal-handle" style="background:var(--gris-fonce);"></div>
-    <div style="font-family:var(--font-display);font-size:var(--fs-7);font-weight:var(--fw-black);margin-bottom:20px;text-align:center;">
+    <div style="font-family:var(--font-display);font-size:var(--fs-7);font-weight:var(--fw-black);letter-spacing:var(--ls-display);margin-bottom:20px;text-align:center;">
       Scanner un Pass
     </div>
     
@@ -293,7 +291,7 @@ $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
     
     <div id="scan-result" style="text-align:center;font-weight:var(--fw-bold);font-size:var(--fs-5);min-height:24px;margin-bottom:20px;"></div>
     
-    <button type="button" class="btn btn-outline-blanc btn-full" id="btn-close-scan">Fermer</button>
+    <button type="button" class="btn btn-outline btn-full" id="btn-close-scan" style="color:var(--blanc);border-color:var(--blanc);">Fermer</button>
   </div>
 </div>
 

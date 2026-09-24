@@ -1,5 +1,5 @@
 -- ============================================================
---  StudentLink — migration v7
+--  Linkee — migration v7
 --  Fiabilité et performance du cœur transactionnel
 --
 --  1. MyISAM ne connaît ni transaction ni clé étrangère et verrouille

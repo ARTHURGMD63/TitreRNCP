@@ -1,4 +1,4 @@
-/* StudentLink — service worker
+/* Linkee — service worker
  *
  * Deux objectifs :
  *  1. rendre l'application réellement installable (un manifeste seul ne suffit pas) ;
@@ -11,9 +11,11 @@
  *    une page hors-ligne. Jamais de contenu périmé servi silencieusement.
  */
 
-const VERSION = 'v1';
-const CACHE_COQUILLE = 'studentlink-coquille-' + VERSION;
-const CACHE_PAGES = 'studentlink-pages-' + VERSION;
+// v2 : refonte Linkee — le logo change sans changer d'URL, l'ancien cache
+// doit donc être purgé. v3 : polices hébergées, ajoutées à la coquille.
+const VERSION = 'v3';
+const CACHE_COQUILLE = 'linkee-coquille-' + VERSION;
+const CACHE_PAGES = 'linkee-pages-' + VERSION;
 
 // Résolu à l'installation : le service worker est servi depuis la racine du projet.
 const RACINE = new URL('./', self.location).pathname;
@@ -21,6 +23,10 @@ const RACINE = new URL('./', self.location).pathname;
 const COQUILLE = [
   RACINE + 'assets/css/style.css',
   RACINE + 'assets/js/app.js',
+  // Sans elles, la page hors ligne retombait sur les polices système.
+  RACINE + 'assets/fonts/unbounded-latin.woff2',
+  RACINE + 'assets/fonts/instrument-sans-latin.woff2',
+  RACINE + 'assets/fonts/jetbrains-mono-latin.woff2',
   RACINE + 'Logo.png',
   RACINE + 'manifest.json',
 ];
@@ -38,7 +44,10 @@ self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
       .then(noms => Promise.all(
-        noms.filter(n => n.startsWith('studentlink-') && !n.endsWith(VERSION))
+        // Les caches « studentlink-… » datent d'avant le changement de nom :
+        // tous périmés, quelle que soit leur version.
+        noms.filter(n => n.startsWith('studentlink-')
+                      || (n.startsWith('linkee-') && !n.endsWith(VERSION)))
             .map(n => caches.delete(n))
       ))
       .then(() => self.clients.claim())

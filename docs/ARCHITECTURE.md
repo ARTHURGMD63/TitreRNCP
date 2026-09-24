@@ -1,4 +1,4 @@
-# Architecture technique — StudentLink
+# Architecture technique — Linkee
 
 ## Vue d'ensemble
 
@@ -45,7 +45,7 @@ Requête utilisateur
 
 ## Pattern MVC simplifié
 
-StudentLink utilise un **pattern PHP procédural MVC léger** sans framework :
+Linkee utilise un **pattern PHP procédural MVC léger** sans framework :
 
 | Couche | Implémentation |
 |--------|---------------|

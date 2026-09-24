@@ -45,7 +45,7 @@ Corrigé dans `includes/mail.php` :
 - **Adresse d'enveloppe explicite** (`-f`), pour que SPF et les rebonds
   s'alignent sur le domaine annoncé et non sur le compte d'hébergement.
 - **Expéditeur construit sur le domaine servi** par défaut, au lieu d'un
-  `noreply@studentlink.app` écrit en dur qui mentait dès que le site tournait
+  `noreply@linkee.app` écrit en dur qui mentait dès que le site tournait
   ailleurs.
 - **Transport SMTP authentifié** en option (section 3).
 - **Échecs journalisés.** `mail()` renvoyait `false` en silence.
@@ -69,7 +69,7 @@ Par variables d'environnement (Railway, Docker) :
 ```bash
 MAIL_TRANSPORT=smtp
 MAIL_FROM=noreply@votre-domaine.fr
-MAIL_FROM_NOM=StudentLink
+MAIL_FROM_NOM=Linkee
 MAIL_RETURN_PATH=rebonds@votre-domaine.fr
 MAIL_SMTP_HOTE=smtp.votre-fournisseur.fr
 MAIL_SMTP_PORT=587

@@ -1,4 +1,4 @@
-# Modèle Conceptuel de Données — StudentLink
+# Modèle Conceptuel de Données — Linkee
 
 ## Diagramme Entité-Relation (Mermaid)
 
