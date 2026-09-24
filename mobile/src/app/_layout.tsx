@@ -14,9 +14,10 @@
  *  - partenaire : l'espace pro vit sur le site, l'application le dit.
  */
 
-import React from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { View } from 'react-native';
 import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
@@ -31,16 +32,24 @@ import { FournisseurSession, useSession } from '../session';
 import { FournisseurTheme, useTheme } from '../useTheme';
 import { FournisseurToast } from '../composants/Toast';
 
+// L'écran de lancement (fond basalte, les deux anneaux) reste affiché tant
+// que l'application n'est pas prête : polices chargées ET session tranchée.
+// Sans cela on voyait, entre les deux, un écran vide puis un rond de
+// chargement.
+SplashScreen.preventAutoHideAsync().catch(() => {});
+SplashScreen.setOptions({ fade: true, duration: 300 });
+
 function Navigation() {
   const { profil, nouveau } = useSession();
   const { c, sombre } = useTheme();
 
+  useEffect(() => {
+    if (profil !== undefined) SplashScreen.hideAsync().catch(() => {});
+  }, [profil]);
+
+  // Session pas encore vérifiée : l'écran de lancement la couvre.
   if (profil === undefined) {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: c.bg }}>
-        <ActivityIndicator color={c.rouge} />
-      </View>
-    );
+    return <View style={{ flex: 1, backgroundColor: c.bg }} />;
   }
 
   const etudiant = profil?.type === 'etudiant';
@@ -82,7 +91,7 @@ function Polices({ children }: { children: React.ReactNode }) {
     JetBrainsMono_400Regular, JetBrainsMono_500Medium, JetBrainsMono_600SemiBold,
   });
   // Sans ses polices, l'écran s'afficherait une fraction de seconde en
-  // police système puis sauterait : on attend, sur le fond basalte.
+  // police système puis sauterait : l'écran de lancement reste affiché.
   if (!pretes) return <View style={{ flex: 1, backgroundColor: '#111013' }} />;
   return <>{children}</>;
 }
