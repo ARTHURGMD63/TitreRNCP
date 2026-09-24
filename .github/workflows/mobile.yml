@@ -28,6 +28,11 @@ name: Application mobile
 
 on:
   workflow_dispatch:
+  # GitHub n'affiche « Run workflow » que pour les workflows de la branche
+  # par défaut. Une étiquette, elle, lance la construction depuis n'importe
+  # quelle branche :  git tag mobile-v1 && git push origin mobile-v1
+  push:
+    tags: ['mobile-v*']
 
 env:
   EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
