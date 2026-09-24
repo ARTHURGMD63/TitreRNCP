@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { fs, gutter } from '../theme';
 import { useTheme } from '../useTheme';
-import { HAUTEUR_BARRE } from './BarreOnglets';
+import { reserveBarre } from './BarreOnglets';
 import { Bouton } from './Bouton';
 import { T } from './Texte';
 
@@ -45,7 +45,7 @@ export function Ecran({ children, avecBarre = true, rafraichit = false, onRafrai
         ref={defilementRef}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[
-          { paddingTop: plein ? 0 : top, paddingBottom: (avecBarre ? HAUTEUR_BARRE : 24) + bottom, width: '100%', maxWidth: 440, alignSelf: 'center' },
+          { paddingTop: plein ? 0 : top, paddingBottom: avecBarre ? reserveBarre(bottom) : 24 + bottom, width: '100%', maxWidth: 440, alignSelf: 'center' },
           style,
         ]}
         refreshControl={onRafraichir ? <RefreshControl refreshing={rafraichit} onRefresh={onRafraichir} tintColor={c.rouge} colors={[c.rouge]} progressBackgroundColor={c.blanc} /> : undefined}

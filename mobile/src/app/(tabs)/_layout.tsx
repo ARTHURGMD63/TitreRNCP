@@ -18,7 +18,10 @@ export default function Onglets() {
   return (
     <Tabs
       tabBar={(props) => <BarreOnglets {...props} />}
-      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: c.bg }, animation: 'fade' }}
+      // Changement d'onglet instantané : aucune animation, et les onglets sont
+      // tous montés (donc chargés) dès l'ouverture plutôt qu'à la première
+      // visite, qui affichait sinon un écran de chargement.
+      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: c.bg }, animation: 'none', lazy: false }}
     >
       <Tabs.Screen name="index" options={{ title: 'Explorer' }} />
       <Tabs.Screen name="squads" options={{ title: 'Squads' }} />

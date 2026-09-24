@@ -57,11 +57,11 @@ function Navigation() {
   return (
     <>
       <StatusBar style={sombre ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg }, animation: 'fade' }}>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg }, animation: 'none' }}>
         <Stack.Protected guard={profil === null}>
           <Stack.Screen name="login" />
-          <Stack.Screen name="inscription" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="mot-de-passe" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="inscription" />
+          <Stack.Screen name="mot-de-passe" />
         </Stack.Protected>
 
         <Stack.Protected guard={etudiant && nouveau}>
@@ -70,9 +70,9 @@ function Navigation() {
 
         <Stack.Protected guard={etudiant && !nouveau}>
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="evenement/[id]" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="etudiant/[id]" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="avis/[id]" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="evenement/[id]" />
+          <Stack.Screen name="etudiant/[id]" />
+          <Stack.Screen name="avis/[id]" />
         </Stack.Protected>
 
         <Stack.Protected guard={profil !== null && !etudiant}>

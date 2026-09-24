@@ -37,8 +37,25 @@ const PARENT: Record<string, string> = {
 /** Les propriétés que Tabs passe à une barre personnalisée. */
 type BottomTabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>['tabBar']>>[0];
 
-/** --nav-h (78) + 16 : ce que le contenu doit laisser libre en bas. */
-export const HAUTEUR_BARRE = 78 + 16;
+/**
+ * Distance entre la barre et le bas de l'écran.
+ *
+ * Sur le site, 16 px sous la barre, mais le navigateur ajoute déjà sa propre
+ * bordure. Dans l'application, 16 px au-dessus de la zone du geste d'accueil
+ * la faisaient flotter trop haut : la barre descend dans cette zone et ne
+ * garde qu'un petit écart au-dessus de l'indicateur.
+ */
+export function ecartBasBarre(zoneBasse: number): number {
+  return zoneBasse > 0 ? Math.max(8, zoneBasse - 20) : 12;
+}
+
+/** Hauteur de la pilule. */
+export const HAUTEUR_PILULE = 64;
+
+/** Ce que le contenu doit laisser libre en bas : la barre et 16 px d'air. */
+export function reserveBarre(zoneBasse: number): number {
+  return ecartBasBarre(zoneBasse) + HAUTEUR_PILULE + 16;
+}
 
 export function BarreOnglets({ state, navigation }: BottomTabBarProps) {
   const { c, ombre } = useTheme();
@@ -49,12 +66,12 @@ export function BarreOnglets({ state, navigation }: BottomTabBarProps) {
   const actif = PARENT[courant] ?? courant;
 
   return (
-    <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, bottom: 16 + bas, alignItems: 'center' }}>
+    <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, bottom: ecartBasBarre(bas), alignItems: 'center' }}>
       <View
         accessibilityRole="tablist"
         style={[
           {
-            width: largeur, paddingHorizontal: 10, height: 64,
+            width: largeur, paddingHorizontal: 10, height: HAUTEUR_PILULE,
             flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',
             backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.pill,
           },

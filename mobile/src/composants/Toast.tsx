@@ -16,6 +16,7 @@ import { Animated, Easing, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { fixe, fs, rayon, sans } from '../theme';
+import { ecartBasBarre, HAUTEUR_PILULE } from './BarreOnglets';
 import { useTheme } from '../useTheme';
 
 type Genre = '' | 'success' | 'error';
@@ -29,8 +30,6 @@ type Etat = {
 
 const Contexte = createContext<Etat | null>(null);
 
-/** --nav-h (78) + 18 px, comme le site. */
-const AU_DESSUS_DE_LA_BARRE = 78 + 18;
 const courbe = Easing.bezier(0.2, 0.9, 0.3, 1);
 
 export function FournisseurToast({ children }: { children: React.ReactNode }) {
@@ -69,7 +68,7 @@ export function VueToast() {
   const encre = genre ? fixe.surLave : c.bg;
 
   return (
-    <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: AU_DESSUS_DE_LA_BARRE + bas, alignItems: 'center' }}>
+    <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: ecartBasBarre(bas) + HAUTEUR_PILULE + 18, alignItems: 'center' }}>
       <Animated.View
         accessibilityLiveRegion="polite"
         style={[

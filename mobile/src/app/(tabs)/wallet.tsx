@@ -23,7 +23,7 @@ import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
 import { court, dateFr, majuscules, nombre } from '../../format';
 import { useJeton, useSession } from '../../session';
-import { fixe, fs, gutter, haloLave, lh, lsEm, mono, rayon, sans } from '../../theme';
+import { fixe, fs, gutter, lh, lsEm, mono, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 const MOIS = ['JANVIER', 'FÉVRIER', 'MARS', 'AVRIL', 'MAI', 'JUIN', 'JUILLET', 'AOÛT', 'SEPTEMBRE', 'OCTOBRE', 'NOVEMBRE', 'DÉCEMBRE'];
@@ -59,7 +59,6 @@ function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
     <View
       style={[
         { width: largeur, backgroundColor: supprime ? '#767676' : '#FF5424', borderRadius: rayon.xl, marginBottom: 18, opacity: supprime ? 0.6 : 1 },
-        supprime ? null : haloLave,
       ]}
     >
       <View style={{ paddingTop: 18, paddingHorizontal: 22, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
