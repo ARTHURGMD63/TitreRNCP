@@ -22,7 +22,7 @@ import { actions, ErreurApi, type Evenement } from '../api';
 import { LIBELLES_TYPE } from '../catalogue';
 import { dateFr, heure, majuscules, ts } from '../format';
 import { useJeton } from '../session';
-import { fixe, fs, haloLave, haloLime, lh, lsEm, mono, rayon, sans } from '../theme';
+import { fixe, fs, haloLave, haloOrange, lh, lsEm, mono, rayon, sans } from '../theme';
 import { useTheme } from '../useTheme';
 import { Bouton } from './Bouton';
 import { Badge, Jauge } from './Elements';
@@ -59,9 +59,10 @@ function usePouls() {
 }
 
 /**
- * « EN COURS », en volt : le point pulse, jamais la couleur pleine du rouge
- * — c'est ce qui la distingue d'un coup d'œil de la carte flash, qui est déjà
- * un aplat rouge. Une soirée en cours reste une carte blanche, juste bordée.
+ * « EN COURS », en moutarde : le point pulse, jamais la couleur pleine du
+ * rouge — c'est ce qui la distingue d'un coup d'œil de la carte flash, qui
+ * est déjà un aplat rouge. Une soirée en cours reste une carte blanche,
+ * juste bordée.
  */
 function PastilleEnCours() {
   const { c } = useTheme();
@@ -69,10 +70,10 @@ function PastilleEnCours() {
   return (
     <View
       accessible accessibilityLabel="Soirée en cours"
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 5, paddingHorizontal: 11, borderRadius: rayon.pill, backgroundColor: c.limeClair }}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 5, paddingHorizontal: 11, borderRadius: rayon.pill, backgroundColor: c.orangeClair }}
     >
-      <Animated.View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: c.lime, opacity: opacite }} />
-      <Text style={{ fontFamily: mono(600), fontSize: fs[1], letterSpacing: lsEm.label * fs[1], textTransform: 'uppercase', color: c.surLimeClair }}>
+      <Animated.View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: c.orange, opacity: opacite }} />
+      <Text style={{ fontFamily: mono(600), fontSize: fs[1], letterSpacing: lsEm.label * fs[1], textTransform: 'uppercase', color: c.surOrangeClair }}>
         En cours
       </Text>
     </View>
@@ -268,7 +269,7 @@ function CarteClassique({ ev, onInviter }: { ev: Evenement; onInviter: () => voi
     <View
       style={[
         { backgroundColor: c.blanc, padding: 20, borderRadius: rayon.base, borderWidth: 1, borderColor: c.grisClair, marginBottom: 20 },
-        ev.en_cours ? [{ borderWidth: 2, borderColor: c.lime }, haloLime] : ombre('base'),
+        ev.en_cours ? [{ borderWidth: 2, borderColor: c.orange }, haloOrange] : ombre('base'),
       ]}
     >
       {ev.en_cours ? <View style={{ marginBottom: 10, alignSelf: 'flex-start' }}><PastilleEnCours /></View> : null}
