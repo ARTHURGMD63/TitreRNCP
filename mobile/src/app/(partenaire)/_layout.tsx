@@ -12,6 +12,7 @@ import { useTheme } from '../../useTheme';
 const ONGLETS: OngletBarre[] = [
   { route: 'index', libelle: 'Tableau de bord', icone: 'appareil' },
   { route: 'evenements', libelle: 'Événements', icone: 'calendrier' },
+  { route: 'moi', libelle: 'Moi', icone: 'personne' },
 ];
 
 const PARENT: Record<string, string> = {
@@ -29,6 +30,7 @@ export default function OngletsPartenaire() {
     >
       <Tabs.Screen name="index" options={{ title: 'Tableau de bord' }} />
       <Tabs.Screen name="evenements" options={{ title: 'Événements' }} />
+      <Tabs.Screen name="moi" options={{ title: 'Moi' }} />
       <Tabs.Screen name="scan" options={{ href: null }} />
       <Tabs.Screen name="evenement-form" options={{ href: null }} />
     </Tabs>

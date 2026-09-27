@@ -337,6 +337,16 @@ export type ReponsePhotosEvenement = {
 
 // ─── Espace partenaire ────────────────────────────────────────────────────────
 
+export type PersonneCheckin = {
+  id: number;
+  prenom: string;
+  nom: string;
+  ecole: string | null;
+  promo: string | null;
+  photo_url: string | null;
+  checkin_le: string | null;
+};
+
 export type ReponseDashboardPartenaire = {
   etablissement: { id: number; nom: string; ville: string };
   evenement: { id: number; titre: string; date_heure: string } | null;
@@ -350,6 +360,7 @@ export type ReponseDashboardPartenaire = {
     ecoles: { nom: string; pourcentage: number }[];
     graphe: { labels: string[]; valeurs: number[] };
     recentes: { prenom: string; nom: string; ecole: string | null; promo: string | null; photo_url: string | null; heure: string }[];
+    checkins: PersonneCheckin[];
   };
 };
 
@@ -505,7 +516,9 @@ export const api = {
   partenaireEnregistrerEvenement: (jeton: string, corps: Record<string, unknown>) =>
     appelApi<Ok & { id: number }>('partenaire_evenement.php', { methode: 'POST', jeton, corps }),
   partenaireScan: (jeton: string, corps: { qr_code: string; event_id: number }) =>
-    appelApi<Ok>('partenaire_scan.php', { methode: 'POST', jeton, corps }),
+    appelApi<Ok & { personne: { id: number; prenom: string; nom: string; ecole: string | null; promo: string | null; photo_url: string | null } }>(
+      'partenaire_scan.php', { methode: 'POST', jeton, corps }
+    ),
   adminModeration: (jeton: string, statut: 'nouveau' | 'traite' = 'nouveau') =>
     appelApi<{ success: true } & ReponseModeration>('admin_moderation.php', { jeton, params: { statut } }),
   adminTraiterSignalement: (jeton: string, id: number) =>
@@ -514,6 +527,12 @@ export const api = {
     appelApi<{ success: true } & ReponseEtudiantsAdmin>('admin_utilisateurs.php', { jeton, params }),
   adminEvenements: (jeton: string, params: { etablissement?: number; periode?: string; type?: string }) =>
     appelApi<{ success: true } & ReponseEvenementsAdmin>('admin_evenements.php', { jeton, params }),
+  partenaireProfil: (jeton: string) =>
+    appelApi<{ success: true; compte: { prenom: string; nom: string; email: string }; etablissement: { nom: string; type: string; ville: string; adresse: string } }>(
+      'partenaire_profil.php', { jeton }
+    ),
+  partenaireEnregistrerProfil: (jeton: string, corps: { nom: string; type: string; ville: string; adresse: string }) =>
+    appelApi<Ok>('partenaire_profil.php', { methode: 'POST', jeton, corps }),
   publierPhotoEvenement: (jeton: string, formulaire: FormData) =>
     appelApi<{ photo: PhotoEvenement; remplace: boolean }>('evenement_photos.php', { methode: 'POST', formulaire, jeton }),
   supprimerPhotoEvenement: (jeton: string, photoId: number) =>

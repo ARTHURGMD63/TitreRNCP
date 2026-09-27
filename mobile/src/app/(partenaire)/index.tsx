@@ -120,6 +120,24 @@ export default function TableauDeBordPartenaire() {
               <T taille={fs[3]} couleur="#8A5A00" interligne={lh.snug}>{stats.conseil}</T>
             </View>
 
+            {stats.checkins.length ? (
+              <Carte>
+                <T taille={fs[2]} couleur={c.gris} style={{ marginBottom: 12 }}>
+                  CHECK-IN · {stats.checkins.length}
+                </T>
+                {stats.checkins.map((p, i) => (
+                  <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, borderBottomWidth: i < stats.checkins.length - 1 ? 1 : 0, borderBottomColor: c.grisClair }}>
+                    <Avatar photo={p.photo_url} prenom={p.prenom} taille={32} fond={c.lime} />
+                    <View style={{ flex: 1 }}>
+                      <T taille={fs[4]} poids={600}>{p.prenom} {p.nom}</T>
+                      <T taille={fs[2]} couleur={c.gris}>{p.ecole ?? '—'} · {p.promo ?? '—'}</T>
+                    </View>
+                    {p.checkin_le ? <Mono couleur={c.gris}>{p.checkin_le.slice(11, 16).replace(':', 'h')}</Mono> : null}
+                  </View>
+                ))}
+              </Carte>
+            ) : null}
+
             {stats.recentes.length ? (
               <Carte>
                 <T taille={fs[2]} couleur={c.gris} style={{ marginBottom: 12 }}>DERNIÈRES INSCRIPTIONS</T>

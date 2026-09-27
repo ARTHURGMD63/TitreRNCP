@@ -114,6 +114,30 @@ if ($event) {
         ],
         $stmt->fetchAll()
     );
+
+    // Qui a ete valide a l'entree — pas seulement combien (nbCheckin
+    // ci-dessus), mais qui exactement, du plus recent scan au plus ancien.
+    $stmt = $pdo->prepare(
+        "SELECT u.id, u.prenom, u.nom, u.ecole, u.promo, u.photo, i.checkin_le
+           FROM inscriptions i JOIN users u ON u.id=i.user_id
+          WHERE i.evenement_id=? AND i.statut='checkin'
+          ORDER BY i.checkin_le DESC"
+    );
+    $stmt->execute([$eid]);
+    $checkins = array_map(
+        static fn (array $r): array => [
+            'id'         => (int) $r['id'],
+            'prenom'     => (string) $r['prenom'],
+            'nom'        => (string) $r['nom'],
+            'ecole'      => $r['ecole'] !== null ? (string) $r['ecole'] : null,
+            'promo'      => $r['promo'] !== null ? (string) $r['promo'] : null,
+            'photo_url'  => apiPhotoUrl($r['photo'] ?? null),
+            'checkin_le' => $r['checkin_le'] !== null ? (string) $r['checkin_le'] : null,
+        ],
+        $stmt->fetchAll()
+    );
+} else {
+    $checkins = [];
 }
 
 apiReponse([
@@ -138,5 +162,6 @@ apiReponse([
         'ecoles'        => $schoolStats,
         'graphe'        => ['labels' => $chartLabels, 'valeurs' => $chartValues],
         'recentes'      => $recents,
+        'checkins'      => $checkins,
     ],
 ]);

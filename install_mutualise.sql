@@ -119,6 +119,7 @@ CREATE TABLE IF NOT EXISTS inscriptions (
     evenement_id INT NOT NULL,
     qr_code VARCHAR(64) NOT NULL,
     statut ENUM('inscrit', 'checkin', 'annule') DEFAULT 'inscrit',
+    checkin_le DATETIME NULL DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (evenement_id) REFERENCES evenements(id) ON DELETE CASCADE,
@@ -208,7 +209,7 @@ CREATE INDEX idx_ev_etab_date   ON evenements (etablissement_id, date_heure);
 CREATE INDEX idx_ev_type_date   ON evenements (type, date_heure);
 CREATE INDEX idx_insc_ev_statut ON inscriptions (evenement_id, statut);
 CREATE INDEX idx_insc_user      ON inscriptions (user_id, statut);
-CREATE INDEX idx_insc_qr        ON inscriptions (qr_code);
+CREATE UNIQUE INDEX idx_insc_qr ON inscriptions (qr_code);
 CREATE INDEX idx_sq_date        ON squads (date_heure);
 CREATE INDEX idx_sm_user        ON squad_membres (user_id);
 CREATE INDEX idx_eco_user_date  ON economies (user_id, date_economie);
@@ -1161,4 +1162,4 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 
 INSERT IGNORE INTO schema_migrations (version) VALUES
 ('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
-('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22');
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23');

@@ -41,7 +41,7 @@ if (!$stmt->fetch()) {
 }
 
 $stmt = $pdo->prepare(
-    'SELECT i.id, i.statut, u.prenom, u.nom
+    'SELECT i.id, i.statut, u.id AS user_id, u.prenom, u.nom, u.ecole, u.promo, u.photo
        FROM inscriptions i JOIN users u ON u.id = i.user_id
       WHERE i.qr_code = ? AND i.evenement_id = ?'
 );
@@ -58,9 +58,18 @@ if ($inscription['statut'] === 'annule') {
     apiErreur('Inscription annulée', 409, 'inscription_annulee');
 }
 
-$pdo->prepare("UPDATE inscriptions SET statut = 'checkin' WHERE id = ?")->execute([(int) $inscription['id']]);
+$pdo->prepare("UPDATE inscriptions SET statut = 'checkin', checkin_le = NOW() WHERE id = ?")
+    ->execute([(int) $inscription['id']]);
 
 apiReponse([
     'success' => true,
     'message' => 'Check-in validé pour ' . $inscription['prenom'] . ' ' . $inscription['nom'],
+    'personne' => [
+        'id'        => (int) $inscription['user_id'],
+        'prenom'    => (string) $inscription['prenom'],
+        'nom'       => (string) $inscription['nom'],
+        'ecole'     => $inscription['ecole'] !== null ? (string) $inscription['ecole'] : null,
+        'promo'     => $inscription['promo'] !== null ? (string) $inscription['promo'] : null,
+        'photo_url' => apiPhotoUrl($inscription['photo'] ?? null),
+    ],
 ]);

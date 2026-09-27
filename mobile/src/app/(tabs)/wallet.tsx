@@ -290,7 +290,10 @@ export default function Wallet() {
                     <View key={p.id} style={{ paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: c.grisClair, flexDirection: 'row', alignItems: 'center', gap: 13, opacity: avis ? 1 : 0.5 }}>
                       <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: avis ? c.lime : c.gris }} />
                       <View style={{ flex: 1 }}>
-                        <T taille={fs[4]} poids={600}>{p.etablissement}</T>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <T taille={fs[4]} poids={600}>{p.etablissement}</T>
+                          {avis ? <T taille={fs[1]} poids={700} couleur={c.surLimeClair}>· CHECK-IN ✓</T> : null}
+                        </View>
                         <T taille={fs[2]} couleur={c.gris} style={{ marginTop: 2 }}>{p.titre} · {dateFr(p.date_heure, 'D j M')}</T>
                         {avis && p.evenement_id ? (
                           <Text
