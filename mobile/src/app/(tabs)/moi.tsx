@@ -64,7 +64,7 @@ function PastilleBadge({ b, verrouille, largeur }: { b: Badge; verrouille?: bool
 }
 
 export default function Moi() {
-  const { c, choisir } = useTheme();
+  const { c, choisir, preference } = useTheme();
   const jeton = useJeton();
   const { deconnexion, mettreAJour } = useSession();
   const defilement = useRef<ScrollView>(null);
@@ -299,16 +299,21 @@ export default function Moi() {
         {/* Apparence */}
         <CarteProfil>
           <TitreSection icone="soleil">Apparence</TitreSection>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <Pressable onPress={() => choisir('clair')} accessibilityRole="button"
-              style={{ flex: 1, padding: 14, borderRadius: rayon.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#F5F1E8', borderWidth: 1, borderColor: '#DCD5C7' }}>
-              <Icone nom="soleil-petit" taille={16} couleur="#111013" />
-              <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: '#111013' }}>Clair</Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Pressable onPress={() => choisir('systeme')} accessibilityRole="button" accessibilityState={{ selected: preference === 'systeme' }}
+              style={{ flex: 1, paddingVertical: 14, paddingHorizontal: 6, borderRadius: rayon.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: c.blanc, borderWidth: preference === 'systeme' ? 2 : 1, borderColor: preference === 'systeme' ? c.rouge : c.grisClair }}>
+              <Icone nom="engrenage" taille={15} couleur={c.noir} />
+              <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: fs[3], color: c.noir }}>Système</Text>
             </Pressable>
-            <Pressable onPress={() => choisir('sombre')} accessibilityRole="button"
-              style={{ flex: 1, padding: 14, borderRadius: rayon.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#111013', borderWidth: 1, borderColor: '#36323B' }}>
-              <Icone nom="lune" taille={16} couleur="#F5F1E8" />
-              <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: '#F5F1E8' }}>Sombre</Text>
+            <Pressable onPress={() => choisir('clair')} accessibilityRole="button" accessibilityState={{ selected: preference === 'clair' }}
+              style={{ flex: 1, paddingVertical: 14, paddingHorizontal: 6, borderRadius: rayon.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: '#F5F1E8', borderWidth: preference === 'clair' ? 2 : 1, borderColor: preference === 'clair' ? c.rouge : '#DCD5C7' }}>
+              <Icone nom="soleil-petit" taille={15} couleur="#111013" />
+              <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: fs[3], color: '#111013' }}>Clair</Text>
+            </Pressable>
+            <Pressable onPress={() => choisir('sombre')} accessibilityRole="button" accessibilityState={{ selected: preference === 'sombre' }}
+              style={{ flex: 1, paddingVertical: 14, paddingHorizontal: 6, borderRadius: rayon.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: '#111013', borderWidth: preference === 'sombre' ? 2 : 1, borderColor: preference === 'sombre' ? c.rouge : '#36323B' }}>
+              <Icone nom="lune" taille={15} couleur="#F5F1E8" />
+              <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: fs[3], color: '#F5F1E8' }}>Sombre</Text>
             </Pressable>
           </View>
         </CarteProfil>
