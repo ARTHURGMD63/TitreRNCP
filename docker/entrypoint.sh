@@ -21,7 +21,7 @@ sed -ri "s/<VirtualHost \*:[0-9]+>/<VirtualHost *:${PORT}>/" /etc/apache2/sites-
 # de root et les envois échouent silencieusement.
 # Rappel, et ce n'est pas un détail : ce dossier vit dans le conteneur. Un
 # redéploiement l'efface. Le stockage objet externe reste à faire (SL-12).
-mkdir -p /var/www/html/uploads/avatars /var/www/html/uploads/etablissements
+mkdir -p /var/www/html/uploads/avatars /var/www/html/uploads/etablissements /var/www/html/uploads/evenements
 chown -R www-data:www-data /var/www/html/uploads
 
 exec "$@"

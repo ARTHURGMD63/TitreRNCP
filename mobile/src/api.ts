@@ -66,8 +66,14 @@ async function requete<T>(url: string, { methode = 'GET', corps, formulaire, jet
 
   // Sans délai maximal, un serveur injoignable laisse l'écran sur son rond qui
   // tourne indéfiniment — la pire des réponses, parce qu'elle n'en est pas une.
+  //
+  // Un envoi de fichier (formulaire) a droit à plus de temps : sur l'offre
+  // gratuite de Render, un serveur endormi met jusqu'à une minute à se
+  // réveiller au premier appel, et une photo met plus longtemps à téléverser
+  // qu'un JSON. 15 s y coupait la connexion en pleine réveil du serveur —
+  // le fichier n'atteignait jamais l'API, sans qu'aucun message ne le dise.
   const abandon = new AbortController();
-  const minuteur = setTimeout(() => abandon.abort(), 15000);
+  const minuteur = setTimeout(() => abandon.abort(), formulaire ? 45000 : 15000);
 
   let reponse: Response;
   try {

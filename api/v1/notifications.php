@@ -28,7 +28,10 @@ apiExigerMethode('GET');
 
 $notifs = notificationsEtudiant($pdo, $uid);
 $luesLe = notificationsLuesLe($pdo, $uid);
-$luesTs = $luesLe !== null ? strtotime($luesLe) : null;
+// epochUtc(), pas strtotime() : lues_le et ts (ci-dessous) viennent de
+// colonnes ecrites par NOW() cote base, qui tourne en UTC ici -- voir
+// includes/notifications.php.
+$luesTs = $luesLe !== null ? epochUtc($luesLe) : null;
 
 $minuit  = strtotime('today');
 $semaine = strtotime('-7 days', $minuit);
@@ -36,7 +39,7 @@ $semaine = strtotime('-7 days', $minuit);
 $items = [];
 foreach ($notifs['items'] as $n) {
     $ts  = (string) $n['ts'];
-    $sec = strtotime($ts) ?: 0;
+    $sec = epochUtc($ts);
 
     $item = [
         'type'     => (string) $n['type'],
