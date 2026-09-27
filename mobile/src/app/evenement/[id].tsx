@@ -323,12 +323,12 @@ export default function FicheEvenement() {
             {photosData.peut_publier ? (
               <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
                 <Bouton
-                  variante="contour" icone="appareil" libelle="Prendre une photo"
+                  variante="primaire" icone="appareil" libelle="Prendre une photo"
                   chargement={publicationEnCours === 'camera'} desactive={publicationEnCours === 'galerie'}
                   onPress={() => choisirEtPublier('camera')}
                 />
                 <Bouton
-                  variante="contour" icone="image" libelle="Galerie"
+                  variante="primaire" icone="image" libelle="Galerie"
                   chargement={publicationEnCours === 'galerie'} desactive={publicationEnCours === 'camera'}
                   onPress={() => choisirEtPublier('galerie')}
                 />

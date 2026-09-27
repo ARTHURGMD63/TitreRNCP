@@ -179,24 +179,11 @@ export function ombre(mode: Mode, niveau: 'sm' | 'base' | 'lg') {
   return { shadowColor: '#111013', shadowOffset: { width: 0, height: t.h }, shadowOpacity: t.o, shadowRadius: t.r, elevation: t.e };
 }
 
-/** --halo-lave : seuls la carte flash et le pass actif le portent. */
+/** --halo-lave : carte flash, pass actif, et le liseré d'une soirée en cours. */
 export const haloLave = {
   shadowColor: '#FF5424',
   shadowOffset: { width: 0, height: 18 },
   shadowOpacity: 0.45,
   shadowRadius: 26,
   elevation: 14,
-} as const;
-
-/**
- * Halo moutarde, plus discret que haloLave : la carte d'une soirée en cours
- * reste une carte blanche (à ne pas confondre avec l'aplat rouge du flash),
- * juste bordée d'un liseré qui respire.
- */
-export const haloOrange = {
-  shadowColor: '#FFC23D',
-  shadowOffset: { width: 0, height: 10 },
-  shadowOpacity: 0.35,
-  shadowRadius: 18,
-  elevation: 8,
 } as const;
