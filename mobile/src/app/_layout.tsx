@@ -12,7 +12,8 @@
  *  - étudiant qui vient de s'inscrire : l'accueil (onboarding.php) ;
  *  - étudiant : les onglets et les fiches ;
  *  - partenaire : son propre groupe d'onglets, natif — voir (partenaire)/ ;
- *  - admin : le back-office reste sur le site, l'application le dit.
+ *  - admin : idem, plus léger — voir (admin)/. Les pages les plus lourdes
+ *    (CRM, finances, tableau de bord fondateurs) restent sur le site.
  */
 
 import React, { useEffect } from 'react';
@@ -83,7 +84,7 @@ function Navigation() {
         </Stack.Protected>
 
         <Stack.Protected guard={admin}>
-          <Stack.Screen name="admin" />
+          <Stack.Screen name="(admin)" />
         </Stack.Protected>
       </Stack>
     </>

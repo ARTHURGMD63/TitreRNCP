@@ -398,6 +398,69 @@ export type ReponseFormulaireEvenementPartenaire = {
   flash_par_mois: number | null;
 };
 
+// ─── Administration ─────────────────────────────────────────────────────────
+
+export type Signalement = {
+  id: number;
+  motif: string;
+  details: string | null;
+  created_at: string;
+  total_cible: number;
+  signale_par: string;
+  personne: { id: number; prenom: string; nom: string; photo_url: string | null };
+  traite_par: string | null;
+  traite_le: string | null;
+};
+
+export type ReponseModeration = { nb_nouveaux: number; signalements: Signalement[] };
+
+export type EtudiantAdmin = {
+  id: number;
+  prenom: string;
+  nom: string;
+  email: string;
+  ecole: string | null;
+  promo: string | null;
+  photo_url: string | null;
+  interets: string[];
+  sorties: number;
+  presences: number;
+  squads: number;
+  economies: number;
+  derniere_activite: string | null;
+  inscrit_le: string;
+};
+
+export type ReponseEtudiantsAdmin = {
+  repere: { total: number; nouveaux_7j: number; actifs: number };
+  filtres: { q: string; ecole: string; etat: string; ecoles_disponibles: string[] };
+  pagination: { page: number; par_page: number; total: number; pages: number };
+  etudiants: EtudiantAdmin[];
+};
+
+export type EvenementAdmin = {
+  id: number;
+  titre: string;
+  type: string;
+  date_heure: string;
+  passe: boolean;
+  etablissement: { nom: string; ville: string };
+  quota: number;
+  inscrits: number;
+  presents: number | null;
+  taux_presence: number | null;
+  reduction: number | null;
+  is_gratuit: boolean;
+  is_flash: boolean;
+  sponsorise_actif: boolean;
+};
+
+export type ReponseEvenementsAdmin = {
+  repere: { total: number; a_venir: number; nouveaux_7j: number; taux_presence_global: number | null };
+  filtres: { etablissement: number | null; periode: string; type: string; etablissements: { id: number; nom: string }[] };
+  evenements: EvenementAdmin[];
+};
+
 // ─── Lectures ────────────────────────────────────────────────────────────────
 
 export const api = {
@@ -443,6 +506,14 @@ export const api = {
     appelApi<Ok & { id: number }>('partenaire_evenement.php', { methode: 'POST', jeton, corps }),
   partenaireScan: (jeton: string, corps: { qr_code: string; event_id: number }) =>
     appelApi<Ok>('partenaire_scan.php', { methode: 'POST', jeton, corps }),
+  adminModeration: (jeton: string, statut: 'nouveau' | 'traite' = 'nouveau') =>
+    appelApi<{ success: true } & ReponseModeration>('admin_moderation.php', { jeton, params: { statut } }),
+  adminTraiterSignalement: (jeton: string, id: number) =>
+    appelApi<Ok>('admin_moderation.php', { methode: 'POST', jeton, corps: { action: 'traiter', id } }),
+  adminEtudiants: (jeton: string, params: { q?: string; ecole?: string; etat?: string; p?: number }) =>
+    appelApi<{ success: true } & ReponseEtudiantsAdmin>('admin_utilisateurs.php', { jeton, params }),
+  adminEvenements: (jeton: string, params: { etablissement?: number; periode?: string; type?: string }) =>
+    appelApi<{ success: true } & ReponseEvenementsAdmin>('admin_evenements.php', { jeton, params }),
   publierPhotoEvenement: (jeton: string, formulaire: FormData) =>
     appelApi<{ photo: PhotoEvenement; remplace: boolean }>('evenement_photos.php', { methode: 'POST', formulaire, jeton }),
   supprimerPhotoEvenement: (jeton: string, photoId: number) =>
