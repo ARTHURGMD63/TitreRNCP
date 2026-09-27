@@ -13,21 +13,32 @@ import React, { useCallback, useState } from 'react';
 import { Image, ImageBackground, Pressable, ScrollView, Share, Text, View, useWindowDimensions } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as ImagePicker from 'expo-image-picker';
 import Svg, { Defs, Pattern, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { actions, adresseServeur, api, ErreurApi, type EvenementDetail } from '../../api';
+import { actions, adresseServeur, api, ErreurApi, type EvenementDetail, type PhotoEvenement, type ReponsePhotosEvenement } from '../../api';
 import { Bouton } from '../../composants/Bouton';
 import { libelleStyle } from '../../composants/CarteEvenement';
 import { Chargement, Ecran, Erreur } from '../../composants/Ecran';
 import { Avatar, Badge, BoutonRetour, Jauge } from '../../composants/Elements';
+import { Feuille } from '../../composants/Feuille';
+import { Champ, Selecteur } from '../../composants/Formulaire';
 import { Icone, type NomIcone } from '../../composants/Icone';
 import { Display, Mono, T } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
+import { confirmer } from '../../confirmer';
 import { dateFr, heure, majuscules, ts } from '../../format';
 import { useJeton } from '../../session';
 import { fixe, fs, gutter, lh, lsEm, mono, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
+
+const MOTIFS_PHOTO = [
+  { valeur: 'n_apparait_pas', libelle: "Je ne veux pas apparaître" },
+  { valeur: 'contenu_inapproprie', libelle: 'Contenu inapproprié' },
+  { valeur: 'spam', libelle: 'Spam ou publicité' },
+  { valeur: 'autre', libelle: 'Autre' },
+];
 
 function Section({ icone, children }: { icone?: NomIcone; children: string }) {
   const { c } = useTheme();
@@ -68,6 +79,15 @@ export default function FicheEvenement() {
   const [libelleErreur, setLibelleErreur] = useState<string | null>(null);
   const [instant] = useState(() => Date.now() / 1000);
 
+  const [photosData, setPhotosData] = useState<ReponsePhotosEvenement | null>(null);
+  const [publicationEnCours, setPublicationEnCours] = useState<'camera' | 'galerie' | null>(null);
+  const [photoOuverte, setPhotoOuverte] = useState<PhotoEvenement | null>(null);
+  const [suppressionEnCours, setSuppressionEnCours] = useState(false);
+  const [signalementPhoto, setSignalementPhoto] = useState(false);
+  const [motifPhoto, setMotifPhoto] = useState('n_apparait_pas');
+  const [detailsPhoto, setDetailsPhoto] = useState('');
+  const [envoiSignalement, setEnvoiSignalement] = useState(false);
+
   const charger = useCallback(async () => {
     try {
       setErreur(null);
@@ -77,7 +97,79 @@ export default function FicheEvenement() {
     }
   }, [jeton, id]);
 
-  useFocusEffect(useCallback(() => { void charger(); }, [charger]));
+  const chargerPhotos = useCallback(async () => {
+    try {
+      setPhotosData(await api.photosEvenement(jeton, Number(id)));
+    } catch {
+      // Une soirée sans photo n'est pas une erreur à afficher : la section
+      // reste simplement absente.
+    }
+  }, [jeton, id]);
+
+  useFocusEffect(useCallback(() => { void charger(); void chargerPhotos(); }, [charger, chargerPhotos]));
+
+  async function choisirEtPublier(source: 'camera' | 'galerie') {
+    const options: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], allowsEditing: true, quality: 0.85 };
+    let choix: ImagePicker.ImagePickerResult;
+    if (source === 'camera') {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        toast("Autorise l'accès à la caméra pour prendre une photo.", 'error');
+        return;
+      }
+      choix = await ImagePicker.launchCameraAsync(options);
+    } else {
+      choix = await ImagePicker.launchImageLibraryAsync(options);
+    }
+    if (choix.canceled || !choix.assets[0]) return;
+
+    const photo = choix.assets[0];
+    setPublicationEnCours(source);
+    try {
+      const f = new FormData();
+      f.append('evenement_id', String(id));
+      f.append('photo', { uri: photo.uri, name: photo.fileName ?? 'photo.jpg', type: photo.mimeType ?? 'image/jpeg' } as unknown as Blob);
+      const rep = await api.publierPhotoEvenement(jeton, f);
+      setPhotosData((d) => (d ? { ...d, photos: [rep.photo, ...d.photos] } : d));
+      toast('Photo publiée !', 'success');
+    } catch (err) {
+      toast(err instanceof ErreurApi ? err.message : 'Erreur réseau', 'error');
+    } finally {
+      setPublicationEnCours(null);
+    }
+  }
+
+  async function supprimerPhotoCourante() {
+    if (!photoOuverte) return;
+    if (!(await confirmer('Supprimer cette photo ?'))) return;
+    setSuppressionEnCours(true);
+    try {
+      await api.supprimerPhotoEvenement(jeton, photoOuverte.id);
+      setPhotosData((d) => (d ? { ...d, photos: d.photos.filter((p) => p.id !== photoOuverte.id) } : d));
+      setPhotoOuverte(null);
+    } catch (err) {
+      toast(err instanceof ErreurApi ? err.message : 'Erreur réseau', 'error');
+    } finally {
+      setSuppressionEnCours(false);
+    }
+  }
+
+  async function envoyerSignalementPhoto() {
+    if (!photoOuverte) return;
+    setEnvoiSignalement(true);
+    try {
+      await api.signalerPhotoEvenement(jeton, { photo_id: photoOuverte.id, motif: motifPhoto, details: detailsPhoto });
+      toast('Signalement envoyé. Merci.', 'success');
+      setSignalementPhoto(false);
+      setPhotoOuverte(null);
+      setMotifPhoto('n_apparait_pas');
+      setDetailsPhoto('');
+    } catch (err) {
+      toast(err instanceof ErreurApi ? err.message : 'Erreur réseau', 'error');
+    } finally {
+      setEnvoiSignalement(false);
+    }
+  }
 
   if (!e) {
     return (
@@ -147,7 +239,44 @@ export default function FicheEvenement() {
   const arrondi = { borderBottomLeftRadius: rayon.xl, borderBottomRightRadius: rayon.xl, overflow: 'hidden' as const };
 
   return (
-    <Ecran avecBarre={false} plein onRafraichir={charger}>
+    <Ecran
+      avecBarre={false}
+      plein
+      onRafraichir={charger}
+      horsDefilement={
+        <>
+          <Feuille visible={!!photoOuverte && !signalementPhoto} onClose={() => setPhotoOuverte(null)}>
+            {photoOuverte ? (
+              <>
+                <Image source={{ uri: photoOuverte.url ?? undefined }} resizeMode="cover"
+                  style={{ width: '100%', aspectRatio: 3 / 4, borderRadius: rayon.md, marginBottom: 16 }} />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+                  <Avatar photo={photoOuverte.auteur.photo_url} prenom={photoOuverte.auteur.prenom} taille={32} />
+                  <T taille={fs[4]} poids={700}>{photoOuverte.auteur.prenom}</T>
+                </View>
+                {photoOuverte.moi ? (
+                  <Bouton libelle="Supprimer ma photo" variante="alerte" plein chargement={suppressionEnCours} onPress={supprimerPhotoCourante} />
+                ) : (
+                  <Bouton libelle="Signaler cette photo" variante="contour" plein onPress={() => setSignalementPhoto(true)} />
+                )}
+              </>
+            ) : null}
+          </Feuille>
+
+          <Feuille visible={signalementPhoto} onClose={() => setSignalementPhoto(false)}>
+            <Display taille={fs[7]} interligne={lh.tight} style={{ marginBottom: 6, letterSpacing: lsEm.tight * fs[7] }}>Signaler cette photo</Display>
+            <T taille={fs[3]} poids={500} couleur={c.grisFonce} interligne={lh.snug} style={{ marginBottom: 20 }}>
+              Ton signalement est envoyé à l&apos;équipe de modération.
+            </T>
+            <Selecteur etiquette="Motif" valeur={motifPhoto} onChange={setMotifPhoto} options={MOTIFS_PHOTO} />
+            <Champ etiquette="Précisions (facultatif)" value={detailsPhoto} onChangeText={setDetailsPhoto} multiligne maxLength={500}
+              placeholder="Ce qui te dérange sur cette photo." numberOfLines={3} />
+            <Bouton libelle="Envoyer le signalement" plein chargement={envoiSignalement} onPress={envoyerSignalementPhoto} />
+            <Bouton libelle="Annuler" variante="contour" plein onPress={() => setSignalementPhoto(false)} style={{ marginTop: 12 }} />
+          </Feuille>
+        </>
+      }
+    >
       {photo ? (
         <ImageBackground source={{ uri: photo }} accessibilityLabel={e.photos[0]?.legende ?? `Photo de ${e.etablissement.nom}`} style={arrondi}>
           <LinearGradient
@@ -202,6 +331,45 @@ export default function FicheEvenement() {
                 </View>
               ))}
             </ScrollView>
+          </View>
+        ) : null}
+
+        {photosData && !photosData.reserve_participants ? (
+          <View style={{ marginTop: 32 }}>
+            <Section icone="appareil">{photosData.en_cours ? 'Photos de la soirée' : 'Tes photos de cette soirée'}</Section>
+
+            {photosData.peut_publier ? (
+              <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
+                <Bouton
+                  variante="contour" icone="appareil" libelle="Prendre une photo"
+                  chargement={publicationEnCours === 'camera'} desactive={publicationEnCours === 'galerie'}
+                  onPress={() => choisirEtPublier('camera')}
+                />
+                <Bouton
+                  variante="contour" icone="image" libelle="Galerie"
+                  chargement={publicationEnCours === 'galerie'} desactive={publicationEnCours === 'camera'}
+                  onPress={() => choisirEtPublier('galerie')}
+                />
+              </View>
+            ) : null}
+
+            {photosData.photos.length ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 8 }}>
+                {photosData.photos.map((p) => (
+                  <Pressable key={p.id} onPress={() => setPhotoOuverte(p)} accessibilityRole="button" accessibilityLabel={`Photo de ${p.auteur.prenom}`}>
+                    <Image source={{ uri: p.url ?? undefined }} style={{ height: 200, width: 150, borderRadius: rayon.md }} resizeMode="cover" />
+                    <View style={{ position: 'absolute', bottom: 8, left: 8, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Avatar photo={p.auteur.photo_url} prenom={p.auteur.prenom} taille={22} />
+                      <Text style={{ fontFamily: sans(700), fontSize: fs[2], color: fixe.craie }}>{p.auteur.prenom}</Text>
+                    </View>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            ) : (
+              <T taille={fs[3]} couleur={c.gris}>
+                {photosData.peut_publier ? 'Sois le premier à partager une photo de cette soirée.' : 'Aucune photo pour le moment.'}
+              </T>
+            )}
           </View>
         ) : null}
 

@@ -18,7 +18,7 @@ import { adresseServeur, api, ErreurApi, type Badge, type ReponseMoi } from '../
 import { Bouton } from '../../composants/Bouton';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Avatar, Encart, Jauge } from '../../composants/Elements';
-import { Case, Etiquette, SelecteurInterets, Selecteur } from '../../composants/Formulaire';
+import { Aide, Case, Etiquette, SelecteurInterets, Selecteur } from '../../composants/Formulaire';
 import { estIcone, Icone, type NomIcone } from '../../composants/Icone';
 import { Display, Mono, T, TitreEcran } from '../../composants/Texte';
 import { nombre } from '../../format';
@@ -79,6 +79,7 @@ export default function Moi() {
   const [ecole, setEcole] = useState('UCA');
   const [promo, setPromo] = useState('L1');
   const [interets, setInterets] = useState<string[]>([]);
+  const [comptePrive, setComptePrive] = useState(true);
   const [photo, setPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [retirer, setRetirer] = useState(false);
   const [enregistrement, setEnregistrement] = useState(false);
@@ -94,6 +95,7 @@ export default function Moi() {
       setEcole(r.moi.ecole && r.choix.ecoles.includes(r.moi.ecole) ? r.moi.ecole : r.choix.ecoles[0]);
       setPromo(r.moi.promo && r.choix.promos.includes(r.moi.promo) ? r.moi.promo : r.choix.promos[0]);
       setInterets(r.moi.interets);
+      setComptePrive(r.moi.compte_prive);
     } catch (e) {
       setErreur(e instanceof Error ? e.message : 'Chargement impossible.');
     } finally {
@@ -120,6 +122,7 @@ export default function Moi() {
       const f = new FormData();
       f.append('ecole', ecole);
       f.append('promo', promo);
+      f.append('compte_prive', comptePrive ? '1' : '0');
       interets.forEach((i) => f.append('interets[]', i));
       if (retirer) f.append('supprimer_photo', '1');
       if (photo && !retirer) {
@@ -243,6 +246,15 @@ export default function Moi() {
             <View style={{ marginBottom: 20 }}>
               <Etiquette style={{ marginBottom: 12 }}>Centres d&apos;intérêt</Etiquette>
               <SelecteurInterets catalogue={choix.interets} choisis={interets} onChange={setInterets} />
+            </View>
+
+            <View style={{ marginBottom: 20 }}>
+              <Case coche={!comptePrive} onChange={(v) => setComptePrive(!v)}>Compte public</Case>
+              <Aide>
+                {comptePrive
+                  ? "Compte privé : tes abonnés doivent être acceptés, et tes photos de soirée ne sont visibles que d'eux."
+                  : 'Compte public : tout le monde peut te suivre sans demande, et voir tes photos de soirée.'}
+              </Aide>
             </View>
 
             <Bouton libelle="Enregistrer les modifications" plein chargement={enregistrement} onPress={enregistrer} />

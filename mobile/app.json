@@ -29,6 +29,13 @@
       "expo-web-browser",
       "@react-native-community/datetimepicker",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Linkee a besoin d'accéder à tes photos pour choisir une image.",
+          "cameraPermission": "Linkee a besoin de la caméra pour prendre une photo de la soirée."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#111013",

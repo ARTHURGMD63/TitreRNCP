@@ -168,7 +168,7 @@ function apiUtilisateur(PDO $pdo): array
     $stmt = $pdo->prepare(
         'SELECT t.id AS token_id, t.expire_le, t.derniere_utilisation,
                 u.id, u.nom, u.prenom, u.email, u.ecole, u.promo, u.photo,
-                u.interests, u.type
+                u.interests, u.type, u.compte_prive
            FROM api_tokens t
            JOIN users u ON u.id = t.user_id
           WHERE t.token_hash = ?'
@@ -320,6 +320,7 @@ function apiProfil(array $u): array
         'type'      => (string) $u['type'],
         'photo_url' => !empty($u['photo']) ? avatarUrlAbsolue((string) $u['photo']) : null,
         'interets'  => interetsDepuisTexte($u['interests'] ?? null),
+        'compte_prive' => !empty($u['compte_prive']),
     ];
 }
 

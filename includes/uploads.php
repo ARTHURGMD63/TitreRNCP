@@ -36,6 +36,16 @@ function avatarUrl(string $filename): string {
     return baseUrl('/uploads/avatars/' . rawurlencode($filename));
 }
 
+/** Dossier de stockage des photos postées pendant une soirée (chemin disque). */
+function evenementPhotoDir(): string {
+    return dirname(__DIR__) . '/uploads/evenements';
+}
+
+/** URL publique d'une photo de soirée. */
+function evenementPhotoUrl(string $filename): string {
+    return baseUrl('/uploads/evenements/' . rawurlencode($filename));
+}
+
 /**
  * Rend l'avatar d'un étudiant : sa photo si elle existe, son initiale sinon.
  *

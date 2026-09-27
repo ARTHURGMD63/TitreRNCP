@@ -43,6 +43,28 @@ function canSeeActivity(PDO $pdo, int $me, int $other): bool
     return followState($pdo, $me, $other) === FOLLOW_ACCEPTED;
 }
 
+/** Le compte de $id est-il réglé en privé (comportement par défaut) ? */
+function estComptePrive(PDO $pdo, int $id): bool
+{
+    $stmt = $pdo->prepare('SELECT compte_prive FROM users WHERE id = ?');
+    $stmt->execute([$id]);
+
+    return (bool) $stmt->fetchColumn();
+}
+
+/**
+ * $me peut-il voir les photos postées par $auteur ?
+ *
+ * Point unique de la règle : ses propres photos sont toujours visibles ; un
+ * compte public les montre à tout le monde ; un compte privé les réserve à
+ * ceux qu'il a acceptés — même règle que canSeeActivity(), volontairement,
+ * pour que « compte privé » veuille dire la même chose partout dans l'app.
+ */
+function peutVoirPhotosDe(PDO $pdo, int $me, int $auteur): bool
+{
+    return $me === $auteur || !estComptePrive($pdo, $auteur) || canSeeActivity($pdo, $me, $auteur);
+}
+
 /**
  * Un blocage existe-t-il dans un sens ou dans l'autre ?
  * Le blocage est symétrique dans ses effets : ni l'un ni l'autre ne se voit.

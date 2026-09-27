@@ -52,6 +52,10 @@ CREATE TABLE IF NOT EXISTS users (
     cgu_acceptees_le DATETIME DEFAULT NULL,
     interests TEXT,
     type ENUM('etudiant', 'partenaire', 'admin') DEFAULT 'etudiant',
+    -- Compte public/prive a l'instagram (migration v21). Prive par defaut :
+    -- comportement inchange pour l'existant tant que la personne n'a pas
+    -- choisi de passer en public (voir follow.php et evenement_photos.php).
+    compte_prive TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -851,6 +855,41 @@ CREATE TABLE IF NOT EXISTS liste_attente (
     INDEX idx_parrain (parrain_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ═══════════════════════════════════════════════════════════════════════════
+--  migration v21 — photos d'événement + comptes publics/privés
+--
+--  Pendant une soirée, les participants check-in peuvent poster des photos,
+--  publiques (sauf compte privé) tant que la soirée est en cours, réservées
+--  aux participants une fois close. Voir db_migrations_v21.sql et
+--  includes/evenements_photos.php.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS evenement_photos (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    evenement_id INT NOT NULL,
+    user_id INT NOT NULL,
+    fichier VARCHAR(255) NOT NULL,
+    legende VARCHAR(255) NULL DEFAULT NULL,
+    masquee TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_evphoto_event (evenement_id, created_at),
+    KEY idx_evphoto_user (user_id),
+    FOREIGN KEY (evenement_id) REFERENCES evenements(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS evenement_photo_signalements (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    photo_id INT NOT NULL,
+    reporter_id INT NOT NULL,
+    motif ENUM('n_apparait_pas','contenu_inapproprie','spam','autre') NOT NULL,
+    details VARCHAR(500) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_signalement (photo_id, reporter_id),
+    FOREIGN KEY (photo_id) REFERENCES evenement_photos(id) ON DELETE CASCADE,
+    FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS schema_migrations (
     version     VARCHAR(20) NOT NULL,
     applique_le DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -859,4 +898,4 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 
 INSERT IGNORE INTO schema_migrations (version) VALUES
 ('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
-('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20');
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21');

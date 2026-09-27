@@ -70,11 +70,19 @@ try {
     }
 
     if ($action === 'follow') {
-        // La demande naît en attente : c'est la personne visée qui ouvre l'accès.
-        $pdo->prepare("INSERT IGNORE INTO follows_users (follower_id, followed_id, statut) VALUES (?,?, 'pending')")
-            ->execute([$uid, $target_id]);
+        // Compte public : pas de demande a ouvrir, l'abonnement est immediat —
+        // exactement comme suivre un etablissement. Compte prive (par
+        // defaut) : la demande naît en attente, c'est la personne visee qui
+        // ouvre l'acces.
+        if (estComptePrive($pdo, $target_id)) {
+            $pdo->prepare("INSERT IGNORE INTO follows_users (follower_id, followed_id, statut) VALUES (?,?, 'pending')")
+                ->execute([$uid, $target_id]);
+        } else {
+            $pdo->prepare("INSERT IGNORE INTO follows_users (follower_id, followed_id, statut, responded_at) VALUES (?,?, 'accepted', NOW())")
+                ->execute([$uid, $target_id]);
+        }
         $etat    = followState($pdo, $uid, $target_id);
-        $message = $etat === FOLLOW_ACCEPTED ? 'Tu suis déjà cette personne' : 'Demande envoyée';
+        $message = $etat === FOLLOW_ACCEPTED ? 'Tu suis maintenant cette personne' : 'Demande envoyée';
 
     } elseif ($action === 'unfollow') {
         // Couvre l'annulation d'une demande et le désabonnement.

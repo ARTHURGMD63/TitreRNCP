@@ -141,6 +141,7 @@ export type Profil = {
   type: 'etudiant' | 'partenaire' | 'admin';
   photo_url: string | null;
   interets: string[];
+  compte_prive: boolean;
 };
 
 export type Evenement = {
@@ -311,6 +312,22 @@ export type ReponseAvis = {
 
 export type ReponseConnexion = { token: string; expire_le: string; utilisateur: Profil };
 
+export type PhotoEvenement = {
+  id: number;
+  url: string | null;
+  legende: string | null;
+  created_at: string;
+  auteur: { id: number; prenom: string; photo_url: string | null };
+  moi: boolean;
+};
+
+export type ReponsePhotosEvenement = {
+  en_cours: boolean;
+  peut_publier: boolean;
+  reserve_participants: boolean;
+  photos: PhotoEvenement[];
+};
+
 // ─── Lectures ────────────────────────────────────────────────────────────────
 
 export const api = {
@@ -344,6 +361,14 @@ export const api = {
   avis: (jeton: string, eventId: number) => appelApi<ReponseAvis>('avis.php', { jeton, params: { event_id: eventId } }),
   envoyerAvis: (jeton: string, eventId: number, note: number, commentaire: string) =>
     appelApi<{ message: string }>('avis.php', { methode: 'POST', jeton, corps: { event_id: eventId, note, commentaire } }),
+  photosEvenement: (jeton: string, evenementId: number) =>
+    appelApi<ReponsePhotosEvenement>('evenement_photos.php', { jeton, params: { id: evenementId } }),
+  publierPhotoEvenement: (jeton: string, formulaire: FormData) =>
+    appelApi<{ photo: PhotoEvenement }>('evenement_photos.php', { methode: 'POST', formulaire, jeton }),
+  supprimerPhotoEvenement: (jeton: string, photoId: number) =>
+    appelApi<Ok>('evenement_photo_supprimer.php', { methode: 'POST', jeton, corps: { photo_id: photoId } }),
+  signalerPhotoEvenement: (jeton: string, corps: { photo_id: number; motif: string; details?: string }) =>
+    appelApi<Ok>('evenement_photo_signaler.php', { methode: 'POST', jeton, corps }),
 };
 
 // ─── Écritures partagées avec le site ────────────────────────────────────────

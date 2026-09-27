@@ -26,9 +26,11 @@ $stmt = $pdo->prepare('SELECT id, photo FROM users WHERE id=?');
 $stmt->execute([$uid]);
 $u = $stmt->fetch();
 
-$ecole     = trim(is_string($_POST['ecole'] ?? null) ? $_POST['ecole'] : '');
-$promo     = trim(is_string($_POST['promo'] ?? null) ? $_POST['promo'] : '');
-$interests = interetsVersTexte(filtrerInterets($_POST['interets'] ?? $_POST['interests'] ?? []));
+$ecole        = trim(is_string($_POST['ecole'] ?? null) ? $_POST['ecole'] : '');
+$promo        = trim(is_string($_POST['promo'] ?? null) ? $_POST['promo'] : '');
+$interests    = interetsVersTexte(filtrerInterets($_POST['interets'] ?? $_POST['interests'] ?? []));
+// Absent (ancienne version de l'app) : on ne change rien au réglage existant.
+$comptePrive  = isset($_POST['compte_prive']) ? ($_POST['compte_prive'] === '1' ? 1 : 0) : null;
 
 $photoErr = '';
 if (!empty($_POST['supprimer_photo']) && !empty($u['photo'])) {
@@ -47,11 +49,16 @@ if (!empty($_POST['supprimer_photo']) && !empty($u['photo'])) {
     }
 }
 
-$pdo->prepare('UPDATE users SET ecole=?, promo=?, interests=? WHERE id=?')->execute([$ecole, $promo, $interests, $uid]);
+if ($comptePrive === null) {
+    $pdo->prepare('UPDATE users SET ecole=?, promo=?, interests=? WHERE id=?')->execute([$ecole, $promo, $interests, $uid]);
+} else {
+    $pdo->prepare('UPDATE users SET ecole=?, promo=?, interests=?, compte_prive=? WHERE id=?')
+        ->execute([$ecole, $promo, $interests, $comptePrive, $uid]);
+}
 synchroniserInterets($pdo, $uid, interetsDepuisTexte($interests));
 oublierEcolesRepresentees();
 
-$stmt = $pdo->prepare('SELECT id, nom, prenom, email, ecole, promo, photo, interests, type FROM users WHERE id=?');
+$stmt = $pdo->prepare('SELECT id, nom, prenom, email, ecole, promo, photo, interests, type, compte_prive FROM users WHERE id=?');
 $stmt->execute([$uid]);
 $ligne  = $stmt->fetch();
 $profil = ['photo_url' => apiPhotoUrl($ligne['photo'] ?? null)] + apiProfil($ligne);
