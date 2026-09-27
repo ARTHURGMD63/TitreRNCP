@@ -130,8 +130,10 @@ export default function FicheEvenement() {
       f.append('evenement_id', String(id));
       f.append('photo', { uri: photo.uri, name: photo.fileName ?? 'photo.jpg', type: photo.mimeType ?? 'image/jpeg' } as unknown as Blob);
       const rep = await api.publierPhotoEvenement(jeton, f);
-      setPhotosData((d) => (d ? { ...d, photos: [rep.photo, ...d.photos] } : d));
-      toast('Photo publiée !', 'success');
+      // Une seule photo par personne : la nouvelle remplace la sienne dans la
+      // liste locale au lieu de s'y ajouter.
+      setPhotosData((d) => (d ? { ...d, photos: [rep.photo, ...d.photos.filter((p) => !p.moi)] } : d));
+      toast(rep.remplace ? 'Photo remplacée !' : 'Photo publiée !', 'success');
     } catch (err) {
       toast(err instanceof ErreurApi ? err.message : 'Erreur réseau', 'error');
     } finally {
@@ -314,26 +316,6 @@ export default function FicheEvenement() {
         </View>
         <Jauge pourcentage={pct} piste={c.grisClair} remplissage={c.rouge} hauteur={8} />
 
-        <View style={{ marginTop: 32 }}>
-          <Section icone="info">À propos de l&apos;événement</Section>
-          <T taille={fs[5]} interligne={lh.relaxed} couleur={c.grisFonce}>{e.description}</T>
-        </View>
-
-        {e.photos.length ? (
-          <View style={{ marginTop: 32 }}>
-            <Section icone="image">Le lieu en photos</Section>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 8 }}>
-              {e.photos.map((p, i) => (
-                <View key={i}>
-                  <Image source={{ uri: p.url }} accessibilityLabel={p.legende ?? `Photo de ${e.etablissement.nom}`}
-                    style={{ height: 180, width: Math.min(280, width * 0.7), borderRadius: rayon.md }} resizeMode="cover" />
-                  {p.legende ? <T taille={fs[2]} couleur={c.gris} style={{ marginTop: 6, maxWidth: 280 }}>{p.legende}</T> : null}
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-        ) : null}
-
         {photosData && !photosData.reserve_participants ? (
           <View style={{ marginTop: 32 }}>
             <Section icone="appareil">{photosData.en_cours ? 'Photos de la soirée' : 'Tes photos de cette soirée'}</Section>
@@ -370,6 +352,26 @@ export default function FicheEvenement() {
                 {photosData.peut_publier ? 'Sois le premier à partager une photo de cette soirée.' : 'Aucune photo pour le moment.'}
               </T>
             )}
+          </View>
+        ) : null}
+
+        <View style={{ marginTop: 32 }}>
+          <Section icone="info">À propos de l&apos;événement</Section>
+          <T taille={fs[5]} interligne={lh.relaxed} couleur={c.grisFonce}>{e.description}</T>
+        </View>
+
+        {e.photos.length ? (
+          <View style={{ marginTop: 32 }}>
+            <Section icone="image">Le lieu en photos</Section>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 8 }}>
+              {e.photos.map((p, i) => (
+                <View key={i}>
+                  <Image source={{ uri: p.url }} accessibilityLabel={p.legende ?? `Photo de ${e.etablissement.nom}`}
+                    style={{ height: 180, width: Math.min(280, width * 0.7), borderRadius: rayon.md }} resizeMode="cover" />
+                  {p.legende ? <T taille={fs[2]} couleur={c.gris} style={{ marginTop: 6, maxWidth: 280 }}>{p.legende}</T> : null}
+                </View>
+              ))}
+            </ScrollView>
           </View>
         ) : null}
 

@@ -161,6 +161,7 @@ export type Evenement = {
   flash_expiry: string | null;
   sponsorise: boolean;
   deja_inscrit: boolean;
+  en_cours: boolean;
   amis: { prenoms: string[]; nb: number };
 };
 
@@ -364,7 +365,7 @@ export const api = {
   photosEvenement: (jeton: string, evenementId: number) =>
     appelApi<ReponsePhotosEvenement>('evenement_photos.php', { jeton, params: { id: evenementId } }),
   publierPhotoEvenement: (jeton: string, formulaire: FormData) =>
-    appelApi<{ photo: PhotoEvenement }>('evenement_photos.php', { methode: 'POST', formulaire, jeton }),
+    appelApi<{ photo: PhotoEvenement; remplace: boolean }>('evenement_photos.php', { methode: 'POST', formulaire, jeton }),
   supprimerPhotoEvenement: (jeton: string, photoId: number) =>
     appelApi<Ok>('evenement_photo_supprimer.php', { methode: 'POST', jeton, corps: { photo_id: photoId } }),
   signalerPhotoEvenement: (jeton: string, corps: { photo_id: number; motif: string; details?: string }) =>

@@ -29,6 +29,7 @@
 require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/hub.php';
 require_once __DIR__ . '/../../includes/musique.php';
+require_once __DIR__ . '/../../includes/evenements_photos.php';
 
 apiExigerMethode('GET');
 
@@ -39,7 +40,9 @@ $criteres     = hubCriteres($_GET);
 $etabsSuivis  = hubEtablissementsSuivis($pdo, $uid);
 $amisParEvent = hubAmisParEvenement($pdo, $uid);
 
-$resultat = hubEvenements($pdo, $uid, $criteres, $etabsSuivis, $amisParEvent);
+// Une soirée commencée reste dans le fil, et en tête, tant que sa fenêtre de
+// photos est ouverte — la même que celle qui autorise à en poster une.
+$resultat = hubEvenements($pdo, $uid, $criteres, $etabsSuivis, $amisParEvent, EVENEMENT_PHOTOS_FENETRE_HEURES);
 
 /**
  * Met un evenement en forme pour l'application.
@@ -100,6 +103,7 @@ function apiEvenement(array $e, array $amis, array $etabsSuivis): array
         'flash_expiry' => $e['flash_expiry'] !== null ? (string) $e['flash_expiry'] : null,
         'sponsorise'   => (bool) ($e['sponso_actif'] ?? false),
         'deja_inscrit' => (bool) ($e['deja_inscrit'] ?? false),
+        'en_cours'     => (bool) ($e['en_cours_calc'] ?? false),
 
         // « Hugo et Maxime y vont » : l'argument le plus fort de la carte.
         // hubAmisParEvenement() agrege les prenoms en base (GROUP_CONCAT) et

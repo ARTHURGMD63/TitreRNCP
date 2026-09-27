@@ -437,7 +437,14 @@ function hubAnnuaire(PDO $pdo, array $utilisateur, array $criteres): array
  * @param array<int,array{prenoms:list<string>,nb:int}> $amisParEvent hubAmisParEvenement()
  * @return array{evenements:list<array<string,mixed>>, reste:bool}
  */
-function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, array $amisParEvent): array
+/**
+ * @param int $fenetreEnCoursHeures Étend la fenêtre aux soirées commencées
+ *        depuis moins de N heures (0 = comportement historique : seulement
+ *        les soirées à venir, comme sur le site). L'application mobile passe
+ *        EVENEMENT_PHOTOS_FENETRE_HEURES pour que « visible dans le fil » et
+ *        « on peut encore y poster une photo » restent la même fenêtre.
+ */
+function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, array $amisParEvent, int $fenetreEnCoursHeures = 0): array
 {
     $filter  = (string) $criteres['type'];
     $musique = (string) $criteres['musique'];
@@ -467,7 +474,7 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
 
     $ouE     = " FROM evenements e
                  JOIN etablissements et ON et.id = e.etablissement_id
-                 WHERE e.date_heure >= NOW()";
+                 WHERE e.date_heure >= NOW() - INTERVAL $fenetreEnCoursHeures HOUR";
     $paramsE = [];
 
     if ($filter === 'pour-moi') {
@@ -486,13 +493,20 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
         $paramsE[] = $musique;
     }
 
+    // Une soirée commencée mais encore dans sa fenêtre de photos passe devant
+    // tout le reste, sponsoring compris : c'est la seule dont l'écran a une
+    // action à proposer maintenant plutôt que plus tard.
+    $enCoursSql = $fenetreEnCoursHeures > 0
+        ? "(e.date_heure <= NOW() AND e.date_heure >= NOW() - INTERVAL $fenetreEnCoursHeures HOUR) DESC, "
+        : '';
+
     // Le sponsoring acheté passe devant le reste du fil — c'est ce que le
     // partenaire paie. Il ne s'en cache pas pour autant : chaque carte
     // concernée porte le badge « Sponsorisé », et la mise en avant expire.
     // e.id départage : sans dernier critère stable, deux soirées à la même
     // heure peuvent changer de place d'un chargement à l'autre, et la
     // pagination sauter ou répéter une carte.
-    $classementE = " ORDER BY $sponsoActif DESC, e.is_flash DESC, e.date_heure ASC, e.id ASC";
+    $classementE = " ORDER BY $enCoursSql $sponsoActif DESC, e.is_flash DESC, e.date_heure ASC, e.id ASC";
 
     // Même mécanique que l'annuaire : « voir plus » rallonge la page.
     $limiteE = HUB_EVENEMENTS_PAR_PAGE * (int) $criteres['page_evenements'];
@@ -518,6 +532,7 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
     $stmtE = $pdo->prepare(
         "SELECT e.*, et.id AS etab_id, et.nom AS etablissement_nom, et.type AS etab_type, et.ville,
                 $sponsoActif AS sponso_actif,
+                (e.date_heure <= NOW() AND e.date_heure >= NOW() - INTERVAL $fenetreEnCoursHeures HOUR) AS en_cours_calc,
                 (SELECT COUNT(*) FROM inscriptions i
                   WHERE i.evenement_id = e.id AND i.statut <> 'annule') AS nb_inscrits
            FROM evenements e

@@ -1132,6 +1132,9 @@ CREATE TABLE IF NOT EXISTS evenement_photos (
     legende VARCHAR(255) NULL DEFAULT NULL,
     masquee TINYINT(1) NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    -- Une seule photo par personne et par soirée (migration v22) : reposter
+    -- remplace la précédente au lieu d'en accumuler.
+    UNIQUE KEY unique_photo_par_personne (evenement_id, user_id),
     KEY idx_evphoto_event (evenement_id, created_at),
     KEY idx_evphoto_user (user_id),
     FOREIGN KEY (evenement_id) REFERENCES evenements(id) ON DELETE CASCADE,
@@ -1158,4 +1161,4 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 
 INSERT IGNORE INTO schema_migrations (version) VALUES
 ('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
-('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21');
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22');

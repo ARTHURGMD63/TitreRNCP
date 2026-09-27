@@ -230,6 +230,7 @@ function CarteClassique({ ev, onInviter }: { ev: Evenement; onInviter: () => voi
   return (
     <View style={[{ backgroundColor: c.blanc, padding: 20, borderRadius: rayon.base, borderWidth: 1, borderColor: c.grisClair, marginBottom: 20 }, ombre('base')]}>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        {ev.en_cours ? <Badge libelle="EN COURS" fond={c.rouge} encre={fixe.surLave} /> : null}
         <Mono couleur={accent}>{majuscules(LIBELLES_TYPE[ev.type] ?? ev.type)} · {dateFr(ev.date_heure, 'D j M')}</Mono>
         {ev.style_musique ? <Badge libelle={libelleStyle(ev.style_musique)} icone="musique" fond="transparent" encre={c.grisFonce} filet={c.line2} espacement={lsEm.wide} style={{ paddingVertical: 2, paddingHorizontal: 9, gap: 4 }} /> : null}
         {ev.is_gratuit ? <Badge libelle="GRATUIT" fond={c.noir} encre={c.bg} /> : null}

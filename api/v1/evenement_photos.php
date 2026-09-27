@@ -62,18 +62,36 @@ if ($methode === 'POST') {
     $legende = trim(is_string($_POST['legende'] ?? null) ? $_POST['legende'] : '');
     $legende = $legende !== '' ? substr($legende, 0, 255) : null;
 
+    // Une seule photo par personne et par soirée : reposter remplace la
+    // précédente. On la retrouve avant l'upload pour effacer son fichier une
+    // fois le nouveau bien enregistré — jamais avant, sinon un envoi qui
+    // échoue laisserait la personne sans aucune photo.
+    $stmt = $pdo->prepare('SELECT id, fichier FROM evenement_photos WHERE evenement_id = ? AND user_id = ?');
+    $stmt->execute([$eid, $uid]);
+    $existante = $stmt->fetch();
+
     $res = storeUploadedImage($_FILES['photo'], evenementPhotoDir(), 1280);
     if (!$res['ok']) {
         apiErreur($res['error'], 422, 'photo_invalide');
     }
 
-    $pdo->prepare('INSERT INTO evenement_photos (evenement_id, user_id, fichier, legende) VALUES (?,?,?,?)')
-        ->execute([$eid, $uid, $res['filename'], $legende]);
-    $photoId = (int) $pdo->lastInsertId();
+    $pdo->prepare(
+        'INSERT INTO evenement_photos (evenement_id, user_id, fichier, legende) VALUES (?,?,?,?)
+           ON DUPLICATE KEY UPDATE fichier = VALUES(fichier), legende = VALUES(legende),
+                                    masquee = 0, created_at = CURRENT_TIMESTAMP'
+    )->execute([$eid, $uid, $res['filename'], $legende]);
+
+    if ($existante) {
+        deleteStoredImage((string) $existante['fichier'], evenementPhotoDir());
+        $photoId = (int) $existante['id'];
+    } else {
+        $photoId = (int) $pdo->lastInsertId();
+    }
 
     apiReponse([
-        'success' => true,
-        'photo'   => [
+        'success'  => true,
+        'remplace' => (bool) $existante,
+        'photo'    => [
             'id'         => $photoId,
             'url'        => evenementPhotoUrlSiExiste($res['filename']),
             'legende'    => $legende,
