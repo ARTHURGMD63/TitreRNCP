@@ -11,7 +11,8 @@
  *  - déconnecté : connexion, inscription, mot de passe oublié ;
  *  - étudiant qui vient de s'inscrire : l'accueil (onboarding.php) ;
  *  - étudiant : les onglets et les fiches ;
- *  - partenaire : l'espace pro vit sur le site, l'application le dit.
+ *  - partenaire : son propre groupe d'onglets, natif — voir (partenaire)/ ;
+ *  - admin : le back-office reste sur le site, l'application le dit.
  */
 
 import React, { useEffect } from 'react';
@@ -52,7 +53,9 @@ function Navigation() {
     return <View style={{ flex: 1, backgroundColor: c.bg }} />;
   }
 
-  const etudiant = profil?.type === 'etudiant';
+  const etudiant   = profil?.type === 'etudiant';
+  const partenaire = profil?.type === 'partenaire';
+  const admin      = profil?.type === 'admin';
 
   return (
     <>
@@ -75,8 +78,12 @@ function Navigation() {
           <Stack.Screen name="avis/[id]" />
         </Stack.Protected>
 
-        <Stack.Protected guard={profil !== null && !etudiant}>
-          <Stack.Screen name="partenaire" />
+        <Stack.Protected guard={partenaire}>
+          <Stack.Screen name="(partenaire)" />
+        </Stack.Protected>
+
+        <Stack.Protected guard={admin}>
+          <Stack.Screen name="admin" />
         </Stack.Protected>
       </Stack>
     </>

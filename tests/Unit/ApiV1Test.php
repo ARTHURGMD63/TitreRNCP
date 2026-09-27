@@ -93,12 +93,16 @@ final class ApiV1Test extends TestCase
                 continue;
             }
             $source = $this->code($chemin);
-            if (!str_contains($source, 'apiUtilisateur(') && !str_contains($source, 'apiEtudiant(')) {
+            $aUneGarde = str_contains($source, 'apiUtilisateur(')
+                || str_contains($source, 'apiEtudiant(')
+                || str_contains($source, 'apiPartenaire(')
+                || str_contains($source, 'apiAdmin(');
+            if (!$aUneGarde) {
                 $fautifs[] = $nom;
             }
         }
 
-        $this->assertSame([], $fautifs, 'points sans appel à apiUtilisateur()/apiEtudiant() : '
+        $this->assertSame([], $fautifs, 'points sans appel à apiUtilisateur()/apiEtudiant()/apiPartenaire()/apiAdmin() : '
             . implode(', ', $fautifs));
     }
 
@@ -123,6 +127,8 @@ final class ApiV1Test extends TestCase
             $garde = min(array_filter([
                 strpos($source, 'apiUtilisateur(') ?: PHP_INT_MAX,
                 strpos($source, 'apiEtudiant(') ?: PHP_INT_MAX,
+                strpos($source, 'apiPartenaire(') ?: PHP_INT_MAX,
+                strpos($source, 'apiAdmin(') ?: PHP_INT_MAX,
             ]));
 
             foreach (['$pdo->prepare(', '$pdo->query(', '$pdo->exec('] as $appel) {

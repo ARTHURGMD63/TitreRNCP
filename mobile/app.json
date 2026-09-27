@@ -36,6 +36,12 @@
         }
       ],
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Linkee a besoin de la caméra pour scanner les pass à l'entrée."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#111013",

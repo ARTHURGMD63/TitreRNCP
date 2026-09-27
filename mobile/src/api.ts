@@ -335,6 +335,69 @@ export type ReponsePhotosEvenement = {
   photos: PhotoEvenement[];
 };
 
+// ─── Espace partenaire ────────────────────────────────────────────────────────
+
+export type ReponseDashboardPartenaire = {
+  etablissement: { id: number; nom: string; ville: string };
+  evenement: { id: number; titre: string; date_heure: string } | null;
+  stats: {
+    inscrits: number;
+    checkin: number;
+    total: number;
+    age_moyen: number;
+    tendance: string;
+    conseil: string;
+    ecoles: { nom: string; pourcentage: number }[];
+    graphe: { labels: string[]; valeurs: number[] };
+    recentes: { prenom: string; nom: string; ecole: string | null; promo: string | null; photo_url: string | null; heure: string }[];
+  };
+};
+
+export type EvenementPartenaire = {
+  id: number;
+  titre: string;
+  type: string;
+  date_heure: string;
+  quota: number;
+  inscrits: number;
+  checkin: number;
+  reduction: number | null;
+  is_gratuit: boolean;
+  is_flash: boolean;
+  is_sponsorise: boolean;
+  sponsorise_actif: boolean;
+  statut: 'passe' | 'complet' | 'actif';
+};
+
+export type FormulePartenaire = { code: string; nom: string; tarif: number; resume: string };
+
+export type EvenementFormulairePartenaire = {
+  id: number;
+  titre: string;
+  description: string;
+  type: string;
+  style_musique: string | null;
+  date_heure: string;
+  quota: number;
+  reduction: number;
+  prix_normal: number;
+  is_flash: boolean;
+  flash_expiry: string | null;
+  is_gratuit: boolean;
+  lieu: string;
+  is_sponsorise: boolean;
+  sponsor_formule: string | null;
+};
+
+export type ReponseFormulaireEvenementPartenaire = {
+  evenement: EvenementFormulairePartenaire | null;
+  lieu_defaut: string;
+  styles_musique: { code: string; libelle: string }[];
+  formules_sponsoring: FormulePartenaire[];
+  flash_illimite: boolean;
+  flash_par_mois: number | null;
+};
+
 // ─── Lectures ────────────────────────────────────────────────────────────────
 
 export const api = {
@@ -370,6 +433,16 @@ export const api = {
     appelApi<{ message: string }>('avis.php', { methode: 'POST', jeton, corps: { event_id: eventId, note, commentaire } }),
   photosEvenement: (jeton: string, evenementId: number) =>
     appelApi<ReponsePhotosEvenement>('evenement_photos.php', { jeton, params: { id: evenementId } }),
+  partenaireDashboard: (jeton: string) => appelApi<{ success: true } & ReponseDashboardPartenaire>('partenaire_dashboard.php', { jeton }),
+  partenaireEvenements: (jeton: string) => appelApi<{ evenements: EvenementPartenaire[] }>('partenaire_evenements.php', { jeton }),
+  partenaireSupprimerEvenement: (jeton: string, id: number) =>
+    appelApi<Ok>('partenaire_evenements.php', { methode: 'POST', jeton, corps: { action: 'supprimer', id } }),
+  partenaireFormulaireEvenement: (jeton: string, id?: number) =>
+    appelApi<{ success: true } & ReponseFormulaireEvenementPartenaire>('partenaire_evenement.php', { jeton, params: { id } }),
+  partenaireEnregistrerEvenement: (jeton: string, corps: Record<string, unknown>) =>
+    appelApi<Ok & { id: number }>('partenaire_evenement.php', { methode: 'POST', jeton, corps }),
+  partenaireScan: (jeton: string, corps: { qr_code: string; event_id: number }) =>
+    appelApi<Ok>('partenaire_scan.php', { methode: 'POST', jeton, corps }),
   publierPhotoEvenement: (jeton: string, formulaire: FormData) =>
     appelApi<{ photo: PhotoEvenement; remplace: boolean }>('evenement_photos.php', { methode: 'POST', formulaire, jeton }),
   supprimerPhotoEvenement: (jeton: string, photoId: number) =>

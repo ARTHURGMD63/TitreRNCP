@@ -203,6 +203,40 @@ function apiUtilisateur(PDO $pdo): array
     return $ligne;
 }
 
+/**
+ * L'établissement d'un compte partenaire, ou null s'il n'en a pas encore.
+ * Relation stricte 1 compte ↔ 1 établissement, comme sur le site.
+ */
+function apiEtablissementDe(PDO $pdo, int $uid): ?array
+{
+    $stmt = $pdo->prepare('SELECT * FROM etablissements WHERE user_id = ? LIMIT 1');
+    $stmt->execute([$uid]);
+
+    return $stmt->fetch() ?: null;
+}
+
+/** Le compte authentifié, en exigeant qu'il soit un établissement partenaire. */
+function apiPartenaire(PDO $pdo): array
+{
+    $u = apiUtilisateur($pdo);
+    if (($u['type'] ?? '') !== 'partenaire') {
+        apiErreur('Réservé aux comptes établissement', 403, 'role');
+    }
+
+    return $u;
+}
+
+/** Le compte authentifié, en exigeant qu'il soit administrateur. */
+function apiAdmin(PDO $pdo): array
+{
+    $u = apiUtilisateur($pdo);
+    if (($u['type'] ?? '') !== 'admin') {
+        apiErreur('Réservé aux administrateurs', 403, 'role');
+    }
+
+    return $u;
+}
+
 /** Le compte authentifié, en exigeant qu'il soit étudiant. */
 function apiEtudiant(PDO $pdo): array
 {

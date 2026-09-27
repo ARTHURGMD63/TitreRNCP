@@ -20,7 +20,9 @@ import { fs, rayon, sans } from '../theme';
 import { useTheme } from '../useTheme';
 import { Icone, type NomIcone } from './Icone';
 
-const ONGLETS: { route: string; libelle: string; icone: NomIcone }[] = [
+export type OngletBarre = { route: string; libelle: string; icone: NomIcone };
+
+const ONGLETS: OngletBarre[] = [
   { route: 'index', libelle: 'Explorer', icone: 'loupe' },
   { route: 'squads', libelle: 'Squads', icone: 'personnes' },
   { route: 'wallet', libelle: 'Pass', icone: 'carte' },
@@ -57,13 +59,18 @@ export function reserveBarre(zoneBasse: number): number {
   return ecartBasBarre(zoneBasse) + HAUTEUR_PILULE + 16;
 }
 
-export function BarreOnglets({ state, navigation }: BottomTabBarProps) {
+/**
+ * @param onglets Par défaut les quatre onglets étudiant. L'espace partenaire
+ *        passe sa propre liste, plus courte — même barre, mêmes règles.
+ * @param parent Onglet allumé par un écran secondaire sans onglet propre.
+ */
+export function BarreOnglets({ state, navigation, onglets = ONGLETS, parent = PARENT }: BottomTabBarProps & { onglets?: OngletBarre[]; parent?: Record<string, string> }) {
   const { c, ombre } = useTheme();
   const bas = useSafeAreaInsets().bottom;
   // width: calc(100% - 32px) ; max-width: 408px
   const largeur = Math.min(useWindowDimensions().width - 32, 408);
-  const courant = state.routes[state.index]?.name ?? 'index';
-  const actif = PARENT[courant] ?? courant;
+  const courant = state.routes[state.index]?.name ?? onglets[0]?.route;
+  const actif = parent[courant] ?? courant;
 
   return (
     <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, bottom: ecartBasBarre(bas), alignItems: 'center' }}>
@@ -78,7 +85,7 @@ export function BarreOnglets({ state, navigation }: BottomTabBarProps) {
           ombre('lg'),
         ]}
       >
-        {ONGLETS.map((o) => {
+        {onglets.map((o) => {
           const estActif = o.route === actif;
           const couleur = estActif ? c.noir : c.gris;
           return (
@@ -90,7 +97,7 @@ export function BarreOnglets({ state, navigation }: BottomTabBarProps) {
               onPress={() => {
                 const route = state.routes.find((r) => r.name === o.route);
                 const evenement = route ? navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true }) : null;
-                if (courant !== o.route || PARENT[courant]) {
+                if (courant !== o.route || parent[courant]) {
                   if (!evenement?.defaultPrevented) navigation.navigate(o.route);
                 }
               }}
