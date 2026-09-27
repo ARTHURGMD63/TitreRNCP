@@ -185,6 +185,10 @@ export default function Wallet() {
   const { profil } = useSession();
   const largeurEcran = Math.min(useWindowDimensions().width, 440);
   const largeurCarte = (largeurEcran - gutter * 2) * 0.88;
+  // Marge symétrique du carrousel : la carte (88 % de la largeur) reste
+  // centrée dans la page — surtout visible quand il n'y en a qu'une, sans
+  // rien à faire défiler à côté.
+  const margeCarrousel = (largeurEcran - gutter * 2 - largeurCarte) / 2;
 
   const [page, setPage] = useState(1);
   const [donnees, setDonnees] = useState<ReponseWallet | null>(null);
@@ -240,7 +244,7 @@ export default function Wallet() {
                 snapToInterval={largeurCarte + 16}
                 decelerationRate="fast"
                 style={{ flexGrow: 0 }}
-                contentContainerStyle={{ gap: 16, paddingBottom: 16 }}
+                contentContainerStyle={{ gap: 16, paddingHorizontal: margeCarrousel, paddingBottom: 16 }}
               >
                 {passes.map((p, i) => (
                   <CartePass key={p.id} p={p} index={i} total={passes.length} largeur={largeurCarte} nomTitulaire={nomTitulaire} onAnnule={() => charger()} />
@@ -259,7 +263,7 @@ export default function Wallet() {
               <>
                 <EnTeteListe style={{ marginTop: 24 }} gauche={`${squads.length} Squad${squads.length > 1 ? 's' : ''} prévu${squads.length > 1 ? 's' : ''}`} droite="—— Sport ↓" />
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} snapToInterval={largeurCarte + 16} decelerationRate="fast"
-                  style={{ flexGrow: 0 }} contentContainerStyle={{ gap: 16, paddingBottom: 16 }}>
+                  style={{ flexGrow: 0 }} contentContainerStyle={{ gap: 16, paddingHorizontal: margeCarrousel, paddingBottom: 16 }}>
                   {squads.map((sq) => <CarteSquadAgenda key={sq.id} sq={sq} largeur={largeurCarte} onQuitte={() => charger()} />)}
                 </ScrollView>
               </>
