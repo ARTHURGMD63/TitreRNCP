@@ -187,3 +187,16 @@ export const haloLave = {
   shadowRadius: 26,
   elevation: 14,
 } as const;
+
+/**
+ * Halo volt, plus discret que haloLave : la carte d'une soirée en cours
+ * reste une carte blanche (à ne pas confondre avec l'aplat rouge du flash),
+ * juste bordée d'un liseré qui respire.
+ */
+export const haloLime = {
+  shadowColor: '#C8F547',
+  shadowOffset: { width: 0, height: 10 },
+  shadowOpacity: 0.35,
+  shadowRadius: 18,
+  elevation: 8,
+} as const;

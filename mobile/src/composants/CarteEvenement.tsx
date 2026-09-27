@@ -15,14 +15,14 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Animated, Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 
 import { actions, ErreurApi, type Evenement } from '../api';
 import { LIBELLES_TYPE } from '../catalogue';
 import { dateFr, heure, majuscules, ts } from '../format';
 import { useJeton } from '../session';
-import { fixe, fs, haloLave, lh, lsEm, mono, rayon, sans } from '../theme';
+import { fixe, fs, haloLave, haloLime, lh, lsEm, mono, rayon, sans } from '../theme';
 import { useTheme } from '../useTheme';
 import { Bouton } from './Bouton';
 import { Badge, Jauge } from './Elements';
@@ -40,6 +40,43 @@ function useMaintenant(actif = true) {
     return () => clearInterval(id);
   }, [actif]);
   return maintenant;
+}
+
+/** Un point qui respire (opacité 1 → 0,25 → 1), pour dire « ça se passe maintenant ». */
+function usePouls() {
+  const [opacite] = useState(() => new Animated.Value(1));
+  useEffect(() => {
+    const boucle = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacite, { toValue: 0.25, duration: 650, useNativeDriver: true }),
+        Animated.timing(opacite, { toValue: 1, duration: 650, useNativeDriver: true }),
+      ])
+    );
+    boucle.start();
+    return () => boucle.stop();
+  }, [opacite]);
+  return opacite;
+}
+
+/**
+ * « EN COURS », en volt : le point pulse, jamais la couleur pleine du rouge
+ * — c'est ce qui la distingue d'un coup d'œil de la carte flash, qui est déjà
+ * un aplat rouge. Une soirée en cours reste une carte blanche, juste bordée.
+ */
+function PastilleEnCours() {
+  const { c } = useTheme();
+  const opacite = usePouls();
+  return (
+    <View
+      accessible accessibilityLabel="Soirée en cours"
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 5, paddingHorizontal: 11, borderRadius: rayon.pill, backgroundColor: c.limeClair }}
+    >
+      <Animated.View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: c.lime, opacity: opacite }} />
+      <Text style={{ fontFamily: mono(600), fontSize: fs[1], letterSpacing: lsEm.label * fs[1], textTransform: 'uppercase', color: c.surLimeClair }}>
+        En cours
+      </Text>
+    </View>
+  );
 }
 
 /** « FLASH · 12MIN 05S », puis « EXPIRÉ » (app.js, [data-expiry]). */
@@ -228,9 +265,14 @@ function CarteClassique({ ev, onInviter }: { ev: Evenement; onInviter: () => voi
   const inscrit = etat === 'inscrit' || etat === 'vient';
 
   return (
-    <View style={[{ backgroundColor: c.blanc, padding: 20, borderRadius: rayon.base, borderWidth: 1, borderColor: c.grisClair, marginBottom: 20 }, ombre('base')]}>
+    <View
+      style={[
+        { backgroundColor: c.blanc, padding: 20, borderRadius: rayon.base, borderWidth: 1, borderColor: c.grisClair, marginBottom: 20 },
+        ev.en_cours ? [{ borderWidth: 2, borderColor: c.lime }, haloLime] : ombre('base'),
+      ]}
+    >
+      {ev.en_cours ? <View style={{ marginBottom: 10, alignSelf: 'flex-start' }}><PastilleEnCours /></View> : null}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        {ev.en_cours ? <Badge libelle="EN COURS" fond={c.rouge} encre={fixe.surLave} /> : null}
         <Mono couleur={accent}>{majuscules(LIBELLES_TYPE[ev.type] ?? ev.type)} · {dateFr(ev.date_heure, 'D j M')}</Mono>
         {ev.style_musique ? <Badge libelle={libelleStyle(ev.style_musique)} icone="musique" fond="transparent" encre={c.grisFonce} filet={c.line2} espacement={lsEm.wide} style={{ paddingVertical: 2, paddingHorizontal: 9, gap: 4 }} /> : null}
         {ev.is_gratuit ? <Badge libelle="GRATUIT" fond={c.noir} encre={c.bg} /> : null}
