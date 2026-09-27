@@ -11,12 +11,24 @@
 
 SET default_storage_engine = InnoDB;
 
+-- Deux ALTER TABLE distincts, et non un seul avec les deux clauses : TiDB
+-- valide « ADD INDEX (parrain_id) » contre le schema d'AVANT l'ALTER en
+-- cours, et refuse (« column does not exist: parrain_id ») une colonne que
+-- la clause precedente du meme ALTER vient d'ajouter. MySQL accepte les deux
+-- formes ; seule celle-ci marche partout.
+
 SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS
            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'liste_attente'
              AND COLUMN_NAME = 'parrain_id');
 SET @s := IF(@c = 0,
-  'ALTER TABLE liste_attente
-     ADD COLUMN parrain_id INT NULL DEFAULT NULL,
-     ADD INDEX idx_parrain (parrain_id)',
+  'ALTER TABLE liste_attente ADD COLUMN parrain_id INT NULL DEFAULT NULL',
   'SELECT "colonne parrain_id deja presente"');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+
+SET @i := (SELECT COUNT(*) FROM information_schema.STATISTICS
+           WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'liste_attente'
+             AND INDEX_NAME = 'idx_parrain');
+SET @s := IF(@i = 0,
+  'ALTER TABLE liste_attente ADD INDEX idx_parrain (parrain_id)',
+  'SELECT "index idx_parrain deja present"');
 PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;

@@ -276,6 +276,37 @@ function executerInstruction(PDO $pdo, string $sql): void
 }
 
 /**
+ * Adapte une instruction avant exécution, pour les deux détails où TiDB
+ * s'écarte de MySQL (voir outils/installer.php, qui applique déjà ceci sur
+ * une installation neuve — même logique ici pour une base existante) :
+ *
+ *   - « SET default_storage_engine » n'a pas d'objet sur TiDB (un seul
+ *     moteur) et casse sur une variable inconnue ;
+ *   - « PREPARE st FROM @s » exécute du SQL dynamique construit par un
+ *     précédent SET — TiDB ne sait pas préparer depuis une variable
+ *     utilisateur. On lit @s nous-mêmes et on l'exécute directement ;
+ *     EXECUTE et DEALLOCATE PREPARE n'ont alors plus rien à faire.
+ *
+ * Renvoie l'instruction à exécuter, ou null pour la sauter.
+ */
+function adapterInstructionTidb(PDO $pdo, string $instruction, bool $tidb): ?string
+{
+    $propre = trim((string) preg_replace('/^\s*--.*$/m', '', $instruction));
+
+    if ($tidb && preg_match('/^SET\s+default_storage_engine\b/i', $propre)) {
+        return null;
+    }
+    if (preg_match('/^PREPARE\s+\w+\s+FROM\s+(@\w+)$/i', $propre, $m)) {
+        return (string) $pdo->query('SELECT ' . $m[1])->fetchColumn();
+    }
+    if (preg_match('/^(EXECUTE|DEALLOCATE\s+PREPARE)\s+\w+$/i', $propre)) {
+        return null;
+    }
+
+    return $instruction;
+}
+
+/**
  * Applique une migration et l'enregistre.
  *
  * Pas de transaction autour du tout : MySQL valide implicitement à chaque
@@ -298,15 +329,22 @@ function appliquerMigration(PDO $pdo, string $version, string $chemin): int
         throw new RuntimeException("Migration illisible : $chemin");
     }
 
+    $tidb = stripos((string) $pdo->query('SELECT VERSION()')->fetchColumn(), 'tidb') !== false;
+
     $instructions = decouperSql($sql);
+    $executees    = 0;
     foreach ($instructions as $instruction) {
-        executerInstruction($pdo, $instruction);
+        $aExecuter = adapterInstructionTidb($pdo, $instruction, $tidb);
+        if ($aExecuter !== null) {
+            executerInstruction($pdo, $aExecuter);
+        }
+        $executees++;
     }
 
     $pdo->prepare('INSERT IGNORE INTO ' . MIGRATIONS_TABLE . ' (version) VALUES (?)')
         ->execute([$version]);
 
-    return count($instructions);
+    return $executees;
 }
 
 /**
