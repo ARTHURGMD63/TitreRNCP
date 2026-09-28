@@ -121,10 +121,28 @@ function showToast(msg, type = '') {
 // ─── All page logic wrapped so it can be re-run after SPA navigation ─────────
 function initApp() {
 
-  // Filter Pills
-  // Les pilules-liens (explore, moderation) filtrent cote serveur : seules
-  // celles qui portent data-filter ont un travail a faire ici.
-  document.querySelectorAll('.pill[data-filter]').forEach(pill => {
+  // Filter Pills (squads.php) — deux groupes independants : le sport
+  // (data-filter) et l'origine (data-scope, « Mes potes / Tout le monde /
+  // Associations »). Une carte ne s'affiche que si elle passe les deux.
+  function appliquerFiltresSquads() {
+    const filtre = document.querySelector('.pill[data-filter].active')?.dataset.filter || 'all';
+    const scope  = document.querySelector('.pill[data-scope].active')?.dataset.scope || 'tous';
+    const cartes = document.querySelectorAll('.squad-card[data-type]');
+    let visibles = 0;
+    cartes.forEach(card => {
+      const passeType  = filtre === 'all' || card.dataset.type === filtre;
+      const passeScope = scope === 'tous'
+        || (scope === 'potes' && card.dataset.abonne === '1')
+        || (scope === 'associations' && card.dataset.association === '1');
+      const montrer = passeType && passeScope;
+      card.hidden = !montrer;
+      if (montrer) visibles++;
+    });
+    const vide = document.getElementById('filtre-vide');
+    if (vide) vide.hidden = (visibles > 0 || cartes.length === 0);
+  }
+
+  document.querySelectorAll('.pill[data-filter], .pill[data-scope]').forEach(pill => {
     if (pill._init) return; pill._init = true;
     pill.addEventListener('click', () => {
       const group = pill.closest('.filter-scroll') || pill.closest('.pill-group');
@@ -134,21 +152,7 @@ function initApp() {
       });
       pill.classList.add('active');
       if (pill.hasAttribute('aria-pressed')) pill.setAttribute('aria-pressed', 'true');
-
-      const filtre = pill.dataset.filter;
-      // C'est la carte elle-meme qui porte data-type, et elle est fille
-      // directe du conteneur de la liste : masquer son parent masquait donc
-      // la liste entiere, y compris la carte censee rester. Le filtre semblait
-      // casse alors qu'il cachait tout.
-      const cartes = document.querySelectorAll('.squad-card[data-type]');
-      let visibles = 0;
-      cartes.forEach(card => {
-        const montrer = filtre === 'all' || card.dataset.type === filtre;
-        card.hidden = !montrer;
-        if (montrer) visibles++;
-      });
-      const vide = document.getElementById('filtre-vide');
-      if (vide) vide.hidden = (visibles > 0 || cartes.length === 0);
+      appliquerFiltresSquads();
     });
   });
 
@@ -654,6 +658,96 @@ function initApp() {
       }
     });
   });
+
+  // Suppression admin (admin/utilisateurs.php, admin/evenements.php) :
+  // réservée à l'administrateur côté serveur, ce bouton n'est de toute façon
+  // rendu que sur ces deux pages.
+  document.querySelectorAll('.btn-admin-supprimer-utilisateur').forEach(btn => {
+    if (btn._init) return; btn._init = true;
+    btn.addEventListener('click', async () => {
+      if (!confirm(`Supprimer définitivement le compte de ${btn.dataset.nom} ? Cette action est irréversible.`)) return;
+      btn.disabled = true;
+      try {
+        const res = await fetch(BASE + '/api/admin_supprimer_utilisateur.php', {
+          method: 'POST', headers: enTetesJson(),
+          body: JSON.stringify({ user_id: btn.dataset.id })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Compte supprimé', 'success');
+          btn.closest('tr')?.remove();
+        } else {
+          btn.disabled = false;
+          showToast(data.message || 'Erreur', 'error');
+        }
+      } catch {
+        btn.disabled = false;
+        showToast('Erreur réseau', 'error');
+      }
+    });
+  });
+
+  document.querySelectorAll('.btn-admin-supprimer-evenement').forEach(btn => {
+    if (btn._init) return; btn._init = true;
+    btn.addEventListener('click', async () => {
+      if (!confirm(`Supprimer définitivement « ${btn.dataset.titre} » ? Cette action est irréversible.`)) return;
+      btn.disabled = true;
+      try {
+        const res = await fetch(BASE + '/api/admin_supprimer_evenement.php', {
+          method: 'POST', headers: enTetesJson(),
+          body: JSON.stringify({ evenement_id: btn.dataset.id })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Événement supprimé', 'success');
+          btn.closest('tr')?.remove();
+        } else {
+          btn.disabled = false;
+          showToast(data.message || 'Erreur', 'error');
+        }
+      } catch {
+        btn.disabled = false;
+        showToast('Erreur réseau', 'error');
+      }
+    });
+  });
+
+  // Recherche du hub (explore.php) : le bouton révèle le champ et lui donne
+  // le focus ; il repart si le champ est vide au moment de refermer.
+  const btnRecherche = document.getElementById('btn-recherche-toggle');
+  const barreRecherche = document.getElementById('barre-recherche');
+  if (btnRecherche && barreRecherche && !btnRecherche._init) {
+    btnRecherche._init = true;
+    btnRecherche.addEventListener('click', () => {
+      const ouvre = barreRecherche.hidden;
+      barreRecherche.hidden = !ouvre;
+      btnRecherche.setAttribute('aria-expanded', ouvre ? 'true' : 'false');
+      if (ouvre) barreRecherche.querySelector('input[type=search]')?.focus();
+    });
+  }
+
+  // École / promo : seulement demandées entre 18 et 25 ans (au-delà, la
+  // question n'a plus de sens). L'écouteur tourne à l'inscription du
+  // formulaire et au chargement, pour refléter une date déjà remplie après
+  // une erreur de validation.
+  (function () {
+    const naissance = document.getElementById('inscription-naissance');
+    const etudeFields = document.getElementById('etude-fields');
+    if (!naissance || !etudeFields) return;
+    function majAffichage() {
+      if (!naissance.value) { etudeFields.classList.add('hidden'); return; }
+      const n = new Date(naissance.value + 'T00:00:00');
+      if (isNaN(n.getTime())) { etudeFields.classList.add('hidden'); return; }
+      const auj = new Date();
+      let age = auj.getFullYear() - n.getFullYear();
+      const pasEncoreAnniversaire = (auj.getMonth() < n.getMonth()) ||
+        (auj.getMonth() === n.getMonth() && auj.getDate() < n.getDate());
+      if (pasEncoreAnniversaire) age--;
+      etudeFields.classList.toggle('hidden', !(age >= 18 && age <= 25));
+    }
+    naissance.addEventListener('change', majAffichage);
+    majAffichage();
+  })();
 
   // Flash countdown
   document.querySelectorAll('[data-expiry]').forEach(el => {

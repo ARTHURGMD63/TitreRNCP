@@ -9,6 +9,9 @@
  * Les écrans secondaires qui gardent la barre sur le site (Notifications,
  * Classement, Abonnements) allument l'onglet dont ils dépendent, comme les
  * gabarits PHP : Explorer pour les notifications, Moi pour le reste.
+ *
+ * L'onglet « Squads » du site s'appelle « Sport » ici (icône trophée) :
+ * même route et même contenu, seul le libellé visible change.
  */
 
 import React from 'react';
@@ -24,7 +27,7 @@ export type OngletBarre = { route: string; libelle: string; icone: NomIcone };
 
 const ONGLETS: OngletBarre[] = [
   { route: 'index', libelle: 'Explorer', icone: 'loupe' },
-  { route: 'squads', libelle: 'Squads', icone: 'personnes' },
+  { route: 'squads', libelle: 'Sport', icone: 'trophee' },
   { route: 'wallet', libelle: 'Pass', icone: 'carte' },
   { route: 'moi', libelle: 'Moi', icone: 'personne' },
 ];

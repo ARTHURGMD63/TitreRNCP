@@ -19,7 +19,7 @@ import { Bouton } from '../../composants/Bouton';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Pilule, Separateur } from '../../composants/Elements';
 import { Feuille } from '../../composants/Feuille';
-import { Champ, ChampDate, isoDateHeure, Selecteur } from '../../composants/Formulaire';
+import { Case, Champ, ChampDate, isoDateHeure, Selecteur } from '../../composants/Formulaire';
 import { Icone } from '../../composants/Icone';
 import { Display, Mono, T, TitreEcran } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
@@ -34,7 +34,14 @@ const FILTRES = [
   { code: 'running', libelle: 'Running' },
   { code: 'velo', libelle: 'Vélo' },
   { code: 'muscu', libelle: 'Muscu' },
+  { code: 'culture', libelle: 'Culture' },
   { code: 'autre', libelle: 'Autre' },
+];
+
+const SCOPES = [
+  { code: 'tous', libelle: 'Tout le monde' },
+  { code: 'potes', libelle: 'Mes potes' },
+  { code: 'associations', libelle: 'Associations' },
 ];
 
 function CarteSquad({ s, onGerer }: { s: Squad; onGerer: () => void }) {
@@ -78,6 +85,11 @@ function CarteSquad({ s, onGerer }: { s: Squad; onGerer: () => void }) {
       <View style={{ position: 'absolute', top: 16, right: 16, borderWidth: 1, borderColor: c.line2, borderRadius: rayon.pill, paddingVertical: 4, paddingHorizontal: 10 }}>
         <T taille={fs[2]} poids={500} couleur={c.grisFonce}>{NIVEAUX_SQUAD[s.niveau] ?? s.niveau}</T>
       </View>
+      {s.cree_par_association ? (
+        <View style={{ position: 'absolute', top: 16, left: 16, borderWidth: 1, borderColor: c.line2, borderRadius: rayon.pill, paddingVertical: 4, paddingHorizontal: 10 }}>
+          <T taille={fs[2]} poids={500} couleur={c.grisFonce}>Association</T>
+        </View>
+      ) : null}
 
       <Mono couleur={c.surBleuClair} style={{ marginBottom: 6, paddingRight: 96 }}>
         {majuscules(TYPES_SQUAD[s.type] ?? s.type)} · {dateFr(s.date_heure, 'D H\\hi')}
@@ -122,6 +134,7 @@ export default function Squads() {
   const [erreur, setErreur] = useState<string | null>(null);
   const [rafraichit, setRafraichit] = useState(false);
   const [filtre, setFiltre] = useState('all');
+  const [scope, setScope] = useState('tous');
 
   const [creation, setCreation] = useState(false);
   const [gestion, setGestion] = useState<number | null>(null);
@@ -139,7 +152,12 @@ export default function Squads() {
 
   useFocusEffect(useCallback(() => { void charger(); }, [charger]));
 
-  const visibles = (squads ?? []).filter((s) => filtre === 'all' || s.type === filtre);
+  const visibles = (squads ?? []).filter((s) => {
+    if (filtre !== 'all' && s.type !== filtre) return false;
+    if (scope === 'potes' && !s.je_suis_abonne_au_createur) return false;
+    if (scope === 'associations' && !s.cree_par_association) return false;
+    return true;
+  });
 
   return (
     <Ecran
@@ -156,9 +174,15 @@ export default function Squads() {
         <TitreEcran lignes={['Ne cours plus', 'seul·e.']} accent={c.surBleuClair} />
       </EnTete>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ gap: 8, paddingHorizontal: gutter, paddingBottom: 16 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ gap: 8, paddingHorizontal: gutter, paddingBottom: 8 }}>
         {FILTRES.map((f) => (
           <Pilule key={f.code} libelle={f.libelle} actif={filtre === f.code} accent={c.bleu} onPress={() => setFiltre(f.code)} />
+        ))}
+      </ScrollView>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ gap: 8, paddingHorizontal: gutter, paddingBottom: 16 }}>
+        {SCOPES.map((s) => (
+          <Pilule key={s.code} libelle={s.libelle} actif={scope === s.code} accent={c.bleu} onPress={() => setScope(s.code)} />
         ))}
       </ScrollView>
 
@@ -210,6 +234,7 @@ function FeuilleCreation({ visible, onClose, onCree }: { visible: boolean; onClo
   const [quota, setQuota] = useState('10');
   const [lieu, setLieu] = useState('');
   const [description, setDescription] = useState('');
+  const [association, setAssociation] = useState(false);
   const [attente, setAttente] = useState(false);
 
   async function creer() {
@@ -218,8 +243,9 @@ function FeuilleCreation({ visible, onClose, onCree }: { visible: boolean; onClo
       await actions.creerSquad(jeton, {
         titre: titre.trim(), type, niveau, date_heure: date ? isoDateHeure(date) : '',
         quota: parseInt(quota, 10) || 0, lieu: lieu.trim(), description: description.trim(),
+        cree_par_association: association,
       });
-      setTitre(''); setDate(null); setQuota('10'); setLieu(''); setDescription('');
+      setTitre(''); setDate(null); setQuota('10'); setLieu(''); setDescription(''); setAssociation(false);
       onCree();
     } catch (e) {
       toast(e instanceof ErreurApi ? e.message : 'Erreur réseau', 'error');
@@ -246,6 +272,9 @@ function FeuilleCreation({ visible, onClose, onCree }: { visible: boolean; onClo
       </View>
       <Champ etiquette="Lieu de rendez-vous" value={lieu} onChangeText={setLieu} placeholder="Parking Royat" />
       <Champ etiquette="Description" value={description} onChangeText={setDescription} placeholder="Détails sur la sortie..." multiligne />
+      <Case coche={association} onChange={setAssociation} style={{ marginBottom: 16 }}>
+        <T taille={fs[4]}>Créé par une association étudiante</T>
+      </Case>
       <Bouton libelle="Créer le squad" variante="bleu" plein chargement={attente} onPress={creer} />
       <Bouton libelle="Annuler" variante="contour" plein onPress={onClose} style={{ marginTop: 8 }} />
     </Feuille>

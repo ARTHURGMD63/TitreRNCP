@@ -20,7 +20,7 @@ import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
 import { dateFr, majuscules } from '../../format';
 import { useJeton } from '../../session';
-import { fs, rayon } from '../../theme';
+import { fixe, fs, rayon } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 const LIBELLES_TYPE: Record<string, string> = { bar: 'Bar', boite: 'Boîte', resto: 'Resto', afterwork: 'Afterwork' };
@@ -72,7 +72,17 @@ function CarteEvenementPartenaire({ ev, onSupprime }: { ev: EvenementPartenaire;
         <T taille={fs[3]} couleur={c.gris}>{ev.checkin} check-in</T>
       </View>
 
-      <View style={{ flexDirection: 'row', gap: 10 }}>
+      <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
+        {ev.statut !== 'passe' ? (
+          <Pressable
+            onPress={() => router.push({ pathname: '/scan', params: { evenementId: String(ev.id) } })}
+            accessibilityRole="button"
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.rouge, borderRadius: rayon.pill, paddingVertical: 9, paddingHorizontal: 16 }}
+          >
+            <Icone nom="qr" taille={14} couleur={fixe.surLave} />
+            <T taille={fs[3]} poids={700} couleur={fixe.surLave}>Scanner</T>
+          </Pressable>
+        ) : null}
         <Pressable
           onPress={() => router.push({ pathname: '/evenement-form', params: { id: String(ev.id) } })}
           accessibilityRole="button"

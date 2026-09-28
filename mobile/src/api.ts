@@ -144,6 +144,7 @@ export type Profil = {
   email: string;
   ecole: string | null;
   promo: string | null;
+  ville: string | null;
   type: 'etudiant' | 'partenaire' | 'admin';
   photo_url: string | null;
   interets: string[];
@@ -222,6 +223,8 @@ export type Squad = {
   places: { quota: number; membres: number; restantes: number | null; complet: boolean };
   deja_membre: boolean;
   est_createur: boolean;
+  je_suis_abonne_au_createur: boolean;
+  cree_par_association: boolean;
   membres: { id: number; prenom: string; photo_url: string | null }[];
 };
 
@@ -389,6 +392,7 @@ export type EvenementFormulairePartenaire = {
   type: string;
   style_musique: string | null;
   date_heure: string;
+  date_fin: string | null;
   quota: number;
   reduction: number;
   prix_normal: number;
@@ -472,6 +476,24 @@ export type ReponseEvenementsAdmin = {
   evenements: EvenementAdmin[];
 };
 
+export type MouvementFinance = {
+  id: number;
+  sens: 'recette' | 'depense';
+  categorie: string;
+  libelle: string;
+  montant_ht: number;
+  statut: 'regle' | 'prevu';
+  date: string;
+  client: string | null;
+};
+
+export type ReponseFinancesAdmin = {
+  tresorerie: { solde: number; plancher: number; sous_le_plancher: boolean; autonomie_mois: number | null };
+  mrr: { facture: number; engage: number; clients_payants: number };
+  mois_courant: { recettes: number; depenses: number; resultat: number; prevu_recettes: number; prevu_depenses: number };
+  mouvements: MouvementFinance[];
+};
+
 // ─── Lectures ────────────────────────────────────────────────────────────────
 
 export const api = {
@@ -484,7 +506,7 @@ export const api = {
   deconnexion: (jeton: string) => appelApi<{ success: true }>('logout.php', { methode: 'POST', jeton }),
   moi: (jeton: string) => appelApi<{ utilisateur: Profil }>('me.php', { jeton }),
 
-  evenements: (jeton: string, params?: { type?: string; musique?: string; pe?: number }) =>
+  evenements: (jeton: string, params?: { type?: string; musique?: string; q?: string; pe?: number }) =>
     appelApi<ReponseEvenements>('evenements.php', { jeton, params }),
   evenement: (jeton: string, id: number) => appelApi<{ evenement: EvenementDetail }>('evenement.php', { jeton, params: { id } }),
   notifications: (jeton: string) => appelApi<{ a_traiter: number; items: Notification[] }>('notifications.php', { jeton }),
@@ -515,9 +537,13 @@ export const api = {
     appelApi<{ success: true } & ReponseFormulaireEvenementPartenaire>('partenaire_evenement.php', { jeton, params: { id } }),
   partenaireEnregistrerEvenement: (jeton: string, corps: Record<string, unknown>) =>
     appelApi<Ok & { id: number }>('partenaire_evenement.php', { methode: 'POST', jeton, corps }),
-  partenaireScan: (jeton: string, corps: { qr_code: string; event_id: number }) =>
+  partenaireScan: (jeton: string, corps: { qr_code?: string; inscription_id?: number; event_id: number }) =>
     appelApi<Ok & { personne: { id: number; prenom: string; nom: string; ecole: string | null; promo: string | null; photo_url: string | null } }>(
       'partenaire_scan.php', { methode: 'POST', jeton, corps }
+    ),
+  partenaireInvites: (jeton: string, evenementId: number, q?: string) =>
+    appelApi<{ success: true; invites: { inscription_id: number; prenom: string; nom: string; ecole: string | null; promo: string | null; photo_url: string | null }[] }>(
+      'partenaire_invites.php', { jeton, params: { evenement_id: evenementId, q } }
     ),
   adminModeration: (jeton: string, statut: 'nouveau' | 'traite' = 'nouveau') =>
     appelApi<{ success: true } & ReponseModeration>('admin_moderation.php', { jeton, params: { statut } }),
@@ -527,6 +553,8 @@ export const api = {
     appelApi<{ success: true } & ReponseEtudiantsAdmin>('admin_utilisateurs.php', { jeton, params }),
   adminEvenements: (jeton: string, params: { etablissement?: number; periode?: string; type?: string }) =>
     appelApi<{ success: true } & ReponseEvenementsAdmin>('admin_evenements.php', { jeton, params }),
+  adminFinances: (jeton: string) =>
+    appelApi<{ success: true } & ReponseFinancesAdmin>('admin_finances.php', { jeton }),
   partenaireProfil: (jeton: string) =>
     appelApi<{ success: true; compte: { prenom: string; nom: string; email: string }; etablissement: { nom: string; type: string; ville: string; adresse: string } }>(
       'partenaire_profil.php', { jeton }
@@ -554,7 +582,7 @@ export const actions = {
   supprimerSquad: (jeton: string, squadId: number) => action<Ok>('delete_squad.php', jeton, { squad_id: squadId }),
   retirerMembre: (jeton: string, squadId: number, membreId: number) =>
     action<Ok>('remove_squad_member.php', jeton, { squad_id: squadId, member_id: membreId }),
-  creerSquad: (jeton: string, squad: { titre: string; type: string; niveau: string; date_heure: string; quota: number; lieu: string; description: string }) =>
+  creerSquad: (jeton: string, squad: { titre: string; type: string; niveau: string; date_heure: string; quota: number; lieu: string; description: string; cree_par_association?: boolean }) =>
     action<Ok>('create_squad.php', jeton, squad),
   /** follow / unfollow / accept / decline, sur un étudiant ou un établissement. */
   suivi: (jeton: string, act: 'follow' | 'unfollow' | 'accept' | 'decline', type: 'user' | 'etablissement', cible: number) =>
@@ -565,4 +593,9 @@ export const actions = {
     action<Ok>('inviter.php', jeton, { action: accepter ? 'accept' : 'decline', invite_id: invitationId }),
   moderation: (jeton: string, corps: { action: 'report' | 'block' | 'unblock'; target_id: number; motif?: string; details?: string }) =>
     action<Ok>('moderation.php', jeton, corps),
+  /** Réservé à l'administrateur — voir apiAdmin() côté serveur. */
+  adminSupprimerUtilisateur: (jeton: string, userId: number) =>
+    action<Ok>('admin_supprimer_utilisateur.php', jeton, { user_id: userId }),
+  adminSupprimerEvenement: (jeton: string, evenementId: number) =>
+    action<Ok>('admin_supprimer_evenement.php', jeton, { evenement_id: evenementId }),
 };

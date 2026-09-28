@@ -9,11 +9,14 @@ import React, { useCallback, useState } from 'react';
 import { View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
-import { api, ErreurApi, type EvenementAdmin, type ReponseEvenementsAdmin } from '../../api';
+import { actions, api, ErreurApi, type EvenementAdmin, type ReponseEvenementsAdmin } from '../../api';
+import { Bouton } from '../../composants/Bouton';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Badge, Jauge } from '../../composants/Elements';
 import { Selecteur } from '../../composants/Formulaire';
 import { T, TitreEcran } from '../../composants/Texte';
+import { useToast } from '../../composants/Toast';
+import { confirmer } from '../../confirmer';
 import { dateFr, majuscules } from '../../format';
 import { useJeton } from '../../session';
 import { fs, rayon } from '../../theme';
@@ -21,10 +24,26 @@ import { useTheme } from '../../useTheme';
 
 const LIBELLES_TYPE: Record<string, string> = { bar: 'Bar', boite: 'Boîte', resto: 'Resto', afterwork: 'Afterwork' };
 
-function CarteEvenementAdmin({ e }: { e: EvenementAdmin }) {
+function CarteEvenementAdmin({ e, onSupprime }: { e: EvenementAdmin; onSupprime: (id: number) => void }) {
   const { c } = useTheme();
+  const jeton = useJeton();
+  const toast = useToast();
+  const [suppression, setSuppression] = useState(false);
   const remplissage = e.quota > 0 ? Math.min(100, Math.round((e.inscrits / e.quota) * 100)) : 0;
   const couleurTaux = e.taux_presence === null ? c.gris : e.taux_presence < 60 ? c.danger : c.succes;
+
+  async function supprimer() {
+    if (!(await confirmer(`Supprimer définitivement « ${e.titre} » ? Cette action est irréversible.`))) return;
+    setSuppression(true);
+    try {
+      await actions.adminSupprimerEvenement(jeton, e.id);
+      toast('Événement supprimé', 'success');
+      onSupprime(e.id);
+    } catch (err) {
+      toast(err instanceof ErreurApi ? err.message : 'Erreur réseau', 'error');
+      setSuppression(false);
+    }
+  }
 
   return (
     <View style={{ backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.base, padding: 16, marginBottom: 12 }}>
@@ -40,13 +59,15 @@ function CarteEvenementAdmin({ e }: { e: EvenementAdmin }) {
         {dateFr(e.date_heure, 'D j M Y')} · {e.passe ? 'passée' : 'à venir'}
       </T>
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
         <T taille={fs[3]} poids={700}>{e.inscrits}/{e.quota}</T>
         <View style={{ flex: 1 }}><Jauge pourcentage={remplissage} piste={c.grisClair} remplissage={c.rouge} hauteur={6} /></View>
         {e.taux_presence !== null ? (
           <T taille={fs[3]} poids={700} couleur={couleurTaux}>{e.taux_presence}% présents</T>
         ) : null}
       </View>
+
+      <Bouton libelle="Supprimer" variante="alerte" chargement={suppression} onPress={supprimer} />
     </View>
   );
 }
@@ -105,7 +126,9 @@ export default function EvenementsAdmin() {
         {donnees.evenements.length === 0 ? (
           <T taille={fs[4]} couleur={c.gris} style={{ textAlign: 'center', marginTop: 24 }}>Aucune soirée ne correspond.</T>
         ) : (
-          donnees.evenements.map((e) => <CarteEvenementAdmin key={e.id} e={e} />)
+          donnees.evenements.map((e) => (
+            <CarteEvenementAdmin key={e.id} e={e} onSupprime={(id) => setDonnees((d) => d && { ...d, evenements: d.evenements.filter((x) => x.id !== id) })} />
+          ))
         )}
       </Contenu>
     </Ecran>

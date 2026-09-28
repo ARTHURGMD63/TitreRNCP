@@ -53,6 +53,13 @@ export default function Hub() {
 
   const [vue, setVue] = useState<Vue>(params.vue === 'people' ? 'people' : 'events');
 
+  // ── Recherche texte : un champ, révélé par l'icône de l'en-tête, partagé
+  // entre Événements (titre, lieu, établissement) et Personnes (nom, école,
+  // intérêts) — chacun ne lit que ce qui le concerne. ──
+  const [rechercheOuverte, setRechercheOuverte] = useState(false);
+  const [saisie, setSaisie] = useState('');
+  const [q, setQ] = useState('');
+
   // ── Événements ──
   const [type, setType] = useState('all');
   const [musique, setMusique] = useState('');
@@ -62,8 +69,6 @@ export default function Hub() {
   const [resteE, setResteE] = useState(false);
 
   // ── Personnes ──
-  const [saisie, setSaisie] = useState('');
-  const [q, setQ] = useState('');
   const [ecole, setEcole] = useState('');
   const [interet, setInteret] = useState(params.interest ?? '');
   const [pageP, setPageP] = useState(1);
@@ -88,12 +93,12 @@ export default function Hub() {
   }
 
   const chargerEvenements = useCallback(async () => {
-    const r = await api.evenements(jeton, { type, musique, pe: pageE });
+    const r = await api.evenements(jeton, { type, musique, q, pe: pageE });
     enregistrerStyles(r.filtres.styles_musique);
     setStyles(r.filtres.styles_musique);
     setEvenements(r.evenements);
     setResteE(r.pagination.a_suivre);
-  }, [jeton, type, musique, pageE]);
+  }, [jeton, type, musique, q, pageE]);
 
   const chargerAnnuaire = useCallback(async () => {
     setAnnuaire(await api.personnes(jeton, { q, ecole, interest: interet, p: pageP }));
@@ -123,7 +128,7 @@ export default function Hub() {
   }, [charger]);
   useFocusEffect(useCallback(() => { void chargerNotifs(); }, [chargerNotifs]));
 
-  const filtreActif = type !== 'all' || musique !== '';
+  const filtreActif = type !== 'all' || musique !== '' || q !== '';
 
   const choisirType = (t: string) => { setType(t); setPageE(1); setEvenements(null); };
   const choisirMusique = (m: string) => { setMusique(m); setPageE(1); setEvenements(null); };
@@ -182,20 +187,51 @@ export default function Hub() {
             <T taille={fs[4]} couleur={c.gris} style={{ marginBottom: 4 }}>Salut {profil?.prenom}</T>
             <TitreEcran lignes={vue === 'events' ? ['Les bons plans', 'du moment.'] : ['Trouve tes', 'futurs potes.']} />
           </View>
-          <Pressable
-            onPress={() => { setCloche(true); void chargerNotifs(); }}
-            accessibilityRole="button"
-            accessibilityLabel="Notifications"
-            style={[{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.blanc, borderWidth: 1, borderColor: c.line2 }, ombre('sm')]}
-          >
-            <Icone nom="cloche" taille={22} couleur={c.noir} />
-            {notifs?.a_traiter ? (
-              <View style={{ position: 'absolute', top: -3, right: -3, minWidth: 19, height: 19, paddingHorizontal: 5, borderRadius: rayon.pill, backgroundColor: c.rouge, borderWidth: 2, borderColor: c.bg, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontFamily: mono(600), fontSize: fs[1], lineHeight: fs[1] + 1, color: fixe.surLave }}>{notifs.a_traiter}</Text>
-              </View>
-            ) : null}
-          </Pressable>
+          <View style={{ gap: 8, alignItems: 'flex-end' }}>
+            {/* Recherche au-dessus des notifications : « en haut à droite ». */}
+            <Pressable
+              onPress={() => setRechercheOuverte((o) => !o)}
+              accessibilityRole="button"
+              accessibilityLabel="Rechercher"
+              accessibilityState={{ expanded: rechercheOuverte }}
+              style={[{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.blanc, borderWidth: 1, borderColor: c.line2 }, ombre('sm')]}
+            >
+              <Icone nom="loupe" taille={20} couleur={c.noir} />
+            </Pressable>
+
+            <Pressable
+              onPress={() => { setCloche(true); void chargerNotifs(); }}
+              accessibilityRole="button"
+              accessibilityLabel="Notifications"
+              style={[{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.blanc, borderWidth: 1, borderColor: c.line2 }, ombre('sm')]}
+            >
+              <Icone nom="cloche" taille={22} couleur={c.noir} />
+              {notifs?.a_traiter ? (
+                <View style={{ position: 'absolute', top: -3, right: -3, minWidth: 19, height: 19, paddingHorizontal: 5, borderRadius: rayon.pill, backgroundColor: c.rouge, borderWidth: 2, borderColor: c.bg, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontFamily: mono(600), fontSize: fs[1], lineHeight: fs[1] + 1, color: fixe.surLave }}>{notifs.a_traiter}</Text>
+                </View>
+              ) : null}
+            </Pressable>
+          </View>
         </View>
+
+        {rechercheOuverte ? (
+          <View style={{ marginBottom: 16 }}>
+            <TextInput
+              autoFocus
+              value={saisie}
+              onChangeText={setSaisie}
+              onSubmitEditing={() => { setQ(saisie.trim()); setPageE(1); setPageP(1); setEvenements(null); }}
+              placeholder={vue === 'events' ? 'Chercher une soirée, un lieu...' : 'Chercher un nom ou une passion...'}
+              placeholderTextColor={c.gris}
+              returnKeyType="search"
+              style={{ paddingVertical: 14, paddingLeft: 20, paddingRight: 52, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.pill, fontFamily: sans(400), fontSize: fs[4], backgroundColor: c.blanc, color: c.noir }}
+            />
+            <Pressable onPress={() => { setQ(saisie.trim()); setPageE(1); setPageP(1); setEvenements(null); }} accessibilityLabel="Chercher" style={{ position: 'absolute', right: 14, top: 0, bottom: 0, justifyContent: 'center' }}>
+              <Icone nom="loupe" taille={20} couleur={c.gris} />
+            </Pressable>
+          </View>
+        ) : null}
 
         <Segments
           options={[{ code: 'events', libelle: 'Événements' }, { code: 'people', libelle: 'Personnes' }]}
@@ -269,22 +305,6 @@ export default function Hub() {
         </View>
       ) : (
         <Contenu style={{ paddingTop: 12 }}>
-          {/* Recherche */}
-          <View style={{ marginBottom: 14 }}>
-            <TextInput
-              value={saisie}
-              onChangeText={setSaisie}
-              onSubmitEditing={() => { setQ(saisie.trim()); setPageP(1); }}
-              placeholder="Chercher un nom ou une passion..."
-              placeholderTextColor={c.gris}
-              returnKeyType="search"
-              style={{ paddingVertical: 14, paddingLeft: 20, paddingRight: 52, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.pill, fontFamily: sans(400), fontSize: fs[4], backgroundColor: c.blanc, color: c.noir }}
-            />
-            <Pressable onPress={() => { setQ(saisie.trim()); setPageP(1); }} accessibilityLabel="Chercher" style={{ position: 'absolute', right: 14, top: 0, bottom: 0, justifyContent: 'center' }}>
-              <Icone nom="loupe" taille={20} couleur={c.gris} />
-            </Pressable>
-          </View>
-
           {/* Filtres */}
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 20 }}>
             <Selecteur

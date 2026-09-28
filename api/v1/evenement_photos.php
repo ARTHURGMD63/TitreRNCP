@@ -30,14 +30,14 @@ if ($eid <= 0) {
     apiErreur('Événement manquant.', 422, 'id_manquant');
 }
 
-$stmt = $pdo->prepare('SELECT id, date_heure FROM evenements WHERE id = ?');
+$stmt = $pdo->prepare('SELECT id, date_heure, date_fin FROM evenements WHERE id = ?');
 $stmt->execute([$eid]);
 $evenement = $stmt->fetch();
 if (!$evenement) {
     apiErreur('Cette soirée n’existe plus', 404, 'introuvable');
 }
 
-$enCours    = evenementPhotosEnCours((string) $evenement['date_heure']);
+$enCours    = evenementPhotosEnCours((string) $evenement['date_heure'], $evenement['date_fin'] !== null ? (string) $evenement['date_fin'] : null);
 $estCheckin = evenementPhotosEstCheckin($pdo, $uid, $eid);
 
 function evenementPhotoUrlSiExiste(string $fichier): ?string

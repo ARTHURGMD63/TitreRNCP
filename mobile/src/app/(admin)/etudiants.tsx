@@ -6,22 +6,42 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
-import { api, ErreurApi, type EtudiantAdmin, type ReponseEtudiantsAdmin } from '../../api';
+import { actions, api, ErreurApi, type EtudiantAdmin, type ReponseEtudiantsAdmin } from '../../api';
 import { Bouton } from '../../composants/Bouton';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Avatar, Segments } from '../../composants/Elements';
 import { Champ, Selecteur } from '../../composants/Formulaire';
+import { Icone } from '../../composants/Icone';
 import { T, TitreEcran } from '../../composants/Texte';
+import { useToast } from '../../composants/Toast';
+import { confirmer } from '../../confirmer';
 import { dateFr, nombre } from '../../format';
 import { useJeton } from '../../session';
 import { fs, rayon } from '../../theme';
 import { useTheme } from '../../useTheme';
 
-function LigneEtudiant({ e }: { e: EtudiantAdmin }) {
+function LigneEtudiant({ e, onSupprime }: { e: EtudiantAdmin; onSupprime: (id: number) => void }) {
   const { c } = useTheme();
+  const jeton = useJeton();
+  const toast = useToast();
+  const [suppression, setSuppression] = useState(false);
+
+  async function supprimer() {
+    if (!(await confirmer(`Supprimer définitivement le compte de ${e.prenom} ${e.nom} ? Cette action est irréversible.`))) return;
+    setSuppression(true);
+    try {
+      await actions.adminSupprimerUtilisateur(jeton, e.id);
+      toast('Compte supprimé', 'success');
+      onSupprime(e.id);
+    } catch (err) {
+      toast(err instanceof ErreurApi ? err.message : 'Erreur réseau', 'error');
+      setSuppression(false);
+    }
+  }
+
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.grisClair }}>
       <Avatar photo={e.photo_url} prenom={e.prenom} taille={40} fond={c.bleu} />
@@ -32,9 +52,12 @@ function LigneEtudiant({ e }: { e: EtudiantAdmin }) {
           {e.sorties} sorties · {e.presences} présences · {e.squads} squads · {nombre(Math.round(e.economies))}€
         </T>
       </View>
-      <T taille={fs[2]} couleur={c.gris} style={{ textAlign: 'right' }}>
+      <T taille={fs[2]} couleur={c.gris} style={{ textAlign: 'right', marginRight: 4 }}>
         {e.derniere_activite ? dateFr(e.derniere_activite, 'j M') : 'jamais'}
       </T>
+      <Pressable onPress={supprimer} disabled={suppression} accessibilityRole="button" accessibilityLabel={`Supprimer ${e.prenom} ${e.nom}`} hitSlop={10}>
+        <Icone nom="croix" taille={16} couleur={c.surRougeClair} />
+      </Pressable>
     </View>
   );
 }
@@ -104,7 +127,9 @@ export default function EtudiantsAdmin() {
           <T taille={fs[4]} couleur={c.gris} style={{ textAlign: 'center', marginTop: 24 }}>Aucun étudiant ne correspond.</T>
         ) : (
           <View style={{ backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.base, paddingHorizontal: 16 }}>
-            {donnees.etudiants.map((e) => <LigneEtudiant key={e.id} e={e} />)}
+            {donnees.etudiants.map((e) => (
+              <LigneEtudiant key={e.id} e={e} onSupprime={(id) => setDonnees((d) => d && { ...d, etudiants: d.etudiants.filter((x) => x.id !== id) })} />
+            ))}
           </View>
         )}
 

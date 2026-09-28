@@ -5,22 +5,26 @@ require_once __DIR__ . '/includes/db.php';
 requireStudent();
 $user = currentUser();
 
-// Fetch upcoming squads with member count
+// Fetch upcoming squads with member count. « je_suis_abonne » alimente le
+// filtre « Mes potes » (mode Sport) : un squad créé par quelqu'un que je
+// suis, sans devoir déjà en être membre.
 $stmt = $pdo->prepare("
     SELECT s.*,
            u.prenom AS createur_prenom, u.nom AS createur_nom,
            (SELECT COUNT(*) FROM squad_membres sm WHERE sm.squad_id = s.id) AS nb_membres,
            (SELECT COUNT(*) FROM squad_membres sm WHERE sm.squad_id = s.id AND sm.user_id = ?) AS deja_membre,
-           (SELECT GROUP_CONCAT(LEFT(u2.prenom, 1) ORDER BY sm2.joined_at ASC SEPARATOR '') 
-            FROM squad_membres sm2 
-            JOIN users u2 ON u2.id = sm2.user_id 
-            WHERE sm2.squad_id = s.id) AS membres_initials
+           (SELECT GROUP_CONCAT(LEFT(u2.prenom, 1) ORDER BY sm2.joined_at ASC SEPARATOR '')
+            FROM squad_membres sm2
+            JOIN users u2 ON u2.id = sm2.user_id
+            WHERE sm2.squad_id = s.id) AS membres_initials,
+           EXISTS (SELECT 1 FROM follows_users f
+                    WHERE f.follower_id = ? AND f.followed_id = s.createur_id AND f.statut = 'accepted') AS je_suis_abonne
     FROM squads s
     JOIN users u ON u.id = s.createur_id
     WHERE s.date_heure >= NOW()
     ORDER BY s.date_heure ASC
 ");
-$stmt->execute([$user['id']]);
+$stmt->execute([$user['id'], $user['id']]);
 $squads = $stmt->fetchAll();
 
 // Le type colore un rail, l'etiquette et le bouton — jamais le fond de la
@@ -33,9 +37,10 @@ $typeClasses = [
     'running' => 'squad-running',
     'velo'    => 'squad-velo',
     'muscu'   => 'squad-muscu',
+    'culture' => 'squad-culture',
     'autre'   => 'squad-autre',
 ];
-$typeLabels = ['running'=>'Running','velo'=>'Vélo','muscu'=>'Muscu','autre'=>'Autre'];
+$typeLabels = ['running'=>'Running','velo'=>'Vélo','muscu'=>'Muscu','culture'=>'Culture','autre'=>'Autre'];
 $niveauLabels = ['tous'=>'Tous niveaux','debutant'=>'Débutant','inter'=>'Inter.','avance'=>'Avancé'];
 
 ?>
@@ -58,7 +63,16 @@ $niveauLabels = ['tous'=>'Tous niveaux','debutant'=>'Débutant','inter'=>'Inter.
     <button type="button" class="pill" data-filter="running" aria-pressed="false">Running</button>
     <button type="button" class="pill" data-filter="velo" aria-pressed="false">Vélo</button>
     <button type="button" class="pill" data-filter="muscu" aria-pressed="false">Muscu</button>
+    <button type="button" class="pill" data-filter="culture" aria-pressed="false">Culture</button>
     <button type="button" class="pill" data-filter="autre" aria-pressed="false">Autre</button>
+  </div>
+
+  <!-- Filtre « qui » : mes potes, tout le monde, ou seulement les
+       associations (squads.cree_par_association, migration v24). -->
+  <div class="filter-scroll" role="group" aria-label="Filtrer les squads par origine" style="margin-top:8px;">
+    <button type="button" class="pill active" data-scope="tous" aria-pressed="true">Tout le monde</button>
+    <button type="button" class="pill" data-scope="potes" aria-pressed="false">Mes potes</button>
+    <button type="button" class="pill" data-scope="associations" aria-pressed="false">Associations</button>
   </div>
 
   <main id="main-content" class="page-content page-grid">
@@ -93,10 +107,15 @@ $niveauLabels = ['tous'=>'Tous niveaux','debutant'=>'Débutant','inter'=>'Inter.
       $isFull  = $s['nb_membres'] >= $s['quota'];
       $dateStr = dateFr($s['date_heure'], 'D H\hi');
     ?>
-    <div class="squad-card <?= $classeType ?>" data-type="<?= $s['type'] ?>">
+    <div class="squad-card <?= $classeType ?>" data-type="<?= $s['type'] ?>"
+         data-abonne="<?= $s['je_suis_abonne'] ? '1' : '0' ?>"
+         data-association="<?= $s['cree_par_association'] ? '1' : '0' ?>">
       <div class="squad-badge">
         <?= htmlspecialchars($niveauLabels[$s['niveau']] ?? $s['niveau']) ?>
       </div>
+      <?php if ($s['cree_par_association']): ?>
+        <div class="squad-badge" style="right:auto;left:16px;">Association</div>
+      <?php endif; ?>
 
       <div class="squad-type-label"><?= mb_strtoupper($typeLabels[$s['type']] ?? $s['type']) ?> &middot; <?= $dateStr ?></div>
       <div class="squad-title"><?= htmlspecialchars($s['titre']) ?></div>
@@ -194,6 +213,7 @@ $niveauLabels = ['tous'=>'Tous niveaux','debutant'=>'Débutant','inter'=>'Inter.
             <option value="running">Running</option>
             <option value="velo">Vélo</option>
             <option value="muscu">Muscu</option>
+            <option value="culture">Culture</option>
             <option value="autre">Autre</option>
           </select>
         </div>
@@ -225,6 +245,10 @@ $niveauLabels = ['tous'=>'Tous niveaux','debutant'=>'Débutant','inter'=>'Inter.
         <label for="sq-desc">Description</label>
         <textarea id="sq-desc" name="description" placeholder="Détails sur la sortie..."></textarea>
       </div>
+      <label class="case" style="margin-bottom:16px;">
+        <input type="checkbox" id="sq-association" name="cree_par_association" value="1">
+        <span>Créé par une association étudiante</span>
+      </label>
       <button type="submit" class="btn btn-primary btn-full">Créer le squad</button>
       <button type="button" class="btn btn-outline btn-full mt-8" data-modal-close>Annuler</button>
     </form>
@@ -241,8 +265,8 @@ $niveauLabels = ['tous'=>'Tous niveaux','debutant'=>'Débutant','inter'=>'Inter.
     <span>Explorer</span>
   </a>
   <a href="<?= baseUrl('/squads.php') ?>" class="nav-item active" aria-current="page">
-    <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
-    <span>Squads</span>
+    <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"></path><path d="M17 5h3a3 3 0 0 1-3 3M7 5H4a3 3 0 0 0 3 3"></path></svg></span>
+    <span>Sport</span>
   </a>
   <a href="<?= baseUrl('/wallet.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg></span>

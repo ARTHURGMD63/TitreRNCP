@@ -43,6 +43,9 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL,
     ecole VARCHAR(100),
     promo VARCHAR(10),
+    -- Ville choisie a l'inscription (etudiants). Distincte de
+    -- etablissements.ville, qui reste la ville du partenaire (migration v24).
+    ville VARCHAR(100) DEFAULT NULL,
     -- Photo de profil : nom du fichier dans /uploads/avatars, NULL = initiale
     photo VARCHAR(255) DEFAULT NULL,
     -- Majorite verifiee a l'inscription. NULL = compte anterieur a la v10.
@@ -80,6 +83,9 @@ CREATE TABLE IF NOT EXISTS evenements (
     -- ne doit pas demander une migration de schema.
     style_musique VARCHAR(20) NULL DEFAULT NULL,
     date_heure DATETIME NOT NULL,
+    -- Fin declaree de l'evenement (migration v24) ; NULL pour les evenements
+    -- crees avant, ou pour une soiree sans fin annoncee.
+    date_fin DATETIME NULL DEFAULT NULL,
     quota INT DEFAULT 100,
     reduction INT DEFAULT 0,
     prix_normal DECIMAL(8,2) DEFAULT 0,
@@ -119,7 +125,10 @@ CREATE TABLE IF NOT EXISTS inscriptions (
 CREATE TABLE IF NOT EXISTS squads (
     id INT PRIMARY KEY AUTO_INCREMENT,
     createur_id INT NOT NULL,
-    type ENUM('running', 'velo', 'muscu', 'autre') NOT NULL,
+    type ENUM('running', 'velo', 'muscu', 'culture', 'autre') NOT NULL,
+    -- Coche par le createur a la creation (migration v24) : alimente le
+    -- filtre « Associations uniquement » de l'onglet Sport.
+    cree_par_association TINYINT(1) NOT NULL DEFAULT 0,
     titre VARCHAR(255) NOT NULL,
     description TEXT,
     niveau ENUM('tous', 'debutant', 'inter', 'avance') DEFAULT 'tous',
@@ -904,4 +913,4 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 
 INSERT IGNORE INTO schema_migrations (version) VALUES
 ('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
-('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23');
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24');

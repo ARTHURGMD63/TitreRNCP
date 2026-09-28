@@ -1,6 +1,6 @@
 /**
  * Les quatre onglets, dans l'ordre et avec les libellés du site : Explorer,
- * Squads, Pass, Moi — dessinés par la barre flottante de la charte.
+ * Sport, Pass, Moi — dessinés par la barre flottante de la charte.
  *
  * Notifications, Classement et Abonnements vivent ici aussi, sans onglet
  * propre : sur le site ces pages gardent la barre du bas, et c'est ce qui
@@ -24,7 +24,7 @@ export default function Onglets() {
       screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: c.bg }, animation: 'none', lazy: false }}
     >
       <Tabs.Screen name="index" options={{ title: 'Explorer' }} />
-      <Tabs.Screen name="squads" options={{ title: 'Squads' }} />
+      <Tabs.Screen name="squads" options={{ title: 'Sport' }} />
       <Tabs.Screen name="wallet" options={{ title: 'Pass' }} />
       <Tabs.Screen name="moi" options={{ title: 'Moi' }} />
       <Tabs.Screen name="notifications" options={{ href: null }} />

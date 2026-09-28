@@ -80,6 +80,21 @@ function PastilleEnCours() {
   );
 }
 
+/** Pendant statique de PastilleEnCours pour les soirées pas encore commencées. */
+function PastilleAVenir() {
+  const { c } = useTheme();
+  return (
+    <View
+      accessible accessibilityLabel="Soirée à venir"
+      style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 5, paddingHorizontal: 11, borderRadius: rayon.pill, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.line2 }}
+    >
+      <Text style={{ fontFamily: mono(600), fontSize: fs[1], letterSpacing: lsEm.label * fs[1], textTransform: 'uppercase', color: c.grisFonce }}>
+        À venir
+      </Text>
+    </View>
+  );
+}
+
 /** « FLASH · 12MIN 05S », puis « EXPIRÉ » (app.js, [data-expiry]). */
 function libelleFlash(expiry: number, maintenant: number) {
   const diff = Math.max(0, expiry * 1000 - maintenant);
@@ -272,7 +287,9 @@ function CarteClassique({ ev, onInviter }: { ev: Evenement; onInviter: () => voi
         ev.en_cours ? [{ borderWidth: 2, borderColor: c.rouge }, haloLave] : ombre('base'),
       ]}
     >
-      {ev.en_cours ? <View style={{ marginBottom: 10, alignSelf: 'flex-start' }}><PastilleEnCours /></View> : null}
+      <View style={{ marginBottom: 10, alignSelf: 'flex-start' }}>
+        {ev.en_cours ? <PastilleEnCours /> : <PastilleAVenir />}
+      </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 8 }}>
         <Mono couleur={accent}>{majuscules(LIBELLES_TYPE[ev.type] ?? ev.type)} · {dateFr(ev.date_heure, 'D j M')}</Mono>
         {ev.style_musique ? <Badge libelle={libelleStyle(ev.style_musique)} icone="musique" fond="transparent" encre={c.grisFonce} filet={c.line2} espacement={lsEm.wide} style={{ paddingVertical: 2, paddingHorizontal: 9, gap: 4 }} /> : null}

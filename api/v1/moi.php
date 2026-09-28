@@ -18,7 +18,7 @@ $moi = apiEtudiant($pdo);
 $uid = (int) $moi['id'];
 
 // Colonnes nommées : un SELECT * emporterait le hachage du mot de passe.
-$stmt = $pdo->prepare('SELECT id, nom, prenom, email, ecole, promo, photo, interests, type, compte_prive, created_at FROM users WHERE id=?');
+$stmt = $pdo->prepare('SELECT id, nom, prenom, email, ecole, promo, ville, photo, interests, type, compte_prive, created_at FROM users WHERE id=?');
 $stmt->execute([$uid]);
 $u = $stmt->fetch();
 

@@ -17,6 +17,7 @@ $success = '';
 
 $ecoles = ['UCA', 'SIGMA Clermont', 'INP Ingénieurs', 'IFSI', 'Autre'];
 $promos = ['L1','L2','L3','M1','M2','BUT1','BUT2','BUT3'];
+$villes = ['Clermont-Ferrand', 'Lyon', 'Paris', 'Toulouse', 'Bordeaux', 'Autre'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrfVerify();
@@ -31,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $etablType = in_array($_POST['etablissement_type'] ?? '', ['bar','boite','resto','afterwork'])
         ? $_POST['etablissement_type'] : 'bar';
     $etablVille = trim($_POST['ville'] ?? 'Clermont-Ferrand');
+    $etudiantVille = trim($_POST['ville_etudiant'] ?? '') ?: null;
     $naissance  = trim($_POST['date_naissance'] ?? '');
     $cgu        = !empty($_POST['cgu']);
 
@@ -45,6 +47,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
      * Store, ni devant un établissement qui sert de l'alcool.
      */
     $age = ageEnAnnees($naissance);
+
+    // École et promo ne concernent que les 18-25 ans : au-delà, la question
+    // n'a plus de sens et ne doit pas être écrite en base même si un ancien
+    // onglet ouvert les avait pré-remplies avant que l'âge change.
+    if ($type === 'etudiant' && ($age === null || $age > 25)) {
+        $ecole = '';
+        $promo = '';
+    }
 
     if (!$prenom || !$nom || !$email || !$pass) {
         $error = 'Merci de remplir tous les champs obligatoires.';
@@ -63,11 +73,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $hash = password_hash($pass, PASSWORD_DEFAULT);
             $stmt = $pdo->prepare(
-                "INSERT INTO users (nom, prenom, email, password, ecole, promo,
+                "INSERT INTO users (nom, prenom, email, password, ecole, promo, ville,
                                     date_naissance, cgu_acceptees_le, type, interests)
-                 VALUES (?,?,?,?,?,?,?,NOW(),?,?)"
+                 VALUES (?,?,?,?,?,?,?,?,NOW(),?,?)"
             );
             $stmt->execute([$nom, $prenom, $email, $hash, $ecole ?: null, $promo ?: null,
+                            $type === 'etudiant' ? $etudiantVille : null,
                             $naissance, $type, interetsVersTexte($interets)]);
             $userId = $pdo->lastInsertId();
 
@@ -188,24 +199,37 @@ $interetsChoisis = filtrerInterets($_POST['interests'] ?? []);
 
     <!-- Student fields -->
     <div id="student-fields" <?= $selectedType === 'partenaire' ? 'class="hidden"' : '' ?>>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="inscription-ecole">École</label>
-          <select id="inscription-ecole" name="ecole">
-            <option value="">— Choisir —</option>
-            <?php foreach ($ecoles as $e): ?>
-              <option value="<?= $e ?>" <?= ($_POST['ecole'] ?? '') === $e ? 'selected' : '' ?>><?= $e ?></option>
-            <?php endforeach; ?>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="inscription-promo">Promo</label>
-          <select id="inscription-promo" name="promo">
-            <option value="">—</option>
-            <?php foreach ($promos as $p): ?>
-              <option value="<?= $p ?>" <?= ($_POST['promo'] ?? '') === $p ? 'selected' : '' ?>><?= $p ?></option>
-            <?php endforeach; ?>
-          </select>
+      <div class="form-group">
+        <label for="inscription-ville-etudiant">Ville</label>
+        <select id="inscription-ville-etudiant" name="ville_etudiant">
+          <?php foreach ($villes as $v): ?>
+            <option value="<?= $v ?>" <?= ($_POST['ville_etudiant'] ?? 'Clermont-Ferrand') === $v ? 'selected' : '' ?>><?= $v ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+
+      <!-- Visible seulement pour les 18-25 ans : basculé par l'écouteur sur
+           la date de naissance, plus bas dans le script de la page. -->
+      <div id="etude-fields" class="hidden">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="inscription-ecole">École</label>
+            <select id="inscription-ecole" name="ecole">
+              <option value="">— Choisir —</option>
+              <?php foreach ($ecoles as $e): ?>
+                <option value="<?= $e ?>" <?= ($_POST['ecole'] ?? '') === $e ? 'selected' : '' ?>><?= $e ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="inscription-promo">Promo</label>
+            <select id="inscription-promo" name="promo">
+              <option value="">—</option>
+              <?php foreach ($promos as $p): ?>
+                <option value="<?= $p ?>" <?= ($_POST['promo'] ?? '') === $p ? 'selected' : '' ?>><?= $p ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
         </div>
       </div>
 

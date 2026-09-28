@@ -351,6 +351,7 @@ function apiProfil(array $u): array
         'email'     => (string) ($u['email'] ?? ''),
         'ecole'     => $u['ecole'] !== null ? (string) $u['ecole'] : null,
         'promo'     => $u['promo'] !== null ? (string) $u['promo'] : null,
+        'ville'     => !empty($u['ville']) ? (string) $u['ville'] : null,
         'type'      => (string) $u['type'],
         'photo_url' => !empty($u['photo']) ? avatarUrlAbsolue((string) $u['photo']) : null,
         'interets'  => interetsDepuisTexte($u['interests'] ?? null),

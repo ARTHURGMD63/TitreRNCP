@@ -9,8 +9,9 @@
  * ouvre la session dans la foulée, l'application fait de même.
  *
  * Corps JSON : type, prenom, nom, email, password, date_naissance (AAAA-MM-JJ),
- * ecole, promo, interets[] (étudiant) ; etablissement_nom, etablissement_type,
- * ville (partenaire) ; cgu (booléen) ; appareil (facultatif).
+ * ecole, promo, ville_etudiant (étudiant, école/promo réservées aux 18-25
+ * ans) ; etablissement_nom, etablissement_type, ville (partenaire) ; cgu
+ * (booléen) ; appareil (facultatif).
  */
 
 require_once __DIR__ . '/_socle.php';
@@ -29,6 +30,7 @@ $email      = $texte('email');
 $pass       = is_string($corps['password'] ?? null) ? $corps['password'] : '';
 $ecole      = $texte('ecole');
 $promo      = $texte('promo');
+$etudiantVille = $texte('ville_etudiant') !== '' ? $texte('ville_etudiant') : null;
 $etablNom   = $texte('etablissement_nom');
 $etablType  = in_array($corps['etablissement_type'] ?? '', ['bar', 'boite', 'resto', 'afterwork'], true)
     ? (string) $corps['etablissement_type'] : 'bar';
@@ -38,6 +40,12 @@ $cgu        = !empty($corps['cgu']);
 $interets   = $type === 'etudiant' ? filtrerInterets($corps['interets'] ?? []) : [];
 
 $age = ageEnAnnees($naissance);
+
+// École et promo ne concernent que les 18-25 ans : voir auth/register.php.
+if ($type === 'etudiant' && ($age === null || $age > 25)) {
+    $ecole = '';
+    $promo = '';
+}
 
 if (!$prenom || !$nom || !$email || !$pass) {
     apiErreur('Merci de remplir tous les champs obligatoires.', 422, 'champs_manquants');
@@ -55,12 +63,13 @@ if (!$prenom || !$nom || !$email || !$pass) {
 
 try {
     $stmt = $pdo->prepare(
-        "INSERT INTO users (nom, prenom, email, password, ecole, promo,
+        "INSERT INTO users (nom, prenom, email, password, ecole, promo, ville,
                             date_naissance, cgu_acceptees_le, type, interests)
-         VALUES (?,?,?,?,?,?,?,NOW(),?,?)"
+         VALUES (?,?,?,?,?,?,?,?,NOW(),?,?)"
     );
     $stmt->execute([$nom, $prenom, $email, password_hash($pass, PASSWORD_DEFAULT),
-                    $ecole ?: null, $promo ?: null, $naissance, $type, interetsVersTexte($interets)]);
+                    $ecole ?: null, $promo ?: null, $type === 'etudiant' ? $etudiantVille : null,
+                    $naissance, $type, interetsVersTexte($interets)]);
     $userId = (int) $pdo->lastInsertId();
 
     synchroniserInterets($pdo, $userId, $interets);
@@ -76,7 +85,7 @@ try {
         : apiErreur('Erreur lors de la création du compte.', 500, 'creation');
 }
 
-$stmt = $pdo->prepare('SELECT id, nom, prenom, email, ecole, promo, photo, interests, type FROM users WHERE id = ?');
+$stmt = $pdo->prepare('SELECT id, nom, prenom, email, ecole, promo, ville, photo, interests, type FROM users WHERE id = ?');
 $stmt->execute([$userId]);
 $u = $stmt->fetch();
 

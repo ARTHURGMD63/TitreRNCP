@@ -7,11 +7,8 @@
  *   ?type=all|pour-moi|bar|boite|resto   « pour-moi » = les lieux suivis et
  *                                        les soirees ou des amis vont
  *   ?musique=techno|house|…              style exact, voir musique.php
+ *   ?q=…                                 recherche texte (titre, lieu, etablissement)
  *   ?pe=2                                page (voir ci-dessous)
- *
- * Il n'y a PAS de recherche textuelle sur ce point : `?q=` ne filtre que
- * l'annuaire des personnes, et le passer ici ne change rien. Mieux vaut
- * l'ecrire que laisser l'application croire a un filtre qui ne filtre pas.
  *
  * LA PAGINATION EST CUMULATIVE, ce n'est pas une etourderie : le hub web
  * fonctionne en « voir plus », donc la page 2 renvoie les pages 1 ET 2. Cela
@@ -40,9 +37,10 @@ $criteres     = hubCriteres($_GET);
 $etabsSuivis  = hubEtablissementsSuivis($pdo, $uid);
 $amisParEvent = hubAmisParEvenement($pdo, $uid);
 
-// Une soirée commencée reste dans le fil, et en tête, tant que sa fenêtre de
-// photos est ouverte — la même que celle qui autorise à en poster une.
-$resultat = hubEvenements($pdo, $uid, $criteres, $etabsSuivis, $amisParEvent, EVENEMENT_PHOTOS_FENETRE_HEURES);
+// Une soirée commencée reste dans le fil, et en tête, tant qu'elle n'est pas
+// terminée (evenements_temps.php : date_fin si saisie, sinon la fenêtre par
+// défaut) — la même définition que celle qui autorise à y poster une photo.
+$resultat = hubEvenements($pdo, $uid, $criteres, $etabsSuivis, $amisParEvent);
 
 /**
  * Met un evenement en forme pour l'application.

@@ -115,11 +115,12 @@ adminHeader($pdo, 'evenements', 'Événements',
         <th scope="col">Présents</th>
         <th scope="col">Taux</th>
         <th scope="col">Remise</th>
+        <th scope="col">Actions</th>
       </tr>
     </thead>
     <tbody>
       <?php if (empty($evenements)): ?>
-        <tr><td colspan="7" class="admin-vide">Aucune soirée ne correspond.</td></tr>
+        <tr><td colspan="8" class="admin-vide">Aucune soirée ne correspond.</td></tr>
       <?php endif; ?>
       <?php foreach ($evenements as $e):
         $passe = strtotime($e['date_heure']) < time();
@@ -167,6 +168,14 @@ adminHeader($pdo, 'evenements', 'Événements',
         </td>
         <td data-label="Remise" style="font-size:var(--fs-2);white-space:nowrap;">
           <?= (int) $e['reduction'] > 0 ? '−' . (int) $e['reduction'] . ' %' : ($e['is_gratuit'] ? 'Gratuit' : '—') ?>
+        </td>
+        <td data-label="Actions">
+          <button type="button" class="btn-admin-supprimer-evenement" data-id="<?= (int) $e['id'] ?>"
+                  data-titre="<?= htmlspecialchars($e['titre']) ?>"
+                  style="background:var(--alerte-vif);color:var(--sur-lave);border:none;border-radius:var(--radius-pill);
+                         padding:7px 14px;font-size:var(--fs-2);font-weight:var(--fw-bold);cursor:pointer;white-space:nowrap;">
+            Supprimer
+          </button>
         </td>
       </tr>
       <?php endforeach; ?>

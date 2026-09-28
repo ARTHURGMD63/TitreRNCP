@@ -58,7 +58,7 @@ if ($comptePrive === null) {
 synchroniserInterets($pdo, $uid, interetsDepuisTexte($interests));
 oublierEcolesRepresentees();
 
-$stmt = $pdo->prepare('SELECT id, nom, prenom, email, ecole, promo, photo, interests, type, compte_prive FROM users WHERE id=?');
+$stmt = $pdo->prepare('SELECT id, nom, prenom, email, ecole, promo, ville, photo, interests, type, compte_prive FROM users WHERE id=?');
 $stmt->execute([$uid]);
 $ligne  = $stmt->fetch();
 $profil = ['photo_url' => apiPhotoUrl($ligne['photo'] ?? null)] + apiProfil($ligne);

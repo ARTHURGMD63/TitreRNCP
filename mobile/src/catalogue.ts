@@ -9,6 +9,8 @@ export const ECOLES = ['UCA', 'SIGMA Clermont', 'INP Ingénieurs', 'IFSI', 'Autr
 
 export const PROMOS = ['L1', 'L2', 'L3', 'M1', 'M2', 'BUT1', 'BUT2', 'BUT3'];
 
+export const VILLES = ['Clermont-Ferrand', 'Lyon', 'Paris', 'Toulouse', 'Bordeaux', 'Autre'];
+
 export const INTERETS = [
   'Sorties', 'Soirées', 'Bars', 'Boîtes', 'Techno', 'Musique', 'Mixologie',
   'Running', 'Muscu', 'Vélo', 'Foot', 'Tennis', 'Yoga',
@@ -27,5 +29,5 @@ export const TYPES_ETABLISSEMENT = [
 export const LIBELLES_TYPE: Record<string, string> = { bar: 'Bar', boite: 'Boîte', resto: 'Resto', afterwork: 'Afterwork' };
 
 /** squads.php */
-export const TYPES_SQUAD: Record<string, string> = { running: 'Running', velo: 'Vélo', muscu: 'Muscu', autre: 'Autre' };
+export const TYPES_SQUAD: Record<string, string> = { running: 'Running', velo: 'Vélo', muscu: 'Muscu', culture: 'Culture', autre: 'Autre' };
 export const NIVEAUX_SQUAD: Record<string, string> = { tous: 'Tous niveaux', debutant: 'Débutant', inter: 'Inter.', avance: 'Avancé' };

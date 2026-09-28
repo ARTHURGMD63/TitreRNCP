@@ -29,6 +29,7 @@ require_once __DIR__ . '/interets.php';
 require_once __DIR__ . '/social.php';
 require_once __DIR__ . '/musique.php';
 require_once __DIR__ . '/agregats.php';
+require_once __DIR__ . '/evenements_temps.php';
 
 /**
  * Valeur réservée du filtre d'intérêt : « les gens qui aiment ce que j'aime »,
@@ -437,17 +438,12 @@ function hubAnnuaire(PDO $pdo, array $utilisateur, array $criteres): array
  * @param array<int,array{prenoms:list<string>,nb:int}> $amisParEvent hubAmisParEvenement()
  * @return array{evenements:list<array<string,mixed>>, reste:bool}
  */
-/**
- * @param int $fenetreEnCoursHeures Étend la fenêtre aux soirées commencées
- *        depuis moins de N heures (0 = comportement historique : seulement
- *        les soirées à venir, comme sur le site). L'application mobile passe
- *        EVENEMENT_PHOTOS_FENETRE_HEURES pour que « visible dans le fil » et
- *        « on peut encore y poster une photo » restent la même fenêtre.
- */
-function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, array $amisParEvent, int $fenetreEnCoursHeures = 0): array
+function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, array $amisParEvent): array
 {
     $filter  = (string) $criteres['type'];
     $musique = (string) $criteres['musique'];
+    $q       = (string) $criteres['q'];
+    $finEff  = sqlFinEffectiveEvenement();
 
     /*
      * Le fil des soirées se construit en deux temps, et ce n'est pas un
@@ -472,9 +468,13 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
     $sponsoActif = "(e.is_sponsorise = 1
                      AND (e.sponsor_jusqu_au IS NULL OR e.sponsor_jusqu_au > NOW()))";
 
+    // Une soirée reste dans le fil tant qu'elle n'est pas terminée — donc à
+    // venir, ou en cours (voir evenements_temps.php pour ce que « terminée »
+    // veut dire : date_fin si l'établissement l'a saisie, sinon une fenêtre
+    // par défaut après le début).
     $ouE     = " FROM evenements e
                  JOIN etablissements et ON et.id = e.etablissement_id
-                 WHERE e.date_heure >= NOW() - INTERVAL $fenetreEnCoursHeures HOUR";
+                 WHERE $finEff >= NOW()";
     $paramsE = [];
 
     if ($filter === 'pour-moi') {
@@ -493,12 +493,16 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
         $paramsE[] = $musique;
     }
 
-    // Une soirée commencée mais encore dans sa fenêtre de photos passe devant
-    // tout le reste, sponsoring compris : c'est la seule dont l'écran a une
-    // action à proposer maintenant plutôt que plus tard.
-    $enCoursSql = $fenetreEnCoursHeures > 0
-        ? "(e.date_heure <= NOW() AND e.date_heure >= NOW() - INTERVAL $fenetreEnCoursHeures HOUR) DESC, "
-        : '';
+    if ($q !== '') {
+        $ouE .= " AND (e.titre LIKE ? OR e.lieu LIKE ? OR et.nom LIKE ?)";
+        $terme = '%' . addcslashes($q, '%_') . '%';
+        array_push($paramsE, $terme, $terme, $terme);
+    }
+
+    // Une soirée en cours passe devant tout le reste, sponsoring compris :
+    // c'est la seule dont l'écran a une action à proposer maintenant plutôt
+    // que plus tard.
+    $enCoursSql = "(e.date_heure <= NOW() AND $finEff >= NOW()) DESC, ";
 
     // Le sponsoring acheté passe devant le reste du fil — c'est ce que le
     // partenaire paie. Il ne s'en cache pas pour autant : chaque carte
@@ -532,7 +536,7 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
     $stmtE = $pdo->prepare(
         "SELECT e.*, et.id AS etab_id, et.nom AS etablissement_nom, et.type AS etab_type, et.ville,
                 $sponsoActif AS sponso_actif,
-                (e.date_heure <= NOW() AND e.date_heure >= NOW() - INTERVAL $fenetreEnCoursHeures HOUR) AS en_cours_calc,
+                (e.date_heure <= NOW() AND $finEff >= NOW()) AS en_cours_calc,
                 (SELECT COUNT(*) FROM inscriptions i
                   WHERE i.evenement_id = e.id AND i.statut <> 'annule') AS nb_inscrits
            FROM evenements e

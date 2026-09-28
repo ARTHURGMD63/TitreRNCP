@@ -15,6 +15,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'partenaire') {
 
 $input = json_decode(file_get_contents('php://input'), true);
 $qr_code = trim((string) ($input['qr_code'] ?? ''));
+$inscription_id = (int) ($input['inscription_id'] ?? 0);
 $event_id = $input['event_id'] ?? 0;
 
 /*
@@ -37,7 +38,7 @@ foreach (['linkee:', 'studentlink:'] as $prefixe) {
     }
 }
 
-if (!$qr_code || !$event_id) {
+if ((!$qr_code && !$inscription_id) || !$event_id) {
     echo json_encode(['success' => false, 'message' => 'Données manquantes']);
     exit;
 }
@@ -54,14 +55,25 @@ if (!$stmt->fetch()) {
     exit;
 }
 
-// Find the inscription
-$stmt = $pdo->prepare("
-    SELECT i.id, i.statut, u.prenom, u.nom 
-    FROM inscriptions i
-    JOIN users u ON u.id = i.user_id
-    WHERE i.qr_code = ? AND i.evenement_id = ?
-");
-$stmt->execute([$qr_code, $event_id]);
+// Find the inscription — par QR, ou par id pour une validation manuelle
+// (voir partenaire/api_invites.php, quand le scan ne fonctionne pas).
+if ($inscription_id) {
+    $stmt = $pdo->prepare("
+        SELECT i.id, i.statut, u.prenom, u.nom
+        FROM inscriptions i
+        JOIN users u ON u.id = i.user_id
+        WHERE i.id = ? AND i.evenement_id = ?
+    ");
+    $stmt->execute([$inscription_id, $event_id]);
+} else {
+    $stmt = $pdo->prepare("
+        SELECT i.id, i.statut, u.prenom, u.nom
+        FROM inscriptions i
+        JOIN users u ON u.id = i.user_id
+        WHERE i.qr_code = ? AND i.evenement_id = ?
+    ");
+    $stmt->execute([$qr_code, $event_id]);
+}
 $inscription = $stmt->fetch();
 
 if (!$inscription) {

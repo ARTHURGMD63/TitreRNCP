@@ -63,6 +63,7 @@ function apiEvenementPourEdition(array $e): array
         'type' => (string) $e['type'],
         'style_musique' => $e['style_musique'] !== null ? (string) $e['style_musique'] : null,
         'date_heure' => (string) $e['date_heure'],
+        'date_fin' => $e['date_fin'] !== null ? (string) $e['date_fin'] : null,
         'quota' => (int) $e['quota'],
         'reduction' => (int) ($e['reduction'] ?? 0),
         'prix_normal' => (float) ($e['prix_normal'] ?? 0),
@@ -117,6 +118,7 @@ $description  = trim((string) ($corps['description'] ?? ''));
 $type         = (string) ($corps['type'] ?? '');
 $musique      = trim((string) ($corps['style_musique'] ?? ''));
 $dateHeure    = trim((string) ($corps['date_heure'] ?? ''));
+$dateFin      = trim((string) ($corps['date_fin'] ?? '')) ?: null;
 $quota        = (int) ($corps['quota'] ?? 100);
 $reduction    = (int) ($corps['reduction'] ?? 0);
 $prixNormal   = (float) ($corps['prix_normal'] ?? 0);
@@ -132,6 +134,7 @@ if ($titre === '') $erreurs[] = 'Le titre est obligatoire.';
 if (!in_array($type, ['bar', 'boite', 'resto', 'afterwork'], true)) $erreurs[] = 'Type invalide.';
 if ($musique !== '' && !styleMusiqueValide($musique)) $erreurs[] = 'Style de musique invalide.';
 if ($dateHeure === '') $erreurs[] = 'La date est obligatoire.';
+if ($dateFin && strtotime($dateFin) <= strtotime($dateHeure)) $erreurs[] = 'La fin doit être après le début.';
 if ($quota < 1) $erreurs[] = 'Le quota doit être au moins 1.';
 if ($isFlash && $flashExpiry === '') $erreurs[] = "Date d'expiration flash requise.";
 if ($isSponsorise && !formuleSponsoringValide($sponsorFormule)) $erreurs[] = 'Choisis une formule de sponsoring.';
@@ -163,13 +166,13 @@ if ($evenementExistant) {
 
     $pdo->prepare(
         'UPDATE evenements SET
-            titre=?, description=?, type=?, style_musique=?, date_heure=?,
+            titre=?, description=?, type=?, style_musique=?, date_heure=?, date_fin=?,
             quota=?, reduction=?, prix_normal=?,
             is_flash=?, flash_expiry=?, is_gratuit=?, lieu=?,
             is_sponsorise=?, sponsor_formule=?, sponsor_tarif=?, sponsor_jusqu_au=?
           WHERE id=? AND etablissement_id=?'
     )->execute([
-        $titre, $description, $type, $musique ?: null, $dateHeure,
+        $titre, $description, $type, $musique ?: null, $dateHeure, $dateFin,
         $quota, $reduction, $prixNormal,
         $isFlash, $flashExpiry ?: null, $isGratuit, $lieu,
         $isSponsorise, $sponsorFormule, $sponsorTarif, $sponsorFin,
@@ -187,11 +190,11 @@ $sponsorFin = $isSponsorise ? finSponsoring((string) $sponsorFormule, $dateHeure
 
 $pdo->prepare(
     'INSERT INTO evenements
-        (etablissement_id, titre, description, type, style_musique, date_heure, quota, reduction, prix_normal, is_flash, flash_expiry, is_gratuit, lieu,
+        (etablissement_id, titre, description, type, style_musique, date_heure, date_fin, quota, reduction, prix_normal, is_flash, flash_expiry, is_gratuit, lieu,
          is_sponsorise, sponsor_formule, sponsor_tarif, sponsor_jusqu_au)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
 )->execute([
-    (int) $etab['id'], $titre, $description, $type, $musique ?: null, $dateHeure,
+    (int) $etab['id'], $titre, $description, $type, $musique ?: null, $dateHeure, $dateFin,
     $quota, $reduction, $prixNormal, $isFlash,
     $flashExpiry ?: null, $isGratuit, $lieu,
     $isSponsorise, $sponsorFormule, $sponsorTarif, $sponsorFin,

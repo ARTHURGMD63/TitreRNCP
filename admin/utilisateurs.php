@@ -136,11 +136,12 @@ adminHeader($pdo, 'utilisateurs', 'Étudiants', $total . ' ' . pluriel($total, '
         <th scope="col">Économies</th>
         <th scope="col">Dernière résa</th>
         <th scope="col">Inscrit le</th>
+        <th scope="col">Actions</th>
       </tr>
     </thead>
     <tbody>
       <?php if (empty($etudiants)): ?>
-        <tr><td colspan="8" class="admin-vide">Aucun étudiant ne correspond.</td></tr>
+        <tr><td colspan="9" class="admin-vide">Aucun étudiant ne correspond.</td></tr>
       <?php endif; ?>
       <?php foreach ($etudiants as $u):
         $interets = $u['interests'] ? array_slice(array_map('trim', explode(',', $u['interests'])), 0, 3) : [];
@@ -180,6 +181,14 @@ adminHeader($pdo, 'utilisateurs', 'Étudiants', $total . ' ' . pluriel($total, '
         </td>
         <td data-label="Inscrit le" style="font-size:var(--fs-2);color:var(--gris);white-space:nowrap;">
           <?= dateFr($u['created_at'], 'j M Y') ?>
+        </td>
+        <td data-label="Actions">
+          <button type="button" class="btn-admin-supprimer-utilisateur" data-id="<?= (int) $u['id'] ?>"
+                  data-nom="<?= htmlspecialchars($u['prenom'] . ' ' . $u['nom']) ?>"
+                  style="background:var(--alerte-vif);color:var(--sur-lave);border:none;border-radius:var(--radius-pill);
+                         padding:7px 14px;font-size:var(--fs-2);font-weight:var(--fw-bold);cursor:pointer;white-space:nowrap;">
+            Supprimer
+          </button>
         </td>
       </tr>
       <?php endforeach; ?>

@@ -51,6 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $type         = $_POST['type'] ?? '';
     $musique      = trim($_POST['style_musique'] ?? '');
     $date_heure   = trim($_POST['date_heure'] ?? '');
+    $date_fin     = trim($_POST['date_fin'] ?? '') ?: null;
     $quota        = (int)($_POST['quota'] ?? 100);
     $reduction    = (int)($_POST['reduction'] ?? 0);
     $prix_normal  = (float)($_POST['prix_normal'] ?? 0);
@@ -67,6 +68,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Facultatif, mais jamais libre : le code vient du catalogue.
     if ($musique !== '' && !styleMusiqueValide($musique)) $errors[] = 'Style de musique invalide.';
     if (!$date_heure) $errors[] = 'La date est obligatoire.';
+    if ($date_fin && strtotime($date_fin) <= strtotime($date_heure)) {
+        $errors[] = 'La fin doit être après le début.';
+    }
     if ($quota < 1)   $errors[] = 'Le quota doit être au moins 1.';
     if ($is_flash && !$flash_expiry) $errors[] = 'Date d\'expiration flash requise.';
     if ($is_sponsorise && !formuleSponsoringValide($sponsorFormule)) {
@@ -107,14 +111,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $stmt = $pdo->prepare("
             UPDATE evenements SET
-                titre=?, description=?, type=?, style_musique=?, date_heure=?,
+                titre=?, description=?, type=?, style_musique=?, date_heure=?, date_fin=?,
                 quota=?, reduction=?, prix_normal=?,
                 is_flash=?, flash_expiry=?, is_gratuit=?, lieu=?,
                 is_sponsorise=?, sponsor_formule=?, sponsor_tarif=?, sponsor_jusqu_au=?
             WHERE id=? AND etablissement_id=?
         ");
         $stmt->execute([
-            $titre, $description, $type, $musique ?: null, $date_heure,
+            $titre, $description, $type, $musique ?: null, $date_heure, $date_fin,
             $quota, $reduction, $prix_normal,
             $is_flash, $flash_expiry ?: null, $is_gratuit, $lieu,
             $is_sponsorise, $sponsorFormule, $sponsorTarif, $sponsorFin,
@@ -128,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $event = array_merge($event, [
         'titre' => $titre, 'description' => $description, 'type' => $type,
         'style_musique' => $musique,
-        'date_heure' => $date_heure, 'quota' => $quota, 'reduction' => $reduction,
+        'date_heure' => $date_heure, 'date_fin' => $date_fin, 'quota' => $quota, 'reduction' => $reduction,
         'prix_normal' => $prix_normal, 'is_flash' => $is_flash,
         'flash_expiry' => $flash_expiry, 'is_gratuit' => $is_gratuit, 'lieu' => $lieu,
         'is_sponsorise' => $is_sponsorise, 'sponsor_formule' => $sponsorFormule,
@@ -137,6 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Format datetime-local value
 $dtLocal = date('Y-m-d\TH:i', strtotime($event['date_heure']));
+$dtFinLocal = !empty($event['date_fin']) ? date('Y-m-d\TH:i', strtotime($event['date_fin'])) : '';
 $flashLocal = $event['flash_expiry'] ? date('Y-m-d\TH:i', strtotime($event['flash_expiry'])) : '';
 ?>
 <?php ob_start(); ?>
@@ -376,9 +381,14 @@ $flashLocal = $event['flash_expiry'] ? date('Y-m-d\TH:i', strtotime($event['flas
 
         <div class="form-row">
           <div class="form-group">
-            <label for="date_heure">Date & heure *</label>
+            <label for="date_heure">Début *</label>
             <input type="datetime-local" id="date_heure" name="date_heure"
                    value="<?= htmlspecialchars($dtLocal) ?>" required>
+          </div>
+          <div class="form-group">
+            <label for="date_fin">Fin</label>
+            <input type="datetime-local" id="date_fin" name="date_fin"
+                   value="<?= htmlspecialchars($dtFinLocal) ?>">
           </div>
         </div>
 

@@ -172,13 +172,27 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
       </div>
 
       <!-- Cloche : tout ce qui vient d'arriver, là où l'on passe déjà. -->
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+      <button type="button" class="cloche" id="btn-recherche-toggle" aria-expanded="false" aria-controls="barre-recherche">
+        <span class="sr-only">Rechercher</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      </button>
       <button type="button" class="cloche" data-modal-open="modal-notifs">
         <span class="sr-only">Notifications</span>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
         <span class="cloche__pastille" id="cloche-compteur" <?= $notifs['aTraiter'] ? '' : 'hidden' ?>><?= (int) $notifs['aTraiter'] ?></span>
       </button>
+      </div>
     </div>
-    
+
+    <form id="barre-recherche" method="GET" action="" <?= $q === '' ? 'hidden' : '' ?> style="padding:0 20px 10px;">
+      <input type="hidden" name="view" value="<?= htmlspecialchars($view) ?>">
+      <input type="search" name="q" value="<?= htmlspecialchars($q) ?>"
+             placeholder="<?= $view === 'people' ? 'Chercher un etudiant...' : 'Chercher une soiree, un lieu...' ?>"
+             aria-label="Recherche"
+             style="width:100%;padding:12px 16px;border-radius:var(--radius-pill);border:1px solid var(--line-2);background:var(--blanc);color:var(--noir);font-size:var(--fs-4);">
+    </form>
+
     <div class="hub-toggle" style="margin-bottom:0;">
       <a href="?view=events" class="<?= $view==='events'?'active':'' ?>">Événements</a>
       <a href="?view=people" class="<?= $view==='people'?'active':'' ?>">Personnes</a>
@@ -241,13 +255,18 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
         $friends = $friendsByEvent[$e['id']] ?? null;
         $isFollowedEtab = in_array($e['etab_id'], $followedEtabIds);
         $expiryTs = strtotime($e['flash_expiry'] ?? '');
+        // EN COURS / À VENIR : voir includes/evenements_temps.php pour ce que
+        // « en cours » veut dire (date_fin si saisie, sinon une fenêtre par
+        // défaut après le début).
+        $enCours = !empty($e['en_cours_calc']);
       ?>
 
         <?php if ($isFlash): ?>
-          <div class="event-card event-card-flash" style="margin-bottom:20px; position:relative;"
+          <div class="event-card event-card-flash<?= $enCours ? ' event-card--neon' : '' ?>" style="margin-bottom:20px; position:relative;"
                data-live-event="<?= (int) $e['id'] ?>" data-live-quota="<?= (int) $e['quota'] ?>">
             <div class="event-entete">
               <div class="event-entete__meta">
+                <span class="badge-statut <?= $enCours ? 'badge-statut-encours' : 'badge-statut-avenir' ?>"><?= $enCours ? 'EN COURS' : 'À VENIR' ?></span>
                 <div class="label" style="opacity:0.8;">CE SOIR · <?= date('H\hi', strtotime($e['date_heure'])) ?></div>
                 <div class="flash-badge" data-expiry="<?= $expiryTs ?>">FLASH</div>
                 <?php if ($style = libelleStyleMusique($e['style_musique'] ?? null)): ?>
@@ -310,10 +329,11 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
           </div>
 
         <?php else: ?>
-          <div class="event-card event-card-regular type-<?= $e['type'] ?>" style="margin-bottom:20px; position:relative;"
+          <div class="event-card event-card-regular type-<?= $e['type'] ?><?= $enCours ? ' event-card--neon' : '' ?>" style="margin-bottom:20px; position:relative;"
                data-live-event="<?= (int) $e['id'] ?>" data-live-quota="<?= (int) $e['quota'] ?>">
             <div class="event-entete">
               <div class="event-entete__meta">
+                <span class="badge-statut <?= $enCours ? 'badge-statut-encours' : 'badge-statut-avenir' ?>"><?= $enCours ? 'EN COURS' : 'À VENIR' ?></span>
                 <span class="event-meta"><?= mb_strtoupper($typeLabels[$e['type']]) ?> · <?= dateFr($e['date_heure'], 'D j M') ?></span>
                 <?php if ($style = libelleStyleMusique($e['style_musique'] ?? null)): ?>
                   <span class="badge badge-musique"><?= icon('musique', 'icon-sm') ?><?= htmlspecialchars($style) ?></span>
@@ -609,8 +629,8 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
     <span>Explorer</span>
   </a>
   <a href="<?= baseUrl('/squads.php') ?>" class="nav-item">
-    <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
-    <span>Squads</span>
+    <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"></path><path d="M17 5h3a3 3 0 0 1-3 3M7 5H4a3 3 0 0 0 3 3"></path></svg></span>
+    <span>Sport</span>
   </a>
   <a href="<?= baseUrl('/wallet.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg></span>

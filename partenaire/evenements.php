@@ -43,7 +43,7 @@ $evenements = $stmt->fetchAll();
 
 $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Afterwork'];
 ?>
-<?php pageDebut('Linkee — Mes événements', ['univers' => 'pro']); ?>
+<?php pageDebut('Linkee — Mes événements', ['univers' => 'pro', 'scripts' => ['/assets/vendor/html5-qrcode.min.js']]); ?>
 <div class="partner-shell">
 
   <aside class="partner-sidebar">
@@ -159,6 +159,12 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
               <?php endif; ?>
             </td>
             <td data-label="Actions" style="white-space:nowrap;">
+              <?php if (!$isPast): ?>
+              <button type="button" class="btn-icon btn-open-scanner" data-event-id="<?= $e['id'] ?>"
+                      title="Scanner" aria-label="Scanner les pass de cet événement">
+                <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14" y1="14" x2="21" y2="14"/><line x1="14" y1="21" x2="21" y2="21"/><line x1="17.5" y1="14" x2="17.5" y2="21"/></svg>
+              </button>
+              <?php endif; ?>
               <a href="<?= baseUrl('/partenaire/edit_event.php?id=' . $e['id']) ?>"
                  class="btn-icon"
                  title="Modifier" aria-label="Modifier"><svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></a>
@@ -176,5 +182,179 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
     </div>
   </main>
 </div>
+
+<!-- Scanner Modal — un bouton « Scanner » par événement (pas seulement la
+     prochaine soirée du tableau de bord) : quand un établissement organise
+     plusieurs soirées le même soir, chacune a son propre scan. -->
+<div class="modal-overlay" id="modal-scanner">
+  <div class="modal-sheet" style="background:var(--noir);color:var(--blanc);border-color:var(--noir);">
+    <div class="modal-handle" style="background:var(--gris-fonce);"></div>
+    <div style="font-family:var(--font-display);font-size:var(--fs-7);font-weight:var(--fw-black);letter-spacing:var(--ls-display);margin-bottom:20px;text-align:center;">
+      Scanner un Pass
+    </div>
+
+    <div id="reader" style="width:100%; border-radius:var(--radius); overflow:hidden; border:var(--border); box-shadow:var(--shadow); margin-bottom: 20px; background:var(--blanc);"></div>
+
+    <div id="scan-result" style="text-align:center;font-weight:var(--fw-bold);font-size:var(--fs-5);min-height:24px;margin-bottom:20px;"></div>
+
+    <button type="button" class="btn btn-outline btn-full" id="btn-open-manuel" style="color:var(--blanc);border-color:var(--blanc);margin-bottom:8px;">
+      Le scan ne marche pas ? Valider manuellement
+    </button>
+    <button type="button" class="btn btn-outline btn-full" id="btn-close-scan" style="color:var(--blanc);border-color:var(--blanc);">Fermer</button>
+  </div>
+</div>
+
+<!-- Validation manuelle : cherche parmi les inscrits pas encore check-in de
+     CET événement et les valide sans scanner. -->
+<div class="modal-overlay" id="modal-manuel">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="font-family:var(--font-display);font-size:var(--fs-7);font-weight:var(--fw-black);letter-spacing:var(--ls-display);margin-bottom:8px;">
+      Valider manuellement
+    </div>
+    <p class="aide-champ" style="margin-bottom:16px;">Cherche la personne parmi les inscrits pas encore validés.</p>
+    <input type="text" id="manuel-recherche" placeholder="Prénom ou nom..." style="margin-bottom:16px;">
+    <div id="manuel-liste" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;max-height:50vh;overflow-y:auto;"></div>
+    <button type="button" class="btn btn-outline btn-full" data-modal-close>Fermer</button>
+  </div>
+</div>
+
+<script src="<?= asset('/assets/js/app.js') ?>"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const modalScanner = document.getElementById('modal-scanner');
+    const modalManuel = document.getElementById('modal-manuel');
+    const resultDiv = document.getElementById('scan-result');
+    const btnOpenManuel = document.getElementById('btn-open-manuel');
+    const btnCloseScan = document.getElementById('btn-close-scan');
+    const rechercheInput = document.getElementById('manuel-recherche');
+    const listeDiv = document.getElementById('manuel-liste');
+
+    let html5QrcodeScanner = null;
+    let eventIdActif = 0;
+    let isScanning = false;
+
+    const playBeep = () => {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1);
+            osc.stop(ctx.currentTime + 0.1);
+        } catch(e) {}
+    };
+
+    function validerInscription(payload) {
+        return fetch(BASE + '/partenaire/api_scan.php', {
+            method: 'POST', headers: enTetesJson(), body: JSON.stringify(payload)
+        }).then(res => res.json());
+    }
+
+    function onScanSuccess(decodedText) {
+        if (isScanning) return;
+        isScanning = true;
+        html5QrcodeScanner.pause(true);
+
+        validerInscription({ qr_code: decodedText, event_id: eventIdActif }).then(data => {
+            if (data.success) {
+                playBeep();
+                resultDiv.textContent = data.message;
+                resultDiv.style.color = 'var(--lime)';
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                resultDiv.textContent = data.message || 'Pass invalide';
+                resultDiv.style.color = 'var(--rouge)';
+                setTimeout(() => { resultDiv.textContent = 'En attente de scan...'; resultDiv.style.color = 'var(--blanc)'; html5QrcodeScanner.resume(); isScanning = false; }, 2000);
+            }
+        }).catch(() => {
+            resultDiv.textContent = 'Erreur réseau';
+            resultDiv.style.color = 'var(--rouge)';
+            setTimeout(() => { resultDiv.textContent = 'En attente de scan...'; resultDiv.style.color = 'var(--blanc)'; html5QrcodeScanner.resume(); isScanning = false; }, 2000);
+        });
+    }
+
+    document.querySelectorAll('.btn-open-scanner').forEach(btn => {
+        btn.addEventListener('click', () => {
+            eventIdActif = parseInt(btn.dataset.eventId, 10);
+            window.ouvrirModale ? window.ouvrirModale(modalScanner) : modalScanner.classList.add('open');
+            resultDiv.textContent = 'En attente de scan...';
+            resultDiv.style.color = 'var(--blanc)';
+
+            html5QrcodeScanner = new Html5Qrcode('reader');
+            html5QrcodeScanner.start(
+                { facingMode: 'environment' },
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                onScanSuccess,
+                () => {}
+            ).catch(err => {
+                resultDiv.textContent = 'Erreur caméra: ' + err;
+                resultDiv.style.color = 'var(--rouge)';
+            });
+        });
+    });
+
+    if (btnCloseScan) btnCloseScan.addEventListener('click', () => {
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.stop().then(() => html5QrcodeScanner.clear()).catch(() => {});
+        }
+        window.fermerModale ? window.fermerModale(modalScanner) : modalScanner.classList.remove('open');
+    });
+
+    function chargerInvites(q) {
+        listeDiv.innerHTML = '<p style="color:var(--gris);">Chargement...</p>';
+        fetch(BASE + '/partenaire/api_invites.php?event_id=' + eventIdActif + '&q=' + encodeURIComponent(q || ''))
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) { listeDiv.innerHTML = '<p style="color:var(--gris);">' + (data.message || 'Erreur') + '</p>'; return; }
+                if (data.invites.length === 0) { listeDiv.innerHTML = '<p style="color:var(--gris);">Personne à faire correspondre.</p>'; return; }
+                listeDiv.innerHTML = '';
+                data.invites.forEach(inv => {
+                    const ligne = document.createElement('div');
+                    ligne.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--gris-clair);';
+                    ligne.innerHTML = `
+                        <div style="min-width:0;">
+                          <div style="font-weight:var(--fw-bold);">${inv.prenom} ${inv.nom}</div>
+                          <div style="font-size:var(--fs-2);color:var(--gris);">${inv.ecole || '—'}${inv.promo ? ' · ' + inv.promo : ''}</div>
+                        </div>
+                        <button type="button" class="btn btn-primary" style="white-space:nowrap;" data-inscription-id="${inv.inscription_id}">Valider</button>
+                    `;
+                    ligne.querySelector('button').addEventListener('click', (e) => {
+                        const btn = e.currentTarget;
+                        btn.disabled = true;
+                        validerInscription({ inscription_id: parseInt(btn.dataset.inscriptionId, 10), event_id: eventIdActif }).then(data2 => {
+                            if (data2.success) {
+                                showToast(data2.message || 'Validé', 'success');
+                                ligne.remove();
+                            } else {
+                                btn.disabled = false;
+                                showToast(data2.message || 'Erreur', 'error');
+                            }
+                        }).catch(() => { btn.disabled = false; showToast('Erreur réseau', 'error'); });
+                    });
+                    listeDiv.appendChild(ligne);
+                });
+            })
+            .catch(() => { listeDiv.innerHTML = '<p style="color:var(--gris);">Erreur réseau</p>'; });
+    }
+
+    if (btnOpenManuel) btnOpenManuel.addEventListener('click', () => {
+        window.ouvrirModale ? window.ouvrirModale(modalManuel) : modalManuel.classList.add('open');
+        rechercheInput.value = '';
+        chargerInvites('');
+    });
+
+    let rechercheTimer = null;
+    if (rechercheInput) rechercheInput.addEventListener('input', () => {
+        clearTimeout(rechercheTimer);
+        rechercheTimer = setTimeout(() => chargerInvites(rechercheInput.value.trim()), 250);
+    });
+});
+</script>
 </body>
 </html>

@@ -633,7 +633,7 @@ button, input[type="submit"], input[type="button"] {
 /* Charte : tout ce qui est sport et squads porte le dôme. L'étiquette mono
    (« RUNNING · MAR 07:00 ») prend la teinte lisible du thème, les aplats
    (bouton, avatar) le dôme pur avec un texte basalte (6:1).            */
-.squad-running, .squad-velo, .squad-muscu, .squad-autre {
+.squad-running, .squad-velo, .squad-muscu, .squad-culture, .squad-autre {
   --accent: var(--sur-bleu-clair); --accent-plein: var(--bleu); --accent-contraste: var(--sur-lave);
 }
 
@@ -1225,6 +1225,27 @@ h1.titre-page.partner-headline {
 /* « Gratuit » est un fait, pas une catégorie : il ne doit surtout pas
    emprunter la teinte d'un type de lieu, sinon la couleur ment. */
 .badge-gratuit   { background: var(--noir); color: var(--bg); }
+
+/* EN COURS / À VENIR (explore.php) : un fait temporel, jamais une catégorie
+   — même logique que .badge-gratuit. « En cours » reprend la teinte volt de
+   la marque (succès/XP ailleurs dans l'app) pour se voir en un coup d'œil. */
+.badge-statut { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: var(--radius-pill);
+  font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-label); text-transform: uppercase; }
+.badge-statut-encours { background: var(--lime); color: #111013; }
+.badge-statut-avenir  { background: var(--surface-2); color: var(--gris-fonce); border: 1px solid var(--line-2); }
+.event-card-flash .badge-statut-avenir { background: rgba(17,16,19,.1); color: var(--sur-lave); border-color: rgba(17,16,19,.3); }
+
+/* Halo dynamique autour d'une carte en cours : la rendre immédiatement
+   repérable dans le fil, sans dépendre uniquement du badge. */
+@keyframes neon-pulse {
+  0%, 100% { box-shadow: 0 0 0 1px var(--lime), 0 0 16px 2px rgba(200,245,71,.45); }
+  50%      { box-shadow: 0 0 0 1.5px var(--lime), 0 0 26px 6px rgba(200,245,71,.7); }
+}
+.event-card--neon { animation: neon-pulse 2.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .event-card--neon { animation: none; box-shadow: 0 0 0 1.5px var(--lime), 0 0 20px 3px rgba(200,245,71,.55); }
+}
 
 /* ─── Modal / Sheet ─── */
 .modal-overlay {

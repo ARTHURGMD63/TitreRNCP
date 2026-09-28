@@ -22,13 +22,15 @@ $stmt = $pdo->prepare("
            u.prenom AS createur_prenom, u.nom AS createur_nom, u.photo AS createur_photo,
            (SELECT COUNT(*) FROM squad_membres sm WHERE sm.squad_id = s.id) AS nb_membres,
            (SELECT COUNT(*) FROM squad_membres sm
-             WHERE sm.squad_id = s.id AND sm.user_id = ?) AS deja_membre
+             WHERE sm.squad_id = s.id AND sm.user_id = ?) AS deja_membre,
+           EXISTS (SELECT 1 FROM follows_users f
+                    WHERE f.follower_id = ? AND f.followed_id = s.createur_id AND f.statut = 'accepted') AS je_suis_abonne
       FROM squads s
       JOIN users u ON u.id = s.createur_id
      WHERE s.date_heure >= NOW()
      ORDER BY s.date_heure ASC
 ");
-$stmt->execute([$uid]);
+$stmt->execute([$uid, $uid]);
 $squads = $stmt->fetchAll();
 
 // Les membres de toutes les squads en une requete, plutot qu'une par squad.
@@ -95,6 +97,8 @@ apiReponse([
                 // « Rejoindre » : l'application a besoin de le savoir sans
                 // avoir a comparer elle-meme des identifiants.
                 'est_createur' => (int) $s['createur_id'] === $uid,
+                'je_suis_abonne_au_createur' => (bool) $s['je_suis_abonne'],
+                'cree_par_association' => (bool) $s['cree_par_association'],
                 'membres'     => $membres[$id] ?? [],
             ];
         },

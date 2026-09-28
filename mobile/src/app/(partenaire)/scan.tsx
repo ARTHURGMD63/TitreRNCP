@@ -10,10 +10,16 @@
  *
  * La liste de qui a été check-in reste visible pendant tout le scan (pastille
  * en haut, feuille au tap) : c'est elle qui répond à « qui j'ai eu ce soir ».
+ *
+ * « Valider manuellement » (feuille dédiée) cherche parmi les inscrits pas
+ * encore check-in de CET événement et les valide sans scan — pour quand le
+ * QR code ne marche pas (lumière, code abîmé, plusieurs soirées le même
+ * soir). Voir api/v1/partenaire_invites.php et le paramètre inscription_id
+ * de api/v1/partenaire_scan.php.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Text, TextInput, View } from 'react-native';
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,6 +30,7 @@ import { Avatar } from '../../composants/Elements';
 import { Feuille } from '../../composants/Feuille';
 import { Icone } from '../../composants/Icone';
 import { Display, T } from '../../composants/Texte';
+import { useToast } from '../../composants/Toast';
 import { useJeton } from '../../session';
 import { fixe, fs, lh, rayon, sans } from '../../theme';
 
@@ -35,11 +42,41 @@ export default function ScanPass() {
   const { evenementId } = useLocalSearchParams<{ evenementId: string }>();
   const [permission, demanderPermission] = useCameraPermissions();
 
+  const toast = useToast();
+
   const [messageEchec, setMessageEchec] = useState<string | null>(null);
   const [personneValidee, setPersonneValidee] = useState<Personne | null>(null);
   const [checkins, setCheckins] = useState<PersonneCheckin[]>([]);
   const [listeOuverte, setListeOuverte] = useState(false);
   const enTraitement = useRef(false);
+
+  // ── Validation manuelle : quand le scan ne fonctionne pas ──
+  const [manuelOuvert, setManuelOuvert] = useState(false);
+  const [rechercheManuelle, setRechercheManuelle] = useState('');
+  const [invitesManuels, setInvitesManuels] = useState<{ inscription_id: number; prenom: string; nom: string; ecole: string | null; promo: string | null; photo_url: string | null }[] | null>(null);
+  const [validationEnCours, setValidationEnCours] = useState<number | null>(null);
+
+  const chercherInvites = useCallback(async (q: string) => {
+    try {
+      setInvitesManuels((await api.partenaireInvites(jeton, Number(evenementId), q || undefined)).invites);
+    } catch {
+      setInvitesManuels([]);
+    }
+  }, [jeton, evenementId]);
+
+  async function validerManuellement(invite: { inscription_id: number; prenom: string; nom: string; ecole: string | null; promo: string | null; photo_url: string | null }) {
+    setValidationEnCours(invite.inscription_id);
+    try {
+      const rep = await api.partenaireScan(jeton, { inscription_id: invite.inscription_id, event_id: Number(evenementId) });
+      setCheckins((liste) => [{ ...rep.personne, checkin_le: new Date().toISOString() }, ...liste]);
+      setInvitesManuels((liste) => (liste ?? []).filter((i) => i.inscription_id !== invite.inscription_id));
+      toast(`${rep.personne.prenom} ${rep.personne.nom} validé·e`, 'success');
+    } catch (e) {
+      toast(e instanceof ErreurApi ? e.message : 'Erreur réseau', 'error');
+    } finally {
+      setValidationEnCours(null);
+    }
+  }
 
   // La liste connue au moment d'ouvrir le scanner : elle s'enrichit ensuite
   // localement à chaque scan reussi, sans re-appeler le tableau de bord.
@@ -121,6 +158,16 @@ export default function ScanPass() {
         <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: fixe.craie }}>{checkins.length}</Text>
       </Pressable>
 
+      <Pressable
+        onPress={() => { setManuelOuvert(true); setRechercheManuelle(''); void chercherInvites(''); }}
+        accessibilityRole="button"
+        accessibilityLabel="Valider une présence manuellement"
+        style={{ position: 'absolute', bottom: bottom + 100, left: 24, right: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 44, borderRadius: 22, backgroundColor: 'rgba(17,16,19,0.6)' }}
+      >
+        <Icone nom="outil" taille={16} couleur={fixe.craie} />
+        <Text style={{ fontFamily: sans(700), fontSize: fs[3], color: fixe.craie }}>Le scan ne marche pas ? Valider manuellement</Text>
+      </Pressable>
+
       <View
         pointerEvents="none"
         style={{
@@ -167,6 +214,42 @@ export default function ScanPass() {
                 <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: fixe.basalte }}>{p.prenom} {p.nom}</Text>
                 <Text style={{ fontFamily: sans(500), fontSize: fs[2], color: '#67626D' }}>{p.ecole ?? '—'}{p.promo ? ' · ' + p.promo : ''}</Text>
               </View>
+            </View>
+          ))
+        )}
+      </Feuille>
+
+      <Feuille visible={manuelOuvert} onClose={() => setManuelOuvert(false)}>
+        <Display taille={fs[7]} style={{ marginBottom: 6 }}>Valider manuellement</Display>
+        <T taille={fs[3]} couleur="#67626D" style={{ marginBottom: 16 }}>
+          Cherche la personne parmi les inscrits pas encore validés, si le QR code ne fonctionne pas.
+        </T>
+        <TextInput
+          value={rechercheManuelle}
+          onChangeText={(v) => { setRechercheManuelle(v); void chercherInvites(v); }}
+          placeholder="Prénom ou nom..."
+          placeholderTextColor="#8A858F"
+          autoFocus
+          style={{ paddingVertical: 12, paddingHorizontal: 16, borderWidth: 1, borderColor: '#E8E2D6', borderRadius: rayon.pill, fontFamily: sans(400), fontSize: fs[4], color: fixe.basalte, marginBottom: 16 }}
+        />
+        {invitesManuels === null ? (
+          <T taille={fs[4]} couleur="#67626D">Chargement...</T>
+        ) : invitesManuels.length === 0 ? (
+          <T taille={fs[4]} couleur="#67626D">Personne à faire correspondre.</T>
+        ) : (
+          invitesManuels.map((invite, i) => (
+            <View key={invite.inscription_id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: i < invitesManuels.length - 1 ? 1 : 0, borderBottomColor: '#E8E2D6' }}>
+              <Avatar photo={invite.photo_url} prenom={invite.prenom} taille={38} fond="#5B8CFF" />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: fixe.basalte }}>{invite.prenom} {invite.nom}</Text>
+                <Text style={{ fontFamily: sans(500), fontSize: fs[2], color: '#67626D' }}>{invite.ecole ?? '—'}{invite.promo ? ' · ' + invite.promo : ''}</Text>
+              </View>
+              <Bouton
+                libelle={validationEnCours === invite.inscription_id ? '...' : 'Valider'}
+                onPress={() => void validerManuellement(invite)}
+                chargement={validationEnCours === invite.inscription_id}
+                variante="bleu"
+              />
             </View>
           ))
         )}

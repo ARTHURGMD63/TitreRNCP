@@ -44,6 +44,7 @@ export default function FormulaireEvenementPartenaire() {
   const [type, setType] = useState('bar');
   const [styleMusique, setStyleMusique] = useState('');
   const [date, setDate] = useState<Date | null>(null);
+  const [dateFin, setDateFin] = useState<Date | null>(null);
   const [lieu, setLieu] = useState('');
   const [quota, setQuota] = useState('100');
   const [prixNormal, setPrixNormal] = useState('0');
@@ -66,6 +67,7 @@ export default function FormulaireEvenementPartenaire() {
         setType(e.type);
         setStyleMusique(e.style_musique ?? '');
         setDate(new Date(e.date_heure.replace(' ', 'T')));
+        setDateFin(e.date_fin ? new Date(e.date_fin.replace(' ', 'T')) : null);
         setLieu(e.lieu);
         setQuota(String(e.quota));
         setPrixNormal(String(e.prix_normal));
@@ -95,6 +97,7 @@ export default function FormulaireEvenementPartenaire() {
         titre, description, type,
         style_musique: styleMusique || undefined,
         date_heure: date ? isoDateHeure(date) : '',
+        date_fin: dateFin ? isoDateHeure(dateFin) : undefined,
         lieu, quota: Number(quota), prix_normal: Number(prixNormal), reduction: Number(reduction),
         is_gratuit: isGratuit, is_flash: isFlash,
         flash_expiry: isFlash && flashExpiry ? isoDateHeure(flashExpiry) : undefined,
@@ -133,7 +136,8 @@ export default function FormulaireEvenementPartenaire() {
           <Selecteur style={{ flex: 1 }} etiquette="Type *" valeur={type} onChange={setType} options={TYPES} />
           <Selecteur style={{ flex: 1 }} etiquette="Style de musique" valeur={styleMusique} onChange={setStyleMusique} options={optionsMusique} />
         </View>
-        <ChampDate etiquette="Date & heure *" mode="datetime" valeur={date} onChange={setDate} min={new Date()} />
+        <ChampDate etiquette="Début *" mode="datetime" valeur={date} onChange={setDate} min={new Date()} />
+        <ChampDate etiquette="Fin" mode="datetime" valeur={dateFin} onChange={setDateFin} min={date ?? new Date()} />
         <Champ etiquette="Description" value={description} onChangeText={setDescription} multiligne numberOfLines={3}
           placeholder="Ambiance, animations, dress code..." />
         <Champ etiquette="Lieu / Salle" value={lieu} onChangeText={setLieu} />

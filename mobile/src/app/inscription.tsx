@@ -18,7 +18,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { adresseServeur, ErreurApi } from '../api';
-import { ECOLES, INTERETS, PROMOS, TYPES_ETABLISSEMENT } from '../catalogue';
+import { ECOLES, INTERETS, PROMOS, TYPES_ETABLISSEMENT, VILLES } from '../catalogue';
 import { Bouton } from '../composants/Bouton';
 import { Encart } from '../composants/Elements';
 import { Aide, Case, Champ, ChampDate, Etiquette, isoDate, SelecteurInterets, Selecteur } from '../composants/Formulaire';
@@ -43,6 +43,7 @@ export default function Inscription() {
   const [naissance, setNaissance] = useState<Date | null>(null);
   const [ecole, setEcole] = useState('');
   const [promo, setPromo] = useState('');
+  const [villeEtudiant, setVilleEtudiant] = useState('Clermont-Ferrand');
   const [interets, setInterets] = useState<string[]>([]);
   const [etabNom, setEtabNom] = useState('');
   const [etabType, setEtabType] = useState('bar');
@@ -54,13 +55,25 @@ export default function Inscription() {
   const borneMajeur = new Date(aujourdhui.getFullYear() - 18, aujourdhui.getMonth(), aujourdhui.getDate());
   const bornePlancher = new Date(aujourdhui.getFullYear() - 120, aujourdhui.getMonth(), aujourdhui.getDate());
 
+  // École et promo ne concernent que les 18-25 ans : au-delà, la question
+  // n'a plus de sens (voir auth/register.php, même règle côté serveur).
+  let age: number | null = null;
+  if (naissance) {
+    age = aujourdhui.getFullYear() - naissance.getFullYear();
+    const pasEncoreAnniversaire = (aujourdhui.getMonth() < naissance.getMonth()) ||
+      (aujourdhui.getMonth() === naissance.getMonth() && aujourdhui.getDate() < naissance.getDate());
+    if (pasEncoreAnniversaire) age--;
+  }
+  const afficherEcolePromo = age !== null && age >= 18 && age <= 25;
+
   async function creer() {
     setErreur(null);
     try {
       await inscription({
         type, prenom: prenom.trim(), nom: nom.trim(), email: email.trim(), password: motDePasse,
         date_naissance: naissance ? isoDate(naissance) : '',
-        ecole, promo, interets,
+        ecole: afficherEcolePromo ? ecole : '', promo: afficherEcolePromo ? promo : '', interets,
+        ville_etudiant: villeEtudiant,
         etablissement_nom: etabNom.trim(), etablissement_type: etabType, ville: ville.trim(),
         cgu,
       });
@@ -124,12 +137,17 @@ export default function Inscription() {
 
         {type === 'etudiant' ? (
           <>
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <Selecteur style={{ flex: 1 }} etiquette="École" valeur={ecole} onChange={setEcole}
-                options={[{ valeur: '', libelle: '— Choisir —' }, ...ECOLES.map((e) => ({ valeur: e, libelle: e }))]} />
-              <Selecteur style={{ flex: 1 }} etiquette="Promo" valeur={promo} onChange={setPromo}
-                options={[{ valeur: '', libelle: '—' }, ...PROMOS.map((p) => ({ valeur: p, libelle: p }))]} />
-            </View>
+            <Selecteur etiquette="Ville" valeur={villeEtudiant} onChange={setVilleEtudiant}
+              options={VILLES.map((v) => ({ valeur: v, libelle: v }))} />
+
+            {afficherEcolePromo ? (
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <Selecteur style={{ flex: 1 }} etiquette="École" valeur={ecole} onChange={setEcole}
+                  options={[{ valeur: '', libelle: '— Choisir —' }, ...ECOLES.map((e) => ({ valeur: e, libelle: e }))]} />
+                <Selecteur style={{ flex: 1 }} etiquette="Promo" valeur={promo} onChange={setPromo}
+                  options={[{ valeur: '', libelle: '—' }, ...PROMOS.map((p) => ({ valeur: p, libelle: p }))]} />
+              </View>
+            ) : null}
 
             <View style={{ marginBottom: 16 }}>
               <Etiquette>Centres d&apos;intérêt</Etiquette>

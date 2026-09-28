@@ -14,12 +14,13 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'etudiant') {
 
 $input = json_decode(file_get_contents('php://input'), true);
 $titre = substr(trim($input['titre'] ?? ''), 0, 255);
-$type = $input['type'] ?? 'autre';
+$type = in_array($input['type'] ?? '', ['running', 'velo', 'muscu', 'culture', 'autre'], true) ? $input['type'] : 'autre';
 $niveau = $input['niveau'] ?? 'tous';
 $date_heure = $input['date_heure'] ?? '';
 $quota = max(2, min(500, (int)($input['quota'] ?? 10)));
 $lieu = substr(trim($input['lieu'] ?? ''), 0, 255);
 $desc = substr(trim($input['description'] ?? ''), 0, 1000);
+$association = !empty($input['cree_par_association']) ? 1 : 0;
 
 if (!$titre || !$date_heure) {
     echo json_encode(['success' => false, 'message' => 'Veuillez remplir les champs obligatoires']);
@@ -28,9 +29,9 @@ if (!$titre || !$date_heure) {
 
 try {
     $pdo->beginTransaction();
-    
-    $stmt = $pdo->prepare("INSERT INTO squads (createur_id, type, titre, description, niveau, date_heure, lieu, quota) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$_SESSION['user_id'], $type, $titre, $desc, $niveau, $date_heure, $lieu, $quota]);
+
+    $stmt = $pdo->prepare("INSERT INTO squads (createur_id, type, cree_par_association, titre, description, niveau, date_heure, lieu, quota) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$_SESSION['user_id'], $type, $association, $titre, $desc, $niveau, $date_heure, $lieu, $quota]);
     
     $squad_id = $pdo->lastInsertId();
     

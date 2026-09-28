@@ -7,10 +7,15 @@
  * haut, poignée, 90 % de la hauteur au plus. Un toucher sur le voile la
  * ferme, comme un clic à côté sur le site. Elle passe au-dessus de tout,
  * barre d'onglets comprise.
+ *
+ * La poignée se glisse aussi vers le bas pour refermer, au doigt : un
+ * PanResponder (natif à React Native, pas de dépendance de plus) suit le
+ * tracé vertical sur la poignée seule — jamais sur le contenu défilable, pour
+ * ne jamais entrer en conflit avec le défilement de la feuille elle-même.
  */
 
-import React, { useEffect, useState } from 'react';
-import { Animated, Easing, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, KeyboardAvoidingView, Modal, PanResponder, Platform, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -36,6 +41,14 @@ export function Feuille({ visible, onClose, children }: Props) {
   const [precedent, setPrecedent] = useState(visible);
   const [voile] = useState(() => new Animated.Value(0));
   const [glisse] = useState(() => new Animated.Value(height));
+  // Décalage du glissé au doigt, ajouté à `glisse` : les deux animations
+  // (ouverture/fermeture programmée, et geste) ne se marchent jamais dessus.
+  const [arrache] = useState(() => new Animated.Value(0));
+  // Le PanResponder (ci-dessous) est créé une seule fois et doit toujours
+  // appeler le dernier `onClose` reçu : le ref se met à jour dans un effet,
+  // jamais pendant le rendu lui-même.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
 
   // Ouverture : la Modal se monte avant que l'animation ne commence.
   if (visible !== precedent) {
@@ -47,6 +60,7 @@ export function Feuille({ visible, onClose, children }: Props) {
     if (visible) {
       voile.setValue(0);
       glisse.setValue(height);
+      arrache.setValue(0);
       Animated.parallel([
         Animated.timing(voile, { toValue: 1, duration: 250, useNativeDriver: true }),
         Animated.timing(glisse, { toValue: 0, duration: 340, easing: courbe, useNativeDriver: true }),
@@ -59,7 +73,29 @@ export function Feuille({ visible, onClose, children }: Props) {
         if (finished) setMonte(false);
       });
     }
-  }, [visible, height, voile, glisse]);
+  }, [visible, height, voile, glisse, arrache]);
+
+  // Glisser la poignée vers le bas referme la feuille — au-delà d'un seuil de
+  // distance ou de vitesse, comme un tiroir qu'on lâche en plein mouvement.
+  // PanResponder est une API impérative : ses callbacks ne s'exécutent
+  // jamais pendant le rendu, seulement sur un geste réel — la règle ne le
+  // sait pas et signale à tort la fermeture sur onCloseRef.
+  // eslint-disable-next-line react-hooks/refs
+  const [pan] = useState(() => PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dy) > 4 && Math.abs(g.dy) > Math.abs(g.dx),
+    onPanResponderMove: (_e, g) => { if (g.dy > 0) arrache.setValue(g.dy); },
+    onPanResponderRelease: (_e, g) => {
+      if (g.dy > 120 || g.vy > 0.8) {
+        onCloseRef.current();
+      } else {
+        Animated.spring(arrache, { toValue: 0, useNativeDriver: true, bounciness: 4 }).start();
+      }
+    },
+    onPanResponderTerminate: () => {
+      Animated.spring(arrache, { toValue: 0, useNativeDriver: true, bounciness: 4 }).start();
+    },
+  }));
 
   return (
     <Modal visible={monte} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
@@ -78,14 +114,16 @@ export function Feuille({ visible, onClose, children }: Props) {
               maxHeight: height * 0.9, backgroundColor: c.bg,
               borderTopLeftRadius: rayon.xl, borderTopRightRadius: rayon.xl,
               borderWidth: 1, borderBottomWidth: 0, borderColor: c.grisClair,
-              transform: [{ translateY: glisse }],
+              transform: [{ translateY: Animated.add(glisse, arrache) }],
             }}
           >
+            <View {...pan.panHandlers} accessibilityLabel="Glisser vers le bas pour fermer" style={{ paddingTop: 12, paddingBottom: 6 }}>
+              <View style={{ width: 40, height: 5, backgroundColor: c.line2, borderRadius: 99, alignSelf: 'center' }} />
+            </View>
             <ScrollView
               keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingTop: 12, paddingHorizontal: 22, paddingBottom: 36 + bas }}
+              contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: 36 + bas }}
             >
-              <View style={{ width: 40, height: 5, backgroundColor: c.line2, borderRadius: 99, alignSelf: 'center', marginBottom: 18 }} />
               {children}
             </ScrollView>
           </Animated.View>

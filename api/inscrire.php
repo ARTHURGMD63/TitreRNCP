@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/temps_reel.php';
+require_once __DIR__ . '/../includes/evenements_temps.php';
 header('Content-Type: application/json');
 
 // Ecriture : POST obligatoire, jeton CSRF et origine verifies.
@@ -33,10 +34,14 @@ try {
      * inscriptions concurrentes sur un même événement se suivent au lieu de
      * se chevaucher.
      */
+    // Rejoignable tant qu'elle n'est pas TERMINÉE — donc à venir, ou en cours
+    // (voir evenements_temps.php) — et non plus seulement avant son début :
+    // une soirée en cours et pas encore complète doit rester rejoignable.
+    $finEff = sqlFinEffectiveEvenement();
     $stmt = $pdo->prepare(
         "SELECT quota, prix_normal, reduction
            FROM evenements
-          WHERE id = ? AND date_heure >= NOW()
+          WHERE id = ? AND $finEff >= NOW()
           FOR UPDATE"
     );
     $stmt->execute([$evenement_id]);
@@ -44,7 +49,7 @@ try {
 
     if (!$event) {
         $pdo->rollBack();
-        echo json_encode(['success' => false, 'message' => 'Événement introuvable ou passé']);
+        echo json_encode(['success' => false, 'message' => 'Événement introuvable ou terminé']);
         exit;
     }
 

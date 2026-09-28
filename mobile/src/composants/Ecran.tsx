@@ -48,7 +48,13 @@ export function Ecran({ children, avecBarre = true, rafraichit = false, onRafrai
           { paddingTop: plein ? 0 : top, paddingBottom: avecBarre ? reserveBarre(bottom) : 24 + bottom, width: '100%', maxWidth: 440, alignSelf: 'center' },
           style,
         ]}
-        refreshControl={onRafraichir ? <RefreshControl refreshing={rafraichit} onRefresh={onRafraichir} tintColor={c.rouge} colors={[c.rouge]} progressBackgroundColor={c.blanc} /> : undefined}
+        refreshControl={onRafraichir ? (
+          // progressViewOffset descend le rond de chargement de la hauteur de
+          // la zone sûre : sans lui, il se dessinait au ras du haut du
+          // ScrollView, sous l'encoche ou la Dynamic Island plutôt qu'en
+          // dessous.
+          <RefreshControl refreshing={rafraichit} onRefresh={onRafraichir} tintColor={c.rouge} colors={[c.rouge]} progressBackgroundColor={c.blanc} progressViewOffset={top} />
+        ) : undefined}
       >
         {children}
       </ScrollView>
