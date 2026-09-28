@@ -258,6 +258,7 @@ export default function Hub() {
                 />
               );
             })}
+            <Pilule libelle="Carte" icone="epingle" actif={false} onPress={() => router.push('/carte')} />
           </ScrollView>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginTop: -12, marginBottom: 24 }} contentContainerStyle={{ gap: 8, paddingHorizontal: gutter, paddingBottom: 16 }}>

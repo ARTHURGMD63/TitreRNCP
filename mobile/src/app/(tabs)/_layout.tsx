@@ -30,6 +30,9 @@ export default function Onglets() {
       <Tabs.Screen name="notifications" options={{ href: null }} />
       <Tabs.Screen name="classement" options={{ href: null }} />
       <Tabs.Screen name="abonnements" options={{ href: null }} />
+      {/* lazy: true à part des autres — une MapView native est trop lourde
+          pour se monter au lancement chez qui n'ouvre jamais la carte. */}
+      <Tabs.Screen name="carte" options={{ href: null, lazy: true }} />
     </Tabs>
   );
 }

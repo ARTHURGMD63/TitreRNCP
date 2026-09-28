@@ -19,11 +19,14 @@ import { Pressable, Text, View, useWindowDimensions } from 'react-native';
 import type { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { fs, rayon, sans } from '../theme';
+import { fixe, fs, rayon, sans } from '../theme';
 import { useTheme } from '../useTheme';
 import { Icone, type NomIcone } from './Icone';
 
 export type OngletBarre = { route: string; libelle: string; icone: NomIcone };
+
+/** Le bouton central surélevé (espace partenaire : « + Créer une soirée »). */
+export type ActionCentraleBarre = { libelle: string; icone: NomIcone; couleur: string; onPress: () => void };
 
 const ONGLETS: OngletBarre[] = [
   { route: 'index', libelle: 'Explorer', icone: 'loupe' },
@@ -37,6 +40,7 @@ const PARENT: Record<string, string> = {
   notifications: 'index',
   classement: 'moi',
   abonnements: 'moi',
+  carte: 'index',
 };
 
 /** Les propriétés que Tabs passe à une barre personnalisée. */
@@ -66,8 +70,12 @@ export function reserveBarre(zoneBasse: number): number {
  * @param onglets Par défaut les quatre onglets étudiant. L'espace partenaire
  *        passe sa propre liste, plus courte — même barre, mêmes règles.
  * @param parent Onglet allumé par un écran secondaire sans onglet propre.
+ * @param actionCentrale Bouton surélevé au centre de la barre, pour une
+ *        action plutôt qu'une navigation (créer une soirée, côté partenaire).
+ *        Rendu par-dessus la pilule, il ne compte pas comme un onglet de
+ *        plus et ne déplace donc pas les autres.
  */
-export function BarreOnglets({ state, navigation, onglets = ONGLETS, parent = PARENT }: BottomTabBarProps & { onglets?: OngletBarre[]; parent?: Record<string, string> }) {
+export function BarreOnglets({ state, navigation, onglets = ONGLETS, parent = PARENT, actionCentrale }: BottomTabBarProps & { onglets?: OngletBarre[]; parent?: Record<string, string>; actionCentrale?: ActionCentraleBarre }) {
   const { c, ombre } = useTheme();
   const bas = useSafeAreaInsets().bottom;
   // width: calc(100% - 32px) ; max-width: 408px
@@ -112,6 +120,25 @@ export function BarreOnglets({ state, navigation, onglets = ONGLETS, parent = PA
           );
         })}
       </View>
+
+      {actionCentrale ? (
+        <Pressable
+          onPress={actionCentrale.onPress}
+          accessibilityRole="button"
+          accessibilityLabel={actionCentrale.libelle}
+          style={[
+            {
+              position: 'absolute', top: -22, alignSelf: 'center',
+              width: 56, height: 56, borderRadius: 28,
+              backgroundColor: actionCentrale.couleur, borderWidth: 3, borderColor: c.bg,
+              alignItems: 'center', justifyContent: 'center',
+            },
+            ombre('lg'),
+          ]}
+        >
+          <Icone nom={actionCentrale.icone} taille={24} couleur={fixe.surLave} />
+        </Pressable>
+      ) : null}
     </View>
   );
 }

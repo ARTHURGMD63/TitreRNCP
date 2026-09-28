@@ -24,7 +24,7 @@ if ($id <= 0) {
 
 $stmt = $pdo->prepare("
     SELECT e.*, et.nom AS etablissement_nom, et.ville, et.adresse,
-           et.type AS etab_type,
+           et.type AS etab_type, et.latitude AS etab_latitude, et.longitude AS etab_longitude,
            (SELECT COUNT(*) FROM inscriptions
              WHERE evenement_id = e.id AND statut != 'annule') AS nb_inscrits,
            (SELECT COUNT(*) FROM inscriptions
@@ -89,6 +89,8 @@ apiReponse([
             'adresse' => (string) ($e['adresse'] ?? ''),
             'note'    => $note !== null ? round((float) $note['note'], 1) : null,
             'nb_avis' => (int) ($note['nb'] ?? 0),
+            'latitude'  => $e['etab_latitude'] !== null ? (float) $e['etab_latitude'] : null,
+            'longitude' => $e['etab_longitude'] !== null ? (float) $e['etab_longitude'] : null,
         ],
 
         'places' => [

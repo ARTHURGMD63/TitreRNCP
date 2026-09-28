@@ -535,6 +535,7 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
     // aucun ordre, et le sponsoring payé se retrouverait au hasard.
     $stmtE = $pdo->prepare(
         "SELECT e.*, et.id AS etab_id, et.nom AS etablissement_nom, et.type AS etab_type, et.ville,
+                et.latitude AS etab_latitude, et.longitude AS etab_longitude,
                 $sponsoActif AS sponso_actif,
                 (e.date_heure <= NOW() AND $finEff >= NOW()) AS en_cours_calc,
                 (SELECT COUNT(*) FROM inscriptions i

@@ -21,6 +21,13 @@ $villes = ['Clermont-Ferrand', 'Lyon', 'Paris', 'Toulouse', 'Bordeaux', 'Autre']
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrfVerify();
+
+    // Même garde qu'au login, un seuil plus large : cette page répond
+    // différemment selon qu'un e-mail existe déjà, ce qui en ferait sinon un
+    // outil d'énumération des comptes à débit illimité.
+    $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+    $tropDeTentatives = isRateLimited($pdo, $ip, 20, 900);
+
     $type    = in_array($_POST['type'] ?? '', ['etudiant','partenaire']) ? $_POST['type'] : 'etudiant';
     $prenom  = trim($_POST['prenom'] ?? '');
     $nom     = trim($_POST['nom'] ?? '');
@@ -56,10 +63,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $promo = '';
     }
 
-    if (!$prenom || !$nom || !$email || !$pass) {
+    // Même politique qu'à la réinitialisation (longueurMinimaleMotDePasse()) :
+    // un compte ne doit pas pouvoir naître en dessous du plancher qu'il
+    // faudrait de toute façon respecter au premier mot de passe oublié.
+    $longueurMin = longueurMinimaleMotDePasse($type);
+
+    if ($tropDeTentatives) {
+        $error = 'Trop de tentatives. Réessaie dans quinze minutes.';
+    } elseif (!$prenom || !$nom || !$email || !$pass) {
         $error = 'Merci de remplir tous les champs obligatoires.';
-    } elseif (strlen($pass) < 6) {
-        $error = 'Le mot de passe doit faire au moins 6 caractères.';
+    } elseif (strlen($pass) < $longueurMin) {
+        $error = "Le mot de passe doit faire au moins $longueurMin caractères.";
     } elseif ($age === null) {
         $error = 'Merci d’indiquer une date de naissance valide.';
     } elseif ($age < 18) {
@@ -112,9 +126,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: ' . $loc);
             exit;
         } catch (PDOException $e) {
-            $error = str_contains($e->getMessage(), 'Duplicate')
-                ? 'Cet email est déjà utilisé.'
-                : 'Erreur lors de la création du compte.';
+            // Code MySQL 1062, pas le texte du message : sur un serveur dont
+            // la langue des erreurs n'est pas l'anglais, chercher "Duplicate"
+            // ne matchait jamais (voir api/v1/inscription.php).
+            if (($e->errorInfo[1] ?? null) === 1062) {
+                recordLoginAttempt($pdo, $ip, $email);
+                $error = 'Cet email est déjà utilisé.';
+            } else {
+                $error = 'Erreur lors de la création du compte.';
+            }
         }
     }
 }

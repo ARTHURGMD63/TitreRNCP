@@ -34,7 +34,6 @@ const FILTRES = [
   { code: 'running', libelle: 'Running' },
   { code: 'velo', libelle: 'Vélo' },
   { code: 'muscu', libelle: 'Muscu' },
-  { code: 'culture', libelle: 'Culture' },
   { code: 'autre', libelle: 'Autre' },
 ];
 

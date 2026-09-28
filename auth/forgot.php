@@ -12,10 +12,16 @@ $devLink = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrfVerify();
     $email = trim($_POST['email'] ?? '');
+    $ip    = (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
 
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    // Sans cette garde, connaître l'adresse d'une victime suffisait à la
+    // bombarder de mails de réinitialisation à volonté.
+    if (isRateLimited($pdo, $ip, 5, 900)) {
+        $error = 'Trop de tentatives. Réessaie dans quinze minutes.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Adresse email invalide.';
     } else {
+        recordLoginAttempt($pdo, $ip, $email);
         $token = createPasswordResetToken($pdo, $email);
         // On envoie toujours un message de succès (même si email inconnu) → anti-enumération
         // Le lien du message doit être absolu : il est suivi depuis un client

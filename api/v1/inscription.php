@@ -20,6 +20,14 @@ require_once __DIR__ . '/../../includes/agregats.php';
 
 apiExigerMethode('POST');
 
+// Même garde que login.php, un seuil plus large : cet endpoint répond
+// différemment selon qu'un e-mail existe déjà (409) ou non (201), ce qui en
+// ferait sinon un outil d'énumération des comptes à débit illimité.
+$ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+if (isRateLimited($pdo, $ip, 20, 900)) {
+    apiErreur('Trop de tentatives. Réessaie dans quinze minutes.', 429, 'trop_de_tentatives');
+}
+
 $corps = apiCorps();
 $texte = static fn (string $cle): string => trim(is_scalar($corps[$cle] ?? null) ? (string) $corps[$cle] : '');
 
@@ -47,10 +55,12 @@ if ($type === 'etudiant' && ($age === null || $age > 25)) {
     $promo = '';
 }
 
+$longueurMin = longueurMinimaleMotDePasse($type);
+
 if (!$prenom || !$nom || !$email || !$pass) {
     apiErreur('Merci de remplir tous les champs obligatoires.', 422, 'champs_manquants');
-} elseif (strlen($pass) < 6) {
-    apiErreur('Le mot de passe doit faire au moins 6 caractères.', 422, 'mot_de_passe_court');
+} elseif (strlen($pass) < $longueurMin) {
+    apiErreur("Le mot de passe doit faire au moins $longueurMin caractères.", 422, 'mot_de_passe_court');
 } elseif ($age === null) {
     apiErreur('Merci d’indiquer une date de naissance valide.', 422, 'naissance');
 } elseif ($age < 18) {
@@ -80,12 +90,19 @@ try {
             ->execute([$userId, $etablNom, $etablType, $etablVille]);
     }
 } catch (PDOException $e) {
-    str_contains($e->getMessage(), 'Duplicate')
-        ? apiErreur('Cet email est déjà utilisé.', 409, 'email_pris')
-        : apiErreur('Erreur lors de la création du compte.', 500, 'creation');
+    // Code MySQL 1062 (clé dupliquée), et non le texte du message : sur un
+    // serveur dont la langue des erreurs n'est pas l'anglais (le nôtre en
+    // développement dit « Duplicata... », pas « Duplicate... »), chercher
+    // "Duplicate" ne matchait jamais — chaque email déjà pris tombait dans
+    // l'erreur générique 500 au lieu du message dédié.
+    if (($e->errorInfo[1] ?? null) === 1062) {
+        recordLoginAttempt($pdo, $ip, $email);
+        apiErreur('Cet email est déjà utilisé.', 409, 'email_pris');
+    }
+    apiErreur('Erreur lors de la création du compte.', 500, 'creation');
 }
 
-$stmt = $pdo->prepare('SELECT id, nom, prenom, email, ecole, promo, ville, photo, interests, type FROM users WHERE id = ?');
+$stmt = $pdo->prepare('SELECT id, nom, prenom, email, ecole, promo, ville, photo, interests, type, compte_prive FROM users WHERE id = ?');
 $stmt->execute([$userId]);
 $u = $stmt->fetch();
 

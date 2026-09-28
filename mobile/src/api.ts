@@ -159,7 +159,7 @@ export type Evenement = {
   style_musique: string | null;
   date_heure: string;
   lieu: string;
-  etablissement: { id: number; nom: string; type: string; ville: string; note: number | null; nb_avis: number; suivi: boolean };
+  etablissement: { id: number; nom: string; type: string; ville: string; note: number | null; nb_avis: number; suivi: boolean; latitude: number | null; longitude: number | null };
   places: { quota: number; inscrits: number; restantes: number | null; complet: boolean };
   reduction: number | null;
   prix_normal: number | null;
@@ -556,10 +556,10 @@ export const api = {
   adminFinances: (jeton: string) =>
     appelApi<{ success: true } & ReponseFinancesAdmin>('admin_finances.php', { jeton }),
   partenaireProfil: (jeton: string) =>
-    appelApi<{ success: true; compte: { prenom: string; nom: string; email: string }; etablissement: { nom: string; type: string; ville: string; adresse: string } }>(
+    appelApi<{ success: true; compte: { prenom: string; nom: string; email: string }; etablissement: { nom: string; type: string; ville: string; adresse: string; latitude: number | null; longitude: number | null } }>(
       'partenaire_profil.php', { jeton }
     ),
-  partenaireEnregistrerProfil: (jeton: string, corps: { nom: string; type: string; ville: string; adresse: string }) =>
+  partenaireEnregistrerProfil: (jeton: string, corps: { nom: string; type: string; ville: string; adresse: string; latitude?: number; longitude?: number }) =>
     appelApi<Ok>('partenaire_profil.php', { methode: 'POST', jeton, corps }),
   publierPhotoEvenement: (jeton: string, formulaire: FormData) =>
     appelApi<{ photo: PhotoEvenement; remplace: boolean }>('evenement_photos.php', { methode: 'POST', formulaire, jeton }),
@@ -586,7 +586,9 @@ export const actions = {
     action<Ok>('create_squad.php', jeton, squad),
   /** follow / unfollow / accept / decline, sur un étudiant ou un établissement. */
   suivi: (jeton: string, act: 'follow' | 'unfollow' | 'accept' | 'decline', type: 'user' | 'etablissement', cible: number) =>
-    action<Ok & { etat: EtatSuivi; count: number }>('follow.php', jeton, { action: act, type, target_id: cible }),
+    // etat est null pour accept/decline : l'action porte sur la demande d'un
+    // tiers, pas sur « mon » état de suivi envers cible (voir api/follow.php).
+    action<Ok & { etat: EtatSuivi | null; count: number }>('follow.php', jeton, { action: act, type, target_id: cible }),
   inviter: (jeton: string, destinataire: number, type: 'event' | 'squad', cible: number) =>
     action<Ok>('inviter.php', jeton, { action: 'send', to_user_id: destinataire, type, target_id: cible }),
   repondreInvitation: (jeton: string, invitationId: number, accepter: boolean) =>

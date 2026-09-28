@@ -13,6 +13,7 @@
  */
 
 require_once __DIR__ . '/_socle.php';
+require_once __DIR__ . '/../../includes/geocodage.php';
 
 $u   = apiPartenaire($pdo);
 $uid = (int) $u['id'];
@@ -30,6 +31,12 @@ if ($methode === 'POST') {
     $type    = (string) ($corps['type'] ?? '');
     $ville   = trim((string) ($corps['ville'] ?? ''));
     $adresse = trim((string) ($corps['adresse'] ?? ''));
+    // Position choisie à la main sur la carte (on fait glisser l'épingle) :
+    // si le partenaire ne l'a pas touchée, null ici veut dire « laisser la
+    // valeur déjà en base », pas « effacer la position ».
+    $latitude  = array_key_exists('latitude', $corps) && $corps['latitude'] !== null ? (float) $corps['latitude'] : null;
+    $longitude = array_key_exists('longitude', $corps) && $corps['longitude'] !== null ? (float) $corps['longitude'] : null;
+    $positionFournie = $latitude !== null && $longitude !== null;
 
     $erreurs = [];
     if ($nom === '') $erreurs[] = "Le nom de l'établissement est obligatoire.";
@@ -40,8 +47,25 @@ if ($methode === 'POST') {
         apiReponse(['success' => false, 'message' => implode(' ', $erreurs), 'erreurs' => $erreurs], 422);
     }
 
-    $pdo->prepare('UPDATE etablissements SET nom=?, type=?, ville=?, adresse=? WHERE id=? AND user_id=?')
-        ->execute([$nom, $type, $ville, $adresse ?: null, (int) $etab['id'], $uid]);
+    if ($positionFournie) {
+        $pdo->prepare('UPDATE etablissements SET nom=?, type=?, ville=?, adresse=?, latitude=?, longitude=? WHERE id=? AND user_id=?')
+            ->execute([$nom, $type, $ville, $adresse ?: null, $latitude, $longitude, (int) $etab['id'], $uid]);
+    } else {
+        $pdo->prepare('UPDATE etablissements SET nom=?, type=?, ville=?, adresse=? WHERE id=? AND user_id=?')
+            ->execute([$nom, $type, $ville, $adresse ?: null, (int) $etab['id'], $uid]);
+
+        // Filet : si l'adresse ou la ville change et qu'aucune position n'est
+        // encore connue, on tente de la déduire — mieux qu'un établissement
+        // absent de la carte tant que personne n'a touché à l'épingle.
+        $aDejaUnePosition = $etab['latitude'] !== null && $etab['longitude'] !== null;
+        if (!$aDejaUnePosition) {
+            $position = geocoderAdresse($adresse, $ville);
+            if ($position) {
+                $pdo->prepare('UPDATE etablissements SET latitude=?, longitude=? WHERE id=?')
+                    ->execute([$position['lat'], $position['lon'], (int) $etab['id']]);
+            }
+        }
+    }
 
     apiReponse(['success' => true, 'message' => 'Établissement mis à jour.']);
 }
@@ -52,9 +76,11 @@ apiReponse([
     'success' => true,
     'compte' => ['prenom' => (string) $u['prenom'], 'nom' => (string) $u['nom'], 'email' => (string) $u['email']],
     'etablissement' => [
-        'nom'     => (string) $etab['nom'],
-        'type'    => (string) $etab['type'],
-        'ville'   => (string) ($etab['ville'] ?? ''),
-        'adresse' => (string) ($etab['adresse'] ?? ''),
+        'nom'       => (string) $etab['nom'],
+        'type'      => (string) $etab['type'],
+        'ville'     => (string) ($etab['ville'] ?? ''),
+        'adresse'   => (string) ($etab['adresse'] ?? ''),
+        'latitude'  => $etab['latitude'] !== null ? (float) $etab['latitude'] : null,
+        'longitude' => $etab['longitude'] !== null ? (float) $etab['longitude'] : null,
     ],
 ]);

@@ -2,9 +2,12 @@
  * Les deux onglets de l'espace partenaire : Tableau de bord (avec le scan
  * des pass), Événements. Même barre flottante que l'espace étudiant, avec
  * sa propre liste d'onglets — voir BarreOnglets.
+ *
+ * Le bouton orange surélevé au centre ouvre directement la création d'un
+ * événement (evenement-form, sans id), sans passer par l'onglet Événements.
  */
 
-import { Tabs } from 'expo-router';
+import { router, Tabs } from 'expo-router';
 
 import { BarreOnglets, type OngletBarre } from '../../composants/BarreOnglets';
 import { useTheme } from '../../useTheme';
@@ -25,7 +28,14 @@ export default function OngletsPartenaire() {
 
   return (
     <Tabs
-      tabBar={(props) => <BarreOnglets {...props} onglets={ONGLETS} parent={PARENT} />}
+      tabBar={(props) => (
+        <BarreOnglets
+          {...props}
+          onglets={ONGLETS}
+          parent={PARENT}
+          actionCentrale={{ libelle: 'Créer une soirée', icone: 'plus', couleur: c.orange, onPress: () => router.push({ pathname: '/evenement-form' }) }}
+        />
+      )}
       screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: c.bg }, animation: 'none', lazy: false }}
     >
       <Tabs.Screen name="index" options={{ title: 'Tableau de bord' }} />

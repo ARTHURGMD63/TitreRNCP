@@ -14,7 +14,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'etudiant') {
 
 $input = json_decode(file_get_contents('php://input'), true);
 $titre = substr(trim($input['titre'] ?? ''), 0, 255);
-$type = in_array($input['type'] ?? '', ['running', 'velo', 'muscu', 'culture', 'autre'], true) ? $input['type'] : 'autre';
+$type = in_array($input['type'] ?? '', ['running', 'velo', 'muscu', 'autre'], true) ? $input['type'] : 'autre';
 $niveau = $input['niveau'] ?? 'tous';
 $date_heure = $input['date_heure'] ?? '';
 $quota = max(2, min(500, (int)($input['quota'] ?? 10)));

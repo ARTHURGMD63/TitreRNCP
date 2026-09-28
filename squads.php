@@ -37,10 +37,9 @@ $typeClasses = [
     'running' => 'squad-running',
     'velo'    => 'squad-velo',
     'muscu'   => 'squad-muscu',
-    'culture' => 'squad-culture',
     'autre'   => 'squad-autre',
 ];
-$typeLabels = ['running'=>'Running','velo'=>'Vélo','muscu'=>'Muscu','culture'=>'Culture','autre'=>'Autre'];
+$typeLabels = ['running'=>'Running','velo'=>'Vélo','muscu'=>'Muscu','autre'=>'Autre'];
 $niveauLabels = ['tous'=>'Tous niveaux','debutant'=>'Débutant','inter'=>'Inter.','avance'=>'Avancé'];
 
 ?>
@@ -63,7 +62,6 @@ $niveauLabels = ['tous'=>'Tous niveaux','debutant'=>'Débutant','inter'=>'Inter.
     <button type="button" class="pill" data-filter="running" aria-pressed="false">Running</button>
     <button type="button" class="pill" data-filter="velo" aria-pressed="false">Vélo</button>
     <button type="button" class="pill" data-filter="muscu" aria-pressed="false">Muscu</button>
-    <button type="button" class="pill" data-filter="culture" aria-pressed="false">Culture</button>
     <button type="button" class="pill" data-filter="autre" aria-pressed="false">Autre</button>
   </div>
 
@@ -213,7 +211,6 @@ $niveauLabels = ['tous'=>'Tous niveaux','debutant'=>'Débutant','inter'=>'Inter.
             <option value="running">Running</option>
             <option value="velo">Vélo</option>
             <option value="muscu">Muscu</option>
-            <option value="culture">Culture</option>
             <option value="autre">Autre</option>
           </select>
         </div>

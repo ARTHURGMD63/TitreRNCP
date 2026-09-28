@@ -212,6 +212,7 @@ $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Aft
         <a href="<?= $lienFiltre(['type' => 'bar']) ?>"   class="pill <?= $filter==='bar'?'active':'' ?>"   <?= $filter==='bar'?'aria-current="true"':'' ?>>Bars</a>
         <a href="<?= $lienFiltre(['type' => 'boite']) ?>" class="pill <?= $filter==='boite'?'active':'' ?>" <?= $filter==='boite'?'aria-current="true"':'' ?>>Boîtes</a>
         <a href="<?= $lienFiltre(['type' => 'resto']) ?>" class="pill <?= $filter==='resto'?'active':'' ?>" <?= $filter==='resto'?'aria-current="true"':'' ?>>Restos</a>
+        <a href="<?= baseUrl('/carte.php') ?>" class="pill"><?= icon('epingle', 'icon-sm') ?> Carte</a>
       </div>
 
       <!-- Styles de musique : une seconde dimension, et non des pilules de plus

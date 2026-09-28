@@ -77,6 +77,11 @@ function apiEvenement(array $e, array $amis, array $etabsSuivis): array
             'ville'   => (string) ($e['ville'] ?? ''),
             'note'    => $e['etab_note'] !== null ? round((float) $e['etab_note'], 1) : null,
             'nb_avis' => (int) ($e['etab_nb_avis'] ?? 0),
+            // Position sur la carte interactive (migration v25) : absente tant
+            // que le partenaire n'a rien réglé et que le géocodage n'a pas
+            // abouti — l'événement reste listé, simplement pas sur la carte.
+            'latitude'  => $e['etab_latitude'] !== null ? (float) $e['etab_latitude'] : null,
+            'longitude' => $e['etab_longitude'] !== null ? (float) $e['etab_longitude'] : null,
             // Etat du bouton « + SUIVRE » de la carte. Calcule ici : sans lui,
             // l'application devrait charger la liste des lieux suivis a part
             // puis la croiser elle-meme, pour une information que le serveur a
