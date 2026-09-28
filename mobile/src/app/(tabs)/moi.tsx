@@ -20,6 +20,7 @@ import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecr
 import { Avatar, Encart, Jauge } from '../../composants/Elements';
 import { Aide, Case, Etiquette, SelecteurInterets, Selecteur } from '../../composants/Formulaire';
 import { estIcone, Icone, type NomIcone } from '../../composants/Icone';
+import { Marque } from '../../composants/Marque';
 import { Display, Mono, T, TitreEcran } from '../../composants/Texte';
 import { nombre } from '../../format';
 import { useJeton, useSession } from '../../session';
@@ -161,6 +162,9 @@ export default function Moi() {
   return (
     <Ecran defilementRef={defilement} rafraichit={rafraichit} onRafraichir={() => { setRafraichit(true); void charger(); }}>
       <EnTete style={{ marginBottom: 24 }}>
+        <View style={{ marginBottom: 18 }}>
+          <Marque taille={fs[6]} />
+        </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 16 }}>
           <Avatar photo={moi.photo_url} prenom={moi.prenom} taille={72} fond={c.rouge} />
           <View style={{ flex: 1 }}>

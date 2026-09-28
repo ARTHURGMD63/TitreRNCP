@@ -28,10 +28,18 @@ type Props = {
   /** font-size de .marque — var(--fs-6) par défaut. */
   taille?: number;
   suffixe?: string;
+  /**
+   * Remplace le lave par une autre teinte — dérogation à la charte
+   * (includes/marque.php interdit toute variante côté site) réservée aux
+   * en-têtes propres à l'application mobile : le dôme en tête de l'onglet
+   * Sport, par exemple. Le lave reste la couleur par défaut partout ailleurs.
+   */
+  accent?: string;
 };
 
-export function Marque({ taille = fs[6], suffixe }: Props) {
+export function Marque({ taille = fs[6], suffixe, accent }: Props) {
   const { c } = useTheme();
+  const teinte = accent ?? c.rouge;
   const mot = { fontFamily: police.display, fontSize: taille, letterSpacing: -0.045 * taille, lineHeight: taille * 1.15 };
 
   return (
@@ -41,9 +49,9 @@ export function Marque({ taille = fs[6], suffixe }: Props) {
       accessibilityLabel={'Linkee' + (suffixe ? ' ' + suffixe : '')}
       style={{ flexDirection: 'row', alignItems: 'center', gap: 0.42 * taille }}
     >
-      <Anneaux hauteur={taille} encre={c.noir} lave={c.rouge} />
+      <Anneaux hauteur={taille} encre={c.noir} lave={teinte} />
       <Text style={[mot, { color: c.noir }]}>
-        link<Text style={{ color: c.rouge }}>ee</Text>
+        link<Text style={{ color: teinte }}>ee</Text>
         {suffixe ? (
           <Text style={{ fontFamily: police.displayRegular, letterSpacing: -0.03 * taille, color: c.gris }}>
             {' ' + suffixe}

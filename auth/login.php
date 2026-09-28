@@ -97,12 +97,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <div class="auth-link">
     Pas encore de compte ? <a href="<?= baseUrl('/auth/register.php') ?>">Créer un compte</a>
   </div>
-
-  <div class="auth-demo">
-    <strong>Comptes de démo</strong>
-    Étudiant : arthur@uca.fr / password<br>
-    Partenaire : jean@lebecquipique.fr / password
-  </div>
 </div>
 </body>
 </html>

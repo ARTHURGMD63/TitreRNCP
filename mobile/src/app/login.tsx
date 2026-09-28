@@ -2,8 +2,8 @@
  * Connexion — auth/login.php.
  *
  * Le logo, « Content de te revoir. », les deux champs, « Mot de passe
- * oublié ? » aligné à droite, la pilule lave, le lien vers l'inscription et
- * le bloc des comptes de démonstration en mono. Mêmes textes, même ordre.
+ * oublié ? » aligné à droite, la pilule lave, le lien vers l'inscription.
+ * Mêmes textes, même ordre.
  */
 
 import React, { useState } from 'react';
@@ -18,7 +18,7 @@ import { Champ } from '../composants/Formulaire';
 import { Marque } from '../composants/Marque';
 import { T, TitreEcran } from '../composants/Texte';
 import { useSession } from '../session';
-import { fs, lsEm, mono, rayon, sans } from '../theme';
+import { fs, sans } from '../theme';
 import { useTheme } from '../useTheme';
 
 export default function Connexion() {
@@ -95,15 +95,6 @@ export default function Connexion() {
           <T taille={fs[4]} couleur={c.gris}>Pas encore de compte ? </T>
           <Text onPress={() => router.push('/inscription')} accessibilityRole="link" style={{ fontFamily: sans(700), fontSize: fs[4], color: c.noir }}>
             Créer un compte
-          </Text>
-        </View>
-
-        <View style={{ marginTop: 32, paddingVertical: 16, paddingHorizontal: 18, backgroundColor: c.blanc, borderRadius: rayon.md }}>
-          <Text style={{ fontFamily: mono(500), fontSize: fs[2], color: c.noir, textTransform: 'uppercase', letterSpacing: lsEm.label * fs[2], marginBottom: 4 }}>
-            Comptes de démo
-          </Text>
-          <Text style={{ fontFamily: mono(400), fontSize: fs[2], lineHeight: fs[2] * 1.7, color: c.gris }}>
-            Étudiant : arthur@uca.fr / password{'\n'}Partenaire : jean@lebecquipique.fr / password
           </Text>
         </View>
       </ScrollView>

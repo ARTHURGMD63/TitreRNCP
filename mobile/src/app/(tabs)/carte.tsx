@@ -8,13 +8,15 @@
  * reste listé normalement dans Explorer, simplement absent d'ici. Taper une
  * épingle ouvre un résumé, puis la fiche complète.
  *
- * L'épingle est dessinée à la main (rond + pointe), pas le pin par défaut du
- * système — trop générique pour porter la charte. Le point bleu « où je
- * suis » vient d'expo-location, demandé une seule fois à l'ouverture.
+ * L'épingle est une vraie goutte dessinée en SVG (pas le pin générique du
+ * système, ni un simple rond) : rouge à venir, vert-volt et pulsante en
+ * cours. Le point bleu « où je suis » vient d'expo-location, demandé une
+ * seule fois à l'ouverture.
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { router, useFocusEffect } from 'expo-router';
@@ -34,7 +36,11 @@ import { useTheme } from '../../useTheme';
 // même d'avoir chargé la moindre soirée ou localisé qui que ce soit.
 const REGION_DEFAUT = { latitude: 45.7772, longitude: 3.087, latitudeDelta: 0.08, longitudeDelta: 0.08 };
 
-/** L'épingle : un rond de couleur avec sa pointe, pas le pin système. */
+// Une vraie goutte (le repère de lieu classique), pas un rond bricolé : le
+// trou circulaire vient du sens de tracé opposé des deux sous-chemins.
+const TRACE_EPINGLE = 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z';
+
+/** L'épingle : une goutte pleine avec son trou, pas le pin système. */
 function Epingle({ enCours, actif }: { enCours: boolean; actif: boolean }) {
   const { c } = useTheme();
   const [opacite] = useState(() => new Animated.Value(1));
@@ -43,7 +49,7 @@ function Epingle({ enCours, actif }: { enCours: boolean; actif: boolean }) {
     if (!enCours) return;
     const boucle = Animated.loop(
       Animated.sequence([
-        Animated.timing(opacite, { toValue: 0.35, duration: 700, useNativeDriver: true }),
+        Animated.timing(opacite, { toValue: 0.3, duration: 700, useNativeDriver: true }),
         Animated.timing(opacite, { toValue: 1, duration: 700, useNativeDriver: true }),
       ])
     );
@@ -52,34 +58,24 @@ function Epingle({ enCours, actif }: { enCours: boolean; actif: boolean }) {
   }, [enCours, opacite]);
 
   const teinte = enCours ? c.lime : c.rouge;
-  const taille = actif ? 40 : 32;
+  const taille = actif ? 44 : 36;
 
   return (
-    <View style={{ alignItems: 'center' }}>
+    <View style={{ width: taille, height: taille, alignItems: 'center', justifyContent: 'flex-end' }}>
       {enCours ? (
         <Animated.View
           style={{
-            position: 'absolute', top: -4, width: taille + 8, height: taille + 8, borderRadius: (taille + 8) / 2,
-            backgroundColor: teinte, opacity: Animated.multiply(opacite, 0.35),
+            position: 'absolute', bottom: taille * 0.05, width: taille * 0.55, height: taille * 0.22,
+            borderRadius: taille * 0.22, backgroundColor: teinte, opacity: Animated.multiply(opacite, 0.4),
+            transform: [{ scaleX: 1.6 }],
           }}
         />
       ) : null}
-      <View
-        style={{
-          width: taille, height: taille, borderRadius: taille / 2, backgroundColor: teinte,
-          borderWidth: 3, borderColor: fixe.craie, alignItems: 'center', justifyContent: 'center',
-          shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 4,
-        }}
-      >
-        <Icone nom="epingle" taille={actif ? 18 : 14} couleur={enCours ? fixe.basalte : fixe.surLave} />
+      <View style={{ shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 3, shadowOffset: { width: 0, height: 2 }, elevation: 5 }}>
+        <Svg width={taille} height={taille} viewBox="0 0 24 24">
+          <Path d={TRACE_EPINGLE} fill={teinte} stroke={fixe.craie} strokeWidth={1} />
+        </Svg>
       </View>
-      {/* La pointe : un petit losange à moitié caché derrière le rond. */}
-      <View
-        style={{
-          width: 10, height: 10, backgroundColor: teinte, borderWidth: 3, borderColor: fixe.craie,
-          transform: [{ rotate: '45deg' }], marginTop: -8, borderTopWidth: 0, borderLeftWidth: 0,
-        }}
-      />
     </View>
   );
 }

@@ -2,7 +2,7 @@
  * Squads — squads.php, dans l'univers sport : le dôme remplace la lave pour
  * l'accent du titre, la pilule active et l'action principale.
  *
- * « Ne cours plus / seul·e. », les filtres de sport (côté appareil, comme le
+ * « Ne fais pas / de sport tout seul. », les filtres de sport (côté appareil, comme le
  * site), le bandeau de suggestion, « + Créer un squad », puis les cartes :
  * niveau en haut à droite, étiquette « RUNNING · MAR 07H00 », lieu,
  * description, pastilles des membres, et l'action — Gérer, Rejoint, Complet
@@ -21,6 +21,7 @@ import { Pilule, Separateur } from '../../composants/Elements';
 import { Feuille } from '../../composants/Feuille';
 import { Case, Champ, ChampDate, isoDateHeure, Selecteur } from '../../composants/Formulaire';
 import { Icone } from '../../composants/Icone';
+import { Marque } from '../../composants/Marque';
 import { Display, Mono, T, TitreEcran } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
@@ -170,7 +171,10 @@ export default function Squads() {
       }
     >
       <EnTete>
-        <TitreEcran lignes={['Ne cours plus', 'seul·e.']} accent={c.surBleuClair} />
+        <View style={{ marginBottom: 14 }}>
+          <Marque taille={fs[6]} accent={c.bleu} />
+        </View>
+        <TitreEcran lignes={['Ne fais pas', 'de sport tout seul.']} accent={c.surBleuClair} />
       </EnTete>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ gap: 8, paddingHorizontal: gutter, paddingBottom: 8 }}>

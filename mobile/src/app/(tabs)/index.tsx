@@ -26,6 +26,7 @@ import { Pilule, Segments, Separateur } from '../../composants/Elements';
 import { Feuille } from '../../composants/Feuille';
 import { Selecteur } from '../../composants/Formulaire';
 import { Icone } from '../../composants/Icone';
+import { Marque } from '../../composants/Marque';
 import {
   CarteSuggestion, ElementNotification, FeuilleInvitation, FermerFeuille, LignePersonne, NotificationsVides, SurtitreFeuille,
 } from '../../composants/Social';
@@ -182,6 +183,9 @@ export default function Hub() {
       }
     >
       <EnTete style={{ paddingBottom: 10 }}>
+        <View style={{ marginBottom: 14 }}>
+          <Marque taille={fs[6]} />
+        </View>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
           <View style={{ flex: 1 }}>
             <T taille={fs[4]} couleur={c.gris} style={{ marginBottom: 4 }}>Salut {profil?.prenom}</T>
@@ -247,18 +251,21 @@ export default function Hub() {
               const actif = type === t.code;
               const pourMoi = t.code === 'pour-moi';
               return (
-                <Pilule
-                  key={t.code}
-                  libelle={t.libelle}
-                  actif={actif}
-                  onPress={() => choisirType(t.code)}
-                  icone={pourMoi ? 'etoile-fine' : undefined}
-                  style={pourMoi && !actif ? { borderColor: c.surRougeClair } : undefined}
-                  couleurTexte={pourMoi && !actif ? c.surRougeClair : undefined}
-                />
+                <React.Fragment key={t.code}>
+                  <Pilule
+                    libelle={t.libelle}
+                    actif={actif}
+                    onPress={() => choisirType(t.code)}
+                    icone={pourMoi ? 'etoile-fine' : undefined}
+                    style={pourMoi && !actif ? { borderColor: c.surRougeClair } : undefined}
+                    couleurTexte={pourMoi && !actif ? c.surRougeClair : undefined}
+                  />
+                  {/* Juste après « Pour moi », avant les types de lieu : une
+                      action (ouvrir la carte), pas un filtre de plus. */}
+                  {pourMoi ? <Pilule libelle="Carte" icone="epingle" actif={false} onPress={() => router.push('/carte')} /> : null}
+                </React.Fragment>
               );
             })}
-            <Pilule libelle="Carte" icone="epingle" actif={false} onPress={() => router.push('/carte')} />
           </ScrollView>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginTop: -12, marginBottom: 24 }} contentContainerStyle={{ gap: 8, paddingHorizontal: gutter, paddingBottom: 16 }}>

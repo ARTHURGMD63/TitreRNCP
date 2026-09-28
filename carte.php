@@ -63,25 +63,15 @@ $points = array_map(
   .popup-titre { font-weight:var(--fw-bold);font-size:var(--fs-4);margin-bottom:2px; }
   .popup-meta { font-size:var(--fs-2);color:var(--gris); }
 
-  /* L'épingle : un rond de couleur avec sa pointe, pas le pin par défaut de
-     Leaflet — trop générique pour porter la charte. Même dessin que côté
-     mobile (composants/BarreOnglets · carte.tsx). */
-  .epingle-linkee { display: flex; flex-direction: column; align-items: center; }
-  .epingle-linkee .rond {
-    width: 32px; height: 32px; border-radius: 50%; border: 3px solid #F5F1E8;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,.25);
-  }
-  .epingle-linkee .pointe {
-    width: 10px; height: 10px; margin-top: -8px; transform: rotate(45deg);
-    border: 3px solid #F5F1E8; border-top: none; border-left: none;
-  }
-  .epingle-avenir .rond, .epingle-avenir .pointe { background: var(--rouge); }
-  .epingle-encours .rond, .epingle-encours .pointe { background: var(--lime); }
-  .epingle-encours .rond { animation: epingle-pouls 1.4s ease-in-out infinite; }
+  /* L'épingle : une vraie goutte (repère de lieu classique), pas un rond
+     bricolé ni le pin par défaut de Leaflet. Même tracé SVG que côté mobile
+     (carte.tsx) : rouge à venir, vert-volt et pulsante en cours. */
+  .epingle-linkee { filter: drop-shadow(0 2px 3px rgba(0,0,0,.3)); }
+  .epingle-avenir svg path { fill: var(--rouge); }
+  .epingle-encours svg path { fill: var(--lime); animation: epingle-pouls 1.4s ease-in-out infinite; }
   @keyframes epingle-pouls {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(200,245,71,.55), 0 2px 4px rgba(0,0,0,.25); }
-    50%      { box-shadow: 0 0 0 8px rgba(200,245,71,0), 0 2px 4px rgba(0,0,0,.25); }
+    0%, 100% { opacity: 1; }
+    50%      { opacity: .55; }
   }
 
   .carte-localiser {
@@ -114,14 +104,15 @@ $points = array_map(
 (function () {
   var points = <?= json_encode($points, JSON_UNESCAPED_SLASHES) ?>;
 
+  var TRACE_EPINGLE = 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z';
+
   function icone(enCours) {
     return L.divIcon({
-      className: '',
-      html: '<div class="epingle-linkee ' + (enCours ? 'epingle-encours' : 'epingle-avenir') + '">' +
-            '<div class="rond"></div><div class="pointe"></div></div>',
-      iconSize: [32, 40],
-      iconAnchor: [16, 40],
-      popupAnchor: [0, -40]
+      className: 'epingle-linkee ' + (enCours ? 'epingle-encours' : 'epingle-avenir'),
+      html: '<svg width="36" height="36" viewBox="0 0 24 24"><path d="' + TRACE_EPINGLE + '" stroke="#F5F1E8" stroke-width="1"/></svg>',
+      iconSize: [36, 36],
+      iconAnchor: [18, 34],
+      popupAnchor: [0, -34]
     });
   }
 
