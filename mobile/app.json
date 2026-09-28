@@ -42,6 +42,12 @@
         }
       ],
       [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Linkee a besoin de ta position pour te situer sur la carte des soirées."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#111013",
