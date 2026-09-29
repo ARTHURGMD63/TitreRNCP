@@ -33,7 +33,7 @@ import { JetBrainsMono_400Regular, JetBrainsMono_500Medium, JetBrainsMono_600Sem
 import { FournisseurSession, useSession } from '../session';
 import { FournisseurTheme, useTheme } from '../useTheme';
 import { FournisseurToast } from '../composants/Toast';
-import { introDejaVue, IntroSplash, marquerIntroVue } from '../composants/IntroSplash';
+import { IntroSplash } from '../composants/IntroSplash';
 
 // L'écran de lancement (fond basalte, les deux anneaux) reste affiché tant
 // que l'application n'est pas prête : polices chargées ET session tranchée.
@@ -47,27 +47,19 @@ function Navigation() {
   const { c, sombre } = useTheme();
   // Une fois la session tranchée, l'écran natif cède la place à cette
   // arrivée animée (voir IntroSplash) plutôt que de sauter cash sur l'écran
-  // réel — déjà monté dessous, prêt à apparaître sous le fondu. Réservée au
-  // tout premier lancement (posé au trousseau, voir IntroSplash) : la
-  // rejouer à chaque réouverture transformerait l'effet de marque en
-  // attente pour qui rouvre l'app dix fois par jour.
-  const [introVisible, setIntroVisible] = useState<boolean | undefined>(undefined);
-
-  useEffect(() => {
-    introDejaVue().then((vue) => {
-      setIntroVisible(!vue);
-      if (!vue) marquerIntroVue();
-    });
-  }, []);
+  // réel — déjà monté dessous, prêt à apparaître sous le fondu. Rejouée à
+  // chaque lancement complet : `Navigation` ne remonte qu'à un vrai démarrage
+  // de l'application (fermée puis rouverte), jamais à un simple retour au
+  // premier plan.
+  const [introVisible, setIntroVisible] = useState(true);
 
   useEffect(() => {
     if (profil !== undefined) SplashScreen.hideAsync().catch(() => {});
   }, [profil]);
 
-  // Session pas encore vérifiée, ou pas encore su s'il faut jouer l'intro :
-  // l'écran de lancement natif couvre encore l'attente, qui ne dure jamais
-  // plus qu'une lecture du trousseau.
-  if (profil === undefined || introVisible === undefined) {
+  // Session pas encore vérifiée : l'écran de lancement natif couvre encore
+  // l'attente.
+  if (profil === undefined) {
     return <View style={{ flex: 1, backgroundColor: c.bg }} />;
   }
 

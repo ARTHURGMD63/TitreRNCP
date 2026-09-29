@@ -17,34 +17,10 @@
 import React, { useEffect, useState } from 'react';
 import { Animated, Easing, StyleSheet, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as SecureStore from 'expo-secure-store';
 
 import { Anneaux } from './Marque';
 import { fixe, fs, gutter } from '../theme';
 import { useTheme } from '../useTheme';
-
-const CLE_INTRO_VUE = 'linkee.intro_vue';
-
-/**
- * L'arrivée animée ne mérite d'être vue qu'une fois : rejouée à chaque
- * réouverture, l'effet de marque devient de l'attente pour qui rouvre
- * l'application dix fois par jour. Le trousseau système sert déjà au jeton
- * (session.tsx) — pas besoin d'une dépendance de plus pour un simple
- * booléen qui, comme le jeton, doit survivre aux réinstallations de l'app.
- */
-export async function introDejaVue(): Promise<boolean> {
-  try {
-    return (await SecureStore.getItemAsync(CLE_INTRO_VUE)) === '1';
-  } catch {
-    // Trousseau indisponible : on préfère rejouer l'intro une fois de trop
-    // plutôt que risquer de ne plus jamais la montrer.
-    return false;
-  }
-}
-
-export function marquerIntroVue(): void {
-  SecureStore.setItemAsync(CLE_INTRO_VUE, '1').catch(() => {});
-}
 
 const HAUTEUR_ANNEAUX = fs[6];
 const LARGEUR_ANNEAUX = HAUTEUR_ANNEAUX * 1.62;
