@@ -1,9 +1,9 @@
 /**
  * Le hub étudiant — explore.php.
  *
- * En-tête : « Salut Arthur », « Les bons plans / du moment. », la cloche et
- * sa pastille. Les filtres de type (dont « Pour moi ») et de musique, les
- * cartes flash et classiques, l'état vide, « Voir plus d'événements ».
+ * En-tête : « Les bons plans / du moment. », la cloche et sa pastille. Les
+ * filtres de type (dont « Pour moi ») et de musique, les cartes flash et
+ * classiques, l'état vide, « Voir plus d'événements ».
  *
  * La partie Personnes de l'ancien sélecteur Événements / Personnes vit
  * maintenant dans son propre onglet (personnes.tsx) — plus lisible qu'un
@@ -28,7 +28,7 @@ import { Marque } from '../../composants/Marque';
 import { ElementNotification, FeuilleInvitation, FermerFeuille, NotificationsVides, SurtitreFeuille } from '../../composants/Social';
 import { Display, T, TitreEcran } from '../../composants/Texte';
 import { ts } from '../../format';
-import { useJeton, useSession } from '../../session';
+import { useJeton } from '../../session';
 import { fixe, fs, gutter, lh, mono, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 
@@ -43,7 +43,6 @@ const TYPES = [
 export default function Hub() {
   const { c, ombre } = useTheme();
   const jeton = useJeton();
-  const { profil } = useSession();
 
   const [rechercheOuverte, setRechercheOuverte] = useState(false);
   const [saisie, setSaisie] = useState('');
@@ -149,7 +148,6 @@ export default function Hub() {
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
           <View style={{ flex: 1 }}>
-            <T taille={fs[4]} couleur={c.gris} style={{ marginBottom: 4 }}>Salut {profil?.prenom}</T>
             <TitreEcran lignes={['Les bons plans', 'du moment.']} />
           </View>
           <View style={{ gap: 8, alignItems: 'flex-end' }}>
