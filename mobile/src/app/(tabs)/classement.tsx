@@ -76,7 +76,7 @@ export default function Classement() {
         {erreur ? <Erreur message={erreur} onReessayer={charger} /> : donnees === null ? <Chargement /> : donnees.sans_ecole ? (
           videCarte("Ton école n'est pas renseignée : impossible de te classer avec elle.", 'Compléter mon profil', () => router.navigate('/moi'))
         ) : donnees.sans_amis ? (
-          videCarte('Tu ne suis encore personne : ton classement entre amis est vide.', 'Trouver des étudiants', () => router.navigate({ pathname: '/', params: { vue: 'people' } }))
+          videCarte('Tu ne suis encore personne : ton classement entre amis est vide.', 'Trouver des étudiants', () => router.navigate('/personnes'))
         ) : (
           <>
             {podium.length ? (

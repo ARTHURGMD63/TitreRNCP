@@ -177,7 +177,7 @@ export default function Moi() {
           {moi.interets.length ? (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
               {moi.interets.map((i) => (
-                <Pressable key={i} onPress={() => router.navigate({ pathname: '/', params: { vue: 'people', interest: i } })} accessibilityRole="link"
+                <Pressable key={i} onPress={() => router.navigate({ pathname: '/personnes', params: { interest: i } })} accessibilityRole="link"
                   accessibilityLabel={`Voir les étudiants qui aiment ${i}`}
                   style={{ paddingVertical: 7, paddingHorizontal: 14, backgroundColor: c.noir, borderRadius: rayon.pill }}>
                   <T taille={fs[3]} poids={600} couleur={c.bg}>#{i}</T>

@@ -77,7 +77,7 @@ export default function Notifications() {
                 </View>
               );
             })}
-            {items.length === 0 ? <NotificationsVides onLien={() => router.navigate({ pathname: '/', params: { vue: 'people' } })} /> : null}
+            {items.length === 0 ? <NotificationsVides onLien={() => router.navigate('/personnes')} /> : null}
           </>
         )}
       </Contenu>

@@ -1,6 +1,9 @@
 /**
- * Les quatre onglets, dans l'ordre et avec les libellés du site : Explorer,
- * Sport, Pass, Moi — dessinés par la barre flottante de la charte.
+ * Les onglets, dans l'ordre et avec les libellés du site : Explorer,
+ * Personnes, Sport, Pass, Moi — dessinés par la barre flottante de la
+ * charte. Personnes n'a pas d'onglet propre sur le site (explore.php le
+ * propose en sélecteur en haut d'Explorer) ; ici il en a un, plus facile à
+ * retrouver qu'une bascule cachée dans un autre écran.
  *
  * Notifications, Classement et Abonnements vivent ici aussi, sans onglet
  * propre : sur le site ces pages gardent la barre du bas, et c'est ce qui
@@ -24,6 +27,7 @@ export default function Onglets() {
       screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: c.bg }, animation: 'none', lazy: false }}
     >
       <Tabs.Screen name="index" options={{ title: 'Explorer' }} />
+      <Tabs.Screen name="personnes" options={{ title: 'Personnes' }} />
       <Tabs.Screen name="squads" options={{ title: 'Sport' }} />
       <Tabs.Screen name="wallet" options={{ title: 'Pass' }} />
       <Tabs.Screen name="moi" options={{ title: 'Moi' }} />

@@ -388,7 +388,7 @@ export function FeuilleInvitation({ cible, onClose }: { cible: { type: 'event' |
           <View style={{ alignItems: 'center', padding: 24 }}>
             <T taille={fs[4]} couleur={c.gris} style={{ textAlign: 'center' }}>Tu ne suis personne encore.</T>
             <Text
-              onPress={() => { onClose(); router.navigate({ pathname: '/', params: { vue: 'people' } }); }}
+              onPress={() => { onClose(); router.navigate('/personnes'); }}
               style={{ fontFamily: sans(700), fontSize: fs[4], color: c.surRougeClair, textAlign: 'center' }}
             >
               Trouve des étudiants à suivre →

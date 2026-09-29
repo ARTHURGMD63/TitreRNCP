@@ -2,9 +2,11 @@
  * La barre d'onglets flottante du site (.bottom-nav).
  *
  * Une pilule de surface posée à 16 px du bas, 64 px de haut, 408 px de large
- * au plus ; quatre onglets, l'icône au-dessus du libellé. L'onglet actif est
+ * au plus ; les onglets, l'icône au-dessus du libellé. L'onglet actif est
  * en gras, son icône en lave. Mêmes libellés, même ordre, mêmes icônes que le
- * site : Explorer, Squads, Pass, Moi.
+ * site : Explorer, Squads, Pass, Moi — Personnes en plus, propre à
+ * l'application (explore.php le proposait en sélecteur en haut d'Explorer,
+ * pas en onglet).
  *
  * Les écrans secondaires qui gardent la barre sur le site (Notifications,
  * Classement, Abonnements) allument l'onglet dont ils dépendent, comme les
@@ -30,6 +32,7 @@ export type ActionCentraleBarre = { libelle: string; icone: NomIcone; couleur: s
 
 const ONGLETS: OngletBarre[] = [
   { route: 'index', libelle: 'Explorer', icone: 'loupe' },
+  { route: 'personnes', libelle: 'Personnes', icone: 'personnes' },
   { route: 'squads', libelle: 'Sport', icone: 'trophee' },
   { route: 'wallet', libelle: 'Pass', icone: 'carte' },
   { route: 'moi', libelle: 'Moi', icone: 'personne' },

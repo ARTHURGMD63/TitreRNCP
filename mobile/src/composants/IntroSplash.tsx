@@ -11,21 +11,27 @@
  * formule fixe (Anneaux : largeur = hauteur × 1.62), donc leur point de
  * départ (centre de l'écran) et d'arrivée (en-tête) se calculent directement.
  *
- * Deux pièges corrigés après un premier essai :
- *  - Le fond ne se DISSOUT plus (opacité → 0) : sur un écran clair, un voile
- *    basalte qui s'éclaircit en fondu se voit comme une lueur sombre trouble
- *    avant l'écran réel. Il change de COULEUR à la place (basalte → c.bg,
- *    le fond exact de l'écran qui arrive), en restant opaque jusqu'au bout —
- *    plus de fondu alpha, donc plus de flash.
- *  - Les anneaux, eux, s'effacent (opacité) avant la toute fin de leur
- *    course : leur position finale n'est qu'une approximation de celle du
- *    vrai logo de l'écran (impossible à mesurer d'ici, il appartient à un
- *    autre composant). Sans ce fondu, l'écart, même petit, se voyait comme
- *    un saut au moment où cette vue disparaît.
+ * Deux pièges corrigés après les premiers essais :
+ *  - Le fond ne se DISSOUT pas par transparence (opacité → 0) : sur un écran
+ *    clair, un voile basalte qui s'éclaircit en fondu se voit comme une
+ *    lueur sombre trouble avant l'écran réel. Il ne change pas non plus de
+ *    COULEUR en l'animant directement (interpolation basalte → c.bg) : ça
+ *    revient au même défaut par un autre calcul, et surtout Animated ne
+ *    garantit une interpolation de couleur fiable que via des bibliothèques
+ *    dédiées — ça s'est vu rendre l'écran entièrement noir. La bonne
+ *    solution est plus bête : une couche `c.bg` FIXE en dessous depuis le
+ *    départ, et un voile basalte AU-DESSUS dont seule l'OPACITÉ (un nombre,
+ *    jamais une couleur) descend à 0 sur la toute fin — le même résultat
+ *    visuel qu'un fondu de couleur, sans jamais interpoler de couleur.
+ *  - Les anneaux, eux, s'effacent (opacité, même technique) avant la toute
+ *    fin de leur course : leur position finale n'est qu'une approximation de
+ *    celle du vrai logo de l'écran (impossible à mesurer d'ici, il
+ *    appartient à un autre composant). Sans ce fondu, l'écart, même petit,
+ *    se voyait comme un saut au moment où le voile se dissipe.
  */
 
 import React, { useEffect, useState } from 'react';
-import { Animated, Easing, StyleSheet, useWindowDimensions } from 'react-native';
+import { Animated, Easing, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Anneaux } from './Marque';
@@ -68,22 +74,24 @@ export function IntroSplash({ onTermine }: { onTermine: () => void }) {
   const gauche = progres.interpolate({ inputRange: [0, 1], outputRange: [centreGauche, cibleGauche] });
   const hautPos = progres.interpolate({ inputRange: [0, 1], outputRange: [centreHaut, cibleHaut] });
   const echelle = progres.interpolate({ inputRange: [0, 1], outputRange: [ECHELLE_DEPART, 1] });
-  // Une couleur, pas une opacité : le fond devient littéralement celui de
-  // l'écran qui arrive, plutôt que de s'effacer par transparence dessus.
-  // Le changement reste concentré sur la toute fin (88-100%) : étalé sur
-  // toute la durée, le dégradé linéaire entre basalte et un fond clair passe
-  // par un gris-brun trouble bien visible — le même défaut que l'ancien
-  // fondu, avec une autre cause.
-  const fond = progres.interpolate({ inputRange: [0, 0.88, 1], outputRange: [fixe.basalte, fixe.basalte, c.bg] });
+  // Uniquement des nombres (opacité), jamais une couleur interpolée — voir
+  // le commentaire d'en-tête. Le voile basalte reste opaque presque toute la
+  // durée, puis s'efface vite à la fin pour révéler la couche `c.bg` fixe
+  // en dessous : même effet qu'un fondu de couleur, sans en interpoler une.
+  const opaciteVoile = progres.interpolate({ inputRange: [0, 0.88, 1], outputRange: [1, 1, 0] });
   // Les anneaux s'effacent juste avant, pour qu'un léger écart avec la
   // position réelle du logo ne se voie pas comme un saut.
   const opaciteAnneaux = progres.interpolate({ inputRange: [0, 0.7, 0.88, 1], outputRange: [1, 1, 0, 0] });
 
   return (
-    <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: fond }]}>
-      <Animated.View style={{ position: 'absolute', left: gauche, top: hautPos, opacity: opaciteAnneaux, transform: [{ scale: echelle }] }}>
-        <Anneaux hauteur={HAUTEUR_ANNEAUX} encre={fixe.craie} lave={c.rouge} />
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      {/* La couleur d'arrivée, fixe, dès le premier rendu. */}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: c.bg }]} />
+      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: fixe.basalte, opacity: opaciteVoile }]}>
+        <Animated.View style={{ position: 'absolute', left: gauche, top: hautPos, opacity: opaciteAnneaux, transform: [{ scale: echelle }] }}>
+          <Anneaux hauteur={HAUTEUR_ANNEAUX} encre={fixe.craie} lave={c.rouge} />
+        </Animated.View>
       </Animated.View>
-    </Animated.View>
+    </View>
   );
 }

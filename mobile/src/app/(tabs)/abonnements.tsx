@@ -122,7 +122,7 @@ export default function Abonnements() {
                     <T taille={fs[3]} couleur={c.gris} style={{ textAlign: 'center' }}>
                       {vue === 'abonnes' ? 'Personne ne te suit encore.' : "Tu ne suis personne pour l'instant."}
                     </T>
-                    <Text onPress={() => router.navigate({ pathname: '/', params: { vue: 'people' } })} style={{ fontFamily: sans(700), fontSize: fs[3], color: c.surRougeClair, textAlign: 'center' }}>
+                    <Text onPress={() => router.navigate('/personnes')} style={{ fontFamily: sans(700), fontSize: fs[3], color: c.surRougeClair, textAlign: 'center' }}>
                       {vue === 'abonnes' ? 'Va te faire connaître →' : 'Trouve des étudiants à suivre →'}
                     </Text>
                   </>

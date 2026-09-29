@@ -101,7 +101,7 @@ export default function ProfilEtudiant() {
     try {
       const rep = await actions.moderation(jeton, { action: bloque ? 'unblock' : 'block', target_id: u.id });
       toast(rep.message || 'Erreur');
-      if (!bloque) setTimeout(() => router.navigate({ pathname: '/', params: { vue: 'people' } }), 700);
+      if (!bloque) setTimeout(() => router.navigate('/personnes'), 700);
       else setBloque(false);
     } catch (e) {
       toast(e instanceof ErreurApi ? e.message : 'Erreur réseau', 'error');
