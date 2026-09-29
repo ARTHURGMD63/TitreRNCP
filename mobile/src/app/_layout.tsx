@@ -33,7 +33,7 @@ import { JetBrainsMono_400Regular, JetBrainsMono_500Medium, JetBrainsMono_600Sem
 import { FournisseurSession, useSession } from '../session';
 import { FournisseurTheme, useTheme } from '../useTheme';
 import { FournisseurToast } from '../composants/Toast';
-import { IntroSplash } from '../composants/IntroSplash';
+import { IntroSplash, type CibleIntro } from '../composants/IntroSplash';
 
 // L'écran de lancement (fond basalte, les deux anneaux) reste affiché tant
 // que l'application n'est pas prête : polices chargées ET session tranchée.
@@ -67,6 +67,11 @@ function Navigation() {
   const partenaire = profil?.type === 'partenaire';
   const admin      = profil?.type === 'admin';
 
+  // Où les anneaux doivent atterrir : voir le commentaire d'en-tête
+  // d'IntroSplash. Onboarding, partenaire et admin n'ont pas de Marque dans
+  // leur en-tête — `null` y laisse l'animation en simple fondu sur place.
+  const cibleIntro: CibleIntro = profil === null ? 'login' : etudiant && !nouveau ? 'tabs' : null;
+
   return (
     <>
       <StatusBar style={sombre ? 'light' : 'dark'} />
@@ -96,7 +101,7 @@ function Navigation() {
           <Stack.Screen name="(admin)" />
         </Stack.Protected>
       </Stack>
-      {introVisible ? <IntroSplash onTermine={() => setIntroVisible(false)} /> : null}
+      {introVisible ? <IntroSplash onTermine={() => setIntroVisible(false)} cible={cibleIntro} /> : null}
     </>
   );
 }
