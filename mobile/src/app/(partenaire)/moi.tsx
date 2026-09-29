@@ -6,7 +6,7 @@
 
 import React, { useCallback, useState } from 'react';
 import { View } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import MapView, { Marker, PROVIDER_DEFAULT, type MapPressEvent } from 'react-native-maps';
 
 import { ErreurApi, api } from '../../api';
@@ -138,6 +138,9 @@ export default function MoiPartenaire() {
 
           <Bouton libelle="Enregistrer" plein chargement={enregistrement} onPress={enregistrer} />
         </View>
+
+        <Bouton libelle="Photos de l'établissement" variante="contour" plein onPress={() => router.push('/photos')} style={{ marginBottom: 12 }} />
+        <Bouton libelle="Mon abonnement" variante="contour" plein onPress={() => router.push('/abonnement')} style={{ marginBottom: 20 }} />
 
         <Bouton libelle="Se déconnecter" variante="contour" plein onPress={deconnexion} />
       </Contenu>

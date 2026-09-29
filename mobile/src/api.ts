@@ -413,6 +413,32 @@ export type ReponseFormulaireEvenementPartenaire = {
   flash_par_mois: number | null;
 };
 
+export type FormulePartenaireAbonnement = {
+  code: string;
+  libelle: string;
+  tarif: number;
+  note: string;
+  places_restantes: number | null;
+  mois_essai: number;
+};
+
+export type ClientPartenaireAbonnement = {
+  offre: string;
+  offre_libelle: string;
+  mrr: number;
+  statut: string;
+  essai_jusquau: string | null;
+};
+
+export type ReponseAbonnementPartenaire = {
+  client: ClientPartenaireAbonnement | null;
+  formules: FormulePartenaireAbonnement[];
+};
+
+export type PhotoEtablissement = { id: number; url: string | null; legende: string | null; position: number };
+
+export type ReponsePhotosPartenaire = { max: number; photos: PhotoEtablissement[] };
+
 // ─── Administration ─────────────────────────────────────────────────────────
 
 export type Signalement = {
@@ -561,6 +587,18 @@ export const api = {
     ),
   partenaireEnregistrerProfil: (jeton: string, corps: { nom: string; type: string; ville: string; adresse: string; latitude?: number; longitude?: number }) =>
     appelApi<Ok>('partenaire_profil.php', { methode: 'POST', jeton, corps }),
+  partenaireAbonnement: (jeton: string) =>
+    appelApi<{ success: true } & ReponseAbonnementPartenaire>('partenaire_abonnement.php', { jeton }),
+  partenaireSouscrire: (jeton: string, offre: string) =>
+    appelApi<Ok & { client: ClientPartenaireAbonnement | null }>('partenaire_abonnement.php', { methode: 'POST', jeton, corps: { offre } }),
+  partenairePhotos: (jeton: string) =>
+    appelApi<{ success: true } & ReponsePhotosPartenaire>('partenaire_photos.php', { jeton }),
+  partenaireAjouterPhoto: (jeton: string, formulaire: FormData) =>
+    appelApi<{ success: true; photo: PhotoEtablissement }>('partenaire_photos.php', { methode: 'POST', formulaire, jeton }),
+  partenaireSupprimerPhoto: (jeton: string, photoId: number) =>
+    appelApi<Ok>('partenaire_photo_supprimer.php', { methode: 'POST', jeton, corps: { photo_id: photoId } }),
+  partenaireDefinirCouverture: (jeton: string, photoId: number) =>
+    appelApi<Ok>('partenaire_photo_couverture.php', { methode: 'POST', jeton, corps: { photo_id: photoId } }),
   publierPhotoEvenement: (jeton: string, formulaire: FormData) =>
     appelApi<{ photo: PhotoEvenement; remplace: boolean }>('evenement_photos.php', { methode: 'POST', formulaire, jeton }),
   supprimerPhotoEvenement: (jeton: string, photoId: number) =>

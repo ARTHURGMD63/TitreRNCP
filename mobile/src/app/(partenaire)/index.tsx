@@ -44,6 +44,12 @@ export default function TableauDeBordPartenaire() {
       setErreur(null);
       setDonnees(await api.partenaireDashboard(jeton));
     } catch (e) {
+      // Aucune formule choisie : le tableau de bord n'a rien à montrer tant
+      // que ce n'est pas réglé, comme exigerAbonnement() côté site.
+      if (e instanceof ErreurApi && e.code === 'abonnement_requis') {
+        router.replace('/abonnement');
+        return;
+      }
       setErreur(e instanceof ErreurApi ? e.message : 'Chargement impossible.');
     } finally {
       setRafraichit(false);

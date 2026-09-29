@@ -16,7 +16,7 @@
  *    (CRM, finances, tableau de bord fondateurs) restent sur le site.
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -33,6 +33,7 @@ import { JetBrainsMono_400Regular, JetBrainsMono_500Medium, JetBrainsMono_600Sem
 import { FournisseurSession, useSession } from '../session';
 import { FournisseurTheme, useTheme } from '../useTheme';
 import { FournisseurToast } from '../composants/Toast';
+import { introDejaVue, IntroSplash, marquerIntroVue } from '../composants/IntroSplash';
 
 // L'écran de lancement (fond basalte, les deux anneaux) reste affiché tant
 // que l'application n'est pas prête : polices chargées ET session tranchée.
@@ -44,13 +45,29 @@ SplashScreen.setOptions({ fade: true, duration: 300 });
 function Navigation() {
   const { profil, nouveau } = useSession();
   const { c, sombre } = useTheme();
+  // Une fois la session tranchée, l'écran natif cède la place à cette
+  // arrivée animée (voir IntroSplash) plutôt que de sauter cash sur l'écran
+  // réel — déjà monté dessous, prêt à apparaître sous le fondu. Réservée au
+  // tout premier lancement (posé au trousseau, voir IntroSplash) : la
+  // rejouer à chaque réouverture transformerait l'effet de marque en
+  // attente pour qui rouvre l'app dix fois par jour.
+  const [introVisible, setIntroVisible] = useState<boolean | undefined>(undefined);
+
+  useEffect(() => {
+    introDejaVue().then((vue) => {
+      setIntroVisible(!vue);
+      if (!vue) marquerIntroVue();
+    });
+  }, []);
 
   useEffect(() => {
     if (profil !== undefined) SplashScreen.hideAsync().catch(() => {});
   }, [profil]);
 
-  // Session pas encore vérifiée : l'écran de lancement la couvre.
-  if (profil === undefined) {
+  // Session pas encore vérifiée, ou pas encore su s'il faut jouer l'intro :
+  // l'écran de lancement natif couvre encore l'attente, qui ne dure jamais
+  // plus qu'une lecture du trousseau.
+  if (profil === undefined || introVisible === undefined) {
     return <View style={{ flex: 1, backgroundColor: c.bg }} />;
   }
 
@@ -87,6 +104,7 @@ function Navigation() {
           <Stack.Screen name="(admin)" />
         </Stack.Protected>
       </Stack>
+      {introVisible ? <IntroSplash onTermine={() => setIntroVisible(false)} /> : null}
     </>
   );
 }

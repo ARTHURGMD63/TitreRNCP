@@ -21,6 +21,8 @@ const ONGLETS: OngletBarre[] = [
 const PARENT: Record<string, string> = {
   scan: 'index',
   'evenement-form': 'evenements',
+  abonnement: 'moi',
+  photos: 'moi',
 };
 
 export default function OngletsPartenaire() {
@@ -43,6 +45,8 @@ export default function OngletsPartenaire() {
       <Tabs.Screen name="moi" options={{ title: 'Moi' }} />
       <Tabs.Screen name="scan" options={{ href: null }} />
       <Tabs.Screen name="evenement-form" options={{ href: null }} />
+      <Tabs.Screen name="abonnement" options={{ href: null }} />
+      <Tabs.Screen name="photos" options={{ href: null }} />
     </Tabs>
   );
 }
