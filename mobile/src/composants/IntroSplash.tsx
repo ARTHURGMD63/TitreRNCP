@@ -5,13 +5,23 @@
  * anneaux, même fond, donc le passage de l'un à l'autre ne se voit pas —
  * seule cette vue anime ensuite un vrai mouvement, la glissade et le
  * rétrécissement des anneaux vers leur place dans l'en-tête (Marque, EnTete
- * paddingTop 24 + gouttière), pendant que le fond se dissout et laisse
- * apparaître l'écran réel, déjà monté dessous avec sa propre Marque à sa
- * place.
+ * paddingTop 24 + gouttière).
  *
  * Pas de mesure de mise en page nécessaire : la taille des anneaux est une
  * formule fixe (Anneaux : largeur = hauteur × 1.62), donc leur point de
  * départ (centre de l'écran) et d'arrivée (en-tête) se calculent directement.
+ *
+ * Deux pièges corrigés après un premier essai :
+ *  - Le fond ne se DISSOUT plus (opacité → 0) : sur un écran clair, un voile
+ *    basalte qui s'éclaircit en fondu se voit comme une lueur sombre trouble
+ *    avant l'écran réel. Il change de COULEUR à la place (basalte → c.bg,
+ *    le fond exact de l'écran qui arrive), en restant opaque jusqu'au bout —
+ *    plus de fondu alpha, donc plus de flash.
+ *  - Les anneaux, eux, s'effacent (opacité) avant la toute fin de leur
+ *    course : leur position finale n'est qu'une approximation de celle du
+ *    vrai logo de l'écran (impossible à mesurer d'ici, il appartient à un
+ *    autre composant). Sans ce fondu, l'écart, même petit, se voyait comme
+ *    un saut au moment où cette vue disparaît.
  */
 
 import React, { useEffect, useState } from 'react';
@@ -58,16 +68,20 @@ export function IntroSplash({ onTermine }: { onTermine: () => void }) {
   const gauche = progres.interpolate({ inputRange: [0, 1], outputRange: [centreGauche, cibleGauche] });
   const hautPos = progres.interpolate({ inputRange: [0, 1], outputRange: [centreHaut, cibleHaut] });
   const echelle = progres.interpolate({ inputRange: [0, 1], outputRange: [ECHELLE_DEPART, 1] });
-  // Le fond (et les anneaux avec lui, mêmes enfants) ne se dissout que dans
-  // le dernier quart : le mouvement doit se voir avant de disparaître.
-  const opacite = progres.interpolate({ inputRange: [0, 0.75, 1], outputRange: [1, 1, 0] });
+  // Une couleur, pas une opacité : le fond devient littéralement celui de
+  // l'écran qui arrive, plutôt que de s'effacer par transparence dessus.
+  // Le changement reste concentré sur la toute fin (88-100%) : étalé sur
+  // toute la durée, le dégradé linéaire entre basalte et un fond clair passe
+  // par un gris-brun trouble bien visible — le même défaut que l'ancien
+  // fondu, avec une autre cause.
+  const fond = progres.interpolate({ inputRange: [0, 0.88, 1], outputRange: [fixe.basalte, fixe.basalte, c.bg] });
+  // Les anneaux s'effacent juste avant, pour qu'un léger écart avec la
+  // position réelle du logo ne se voie pas comme un saut.
+  const opaciteAnneaux = progres.interpolate({ inputRange: [0, 0.7, 0.88, 1], outputRange: [1, 1, 0, 0] });
 
   return (
-    <Animated.View
-      pointerEvents="none"
-      style={[StyleSheet.absoluteFill, { backgroundColor: fixe.basalte, opacity: opacite }]}
-    >
-      <Animated.View style={{ position: 'absolute', left: gauche, top: hautPos, transform: [{ scale: echelle }] }}>
+    <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: fond }]}>
+      <Animated.View style={{ position: 'absolute', left: gauche, top: hautPos, opacity: opaciteAnneaux, transform: [{ scale: echelle }] }}>
         <Anneaux hauteur={HAUTEUR_ANNEAUX} encre={fixe.craie} lave={c.rouge} />
       </Animated.View>
     </Animated.View>
