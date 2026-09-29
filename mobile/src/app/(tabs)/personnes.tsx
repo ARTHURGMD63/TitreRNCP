@@ -11,7 +11,7 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import { Pressable, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 
 import { api, type ReponsePersonnes } from '../../api';
@@ -167,7 +167,7 @@ export default function Personnes() {
             {annuaire.suggestions.length ? (
               <View style={{ marginBottom: 22 }}>
                 <Separateur libelle="À suivre · d'après tes goûts" style={{ marginTop: 4 }} />
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} snapToInterval={146} decelerationRate="fast" contentContainerStyle={{ gap: 10, paddingBottom: 4 }}>
                   {annuaire.suggestions.map((s) => (
                     <CarteSuggestion
                       key={s.id}
@@ -175,7 +175,7 @@ export default function Personnes() {
                       motif={s.interets_communs.length ? '#' + s.interets_communs.slice(0, 2).join(' #') : s.squads_communs > 0 ? 'Squad en commun' : 'Même école'}
                     />
                   ))}
-                </View>
+                </ScrollView>
               </View>
             ) : null}
 
