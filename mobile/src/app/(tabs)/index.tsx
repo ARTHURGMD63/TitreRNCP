@@ -150,11 +150,12 @@ export default function Hub() {
           <View style={{ flex: 1 }}>
             <TitreEcran lignes={['Les bons plans', 'du moment.']} />
           </View>
-          <View style={{ gap: 8, alignItems: 'flex-end', marginTop: -6 }}>
+          <View style={{ gap: 8, alignItems: 'flex-end', marginTop: -10 }}>
             {/* Recherche au-dessus des notifications : « en haut à droite ».
-                Le -6 ci-dessus rattrape le blanc au-dessus des majuscules du
-                titre (métrique de la police) : sans lui, les deux pilules de
-                44 px semblaient posées plus bas que le texte et le logo. */}
+                Le marginTop négatif rattrape le blanc au-dessus des
+                majuscules du titre (métrique de la police Unbounded) : sans
+                lui, les deux pilules de 44 px semblaient posées plus bas que
+                le texte et le logo. */}
             <Pressable
               onPress={() => setRechercheOuverte((o) => !o)}
               accessibilityRole="button"
