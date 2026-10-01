@@ -142,15 +142,15 @@ export default function Hub() {
         </>
       }
     >
-      <EnTete style={{ paddingBottom: 10 }}>
+      <EnTete style={{ paddingBottom: 4 }}>
         <View style={{ marginBottom: 14 }}>
           <Marque taille={fs[6]} />
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
           <View style={{ flex: 1 }}>
             <TitreEcran lignes={['Les bons plans', 'du moment.']} />
           </View>
-          <View style={{ gap: 8, alignItems: 'flex-end', marginTop: -10 }}>
+          <View style={{ gap: 8, alignItems: 'flex-end', marginTop: -16 }}>
             {/* Recherche au-dessus des notifications : « en haut à droite ».
                 Le marginTop négatif rattrape le blanc au-dessus des
                 majuscules du titre (métrique de la police Unbounded) : sans
@@ -201,7 +201,7 @@ export default function Hub() {
         ) : null}
       </EnTete>
 
-      <View style={{ paddingTop: 12 }}>
+      <View style={{ paddingTop: 2 }}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 20 }} contentContainerStyle={{ gap: 8, paddingHorizontal: gutter, paddingBottom: 16 }}>
           {TYPES.map((t) => {
             const actif = type === t.code;

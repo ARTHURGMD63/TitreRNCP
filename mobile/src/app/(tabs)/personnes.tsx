@@ -86,7 +86,7 @@ export default function Personnes() {
             accessibilityRole="button"
             accessibilityLabel="Rechercher"
             accessibilityState={{ expanded: rechercheOuverte }}
-            style={[{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.blanc, borderWidth: 1, borderColor: c.line2, marginTop: -10 }, ombre('sm')]}
+            style={[{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.blanc, borderWidth: 1, borderColor: c.line2, marginTop: -16 }, ombre('sm')]}
           >
             <Icone nom="loupe" taille={20} couleur={c.noir} />
           </Pressable>
