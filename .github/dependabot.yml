@@ -50,10 +50,14 @@ updates:
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "@expo/*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      # react et react-dom : version EXACTE imposée par le SDK (bundledNativeModules).
+      # React Native embarque son moteur de rendu, qui doit avoir la même version que
+      # `react` : un correctif d'écart (19.2.3 → 19.2.8) fait planter l'app au démarrage,
+      # et la CI (lint, tests Node) ne le voit pas. On ne propose donc rien, pas même
+      # un correctif. Idem react-native-svg, épinglé par le SDK.
       - dependency-name: "react"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "react-dom"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "react-native-svg"
       - dependency-name: "react-native"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "react-native-*"
