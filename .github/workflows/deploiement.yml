@@ -102,7 +102,7 @@ jobs:
           php -l dist/includes/config.local.php
 
       - name: Envoyer par FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
