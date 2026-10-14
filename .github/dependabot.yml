@@ -1,41 +1,76 @@
-# Mises à jour de dépendances en Pull Requests séparées, une par paquet.
+# Mises à jour de dépendances, regroupées pour ne pas noyer les Pull Requests.
 # Les messages suivent les Conventional Commits (voir CONTRIBUTING.md) :
 # « build(deps): bump … » pour le code, « ci(deps): bump … » pour les workflows.
 version: 2
 
 updates:
   # PHP : composer.json à la racine.
+  #
+  # Les montées MAJEURES sont ignorées : PHPStan 1 → 2 ou PHPUnit 10 → 11 changent
+  # les règles d'analyse et la syntaxe des tests, et se font à la main, avec
+  # leur propre PR, quand on a le temps de corriger ce qu'elles révèlent.
   - package-ecosystem: composer
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     commit-message:
       prefix: "build(deps)"
       prefix-development: "build(deps-dev)"
+    groups:
+      composer:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
-  # Application mobile : mobile/package.json. Expo impose ses versions de
-  # paquets par SDK : les montées majeures d'Expo se font à la main
-  # (`npx expo install --fix`), pas par Dependabot.
+  # Application mobile : mobile/package.json.
+  #
+  # Expo FIXE la version de chaque module natif pour un SDK donné : `expo-location`
+  # 58 n'existe que dans le SDK 58, `react-native-maps` n'est garanti qu'à la
+  # version que l'SDK annonce. Les monter un à un par Dependabot casse
+  # l'application (`npx expo-doctor` le signale). Ces paquets se mettent à jour
+  # d'un bloc, au changement de SDK : `npx expo install expo@latest`, puis
+  # `npx expo install --fix`. On ne laisse passer ici que les correctifs.
   - package-ecosystem: npm
     directory: /mobile
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     commit-message:
       prefix: "build(deps)"
+    groups:
+      mobile:
+        patterns: ["*"]
+        update-types: ["patch"]
     ignore:
       - dependency-name: "expo"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "react-native"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "expo-*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "@expo/*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "react"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "react-native"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "react-native-*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "@react-native-community/*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
-  # Actions GitHub utilisées par .github/workflows/.
+  # Actions GitHub utilisées par .github/workflows/ : une seule PR par semaine.
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 2
     commit-message:
       prefix: "ci(deps)"
+    groups:
+      actions:
+        patterns: ["*"]
