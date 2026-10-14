@@ -1,11 +1,13 @@
 # Linkee
 
 > Plateforme événementielle & sociale pour les étudiants de Clermont-Ferrand.
+>
+> L'application mobile (`mobile/`, React Native / Expo) est le client principal ; le
+> serveur PHP (`api/v1/`) la sert, et le site web reste la vitrine et le back-office.
 
 [![CI](https://github.com/ARTHURGMD63/TitreRNCP/actions/workflows/ci.yml/badge.svg)](https://github.com/ARTHURGMD63/TitreRNCP/actions)
 [![PHP](https://img.shields.io/badge/PHP-8.3-777BB4?logo=php)](https://php.net)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql)](https://mysql.com)
-[![Railway](https://img.shields.io/badge/Deploy-Railway-0B0D0E?logo=railway)](https://railway.app)
 [![License](https://img.shields.io/badge/Licence-Propriétaire-red)](#)
 
 ---
@@ -44,7 +46,7 @@ Linkee connecte les étudiants aux établissements (bars, boîtes, restos) de le
 | Déploiement | Docker (Apache + mod_php + OPcache) ou hébergement mutualisé |
 | Temps réel | Interrogation courte avec ETag et flux de révisions |
 | Cache | APCu si présent, fichiers sinon |
-| Base de données | MySQL 8 (local : WAMP / Railway : MySQL plugin) |
+| Base de données | MySQL 8 ou MariaDB (local : WAMP ; en ligne : TiDB Cloud, voir [docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md)) |
 | PWA | Web App Manifest |
 
 ## Installation locale
@@ -60,7 +62,7 @@ Linkee connecte les étudiants aux établissements (bars, boîtes, restos) de le
 `C:\wamp64\www\TitreRNCP`
 > Le nom du dossier est important : en local, les liens internes utilisent le chemin `/TitreRNCP`.
 
-**2. Créer la base de données** — une **seule** importation suffit (crée les 26 tables **et** un jeu de démonstration avec des événements toujours à venir, back-office fondateurs compris) :
+**2. Créer la base de données** — une **seule** importation suffit (crée les 32 tables **et** un jeu de démonstration avec des événements toujours à venir, back-office fondateurs compris) :
 - **Via phpMyAdmin** (fourni avec WAMP) : ouvrir `http://localhost/phpmyadmin` → onglet **Importer** → choisir `db_setup.sql` → **Exécuter**.
 - **Ou en ligne de commande** :
   ```bash
@@ -108,18 +110,22 @@ En cas de doute, lancer `php outils/migrer.php` sans option : si la base est en 
 | Étudiant | arthur@uca.fr | password |
 | Partenaire | jean@lebecquipique.fr | password |
 
-## Déploiement Railway
+## Déploiement
 
-```bash
-# Variables d'environnement Railway (configurées automatiquement)
-MYSQLHOST, MYSQLPORT, MYSQLUSER, MYSQLPASSWORD, MYSQLDATABASE
+Le détail — serveur, base, distribution de l'application — est dans
+[docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md). En résumé :
 
-# Push → redéploiement automatique
-git push origin main
-```
+| Voie | Pour quoi |
+|------|-----------|
+| Image Docker (`Dockerfile`) sur Render, avec une base TiDB Cloud | Le serveur de l'API pour l'application mobile |
+| Hébergement mutualisé, par FTP | Le site, déployé par `.github/workflows/deploiement.yml` |
+| WAMP / serveur PHP intégré | Le développement local |
 
-Le fichier `includes/db.php` détecte automatiquement l'environnement Railway via `$_ENV`.
+Le serveur lit sa base dans l'environnement (`MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`,
+`MYSQLPASSWORD`, `MYSQLDATABASE`) ; voir `includes/config.php`.
 
+> **Un push sur `main` déploie par FTP.** C'est pourquoi `main` ne reçoit que des
+> Pull Requests (voir [CONTRIBUTING.md](CONTRIBUTING.md)).
 ## Tests
 
 ```bash
@@ -204,7 +210,7 @@ TitreRNCP/
 ├── partenaire/       # Dashboard, événements, create_event
 ├── tests/            # PHPUnit (Unit/ + Integration/)
 ├── .github/          # CI GitHub Actions
-├── db_setup.sql      # Installation complète : 26 tables + données de démo
+├── db_setup.sql      # Installation complète : 32 tables + données de démo
 ├── db_migrations_v*.sql  # Migrations, appliquées par outils/migrer.php
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md
