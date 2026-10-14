@@ -78,7 +78,7 @@ jobs:
 
       - run: cp android/app/build/outputs/apk/release/app-release.apk Linkee.apk
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: linkee-android
           path: mobile/Linkee.apk
@@ -130,7 +130,7 @@ jobs:
           cp -R build/Linkee.xcarchive/Products/Applications/Linkee.app Payload/
           zip -qr Linkee.ipa Payload
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: linkee-ios
           path: mobile/Linkee.ipa
