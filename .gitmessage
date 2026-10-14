@@ -1,0 +1,12 @@
+# type(scope): description courte, 72 caracteres au plus, sans point final
+#
+# Pourquoi ce changement ? (le code dit deja comment)
+#
+# Une ligne vide entre le titre et le corps. Un seul sujet par commit.
+#
+# Types  : feat fix docs style refactor perf test build ci chore security
+# Scopes : auth wallet events squads profil api partner gamification db legal ui
+# Casse  : feat(api)!: ... puis, en pied, BREAKING CHANGE: ...
+# Ticket : Closes #12
+#
+# Activer pour ce depot :  git config commit.template .gitmessage

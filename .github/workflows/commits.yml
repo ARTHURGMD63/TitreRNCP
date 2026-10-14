@@ -1,0 +1,41 @@
+name: Messages de commit
+
+# Contrôle les commits d'une Pull Request, et eux seuls : l'historique déjà
+# publié n'est pas jugé. Les règles sont celles de CONTRIBUTING.md ; elles vivent
+# dans .github/scripts/verifier_commits.sh, qui se lance aussi en local :
+#
+#   bash .github/scripts/verifier_commits.sh origin/main HEAD
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+jobs:
+  commits:
+    name: Conventional Commits
+    runs-on: ubuntu-latest
+
+    steps:
+      # L'historique complet : le script compare la base et la tête de la PR.
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Vérifier les titres de commit
+        run: bash .github/scripts/verifier_commits.sh "origin/${{ github.base_ref }}" "${{ github.event.pull_request.head.sha }}"
+
+      # Le titre de la PR devient le message du commit de fusion quand on
+      # « squash » : il doit suivre la même règle.
+      - name: Vérifier le titre de la PR
+        env:
+          TITRE: ${{ github.event.pull_request.title }}
+        run: |
+          types='feat|fix|docs|style|refactor|perf|test|build|ci|chore|security'
+          if ! [[ "$TITRE" =~ ^(${types})(\([a-z0-9][a-z0-9/_.-]*\))?!?:\ .+ ]]; then
+            echo "::error::Le titre de la PR « $TITRE » n'est pas un Conventional Commit (type(scope): description)."
+            exit 1
+          fi
+          if [ "${#TITRE}" -gt 72 ]; then
+            echo "::error::Le titre de la PR fait ${#TITRE} caractères, 72 au plus."
+            exit 1
+          fi

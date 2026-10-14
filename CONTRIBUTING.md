@@ -3,27 +3,46 @@
 ## Workflow Git
 
 ### Branches
-- `main` : branche stable, toujours déployable. Auto-déployée sur Railway.
-- `develop` : branche d'intégration des features.
-- `feature/<nom-court>` : nouvelle fonctionnalité (ex. `feature/csrf-tokens`).
-- `fix/<nom-court>` : correction de bug (ex. `fix/wallet-checkin`).
-- `hotfix/<nom-court>` : correction urgente sur prod, mergée directement dans `main`.
-- `chore/<nom-court>` : tâches non fonctionnelles (deps, CI, doc).
 
-### Cycle de vie d'une feature
+- `main` : la branche stable. **Un push sur `main` déploie en production**
+  (`.github/workflows/deploiement.yml`, par FTP). On n'y pousse donc jamais
+  directement : tout passe par une Pull Request.
+- `<type>/<sujet-court>` : une branche par sujet, nommée comme le type de commit
+  qu'elle porte — `feat/`, `fix/`, `refactor/`, `perf/`, `test/`, `docs/`,
+  `ci/`, `chore/`, `hotfix/` (correction urgente de la production).
+  Exemples : `feat/mobile-compte-legal`, `fix/wallet-checkin`.
+- Une branche ne mélange pas les sujets : un refactor et une fonctionnalité sont
+  deux branches. Si la seconde dépend de la première, on l'**empile** (elle part
+  du sommet de la première) et on ouvre la PR de la première en premier.
+- Une branche vit quelques jours, pas quelques mois : elle est supprimée dès
+  qu'elle est fusionnée.
+
+### Cycle de vie d'un changement
 
 ```bash
-git checkout develop
-git pull
-git checkout -b feature/ma-feature
-# ... commits ...
-git push -u origin feature/ma-feature
-# Ouvrir une Pull Request feature/ma-feature → develop
+git fetch origin
+git switch -c feat/ma-feature origin/main
+# ... commits (voir « Conventional Commits » ci-dessous) ...
+composer ci                      # PHPStan + PHPUnit
+git push -u origin feat/ma-feature
+# Ouvrir une Pull Request feat/ma-feature → main
 ```
 
-Une fois la PR validée par la CI (lint + PHPStan + PHPUnit), elle est mergée
-dans `develop`. Quand `develop` est stable, elle est mergée dans `main` via
-une PR de release.
+La PR passe la CI (syntaxe, PHPStan, PHPUnit, intégration MariaDB, application
+mobile, messages de commit) puis est **fusionnée en « squash »** : `main` reçoit
+un seul commit par PR, dont le message est le titre de la PR. Ce titre suit donc
+les Conventional Commits, et la CI le vérifie.
+
+### Versions de l'application mobile
+
+Une version se publie en posant une étiquette `mobile-vX.Y.Z` (semver) :
+
+```bash
+git tag mobile-v1.4.0 && git push origin mobile-v1.4.0
+```
+
+Le workflow `mobile.yml` construit alors l'APK et l'IPA (voir son en-tête).
+On ne réutilise jamais une étiquette.
 
 ## Conventional Commits
 
@@ -38,6 +57,33 @@ Tous les messages de commit doivent suivre la spec
 <body optionnel — pourquoi, pas comment>
 
 <footer optionnel — BREAKING CHANGE, refs issues>
+```
+
+### Règles de rédaction
+
+- **Titre** : 72 caractères au plus (GitHub le tronque au-delà), sans point final,
+  à l'indicatif ou au nominal (`ajoute la barre XP`, `découpe de crm.php`).
+- **Un commit, un sujet.** Si le titre demande un « et » entre deux choses sans
+  rapport, ce sont deux commits.
+- **Le corps dit pourquoi**, pas comment : le diff montre déjà le comment. Une
+  ligne vide sépare le titre du corps.
+- **Un seul type.** `ci/docs:` n'existe pas : si un changement touche la CI et la
+  documentation, ce sont deux commits.
+- **Pas de `fixup!` ni de `squash!`** dans une PR : fusionne-les avant
+  (`git rebase -i --autosquash`).
+- Les tests et la documentation d'un changement vont avec lui, dans le même commit.
+
+Ces règles sont vérifiées par la CI sur chaque Pull Request
+(`.github/workflows/commits.yml`), et se lancent aussi en local :
+
+```bash
+bash .github/scripts/verifier_commits.sh origin/main HEAD
+```
+
+Pour avoir un gabarit à l'ouverture de l'éditeur de commit :
+
+```bash
+git config commit.template .gitmessage
 ```
 
 ### Types autorisés
@@ -67,7 +113,7 @@ feat(gamification): ajoute la barre XP et les niveaux sur le profil
 fix(wallet): corrige le check-in en double quand on scanne deux fois
 security(api): ajoute un token CSRF sur create_squad
 refactor(db): centralise la connexion PDO dans includes/db.php
-docs(readme): documente le déploiement Railway
+docs(readme): documente le déploiement FTP
 test(gamification): couvre xpForLevel et getLevel à 100%
 ci: ajoute PHPStan dans le workflow CI
 ```

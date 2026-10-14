@@ -1,0 +1,10 @@
+# Relecteur par défaut de toute Pull Request.
+# GitHub le demande automatiquement ; avec la protection de branche
+# « Require review from Code Owners », il devient obligatoire.
+*                    @ARTHURGMD63
+
+# Ce qui touche à la sécurité ou au déploiement : toujours relu.
+/.github/            @ARTHURGMD63
+/includes/security.php @ARTHURGMD63
+/includes/compte.php @ARTHURGMD63
+/SECURITY.md         @ARTHURGMD63
