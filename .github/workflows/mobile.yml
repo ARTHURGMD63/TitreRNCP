@@ -44,7 +44,7 @@ jobs:
       run:
         working-directory: mobile
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Vérifier l'adresse du serveur
         run: |
@@ -53,13 +53,13 @@ jobs:
             *) echo "::error::Renseigner la variable EXPO_PUBLIC_API_URL (https://…) dans Settings → Variables."; exit 1 ;;
           esac
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: mobile/package-lock.json
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 17
@@ -78,7 +78,7 @@ jobs:
 
       - run: cp android/app/build/outputs/apk/release/app-release.apk Linkee.apk
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: linkee-android
           path: mobile/Linkee.apk
@@ -89,7 +89,7 @@ jobs:
       run:
         working-directory: mobile
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Vérifier l'adresse du serveur
         run: |
@@ -98,7 +98,7 @@ jobs:
             *) echo "::error::Renseigner la variable EXPO_PUBLIC_API_URL (https://…) dans Settings → Variables."; exit 1 ;;
           esac
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -130,7 +130,7 @@ jobs:
           cp -R build/Linkee.xcarchive/Products/Applications/Linkee.app Payload/
           zip -qr Linkee.ipa Payload
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: linkee-ios
           path: mobile/Linkee.ipa
