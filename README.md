@@ -39,7 +39,7 @@ Linkee connecte les étudiants aux établissements (bars, boîtes, restos) de le
 | Frontend | HTML5, CSS3 (custom properties), JS vanilla |
 | Charts | Chart.js 4 |
 | Styles | Charte Linkee : Unbounded, Instrument Sans, JetBrains Mono (hébergées dans `assets/fonts`) |
-| Tests | PHPUnit 10, PHPStan niveau 5 |
+| Tests | PHPUnit 10, PHPStan niveau 6 |
 | CI/CD | GitHub Actions (PHP 8.1 / 8.2 / 8.3) |
 | Déploiement | Docker (Apache + mod_php + OPcache) ou hébergement mutualisé |
 | Temps réel | Interrogation courte avec ETag et flux de révisions |
@@ -133,13 +133,15 @@ composer stan
 composer ci
 ```
 
-**242 tests, 912 assertions.** Ils couvrent :
+**292 tests, 1 262 assertions** côté PHP, 20 côté mobile (`npm test`, dans `mobile/`). Ils couvrent :
 
 | Domaine | Ce qui est vérifié |
 |---|---|
 | Gamification, validation, sessions, cache, CRM | XP, niveaux, badges, listes blanches, expiration, agrégats |
 | `ApiProtectionTest` | Chaque point d'API en écriture exige jeton et origine, **avant** la première requête SQL — et le JavaScript envoie bien le jeton |
-| `SchemaTest` | `db_setup.sql` et `install_mutualise.sql` décrivent la même base, et le code n'interroge aucune table absente |
+| `SchemaTest` | `db_setup.sql` et `install_mutualise.sql` décrivent la même base, chaque colonne ajoutée par une migration y figure, et le code n'interroge aucune table absente |
+| `PagesProtegeesTest` | Chaque page admin, partenaire ou étudiante appelle sa garde d'accès (un appel commenté ne compte pas) ; `__shot.php` garde ses trois conditions |
+| `PlacesTest` | La règle « complet » : quota atteint, dépassé, nul |
 | `MigrationsTest` | Découpage des scripts SQL : `DELIMITER`, chaînes, commentaires, ordre numérique |
 | `RedirectionTest` | Aucune redirection vers un hôte externe ; contrôle d'origine |
 | `HubTest` | Lecture des critères d'URL du hub : page négative, style inventé, vue inconnue |

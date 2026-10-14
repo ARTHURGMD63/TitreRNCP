@@ -8,6 +8,7 @@
  */
 
 require_once __DIR__ . '/_socle.php';
+require_once __DIR__ . '/../../includes/places.php';
 require_once __DIR__ . '/../../includes/uploads.php';
 require_once __DIR__ . '/../../includes/agregats.php';
 require_once __DIR__ . '/../../includes/sponsoring.php';
@@ -96,8 +97,8 @@ apiReponse([
         'places' => [
             'quota'       => $quota,
             'inscrits'    => $inscrits,
-            'restantes'   => $quota > 0 ? max(0, $quota - $inscrits) : null,
-            'complet'     => $quota > 0 && $inscrits >= $quota,
+            'restantes'   => remplissage($quota, $inscrits)['restantes'],
+            'complet'     => remplissage($quota, $inscrits)['complet'],
             'pourcentage' => $quota > 0 ? (int) round($inscrits / $quota * 100) : null,
         ],
 

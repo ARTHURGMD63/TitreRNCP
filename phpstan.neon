@@ -1,5 +1,5 @@
 parameters:
-    level: 5
+    level: 6
     # Les pages racine et l'espace partenaire sont analysés aussi : c'est là
     # que vit l'essentiel de la logique, et les exclure laissait passer des
     # appels à des fonctions qui n'existent pas.

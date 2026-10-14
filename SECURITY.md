@@ -141,7 +141,7 @@ Réponse sous 48h. Merci de ne pas publier la vulnérabilité publiquement avant
 | A03 | Injection | PDO prepared statements partout |
 | A04 | Insecure Design | Rate limiting, anti-enumeration forgot password |
 | A05 | Security Misconfiguration | Headers HTTP, CSP |
-| A06 | Vulnerable Components | PHPStan niveau 5, dépendances minimales |
+| A06 | Vulnerable Components | PHPStan niveau 6, dépendances minimales |
 | A07 | Auth & Session Failures | Session regen, CSRF, rate limiting |
 | A08 | Software Integrity Failures | Pas de CDN non fiable |
 | A09 | Logging & Monitoring | Partiel : journal PHP via `logErreur()`, échecs d'envoi tracés — pas d'alerte automatique |

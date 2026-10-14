@@ -240,6 +240,9 @@ function csrfFlash(): string {
     return '';
 }
 
+/**
+ * @return array<string, mixed>
+ */
 function currentUser(): array {
     return [
         'id'     => $_SESSION['user_id'] ?? null,

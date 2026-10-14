@@ -205,7 +205,11 @@ function entetesMail(array $config, string $sujet): array
     ];
 }
 
-/** Met les en-têtes au format attendu par mail() et par SMTP. */
+/**
+ * Met les en-têtes au format attendu par mail() et par SMTP.
+ *
+ * @param array<string, string> $entetes
+ */
 function formaterEntetes(array $entetes): string
 {
     $lignes = [];

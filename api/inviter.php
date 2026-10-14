@@ -10,6 +10,7 @@
  */
 require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/places.php';
 require_once __DIR__ . '/../includes/temps_reel.php';
 header('Content-Type: application/json');
 
@@ -28,7 +29,11 @@ $data   = json_decode(file_get_contents('php://input'), true) ?: [];
 $action = $data['action'] ?? 'send';
 $moi    = (int) $_SESSION['user_id'];
 
-/** Titre, quota et remplissage de la cible — null si elle n'existe plus ou est passee. */
+/**
+ * Titre, quota et remplissage de la cible — null si elle n'existe plus ou est passee.
+ *
+ * @return array<string, mixed>|null
+ */
 function cibleValide(PDO $pdo, string $type, int $id): ?array
 {
     if ($type === 'event') {
@@ -109,7 +114,7 @@ if ($action === 'send') {
         echo json_encode(['success' => false, 'message' => "Cette sortie n'est plus disponible"]);
         exit;
     }
-    if ((int) $infos['nb'] >= (int) $infos['quota']) {
+    if (estComplet((int) $infos['nb'], (int) $infos['quota'])) {
         echo json_encode(['success' => false, 'message' => "C'est complet, plus de place à offrir"]);
         exit;
     }
@@ -181,7 +186,7 @@ if ($action === 'accept') {
     }
 
     $dedans = dejaParticipant($pdo, $invite['type'], $cibleId, $moi);
-    if (!$dedans && (int) $infos['nb'] >= (int) $infos['quota']) {
+    if (!$dedans && estComplet((int) $infos['nb'], (int) $infos['quota'])) {
         echo json_encode(['success' => false, 'message' => "Trop tard, c'est complet"]);
         exit;
     }

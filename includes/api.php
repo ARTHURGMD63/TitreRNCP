@@ -206,6 +206,8 @@ function apiUtilisateur(PDO $pdo): array
 /**
  * L'établissement d'un compte partenaire, ou null s'il n'en a pas encore.
  * Relation stricte 1 compte ↔ 1 établissement, comme sur le site.
+ *
+ * @return array<string, mixed>|null
  */
 function apiEtablissementDe(PDO $pdo, int $uid): ?array
 {
@@ -215,7 +217,11 @@ function apiEtablissementDe(PDO $pdo, int $uid): ?array
     return $stmt->fetch() ?: null;
 }
 
-/** Le compte authentifié, en exigeant qu'il soit un établissement partenaire. */
+/**
+ * Le compte authentifié, en exigeant qu'il soit un établissement partenaire.
+ *
+ * @return array<string, mixed>
+ */
 function apiPartenaire(PDO $pdo): array
 {
     $u = apiUtilisateur($pdo);
@@ -226,7 +232,11 @@ function apiPartenaire(PDO $pdo): array
     return $u;
 }
 
-/** Le compte authentifié, en exigeant qu'il soit administrateur. */
+/**
+ * Le compte authentifié, en exigeant qu'il soit administrateur.
+ *
+ * @return array<string, mixed>
+ */
 function apiAdmin(PDO $pdo): array
 {
     $u = apiUtilisateur($pdo);
@@ -237,7 +247,11 @@ function apiAdmin(PDO $pdo): array
     return $u;
 }
 
-/** Le compte authentifié, en exigeant qu'il soit étudiant. */
+/**
+ * Le compte authentifié, en exigeant qu'il soit étudiant.
+ *
+ * @return array<string, mixed>
+ */
 function apiEtudiant(PDO $pdo): array
 {
     $u = apiUtilisateur($pdo);

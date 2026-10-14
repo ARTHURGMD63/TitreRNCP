@@ -12,6 +12,7 @@
  */
 
 require_once __DIR__ . '/_socle.php';
+require_once __DIR__ . '/../../includes/places.php';
 require_once __DIR__ . '/../../includes/crm.php';
 require_once __DIR__ . '/../../includes/sponsoring.php';
 
@@ -67,7 +68,7 @@ apiReponse([
             $quota    = (int) ($e['quota'] ?? 0);
             $inscrits = (int) $e['nb_inscrits'];
             $passe    = strtotime((string) $e['date_heure']) < time();
-            $complet  = $quota > 0 && $inscrits >= $quota;
+            $complet  = remplissage($quota, $inscrits)['complet'];
 
             return [
                 'id'             => (int) $e['id'],

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/places.php';
 require_once __DIR__ . '/../includes/temps_reel.php';
 header('Content-Type: application/json');
 
@@ -34,7 +35,7 @@ $stmt = $pdo->prepare("SELECT COUNT(*) FROM squad_membres WHERE squad_id = ?");
 $stmt->execute([$squad_id]);
 $nbMembres = $stmt->fetchColumn();
 
-if ($nbMembres >= $squad['quota']) {
+if (estComplet((int) $nbMembres, (int) $squad['quota'])) {
     echo json_encode(['success' => false, 'message' => 'Complet']);
     exit;
 }

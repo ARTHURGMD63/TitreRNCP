@@ -8,6 +8,14 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **Tests d'architecture.** `PagesProtegeesTest` : chaque page porte sa garde
+  d'accès, comme `ApiProtectionTest` le fait pour les API. `SchemaTest`
+  contrôle aussi les colonnes ajoutées par les migrations, pas seulement les
+  tables. `PlacesTest` fige la règle « complet ». Côté mobile, 20 tests de
+  `format.ts` et du catalogue (lanceur intégré à Node 24, aucune dépendance),
+  et un job `mobile` dans l'intégration continue : lint et tests.
+- `.dockerignore` : le contexte de build n'envoie plus l'historique Git,
+  l'application mobile et ses `node_modules`, ni les livrables.
 - **Linkee.** StudentLink devient Linkee : charte graphique v1.0 (basalte,
   lave, craie ; Unbounded, Instrument Sans, JetBrains Mono) appliquée à tout
   le web. L'app étudiant est sombre par défaut, l'espace partenaire et le
@@ -22,6 +30,17 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 - **Partager** un événement (feuille de partage native ou copie du lien).
 
 ### Changed
+- **`crm.php` découpé en trois.** 700 lignes mêlaient vocabulaire commercial,
+  souscription, finances et indicateurs produit. Les finances (`finances.php`)
+  et les indicateurs avec leurs alertes (`kpi.php`) en sont extraits à
+  l'identique ; `crm.php` les recharge, les quinze fichiers qui l'incluent ne
+  changent pas.
+- **La règle « complet » écrite une fois** (`includes/places.php`). Elle
+  existait sous six formes voisines, dont un quota nul traité autrement en
+  écriture qu'à l'affichage. Les deux comportements sont nommés et testés ;
+  aucun changement observable.
+- **PHPStan niveau 6.** Quarante et une fonctions déclarent maintenant le
+  contenu de leurs tableaux (`@param` / `@return`), sans changement de code.
 - **Polices hébergées avec l'application** (`assets/fonts/`, 112 Ko). Le
   `@import` Google Fonts enchaînait trois allers-retours vers un serveur tiers
   avant le premier affichage, et transmettait l'adresse IP des visiteurs à

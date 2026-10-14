@@ -33,7 +33,12 @@ if (!abonnementChoisi(abonnementEtablissement($pdo, (int) $etab['id']))) {
 
 $capacites = capacitesEtablissement($pdo, (int) $etab['id']);
 
-/** Catalogues partagés entre GET (préremplissage) et les erreurs de POST. */
+/**
+ * Catalogues partagés entre GET (préremplissage) et les erreurs de POST.
+ *
+ * @param array<string, mixed> $capacites
+ * @return array<string, mixed>
+ */
 function catalogues(array $capacites): array
 {
     return [
@@ -54,6 +59,10 @@ function catalogues(array $capacites): array
     ];
 }
 
+/**
+ * @param array<string, mixed> $e
+ * @return array<string, mixed>
+ */
 function apiEvenementPourEdition(array $e): array
 {
     return [

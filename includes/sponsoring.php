@@ -76,7 +76,11 @@ function libelleSponsoring(?string $code): string
     return $f['nom'] . ' — ' . number_format($f['tarif'], 0, ',', ' ') . ' €';
 }
 
-/** La mise en avant est-elle encore active pour cette ligne d'événement ? */
+/**
+ * La mise en avant est-elle encore active pour cette ligne d'événement ?
+ *
+ * @param array<string, mixed> $evenement
+ */
 function sponsoringActif(array $evenement): bool
 {
     if (empty($evenement['is_sponsorise'])) return false;

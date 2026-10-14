@@ -25,6 +25,9 @@ if (!$etab) {
     apiErreur('Aucun établissement associé à ce compte.', 404, 'etablissement_absent');
 }
 
+/**
+ * @return list<array<string, mixed>>
+ */
 function partenaireAbonnementFormules(PDO $pdo): array
 {
     $restantes = placesFondateurRestantes($pdo);
@@ -42,6 +45,10 @@ function partenaireAbonnementFormules(PDO $pdo): array
     return $formules;
 }
 
+/**
+ * @param array<string, mixed>|null $client
+ * @return array<string, mixed>|null
+ */
 function partenaireAbonnementClient(?array $client): ?array
 {
     if ($client === null) {

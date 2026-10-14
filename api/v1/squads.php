@@ -10,6 +10,7 @@
  */
 
 require_once __DIR__ . '/_socle.php';
+require_once __DIR__ . '/../../includes/places.php';
 require_once __DIR__ . '/../../includes/uploads.php';
 
 apiExigerMethode('GET');
@@ -88,8 +89,8 @@ apiReponse([
                 'places' => [
                     'quota'     => $quota,
                     'membres'   => $nb,
-                    'restantes' => $quota > 0 ? max(0, $quota - $nb) : null,
-                    'complet'   => $quota > 0 && $nb >= $quota,
+                    'restantes' => remplissage($quota, $nb)['restantes'],
+                    'complet'   => remplissage($quota, $nb)['complet'],
                 ],
 
                 'deja_membre' => ((int) $s['deja_membre']) > 0,

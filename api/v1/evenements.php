@@ -24,6 +24,7 @@
  */
 
 require_once __DIR__ . '/_socle.php';
+require_once __DIR__ . '/../../includes/places.php';
 require_once __DIR__ . '/../../includes/hub.php';
 require_once __DIR__ . '/../../includes/musique.php';
 require_once __DIR__ . '/../../includes/evenements_photos.php';
@@ -54,6 +55,7 @@ $resultat = hubEvenements($pdo, $uid, $criteres, $etabsSuivis, $amisParEvent);
  * @param array<int,array{prenoms:list<string>,nb:int}> $amis tel que le rend
  *        hubAmisParEvenement() : les prenoms deja agreges, et leur nombre.
  * @return array<string,mixed>
+ * @param list<int> $etabsSuivis
  */
 function apiEvenement(array $e, array $amis, array $etabsSuivis): array
 {
@@ -95,8 +97,8 @@ function apiEvenement(array $e, array $amis, array $etabsSuivis): array
             // Calcule ici plutot que dans l'application : la regle « complet »
             // doit etre la meme partout, et une soiree sans quota n'est pas
             // une soiree a zero place.
-            'restantes' => $quota > 0 ? max(0, $quota - $inscrits) : null,
-            'complet'   => $quota > 0 && $inscrits >= $quota,
+            'restantes' => remplissage($quota, $inscrits)['restantes'],
+            'complet'   => remplissage($quota, $inscrits)['complet'],
         ],
 
         'reduction'    => $e['reduction'] !== null ? (int) $e['reduction'] : null,

@@ -10,11 +10,23 @@
  * Les seuils et la grille proviennent des documents fondateurs
  * (docs/fondateurs/) : SL-03 pour les tarifs, SL-07 pour les indicateurs
  * et les alertes, SL-13 pour les charges et la trésorerie.
+ *
+ * Ce fichier garde le vocabulaire commercial, le MRR, le churn et la
+ * souscription des établissements. Les finances (finances.php) et les
+ * indicateurs produit avec leurs alertes (kpi.php) en ont été extraits ; ils
+ * sont rechargés ici, si bien que les pages n'incluent toujours que crm.php.
  */
+
+require_once __DIR__ . '/finances.php';
+require_once __DIR__ . '/kpi.php';
 
 // ─── Vocabulaire ────────────────────────────────────────────────────────────
 
-/** Le pipeline commercial de SL-05, dans l'ordre. */
+/**
+ * Le pipeline commercial de SL-05, dans l'ordre.
+ *
+ * @return array<string, array{libelle: string, couleur: string, actif: bool}>
+ */
 function crmStatuts(): array
 {
     return [
@@ -42,6 +54,8 @@ function crmCouleurStatut(string $code): string
  * La grille de SL-03. `tarif` est le prix catalogue mensuel HT ; le montant
  * réellement facturé vit dans `crm_clients.mrr`, parce que le tarif fondateur
  * est gelé et qu'une grille qui bouge ne doit pas réécrire un contrat signé.
+ *
+ * @return array<string, array{libelle: string, tarif: int, note: string}>
  */
 function crmOffres(): array
 {
@@ -59,6 +73,9 @@ function crmLibelleOffre(string $code): string
     return crmOffres()[$code]['libelle'] ?? $code;
 }
 
+/**
+ * @return array<string, string>
+ */
 function crmCategoriesClient(): array
 {
     return [
@@ -71,6 +88,9 @@ function crmCategoriesClient(): array
     ];
 }
 
+/**
+ * @return array<string, string>
+ */
 function crmTypesInteraction(): array
 {
     return [
@@ -81,73 +101,6 @@ function crmTypesInteraction(): array
         'relance' => 'Relance',
         'note'    => 'Note',
     ];
-}
-
-/** Catégories du registre, séparées par sens pour que les formulaires ne mélangent pas. */
-function financeCategories(): array
-{
-    return [
-        'recette' => [
-            'abonnement'    => 'Abonnement établissement',
-            'sponsoring'    => 'Mise en avant payante',
-            'autre_recette' => 'Autre recette',
-        ],
-        'depense' => [
-            'hebergement'   => 'Hébergement, domaine, e-mails',
-            'banque'        => 'Banque professionnelle',
-            'comptabilite'  => 'Comptabilité',
-            'assurance'     => 'Assurance RC pro',
-            'marketing'     => 'Marketing et acquisition',
-            'juridique'     => 'Juridique, marque, statuts',
-            'materiel'      => 'Matériel',
-            'autre_depense' => 'Autre dépense',
-        ],
-    ];
-}
-
-function financeLibelleCategorie(string $code): string
-{
-    foreach (financeCategories() as $groupe) {
-        if (isset($groupe[$code])) return $groupe[$code];
-    }
-    return $code;
-}
-
-// ─── Repères issus des documents fondateurs ─────────────────────────────────
-
-/**
- * Capital de départ (SL-13 §3). Le solde de trésorerie part de là et se
- * corrige par le registre. À ajuster une fois la société créée et le compte
- * professionnel ouvert — c'est un point de départ, pas une vérité comptable.
- */
-const FINANCE_CAPITAL_INITIAL = 1000.00;
-
-/** Plancher de trésorerie (SL-13 §3). En dessous : décision commune sous 15 jours. */
-const FINANCE_PLANCHER = 1000.00;
-
-/** Charges mensuelles de structure retenues (SL-13 §2). Sert au point mort. */
-const FINANCE_CHARGES_MENSUELLES = 180.00;
-
-/** Objectif de pass scannés par semaine, par jalon (SL-07 §1). */
-function kpiObjectifsNorthStar(): array
-{
-    return [
-        '2026-10-01' => 30,
-        '2026-12-01' => 150,
-        '2027-03-01' => 400,
-        '2027-09-01' => 1000,
-    ];
-}
-
-/** L'objectif en vigueur aujourd'hui : le dernier jalon franchi. */
-function kpiObjectifCourant(?int $maintenant = null): int
-{
-    $ts = $maintenant ?? time();
-    $objectif = 0;
-    foreach (kpiObjectifsNorthStar() as $date => $cible) {
-        if (strtotime($date) <= $ts) $objectif = $cible;
-    }
-    return $objectif ?: 30;
 }
 
 // ─── Calculs commerciaux ────────────────────────────────────────────────────
@@ -192,6 +145,8 @@ function crmMrrEngage(PDO $pdo): float
  * `signe_le` porte la date du premier engagement ; `updated_at` bouge à chaque
  * changement de formule. Comparer les deux permet de distinguer une nouvelle
  * signature d'une montée de gamme, qui n'a pas la même valeur commerciale.
+ *
+ * @return list<array<string, mixed>>
  */
 function crmSouscriptionsRecentes(PDO $pdo, int $limite = 6): array
 {
@@ -237,7 +192,11 @@ function crmClientsPayants(PDO $pdo): int
     )->fetchColumn();
 }
 
-/** Répartition du pipeline, tous statuts présents même à zéro. */
+/**
+ * Répartition du pipeline, tous statuts présents même à zéro.
+ *
+ * @return array<string, int>
+ */
 function crmPipeline(PDO $pdo): array
 {
     $repartition = array_fill_keys(array_keys(crmStatuts()), 0);
@@ -278,151 +237,6 @@ function crmChurnMensuel(PDO $pdo): ?float
     return crmCalculChurn($perdus, $debutMois);
 }
 
-// ─── Indicateurs produit (SL-07) ────────────────────────────────────────────
-
-/**
- * Le tableau de bord hebdomadaire, sur 7 jours glissants.
- * `pass_scannes` est la North Star : c'est ce que la plaquette promet aux
- * partenaires, donc c'est ce que nous mesurons.
- */
-function kpiHebdomadaires(PDO $pdo): array
-{
-    $q = static function (PDO $pdo, string $sql): int {
-        return (int) $pdo->query($sql)->fetchColumn();
-    };
-
-    $inscrits7j = $q($pdo, "SELECT COUNT(*) FROM inscriptions WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) AND statut != 'annule'");
-    $scannes7j  = $q($pdo, "SELECT COUNT(*) FROM inscriptions WHERE statut = 'checkin' AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)");
-
-    return [
-        'pass_scannes'     => $scannes7j,
-        'objectif_scannes' => kpiObjectifCourant(),
-        'etudiants'        => $q($pdo, "SELECT COUNT(*) FROM users WHERE type = 'etudiant'"),
-        'etudiants_7j'     => $q($pdo, "SELECT COUNT(*) FROM users WHERE type = 'etudiant' AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)"),
-        'events_7j'        => $q($pdo, "SELECT COUNT(*) FROM evenements WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)"),
-        'reservations_7j'  => $inscrits7j,
-        'invitations_7j'   => $q($pdo, "SELECT COUNT(*) FROM invitations WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)"),
-        'squads_actifs'    => $q($pdo, "SELECT COUNT(*) FROM squads WHERE date_heure >= NOW()"),
-        'etabs'            => $q($pdo, "SELECT COUNT(*) FROM etablissements"),
-        'etabs_actifs'     => $q($pdo, "SELECT COUNT(DISTINCT etablissement_id) FROM evenements WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)"),
-        'taux_presence'    => tauxPresenceGlobal($pdo),
-    ];
-}
-
-/**
- * Scannés ÷ inscrits sur les soirées passées (SL-07 : cible 70 % minimum).
- * Calculé sur les événements terminés seulement : une soirée à venir n'a
- * aucun scan et écraserait la moyenne vers zéro.
- */
-function tauxPresenceGlobal(PDO $pdo, int $joursEnArriere = 30): ?float
-{
-    $stmt = $pdo->prepare(
-        "SELECT COUNT(*) AS inscrits,
-                SUM(i.statut = 'checkin') AS presents
-           FROM inscriptions i
-           JOIN evenements e ON e.id = i.evenement_id
-          WHERE e.date_heure < NOW()
-            AND e.date_heure >= DATE_SUB(NOW(), INTERVAL ? DAY)
-            AND i.statut != 'annule'"
-    );
-    $stmt->execute([$joursEnArriere]);
-    $ligne = $stmt->fetch();
-
-    return tauxPresence((int) ($ligne['inscrits'] ?? 0), (int) ($ligne['presents'] ?? 0));
-}
-
-/**
- * Scannés ÷ inscrits, en pourcentage. Null sans aucun inscrit : une soirée
- * sans réservation n'a pas un taux de présence de 0 %, elle n'en a pas.
- */
-function tauxPresence(int $inscrits, int $presents): ?float
-{
-    return $inscrits > 0 ? $presents / $inscrits * 100 : null;
-}
-
-/**
- * Les signaux de SL-07 §3. Chacun déclenche une action, pas une discussion :
- * le libellé dit donc quoi faire, pas seulement ce qui va mal.
- */
-function crmAlertes(PDO $pdo): array
-{
-    $alertes = [];
-
-    // Établissement sans soirée publiée depuis 21 jours : premier signe de
-    // churn, bien avant la résiliation.
-    $stmt = $pdo->query(
-        "SELECT c.id, c.nom,
-                DATEDIFF(CURDATE(), COALESCE(MAX(e.created_at), c.created_at)) AS jours
-           FROM crm_clients c
-           JOIN etablissements et ON et.id = c.etablissement_id
-           LEFT JOIN evenements e ON e.etablissement_id = et.id
-          WHERE c.statut IN ('actif','essai')
-          GROUP BY c.id, c.nom, c.created_at
-         HAVING jours >= 21
-          ORDER BY jours DESC"
-    );
-    foreach ($stmt as $ligne) {
-        $alertes[] = [
-            'niveau'  => 'alerte',
-            'titre'   => $ligne['nom'] . ' — ' . (int) $ligne['jours'] . ' jours sans soirée publiée',
-            'action'  => 'Appel dans la semaine : c\'est le premier signe de churn.',
-            'lien'    => 'client.php?id=' . $ligne['id'],
-        ];
-    }
-
-    // Fil trop statique : moins de 10 soirées publiées sur 7 jours.
-    $events7j = (int) $pdo->query(
-        "SELECT COUNT(*) FROM evenements WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)"
-    )->fetchColumn();
-    if ($events7j < 10) {
-        $alertes[] = [
-            'niveau' => 'alerte',
-            'titre'  => $events7j . ' soirée' . ($events7j > 1 ? 's' : '') . ' publiée' . ($events7j > 1 ? 's' : '') . ' cette semaine (seuil : 10)',
-            'action' => 'Le fil devient statique et la rétention étudiante va chuter : priorité au recrutement de partenaires.',
-            'lien'   => 'clients.php?statut=prospect',
-        ];
-    }
-
-    // Taux de présence sous 60 % : vérifier le rappel de la veille, puis
-    // appeler le partenaire avant qu'il ne tire ses propres conclusions.
-    $taux = tauxPresenceGlobal($pdo);
-    if ($taux !== null && $taux < 60) {
-        $alertes[] = [
-            'niveau' => 'danger',
-            'titre'  => 'Taux de présence à ' . number_format($taux, 1, ',', ' ') . ' % (seuil : 60 %)',
-            'action' => 'Vérifier que le rappel de la veille part bien, puis appeler les partenaires concernés.',
-            'lien'   => 'evenements.php',
-        ];
-    }
-
-    // Plancher de trésorerie.
-    $solde = financeSolde($pdo);
-    if ($solde < FINANCE_PLANCHER) {
-        $alertes[] = [
-            'niveau' => 'danger',
-            'titre'  => 'Trésorerie à ' . number_format($solde, 0, ',', ' ') . ' € (plancher : ' . number_format(FINANCE_PLANCHER, 0, ',', ' ') . ' €)',
-            'action' => 'Arrêt de toute dépense non indispensable, aucun nouvel engagement, décision commune sous 15 jours.',
-            'lien'   => 'finances.php',
-        ];
-    }
-
-    // Relances échues.
-    $relances = (int) $pdo->query(
-        "SELECT COUNT(*) FROM crm_interactions
-          WHERE fait = 0 AND prochaine_action_le IS NOT NULL AND prochaine_action_le <= CURDATE()"
-    )->fetchColumn();
-    if ($relances > 0) {
-        $alertes[] = [
-            'niveau' => 'info',
-            'titre'  => $relances . ' relance' . ($relances > 1 ? 's' : '') . ' à faire',
-            'action' => 'Des actions notées en fiche client sont arrivées à échéance.',
-            'lien'   => 'clients.php?relances=1',
-        ];
-    }
-
-    return $alertes;
-}
-
 // ─── Souscription d'un établissement ──────────────────────────────────
 
 /** Nombre de places fondateur, annoncé publiquement (SL-03 §4). */
@@ -437,6 +251,8 @@ const FIN_OFFRE_FONDATEUR = '2026-12-31';
  * C'est elle qui porte l'abonnement : `etablissements` décrit le lieu,
  * `crm_clients` décrit le contrat. Les deux ne se confondent pas, puisqu'une
  * fiche existe déjà avant toute inscription pour les prospects.
+ *
+ * @return array<string, mixed>|null
  */
 function abonnementEtablissement(PDO $pdo, int $etablissementId): ?array
 {
@@ -446,7 +262,11 @@ function abonnementEtablissement(PDO $pdo, int $etablissementId): ?array
     return $stmt->fetch() ?: null;
 }
 
-/** Un établissement a-t-il choisi une formule ? */
+/**
+ * Un établissement a-t-il choisi une formule ?
+ *
+ * @param array<string, mixed>|null $client
+ */
 function abonnementChoisi(?array $client): bool
 {
     return $client !== null && ($client['offre'] ?? 'aucune') !== 'aucune';
@@ -483,6 +303,8 @@ function offreFondateurOuverte(PDO $pdo, ?int $maintenant = null): bool
  * `bde` n'y figure pas : la gratuité BDE est inscrite au contrat partenaire
  * (SL-03), elle passe donc par un fondateur. La laisser en libre-service
  * reviendrait à offrir l'abonnement à qui coche la bonne case.
+ *
+ * @return array<string, array{libelle: string, tarif: int, note: string}>
  */
 function formulesSouscriptibles(PDO $pdo): array
 {
@@ -520,6 +342,8 @@ function finEssaiPourFormule(string $offre, ?int $maintenant = null): string
  * l'établissement. Un compte qui publie des soirées sans abonnement consomme
  * l'audience sans qu'aucune décision commerciale n'ait été prise, et
  * n'apparaît dans le CRM qu'en « essai » par défaut.
+ *
+ * @param array<string, mixed>|null $etablissement
  */
 function exigerAbonnement(PDO $pdo, ?array $etablissement): void
 {
@@ -538,164 +362,3 @@ function crmSignalementsEnAttente(PDO $pdo): int
     return (int) $pdo->query("SELECT COUNT(*) FROM user_reports WHERE statut = 'nouveau'")->fetchColumn();
 }
 
-// ─── Finances ───────────────────────────────────────────────────────────────
-
-/**
- * Solde de trésorerie : capital de départ, plus les recettes réglées, moins
- * les dépenses réglées. Les lignes `prevu` n'entrent pas — une facture émise
- * n'est pas de l'argent en banque, et c'est précisément la confusion que ce
- * registre existe pour éviter.
- */
-function financeSolde(PDO $pdo): float
-{
-    $solde = (float) $pdo->query(
-        "SELECT COALESCE(SUM(CASE WHEN sens = 'recette' THEN montant_ht ELSE -montant_ht END), 0)
-           FROM finance_mouvements
-          WHERE statut = 'regle'"
-    )->fetchColumn();
-
-    return FINANCE_CAPITAL_INITIAL + $solde;
-}
-
-/** Un mois vide, pour que la série n'ait jamais de trou. */
-function financeMoisVide(): array
-{
-    return ['recettes' => 0.0, 'depenses' => 0.0, 'resultat' => 0.0,
-            'prevu_recettes' => 0.0, 'prevu_depenses' => 0.0];
-}
-
-/**
- * Totaux d'un mois donné (format 'Y-m').
- *
- * `regle` et `prevu` sont séparés parce qu'ils ne répondent pas à la même
- * question : le résultat du mois ne compte que l'argent qui a bougé, le
- * prévisionnel dit ce qui reste à encaisser ou à payer.
- *
- * @return array{recettes:float, depenses:float, resultat:float, prevu_recettes:float, prevu_depenses:float}
- */
-function financeMois(PDO $pdo, string $mois): array
-{
-    $stmt = $pdo->prepare(
-        "SELECT
-            COALESCE(SUM(CASE WHEN sens='recette' AND statut='regle' THEN montant_ht END), 0) AS recettes,
-            COALESCE(SUM(CASE WHEN sens='depense' AND statut='regle' THEN montant_ht END), 0) AS depenses,
-            COALESCE(SUM(CASE WHEN sens='recette' AND statut='prevu' THEN montant_ht END), 0) AS prevu_recettes,
-            COALESCE(SUM(CASE WHEN sens='depense' AND statut='prevu' THEN montant_ht END), 0) AS prevu_depenses
-           FROM finance_mouvements
-          WHERE DATE_FORMAT(date_mouvement, '%Y-%m') = ?"
-    );
-    $stmt->execute([$mois]);
-    $l = $stmt->fetch() ?: [];
-
-    $recettes = (float) ($l['recettes'] ?? 0);
-    $depenses = (float) ($l['depenses'] ?? 0);
-
-    return [
-        'recettes'       => $recettes,
-        'depenses'       => $depenses,
-        'resultat'       => $recettes - $depenses,
-        'prevu_recettes' => (float) ($l['prevu_recettes'] ?? 0),
-        'prevu_depenses' => (float) ($l['prevu_depenses'] ?? 0),
-    ];
-}
-
-/**
- * Les N derniers mois, du plus ancien au plus récent, pour le graphique.
- *
- * Une seule requête groupée, pas une par mois : la version naïve faisait
- * douze allers-retours pour dessiner douze barres, et le coût aurait grandi
- * avec la fenêtre affichée. Les mois sans mouvement sont ensuite remplis à
- * zéro — un trou dans une série temporelle se lit comme une absence de
- * données, pas comme un zéro.
- */
-function financeSerieMensuelle(PDO $pdo, int $nbMois = 12): array
-{
-    $nbMois = max(1, $nbMois);
-
-    $serie = [];
-    for ($i = $nbMois - 1; $i >= 0; $i--) {
-        $serie[date('Y-m', strtotime("-$i month"))] = financeMoisVide();
-    }
-
-    $stmt = $pdo->prepare(
-        "SELECT DATE_FORMAT(date_mouvement, '%Y-%m') AS mois,
-                COALESCE(SUM(CASE WHEN sens='recette' AND statut='regle' THEN montant_ht END), 0) AS recettes,
-                COALESCE(SUM(CASE WHEN sens='depense' AND statut='regle' THEN montant_ht END), 0) AS depenses,
-                COALESCE(SUM(CASE WHEN sens='recette' AND statut='prevu' THEN montant_ht END), 0) AS prevu_recettes,
-                COALESCE(SUM(CASE WHEN sens='depense' AND statut='prevu' THEN montant_ht END), 0) AS prevu_depenses
-           FROM finance_mouvements
-          WHERE date_mouvement >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL ? MONTH), '%Y-%m-01')
-          GROUP BY mois"
-    );
-    $stmt->execute([$nbMois - 1]);
-
-    foreach ($stmt as $l) {
-        if (!isset($serie[$l['mois']])) continue;
-        $recettes = (float) $l['recettes'];
-        $depenses = (float) $l['depenses'];
-        $serie[$l['mois']] = [
-            'recettes'       => $recettes,
-            'depenses'       => $depenses,
-            'resultat'       => $recettes - $depenses,
-            'prevu_recettes' => (float) $l['prevu_recettes'],
-            'prevu_depenses' => (float) $l['prevu_depenses'],
-        ];
-    }
-
-    return $serie;
-}
-
-/**
- * Point mort : combien de clients au panier moyen couvrent les charges.
- *
- * Sans client payant on se rabat sur le tarif Essentiel de la grille : le
- * panier moyen vaut alors zéro, et diviser les charges par zéro ne donne
- * rien d'affichable. C'est aussi l'hypothèse de SL-03 — « 3 clients à 79 € ».
- *
- * @return array{charges:float, panier_moyen:float, clients_requis:int, atteint:bool, mrr:float}
- */
-function financeCalculPointMort(float $mrr, int $payants, float $charges): array
-{
-    $panier = $payants > 0 ? $mrr / $payants : (float) crmOffres()['essentiel']['tarif'];
-
-    return [
-        'charges'        => $charges,
-        'panier_moyen'   => $panier,
-        'clients_requis' => (int) ceil($charges / max($panier, 1)),
-        'atteint'        => $mrr >= $charges,
-        'mrr'            => $mrr,
-    ];
-}
-
-/** Le point mort actuel, lu en base. */
-function financePointMort(PDO $pdo): array
-{
-    return financeCalculPointMort(crmMrr($pdo), crmClientsPayants($pdo), FINANCE_CHARGES_MENSUELLES);
-}
-
-/**
- * Autonomie : combien de mois le solde tient au rythme observé.
- *
- * Null quand la consommation nette est nulle ou négative — on ne brûle plus
- * rien, la question ne se pose pas. Un solde négatif rend zéro : l'autonomie
- * est déjà épuisée, pas « négative ».
- */
-function financeCalculAutonomie(float $solde, float $consommationMensuelle): ?float
-{
-    if ($consommationMensuelle <= 0) return null;
-
-    return max(0.0, $solde) / $consommationMensuelle;
-}
-
-/** L'autonomie actuelle, au rythme des trois derniers mois. */
-function financeAutonomieMois(PDO $pdo): ?float
-{
-    // Moyenne des trois derniers mois : un mois isolé sans dépense saisie ne
-    // signifie pas que les charges ont disparu.
-    $total = 0.0;
-    foreach (financeSerieMensuelle($pdo, 3) as $m) {
-        $total += max(0, $m['depenses'] - $m['recettes']);
-    }
-
-    return financeCalculAutonomie(financeSolde($pdo), $total / 3);
-}

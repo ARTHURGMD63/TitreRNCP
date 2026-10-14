@@ -57,7 +57,11 @@ function interetsDepuisTexte(?string $texte): array
     return array_values(array_filter(array_map('trim', explode(',', $texte))));
 }
 
-/** Recompose la colonne `users.interests`. */
+/**
+ * Recompose la colonne `users.interests`.
+ *
+ * @param array<int, string> $interets
+ */
 function interetsVersTexte(array $interets): string
 {
     return implode(',', $interets);

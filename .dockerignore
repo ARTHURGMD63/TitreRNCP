@@ -1,0 +1,46 @@
+# Ce que l'image de production n'a pas à embarquer.
+#
+# Sans ce fichier, `COPY . /var/www/html` envoie au démon Docker le dépôt
+# entier : l'historique Git, l'application mobile avec ses node_modules
+# (plus de 500 Mo) et les livrables de présentation. Rien de cela ne sert
+# à Apache, tout cela ralentit la construction et grossit l'image.
+#
+# Ne figurent PAS ici : vendor/ (l'image ne lance pas composer), outils/ et
+# les db_migrations_v*.sql (les migrations se jouent depuis le conteneur).
+
+# Historique et métadonnées du dépôt
+.git
+.gitignore
+.gitattributes
+.github
+
+# Application mobile : construite et distribuée à part
+mobile
+
+# Tests et caches d'analyse
+tests
+.phpunit.cache
+coverage
+phpunit.xml
+phpstan.neon
+
+# Livrables de présentation et documentation
+docs
+*.pptx
+*.docx
+*.mp4
+*.pdf
+Linkee.bat
+
+# Secrets et réglages locaux : ils se fournissent par l'environnement
+.env
+.env.local
+.env.example
+includes/config.local.php
+.shot-enabled
+
+# Poste de développement
+node_modules
+.vscode
+.idea
+*.log

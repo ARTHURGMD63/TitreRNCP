@@ -137,7 +137,7 @@ composer ci    # = phpstan + phpunit
 
 La CI bloque tout commit qui :
 - ne passe pas `php -l` (syntaxe)
-- déclenche une erreur PHPStan niveau 5
+- déclenche une erreur PHPStan niveau 6
 - casse au moins un test PHPUnit
 
 ## Tests

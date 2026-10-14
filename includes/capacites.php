@@ -60,6 +60,8 @@ function capacitesEtablissement(PDO $pdo, int $etablissementId): array
  * compte, pas celle de la soirée. L'événement en cours de modification ne se
  * compte pas lui-même, sinon rééditer une offre flash existante déclencherait
  * son propre quota.
+ *
+ * @param array<string, mixed> $capacites
  */
 function flashDisponible(PDO $pdo, int $etablissementId, array $capacites, ?int $evenementExclu = null): bool
 {
@@ -91,6 +93,8 @@ function flashDisponible(PDO $pdo, int $etablissementId, array $capacites, ?int 
  * Une mise en avant comprise dans l'abonnement s'écrit comme une ligne de
  * sponsoring à 0 €, et non comme une absence de sponsoring : sans trace, on
  * ne saurait pas combien en ont déjà été consommées.
+ *
+ * @param array<string, mixed> $capacites
  */
 function misesEnAvantOffertesRestantes(PDO $pdo, int $etablissementId, array $capacites): int
 {

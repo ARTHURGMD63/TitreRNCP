@@ -4,6 +4,9 @@
  * Appeler checkBadges($pdo, $uid) après chaque action majeure (inscription, squad, follow, avis).
  */
 
+/**
+ * @return array{events: int, squads: int, follows: int, avis: int, economies: float}
+ */
 function getUserStats(PDO $pdo, int $uid): array {
     $stats = [];
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM inscriptions WHERE user_id=? AND statut != 'annule'");
@@ -29,7 +32,11 @@ function getUserStats(PDO $pdo, int $uid): array {
     return $stats;
 }
 
-/** XP = 15 × events + 10 × squads + 5 × follows + 8 × avis */
+/**
+ * XP = 15 × events + 10 × squads + 5 × follows + 8 × avis
+ *
+ * @param array<string, int|float> $stats
+ */
 function getXp(array $stats): int {
     return $stats['events']*15 + $stats['squads']*10 + $stats['follows']*5 + $stats['avis']*8;
 }
@@ -43,6 +50,9 @@ function xpForLevel(int $level): int {
     return ($level - 1) ** 2 * 50;
 }
 
+/**
+ * @return list<string>
+ */
 function checkBadges(PDO $pdo, int $uid): array {
     $stats = getUserStats($pdo, $uid);
     $unlocked = [];
@@ -71,6 +81,9 @@ function checkBadges(PDO $pdo, int $uid): array {
     return $unlocked;
 }
 
+/**
+ * @return list<array<string, mixed>>
+ */
 function getUserBadges(PDO $pdo, int $uid): array {
     $stmt = $pdo->prepare("
         SELECT b.*, ub.unlocked_at
@@ -83,6 +96,9 @@ function getUserBadges(PDO $pdo, int $uid): array {
     return $stmt->fetchAll();
 }
 
+/**
+ * @return list<array<string, mixed>>
+ */
 function getAllBadges(PDO $pdo): array {
     return $pdo->query("SELECT * FROM badges")->fetchAll();
 }

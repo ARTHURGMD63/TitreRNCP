@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/places.php';
 require_once __DIR__ . '/../includes/temps_reel.php';
 require_once __DIR__ . '/../includes/evenements_temps.php';
 header('Content-Type: application/json');
@@ -59,7 +60,7 @@ try {
     $stmt->execute([$evenement_id]);
     $nbInscrits = (int) $stmt->fetchColumn();
 
-    if ($nbInscrits >= (int) $event['quota']) {
+    if (estComplet($nbInscrits, (int) $event['quota'])) {
         $pdo->rollBack();
         echo json_encode(['success' => false, 'message' => 'Complet']);
         exit;

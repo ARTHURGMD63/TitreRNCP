@@ -75,6 +75,115 @@ final class SchemaTest extends TestCase
         );
     }
 
+    /**
+     * Le test des tables ne voit pas une colonne oubliée : une migration qui
+     * ajoute `users.ville` sans que les fichiers d'installation la
+     * reprennent laisse la table intacte, donc le contrôle précédent passe,
+     * et une installation neuve échoue au premier INSERT.
+     *
+     * Une colonne est « présente » si le CREATE TABLE la déclare ou si le
+     * fichier l'ajoute ensuite par ALTER TABLE (install_mutualise.sql le fait
+     * pour les bases mutualisées, par des requêtes préparées).
+     */
+    public function testChaqueColonneAjouteeParUneMigrationEstDansLesInstallations(): void
+    {
+        $migrations = $this->colonnesAjoutees(implode("\n", array_map(
+            static fn (string $f): string => (string) file_get_contents($f),
+            glob($this->racine . '/db_migrations_v*.sql') ?: []
+        )));
+
+        $this->assertNotEmpty($migrations, 'Aucune colonne lue dans les migrations : le test ne contrôle plus rien.');
+
+        foreach (['db_setup.sql', 'install_mutualise.sql'] as $fichier) {
+            $sql      = (string) file_get_contents($this->racine . '/' . $fichier);
+            $presentes = $this->colonnesDeclarees($sql);
+            foreach ($this->colonnesAjoutees($sql) as $table => $colonnes) {
+                $presentes[$table] = array_merge($presentes[$table] ?? [], $colonnes);
+            }
+
+            $manquantes = [];
+            foreach ($migrations as $table => $colonnes) {
+                foreach (array_diff($colonnes, $presentes[$table] ?? []) as $colonne) {
+                    $manquantes[] = "$table.$colonne";
+                }
+            }
+
+            $this->assertSame(
+                [],
+                $manquantes,
+                "$fichier ne contient pas les colonnes ajoutées par les migrations : "
+                . implode(', ', $manquantes) . '.'
+            );
+        }
+    }
+
+    /** Mots qui suivent ADD sans désigner une colonne. */
+    private const MOTS_NON_COLONNE = 'KEY|INDEX|CONSTRAINT|UNIQUE|FOREIGN|PRIMARY|FULLTEXT';
+
+    /** @return array<string,list<string>> table => colonnes des CREATE TABLE */
+    private function colonnesDeclarees(string $sql): array
+    {
+        // Les commentaires précèdent souvent une colonne : ils fausseraient le découpage.
+        $sql = (string) preg_replace('/^[ \t]*--.*$/m', '', $sql);
+        $out = [];
+
+        preg_match_all(
+            '/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([a-z_][a-z0-9_]*)`?\s*\(/i',
+            $sql,
+            $m,
+            PREG_OFFSET_CAPTURE
+        );
+
+        foreach ($m[1] as $i => [$table]) {
+            // Le corps s'arrête à la parenthèse qui ferme celle du CREATE :
+            // DECIMAL(10,7) ou TINYINT(1) en contiennent d'autres.
+            $debut = $m[0][$i][1] + strlen($m[0][$i][0]);
+            $fin   = $debut;
+            for ($niveau = 1; $niveau > 0 && $fin < strlen($sql); $fin++) {
+                $niveau += $sql[$fin] === '(' ? 1 : ($sql[$fin] === ')' ? -1 : 0);
+            }
+
+            foreach (preg_split('/,\s*\R/', substr($sql, $debut, $fin - $debut - 1)) ?: [] as $ligne) {
+                if (
+                    preg_match('/^\s*`?([a-z_][a-z0-9_]*)`?\s+[a-z]/i', $ligne, $c)
+                    && !preg_match('/^\s*(?:' . self::MOTS_NON_COLONNE . ')\b/i', $ligne)
+                ) {
+                    $out[strtolower($table)][] = strtolower($c[1]);
+                }
+            }
+        }
+
+        return $out;
+    }
+
+    /** @return array<string,list<string>> table => colonnes des ALTER TABLE … ADD */
+    private function colonnesAjoutees(string $sql): array
+    {
+        $out = [];
+
+        // Fin d'une instruction : `;`, ou la quote qui ferme une requête
+        // préparée passée à PREPARE (`'…',` ou `'…')`).
+        preg_match_all(
+            '/ALTER\s+TABLE\s+`?([a-z_][a-z0-9_]*)`?\s+(.*?)(?:;|\'\s*,|\'\s*\))/is',
+            $sql,
+            $m,
+            PREG_SET_ORDER
+        );
+
+        foreach ($m as $alter) {
+            preg_match_all(
+                '/ADD\s+(?!(?:' . self::MOTS_NON_COLONNE . ')\b)(?:COLUMN\s+)?(?:IF\s+NOT\s+EXISTS\s+)?`?([a-z_][a-z0-9_]*)`?\s+[a-z]/i',
+                $alter[2],
+                $c
+            );
+            foreach ($c[1] as $colonne) {
+                $out[strtolower($alter[1])][] = strtolower($colonne);
+            }
+        }
+
+        return $out;
+    }
+
     public function testLeSuiviDesMigrationsEstAmorce(): void
     {
         // Sans cet amorçage, `php outils/migrer.php` proposerait de rejouer

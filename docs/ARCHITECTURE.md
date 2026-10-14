@@ -84,6 +84,8 @@ Les autres pages n'ont pas été découpées : à 300–500 lignes, elles resten
 | `migrations.php` | Découpage des scripts SQL et suivi des versions appliquées |
 | `mail.php` | Envoi : en-têtes RFC, encodage, transport `mail()` ou SMTP authentifié |
 | `hub.php` | Couche données du hub étudiant |
+| `crm.php`, `finances.php`, `kpi.php` | Back-office fondateurs, un fichier par sujet : vocabulaire commercial, MRR et souscription (`crm.php`) ; registre, solde, point mort (`finances.php`) ; indicateurs produit et alertes (`kpi.php`). Les pages n'incluent que `crm.php`, qui recharge les deux autres |
+| `places.php` | La règle « complet » : `estComplet()` pour les écritures, `remplissage()` pour l'affichage de l'API. Un quota nul ferme l'inscription mais ne s'affiche pas « complet » |
 | `temps_reel.php` | Flux de révisions et ETag |
 | `cache.php`, `agregats.php` | APCu si présent, fichiers sinon ; agrégats partagés |
 
@@ -128,7 +130,7 @@ Trois tables dédiées (migration v12) :
   banque) sont séparées des lignes `regle`, parce que confondre les deux est
   exactement ce qui fait croire qu'on a de la trésorerie.
 
-Les calculs vivent dans `includes/crm.php`, jamais dans les pages : le MRR
+Les calculs vivent dans `includes/crm.php`, `finances.php` et `kpi.php`, jamais dans les pages : le MRR
 affiché sur le tableau de bord et celui de la page finances doivent venir de la
 même fonction. Les règles chiffrées (point mort, churn, autonomie, taux de
 présence) sont isolées en fonctions pures — `financeCalculPointMort()`,
@@ -249,7 +251,7 @@ git push origin main
 GitHub Actions (.github/workflows/ci.yml)
        │
        ├─ PHP Lint (syntax check)
-       ├─ PHPStan niveau 5
+       ├─ PHPStan niveau 6
        └─ PHPUnit 40 tests (PHP 8.1 / 8.2 / 8.3)
              │
              ▼ (si succès)
