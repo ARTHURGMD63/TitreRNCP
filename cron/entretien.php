@@ -77,12 +77,17 @@ if ($simulation) {
 // Un jeton périmé ne vaut plus rien, mais il reste une empreinte liée à une
 // adresse e-mail : le conserver, c'est garder une donnée personnelle sans
 // raison — ce que le registre RGPD du projet interdit.
-if ($simulation) {
-    $stmt = $pdo->query("SELECT COUNT(*) FROM password_resets WHERE expires_at < NOW() - INTERVAL 1 DAY");
-    printf("  jetons     : %d ligne(s) seraient supprimée(s)\n", (int) $stmt->fetchColumn());
-} else {
-    $stmt = $pdo->query("DELETE FROM password_resets WHERE expires_at < NOW() - INTERVAL 1 DAY");
-    printf("  jetons     : %d ligne(s) supprimée(s)\n", $stmt->rowCount());
+//
+// Les codes saisis dans l'application (password_reset_codes) sont dans le même
+// cas : une empreinte liée à une adresse, utile quinze minutes.
+foreach (['password_resets', 'password_reset_codes'] as $table) {
+    if ($simulation) {
+        $stmt = $pdo->query("SELECT COUNT(*) FROM $table WHERE expires_at < NOW() - INTERVAL 1 DAY");
+        printf("  %-10s : %d ligne(s) seraient supprimée(s)\n", $table === 'password_resets' ? 'jetons' : 'codes', (int) $stmt->fetchColumn());
+    } else {
+        $stmt = $pdo->query("DELETE FROM $table WHERE expires_at < NOW() - INTERVAL 1 DAY");
+        printf("  %-10s : %d ligne(s) supprimée(s)\n", $table === 'password_resets' ? 'jetons' : 'codes', $stmt->rowCount());
+    }
 }
 
 echo "\nTerminé.\n";

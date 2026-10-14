@@ -16,6 +16,8 @@
 
 import Constants from 'expo-constants';
 
+import type { PageLegale } from './legal';
+
 /**
  * L'adresse du serveur.
  *
@@ -527,8 +529,20 @@ export const api = {
     appelApi<ReponseConnexion>('login.php', { methode: 'POST', corps: { email, password: motDePasse, appareil } }),
   inscription: (corps: Record<string, unknown>) =>
     appelApi<ReponseConnexion>('inscription.php', { methode: 'POST', corps }),
+  /** Demande un code par e-mail. `code_dev` n'est rempli qu'en local, où rien ne part. */
   motDePasseOublie: (email: string) =>
-    appelApi<{ success: true; lien_dev: string | null }>('mot_de_passe_oublie.php', { methode: 'POST', corps: { email } }),
+    appelApi<{ success: true; code_dev: string | null }>('mot_de_passe_oublie.php', { methode: 'POST', corps: { email } }),
+  /** Choisit un nouveau mot de passe avec le code reçu. Déconnecte tous les appareils. */
+  reinitialiserMotDePasse: (email: string, code: string, motDePasse: string) =>
+    appelApi<{ success: true }>('mot_de_passe_reinitialiser.php', { methode: 'POST', corps: { email, code, mot_de_passe: motDePasse } }),
+  /**
+   * Supprime le compte (étudiant) ou en fait la demande (partenaire).
+   * `supprime` : le compte n'existe plus ; `demande` : transmise à l'équipe.
+   */
+  supprimerCompte: (jeton: string, motDePasse: string) =>
+    appelApi<{ success: true; supprime: boolean; demande?: boolean }>('supprimer_compte.php', { methode: 'POST', jeton, corps: { mot_de_passe: motDePasse } }),
+  /** Un texte légal, sans jeton : on le lit avant de créer un compte. */
+  legal: (slug: string) => appelApi<{ success: true; page: PageLegale }>('legal.php', { params: { page: slug } }),
   deconnexion: (jeton: string) => appelApi<{ success: true }>('logout.php', { methode: 'POST', jeton }),
   moi: (jeton: string) => appelApi<{ utilisateur: Profil }>('me.php', { jeton }),
 

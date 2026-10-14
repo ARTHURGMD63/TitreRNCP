@@ -23,8 +23,17 @@ final class ApiV1Test extends TestCase
 {
     private const DOSSIER = __DIR__ . '/../../api/v1';
 
-    /** Les points ouverts sans compte, à l'image de leurs pages sur le site. */
-    private const PUBLICS = ['login.php', 'logout.php', 'inscription.php', 'mot_de_passe_oublie.php'];
+    /**
+     * Les points ouverts sans compte, à l'image de leurs pages sur le site.
+     *
+     * `legal.php` : on lit les conditions avant de s'inscrire.
+     * `mot_de_passe_reinitialiser.php` : la personne n'a justement plus accès
+     * à son compte ; le code reçu par e-mail tient lieu de preuve.
+     */
+    private const PUBLICS = [
+        'login.php', 'logout.php', 'inscription.php', 'mot_de_passe_oublie.php',
+        'mot_de_passe_reinitialiser.php', 'legal.php',
+    ];
 
     /**
      * Le code d'un fichier, commentaires retirés.

@@ -14,10 +14,9 @@
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { adresseServeur, ErreurApi } from '../api';
+import { ErreurApi } from '../api';
 import { ECOLES, INTERETS, PROMOS, TYPES_ETABLISSEMENT, VILLES } from '../catalogue';
 import { Bouton } from '../composants/Bouton';
 import { Encart } from '../composants/Elements';
@@ -82,7 +81,7 @@ export default function Inscription() {
     }
   }
 
-  const ouvrir = (chemin: string) => WebBrowser.openBrowserAsync(`${adresseServeur()}${chemin}`);
+  const ouvrir = (slug: string) => router.push(`/legal/${slug}` as never);
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -170,9 +169,9 @@ export default function Inscription() {
         <Case coche={cgu} onChange={setCgu} style={{ marginTop: 10, alignItems: 'flex-start' }}>
           <T taille={fs[2]} couleur={c.grisFonce} interligne={lh.normal}>
             J’accepte les{' '}
-            <Text onPress={() => ouvrir('/cgu.php')} style={{ textDecorationLine: 'underline', color: c.grisFonce }}>conditions générales</Text>
+            <Text onPress={() => ouvrir('cgu')} style={{ textDecorationLine: 'underline', color: c.grisFonce }}>conditions générales</Text>
             {' '}et la{' '}
-            <Text onPress={() => ouvrir('/confidentialite.php')} style={{ textDecorationLine: 'underline', color: c.grisFonce }}>politique de confidentialité</Text>.
+            <Text onPress={() => ouvrir('confidentialite')} style={{ textDecorationLine: 'underline', color: c.grisFonce }}>politique de confidentialité</Text>.
           </T>
         </Case>
 

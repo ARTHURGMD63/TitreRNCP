@@ -1,5 +1,7 @@
 <?php require_once __DIR__ . '/includes/auth_check.php';
-require_once __DIR__ . '/includes/page.php'; ?>
+require_once __DIR__ . '/includes/page.php';
+require_once __DIR__ . '/includes/textes_legaux.php';
+$doc = textesLegaux()['mentions-legales']; ?>
 <?php ob_start(); ?>
 <style>
   .legal-page { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
@@ -14,30 +16,9 @@ require_once __DIR__ . '/includes/page.php'; ?>
 <?php pageDebut('Linkee — Mentions légales', ['tete' => ob_get_clean()]); ?>
 <div class="legal-page">
   <a href="javascript:history.back()" class="back">← Retour</a>
-  <h1>Mentions légales</h1>
+  <h1><?= htmlspecialchars($doc['titre'], ENT_QUOTES, 'UTF-8') ?></h1>
 
-  <h2>Éditeur du site</h2>
-  <p><strong>Linkee</strong> — plateforme de mise en relation étudiants et établissements.<br>
-  Projet réalisé à Clermont-Ferrand par <strong>Arthur Gramond</strong>, étudiant en 2<sup>e</sup> année (B2) à <strong>Hesias</strong>,
-  dans le cadre du Titre professionnel Développeur Web et Web Mobile.<br>
-  Contact : contact@linkee.fr</p>
-
-  <h2>Hébergement</h2>
-  <p>Application hébergée en environnement local (serveur WAMP), Clermont-Ferrand.</p>
-
-  <h2>Directeur de la publication</h2>
-  <p>Arthur Gramond — étudiant en B2 à Hesias, Clermont-Ferrand.</p>
-
-  <h2>Propriété intellectuelle</h2>
-  <p>L'ensemble des contenus présents sur ce site (textes, images, logo, design) est la propriété de Linkee ou de ses partenaires. Toute reproduction sans autorisation écrite est interdite.</p>
-
-  <h2>Responsabilité</h2>
-  <p>Les informations diffusées par les partenaires (événements, tarifs, horaires) sont publiées sous leur responsabilité. Linkee ne peut être tenu responsable d'inexactitudes ou d'événements annulés.</p>
-
-  <h2>Droit applicable</h2>
-  <p>Les présentes mentions légales sont soumises au droit français.</p>
-
-  <p style="margin-top:40px;font-size:var(--fs-2);color:var(--gris);">Dernière mise à jour : <?= date('d/m/Y') ?></p>
+  <?= legalCorpsHtml($doc) ?>
 
   <div class="legal-links" style="margin-top:40px;padding-top:20px;border-top:1px solid var(--gris-clair);">
     <a href="<?= baseUrl('/cgu.php') ?>" style="color:var(--bleu);font-weight:var(--fw-semibold);text-decoration:none;">CGU</a>

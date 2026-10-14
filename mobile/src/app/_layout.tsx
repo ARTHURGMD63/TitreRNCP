@@ -95,6 +95,13 @@ function Navigation() {
         <Stack.Protected guard={admin}>
           <Stack.Screen name="(admin)" />
         </Stack.Protected>
+
+        {/* Les textes légaux se lisent avant comme après la connexion. */}
+        <Stack.Screen name="legal/[page]" />
+
+        <Stack.Protected guard={(etudiant && !nouveau) || partenaire}>
+          <Stack.Screen name="supprimer-compte" />
+        </Stack.Protected>
       </Stack>
       {introVisible ? <IntroSplash onTermine={() => setIntroVisible(false)} /> : null}
     </>

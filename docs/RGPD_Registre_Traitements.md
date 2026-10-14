@@ -170,6 +170,7 @@ Aucun service de mesure d'audience publicitaire, aucun traceur tiers, aucun cook
 Ces cinq points sont ressortis de la lecture du schéma. Ce sont des chantiers, pas des observations.
 
 1. **La suppression de compte n'existe pas.** Le droit à l'effacement n'est pas optionnel. Chantier déjà identifié (SL-04, SL-12), échéance 20/10.
+   *Traité le 14/10/2026 pour les étudiants : `api/v1/supprimer_compte.php`, `includes/compte.php`, écran « Moi » de l'application. Un compte partenaire fait l'objet d'une demande à l'équipe, pas d'une suppression automatique (abonnement et soirées à venir).*
 
 2. **Le `ON DELETE CASCADE` est un piège.** Toutes les tables liées à `users` sont en cascade : supprimer un compte effacerait ses inscriptions et ses check-ins, donc **les statistiques déjà vendues au partenaire**, rétroactivement. La suppression doit donc être une **anonymisation** — dissocier l'identité en conservant l'école, la promotion et le fait de la présence — et non un `DELETE` sur `users`. À concevoir avant de coder la fonctionnalité, pas après.
 
@@ -189,7 +190,7 @@ Ces cinq points sont ressortis de la lecture du schéma. Ce sont des chantiers, 
 | Vérification de la région d'hébergement Railway | Arthur | 22/09/2026 |
 | Contrat de sous-traitance SMTP | Arthur | 29/09/2026 |
 | Tâches planifiées de purge selon les durées retenues | Arthur | 20/10/2026 |
-| Anonymisation et suppression de compte | Arthur | 20/10/2026 |
+| Anonymisation et suppression de compte | Arthur | 20/10/2026 — fait le 14/10 (étudiants) ; la preuve binaire « majorité vérifiée » du traitement T2 n'est pas encore conservée : la date de naissance est effacée sans être remplacée |
 | Politique de confidentialité alignée sur ce registre | Arthur | 20/10/2026 |
 | Reprise du responsable de traitement après immatriculation | Arthur | Jour de la création |
 | Revue annuelle du registre | Arthur | 16/09/2027 |

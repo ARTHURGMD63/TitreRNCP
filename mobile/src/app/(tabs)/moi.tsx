@@ -12,9 +12,9 @@ import React, { useCallback, useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import * as WebBrowser from 'expo-web-browser';
 
-import { adresseServeur, api, ErreurApi, type Badge, type ReponseMoi } from '../../api';
+import { api, ErreurApi, type Badge, type ReponseMoi } from '../../api';
+import { PAGES_LEGALES } from '../../legal';
 import { Bouton } from '../../composants/Bouton';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Avatar, Encart, Jauge } from '../../composants/Elements';
@@ -145,7 +145,6 @@ export default function Moi() {
     }
   }
 
-  const ouvrirPage = (chemin: string) => WebBrowser.openBrowserAsync(`${adresseServeur()}${chemin}`);
   const allerAuFormulaire = () => defilement.current?.scrollTo({ y: yFormulaire, animated: true });
 
   if (!donnees) {
@@ -324,12 +323,8 @@ export default function Moi() {
 
         {/* Légal */}
         <CarteProfil style={{ padding: 0, overflow: 'hidden' }}>
-          {[
-            ['Mentions légales', '/mentions-legales.php'],
-            ['CGU', '/cgu.php'],
-            ['Politique de confidentialité', '/confidentialite.php'],
-          ].map(([l, chemin], i) => (
-            <Pressable key={chemin} onPress={() => ouvrirPage(chemin)} accessibilityRole="link"
+          {PAGES_LEGALES.map(({ slug, libelle: l }, i) => (
+            <Pressable key={slug} onPress={() => router.push(`/legal/${slug}` as never)} accessibilityRole="link"
               style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 20, borderBottomWidth: i < 2 ? 1 : 0, borderBottomColor: c.grisClair }}>
               <T taille={fs[4]} poids={600}>{l}</T>
               <T taille={fs[4]} poids={600} couleur={c.gris}>→</T>
@@ -350,6 +345,10 @@ export default function Moi() {
           <Pressable onPress={deconnexion} accessibilityRole="button" style={{ paddingVertical: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             <Icone nom="deconnexion" taille={16} couleur={c.surRougeClair} />
             <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: c.surRougeClair }}>Se déconnecter</Text>
+          </Pressable>
+          <Pressable onPress={() => router.push('/supprimer-compte' as never)} accessibilityRole="button" style={{ paddingVertical: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderTopWidth: 1, borderTopColor: c.grisClair }}>
+            <Icone nom="interdit" taille={16} couleur={c.gris} />
+            <Text style={{ fontFamily: sans(600), fontSize: fs[3], color: c.gris }}>Supprimer mon compte</Text>
           </Pressable>
         </CarteProfil>
       </Contenu>

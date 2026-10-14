@@ -1,5 +1,7 @@
 <?php require_once __DIR__ . '/includes/auth_check.php';
-require_once __DIR__ . '/includes/page.php'; ?>
+require_once __DIR__ . '/includes/page.php';
+require_once __DIR__ . '/includes/textes_legaux.php';
+$doc = textesLegaux()['confidentialite']; ?>
 <?php ob_start(); ?>
 <style>
   .legal-page { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
@@ -15,54 +17,9 @@ require_once __DIR__ . '/includes/page.php'; ?>
 <?php pageDebut('Linkee — Politique de confidentialité', ['tete' => ob_get_clean()]); ?>
 <div class="legal-page">
   <a href="javascript:history.back()" class="back">← Retour</a>
-  <h1>Politique de confidentialité</h1>
+  <h1><?= htmlspecialchars($doc['titre'], ENT_QUOTES, 'UTF-8') ?></h1>
 
-  <p>Chez Linkee, nous prenons la protection de tes données personnelles très au sérieux. Cette politique explique comment nous collectons, utilisons et protégeons tes informations, conformément au Règlement Général sur la Protection des Données (RGPD).</p>
-
-  <h2>1. Données collectées</h2>
-  <ul>
-    <li><strong>Identité :</strong> nom, prénom, email</li>
-    <li><strong>Profil étudiant :</strong> école, promotion, centres d'intérêt</li>
-    <li><strong>Activité :</strong> inscriptions aux events, squads rejointes, abonnements</li>
-    <li><strong>Techniques :</strong> adresse IP, logs de connexion</li>
-  </ul>
-
-  <h2>2. Finalités</h2>
-  <p>Tes données sont utilisées pour :</p>
-  <ul>
-    <li>Gérer ton compte et t'authentifier</li>
-    <li>Te proposer des events et personnes pertinents</li>
-    <li>Permettre le check-in aux événements via QR code</li>
-    <li>Fournir aux partenaires des statistiques anonymisées</li>
-  </ul>
-
-  <h2>3. Base légale</h2>
-  <p>Le traitement repose sur ton consentement (inscription) et sur l'exécution du contrat (utilisation du service).</p>
-
-  <h2>4. Durée de conservation</h2>
-  <p>Tes données sont conservées tant que ton compte est actif. En cas de suppression, elles sont effacées sous 30 jours (sauf obligations légales).</p>
-
-  <h2>5. Destinataires</h2>
-  <p>Tes données sont accessibles uniquement par :</p>
-  <ul>
-    <li>L'équipe Linkee</li>
-    <li>Les partenaires pour les events auxquels tu t'inscris (prénom, nom, école, promo)</li>
-    <li>L'hébergeur (serveur local, Clermont-Ferrand)</li>
-  </ul>
-  <p>Aucune donnée n'est vendue à des tiers.</p>
-
-  <h2>6. Tes droits (RGPD)</h2>
-  <p>Tu disposes d'un droit d'accès, de rectification, d'effacement, de limitation, de portabilité et d'opposition. Pour les exercer : contact@linkee.fr</p>
-
-  <h2>7. Cookies</h2>
-  <p>Linkee utilise uniquement un cookie de session pour te maintenir connecté. Aucun cookie publicitaire ou de tracking n'est déposé.</p>
-
-  <h2>8. Sécurité</h2>
-  <p>Les mots de passe sont hachés avec bcrypt. Les échanges sont chiffrés en HTTPS. Les sessions sont régénérées à chaque connexion pour éviter les détournements.</p>
-
-  <p style="margin-top:40px;font-size:var(--fs-2);color:var(--gris);">
-    Document réalisé à Clermont-Ferrand par Arthur Gramond, étudiant en B2 à Hesias.<br>
-    Dernière mise à jour : <?= date('d/m/Y') ?></p>
+  <?= legalCorpsHtml($doc) ?>
 
   <div class="legal-links" style="margin-top:40px;padding-top:20px;border-top:1px solid var(--gris-clair);">
     <a href="<?= baseUrl('/mentions-legales.php') ?>" style="color:var(--bleu);font-weight:var(--fw-semibold);text-decoration:none;">Mentions légales</a>

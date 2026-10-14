@@ -262,6 +262,67 @@ Statistiques d'un événement (réservé au partenaire propriétaire).
 
 ---
 
+## API mobile (`/api/v1/`) — textes légaux et compte
+
+L'application mobile parle à `/api/v1/`, par **jeton** (`Authorization: Bearer …`) et non par session.
+Seuls les points qui servent à récupérer ou quitter un compte sont décrits ici ; les erreurs y prennent la
+forme `{ "success": false, "code": "…", "message": "…" }`.
+
+### `GET /api/v1/legal.php` — public
+Les textes légaux, pour les afficher dans l'application. Sans paramètre : la liste. Avec `?page=` : un document
+(`mentions-legales`, `cgu`, `confidentialite`).
+
+```json
+{ "success": true, "page": {
+    "slug": "cgu", "titre": "Conditions Générales d'Utilisation", "maj": "14/10/2026",
+    "sections": [ { "titre": "Article 1 — Objet",
+                    "blocs": [ { "type": "p", "texte": "…" }, { "type": "liste", "items": ["…"] } ] } ],
+    "pied": "…" } }
+```
+Aucun HTML : seul `**gras**` est balisé. Le texte vient de `includes/textes_legaux.php`, la même source que les
+pages du site. Page inconnue → 404 `introuvable`.
+
+### `POST /api/v1/mot_de_passe_oublie.php` — public
+Demande un **code à six chiffres**, envoyé par e-mail (valable 15 minutes).
+
+```json
+{ "email": "arthur@uca.fr" }
+```
+Réponse identique que l'adresse existe ou non : `{ "success": true, "code_dev": null }`. `code_dev` n'est rempli qu'en
+local, où rien ne part. Un code déjà envoyé il y a moins d'une minute n'est pas renvoyé (cela borne la devinette).
+Limite : 5 demandes par IP et par 15 minutes.
+
+### `POST /api/v1/mot_de_passe_reinitialiser.php` — public
+Choisit un nouveau mot de passe avec le code reçu.
+
+```json
+{ "email": "arthur@uca.fr", "code": "123456", "mot_de_passe": "nouveaumdp99" }
+```
+| Réponse | Cas |
+|---|---|
+| `200 { "success": true }` | Mot de passe changé ; **tous les appareils sont déconnectés** |
+| `422 code_invalide` | Compte inconnu, code faux, expiré ou épuisé — même message dans tous les cas |
+| `422 mot_de_passe` | Trop court (8 caractères, 12 pour un admin) ; le code n'est **pas** brûlé |
+| `429 trop_de_tentatives` | 15 échecs par IP et par 15 minutes |
+
+Cinq saisies fausses détruisent le code. Un succès remet à zéro le compteur de l'IP.
+
+### `POST /api/v1/supprimer_compte.php` — jeton requis
+Supprime son compte. Le mot de passe est redemandé.
+
+```json
+{ "mot_de_passe": "…" }
+```
+| Type de compte | Effet | Réponse |
+|---|---|---|
+| étudiant | Effacement immédiat des données personnelles ; la ligne `users` est **anonymisée** (type `supprime`, école et promotion conservées) ainsi que les présences passées, pour les statistiques des partenaires. Pass à venir annulés, places libérées. | `{ "success": true, "supprime": true }` |
+| partenaire | Demande transmise à contact@linkee.fr (abonnement, soirées à venir) ; le compte reste ouvert | `{ "success": true, "supprime": false, "demande": true }` |
+| admin | Refusé | `403 type_non_supprimable` |
+
+Mot de passe faux → `403 mot_de_passe` (compte intact). Détail de ce qui est effacé : `includes/compte.php`.
+
+---
+
 ## Codes d'erreur communs
 
 | Code | Signification |

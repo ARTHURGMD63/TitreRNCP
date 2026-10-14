@@ -133,7 +133,7 @@ composer stan
 composer ci
 ```
 
-**292 tests, 1 262 assertions** côté PHP, 20 côté mobile (`npm test`, dans `mobile/`). Ils couvrent :
+**315 tests, 1 826 assertions** côté PHP (dont 10 joués seulement face à MariaDB), 26 côté mobile (`npm test`, dans `mobile/`). Ils couvrent :
 
 | Domaine | Ce qui est vérifié |
 |---|---|
@@ -142,6 +142,9 @@ composer ci
 | `SchemaTest` | `db_setup.sql` et `install_mutualise.sql` décrivent la même base, chaque colonne ajoutée par une migration y figure, et le code n'interroge aucune table absente |
 | `PagesProtegeesTest` | Chaque page admin, partenaire ou étudiante appelle sa garde d'accès (un appel commenté ne compte pas) ; `__shot.php` garde ses trois conditions |
 | `PlacesTest` | La règle « complet » : quota atteint, dépassé, nul |
+| `LegalTest` | Les textes légaux : forme lisible par l'application et le site, aucun HTML, date de révision, suppression de compte annoncée |
+| `CompteTest` | Code de réinitialisation : six chiffres, empreinte, adresse factice d'un compte supprimé |
+| `CompteMysqlTest` | Contre une vraie base MariaDB (sauté sans `TEST_MYSQL_DSN`) : codes, cinq essais, expiration ; suppression qui efface l'identité et les données propres, garde les présences passées, et ne laisse rien à moitié |
 | `MigrationsTest` | Découpage des scripts SQL : `DELIMITER`, chaînes, commentaires, ordre numérique |
 | `RedirectionTest` | Aucune redirection vers un hôte externe ; contrôle d'origine |
 | `HubTest` | Lecture des critères d'URL du hub : page négative, style inventé, vue inconnue |

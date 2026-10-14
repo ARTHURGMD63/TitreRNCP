@@ -8,6 +8,27 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **Mot de passe oublié sans page web.** Un code à six chiffres part par e-mail
+  et se saisit dans l'application (`mot_de_passe_oublie.php`, puis
+  `mot_de_passe_reinitialiser.php`). Le code est stocké haché, valable quinze
+  minutes, détruit après cinq saisies fausses, et ne se redemande pas avant une
+  minute. Un succès déconnecte tous les appareils. Migration v26.
+- **Suppression de compte depuis l'application** (`supprimer_compte.php`, écran
+  « Moi » › « Supprimer mon compte »). Un étudiant est anonymisé en
+  transaction : identité, photo, date de naissance, centres d'intérêt, relations,
+  squads, avis et photos effacés, pass à venir annulés ; la ligne `users` et les
+  présences passées restent, sans identité, avec l'école et la promotion — la
+  règle du registre RGPD, car un `DELETE` effacerait aussi les statistiques déjà
+  vendues aux partenaires. Un partenaire envoie une demande à l'équipe. Migration
+  v27 (type `supprime`, que l'annuaire et le classement excluent déjà).
+- **Textes légaux dans l'application** (`api/v1/legal.php`, écran
+  `legal/[page]`). Mentions légales, CGU et confidentialité vivent désormais
+  dans `includes/textes_legaux.php`, source unique de l'API et des pages du
+  site : l'application ne renvoie plus vers le web pour les lire. La date
+  « Dernière mise à jour » était celle du jour d'affichage ; c'est maintenant la
+  date de révision du texte.
+- **Job CI MariaDB** : installe `db_setup.sql` dans un vrai serveur, puis joue
+  les tests d'intégration, dont `CompteMysqlTest`.
 - **Tests d'architecture.** `PagesProtegeesTest` : chaque page porte sa garde
   d'accès, comme `ApiProtectionTest` le fait pour les API. `SchemaTest`
   contrôle aussi les colonnes ajoutées par les migrations, pas seulement les

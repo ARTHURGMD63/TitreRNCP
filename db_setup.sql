@@ -54,7 +54,8 @@ CREATE TABLE IF NOT EXISTS users (
     -- en base ne prouve rien.
     cgu_acceptees_le DATETIME DEFAULT NULL,
     interests TEXT,
-    type ENUM('etudiant', 'partenaire', 'admin') DEFAULT 'etudiant',
+    -- « supprime » : compte vidé de toute identité (migration v27), conservé pour les statistiques.
+    type ENUM('etudiant', 'partenaire', 'admin', 'supprime') DEFAULT 'etudiant',
     -- Compte public/prive a l'instagram (migration v21). Prive par defaut :
     -- comportement inchange pour l'existant tant que la personne n'a pas
     -- choisi de passer en public (voir follow.php et evenement_photos.php).
@@ -291,6 +292,16 @@ CREATE TABLE IF NOT EXISTS password_resets (
     created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_email (email)
 );
+
+-- Codes de réinitialisation du mot de passe, saisis dans l'application
+-- (migration v26). Une ligne par adresse ; seule l'empreinte du code est gardée.
+CREATE TABLE IF NOT EXISTS password_reset_codes (
+    email      VARCHAR(191) NOT NULL PRIMARY KEY,
+    code_hash  CHAR(64)     NOT NULL,
+    expires_at DATETIME     NOT NULL,
+    essais     TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS invitations (
     id           INT AUTO_INCREMENT PRIMARY KEY,
@@ -917,4 +928,4 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 
 INSERT IGNORE INTO schema_migrations (version) VALUES
 ('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
-('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25');
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27');

@@ -1,18 +1,23 @@
 <?php
 /**
- * POST /api/v1/mot_de_passe_oublie.php — demander un lien de réinitialisation.
+ * POST /api/v1/mot_de_passe_oublie.php — demander un code de réinitialisation.
  *
- * Même traitement que auth/forgot.php : l'adresse est validée, un lien part si
- * elle correspond à un compte, et la réponse est la même dans tous les cas —
- * sans quoi l'écran dirait qui est inscrit. Le lien ouvre auth/reset.php sur
- * le site : c'est là que le nouveau mot de passe se choisit, depuis n'importe
- * quel appareil.
+ * Un code à six chiffres part par e-mail, qui se saisit dans l'application
+ * (mot_de_passe_reinitialiser.php). Le lien vers une page du site n'existe
+ * plus ici : l'application doit se suffire à elle-même.
+ *
+ * La réponse est la même dans tous les cas — adresse inconnue, code déjà
+ * envoyé il y a moins d'une minute, ou envoi réussi — sans quoi l'écran dirait
+ * qui est inscrit.
  *
  * Corps JSON : email.
+ * Réponse    : { success: true, code_dev: string|null }. `code_dev` n'est rempli
+ *              qu'en local, où rien ne part : l'écran l'affiche (« Mode dev »).
  */
 
 require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/security.php';
+require_once __DIR__ . '/../../includes/compte.php';
 
 apiExigerMethode('POST');
 
@@ -33,14 +38,13 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
 recordLoginAttempt($pdo, $ip, $email);
 
-$token = createPasswordResetToken($pdo, $email);
-if ($token) {
-    // Le lien doit être absolu : il est suivi depuis un client de messagerie.
-    sendResetEmail($email, $token, apiUrlAbsolue(baseUrl('')));
+$codeDev = null;
+$code    = codeReinitialisationCreer($pdo, $email);
+if ($code !== null) {
+    codeReinitialisationEnvoyer($email, $code);
+    if (estEnLocal()) {
+        $codeDev = $code;
+    }
 }
 
-// En local, rien ne part : sendResetEmail() range le lien pour que l'écran
-// l'affiche (« Mode dev »), exactement comme auth/forgot.php.
-$lienDev = $_SESSION['dev_reset_link'] ?? null;
-
-apiReponse(['success' => true, 'lien_dev' => is_string($lienDev) ? $lienDev : null]);
+apiReponse(['success' => true, 'code_dev' => $codeDev]);

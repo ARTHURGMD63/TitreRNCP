@@ -85,6 +85,8 @@ Les autres pages n'ont pas été découpées : à 300–500 lignes, elles resten
 | `mail.php` | Envoi : en-têtes RFC, encodage, transport `mail()` ou SMTP authentifié |
 | `hub.php` | Couche données du hub étudiant |
 | `crm.php`, `finances.php`, `kpi.php` | Back-office fondateurs, un fichier par sujet : vocabulaire commercial, MRR et souscription (`crm.php`) ; registre, solde, point mort (`finances.php`) ; indicateurs produit et alertes (`kpi.php`). Les pages n'incluent que `crm.php`, qui recharge les deux autres |
+| `compte.php` | Cycle de vie d'un compte pour l'application : code de réinitialisation du mot de passe (six chiffres, haché, cinq essais, délai de renvoi) et suppression d'un compte étudiant par anonymisation, en transaction |
+| `textes_legaux.php` | Mentions légales, CGU et politique de confidentialité sous forme de données : une seule source pour `api/v1/legal.php` et pour les pages du site |
 | `places.php` | La règle « complet » : `estComplet()` pour les écritures, `remplissage()` pour l'affichage de l'API. Un quota nul ferme l'inscription mais ne s'affiche pas « complet » |
 | `temps_reel.php` | Flux de révisions et ETag |
 | `cache.php`, `agregats.php` | APCu si présent, fichiers sinon ; agrégats partagés |
