@@ -28,6 +28,16 @@ export const fixe = {
   surLave: '#111013',
   /** --sur-media : texte clair posé sur une photo. */
   surMedia: '#F5F1E8',
+  /**
+   * Le bleu du logo : Pantone 2728 C (sRGB #0047BB). Il ne sert qu'à la
+   * marque — la tuile des anneaux et le « ee » du logotype. Le reste de
+   * l'interface garde ses accents (lave, dôme…).
+   *
+   * La teinte reste exacte même sur basalte, où le « ee » n'atteint
+   * qu'environ 2,4:1 : choix de marque assumé (2026-11-09), à ne pas
+   * éclaircir en mode sombre.
+   */
+  logo: '#0047BB',
 } as const;
 
 const marque = {

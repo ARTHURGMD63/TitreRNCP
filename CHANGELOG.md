@@ -14,6 +14,10 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
   base par défaut `outsee`, QR codes `outsee:`. Les pass `linkee:` et
   `studentlink:` déjà émis restent acceptés au scan ; le jeton de session, le
   thème et le cache du service worker de l'ancien nom sont repris ou purgés.
+- **Logo en Pantone 2728 C.** Dans l'application mobile, la tuile des anneaux
+  et le « ee » du logotype passent au bleu `#0047BB` (`fixe.logo`), icônes,
+  écran de lancement et favicon compris. Le reste de l'interface garde ses
+  accents. Teinte exacte même sur basalte, par choix de marque.
 
 ### Added
 - **Tests mobile des écrans critiques.** Les règles de la connexion, de

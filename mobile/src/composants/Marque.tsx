@@ -1,7 +1,7 @@
 /**
- * Le logo Outsee, tel que dans Logo.png : deux anneaux entrelacés, l'un
- * basalte, l'autre craie, sur une tuile lave aux coins arrondis, et le
- * logotype « outsee » à côté.
+ * Le logo Outsee : deux anneaux entrelacés, l'un basalte, l'autre craie, sur
+ * une tuile bleue aux coins arrondis, et le logotype « outsee » à côté. Le
+ * bleu est la Pantone 2728 C (`fixe.logo`), sur la tuile comme sur le « ee ».
  *
  * Le dessin reprend Logo.png (512 px) cote pour cote. L'entrelacement est
  * l'essentiel : au croisement du haut l'anneau craie passe devant le noir, à
@@ -16,8 +16,6 @@ import Svg, { ClipPath, Circle, Defs, Rect } from 'react-native-svg';
 
 import { fixe, fs, police } from '../theme';
 import { useTheme } from '../useTheme';
-
-const LAVE = '#8E6BFF';
 
 function Entrelacs() {
   return (
@@ -34,17 +32,17 @@ function Entrelacs() {
   );
 }
 
-/** Le logo complet : tuile lave carrée, anneaux au centre. */
+/** Le logo complet : tuile bleue carrée, anneaux au centre. */
 export function Anneaux({ hauteur }: { hauteur: number }) {
   return (
     <Svg width={hauteur} height={hauteur} viewBox="0 0 512 512" fill="none">
-      <Rect x={0} y={0} width={512} height={512} rx={112} fill={LAVE} />
+      <Rect x={0} y={0} width={512} height={512} rx={112} fill={fixe.logo} />
       <Entrelacs />
     </Svg>
   );
 }
 
-/** Les anneaux seuls, pour les aplats lave qui leur servent déjà de fond. */
+/** Les anneaux seuls, pour les aplats colorés qui leur servent déjà de fond. */
 export function AnneauxSeuls({ largeur }: { largeur: number }) {
   return (
     <Svg width={largeur} height={(largeur * 232) / 352} viewBox="80 140 352 232" fill="none">
@@ -58,17 +56,17 @@ type Props = {
   taille?: number;
   suffixe?: string;
   /**
-   * Remplace le lave par une autre teinte — dérogation à la charte
-   * (includes/marque.php interdit toute variante côté site) réservée aux
-   * en-têtes propres à l'application mobile : le dôme en tête de l'onglet
-   * Sport, par exemple. Le lave reste la couleur par défaut partout ailleurs.
+   * Remplace le bleu du « ee » par une autre teinte — dérogation à la charte
+   * réservée aux en-têtes propres à l'application mobile : le dôme en tête de
+   * l'onglet Squads, par exemple. La Pantone 2728 C reste la couleur par
+   * défaut partout ailleurs.
    */
   accent?: string;
 };
 
 export function Marque({ taille = fs[6], suffixe, accent }: Props) {
   const { c } = useTheme();
-  const teinte = accent ?? c.rouge;
+  const teinte = accent ?? fixe.logo;
   const mot = { fontFamily: police.display, fontSize: taille, letterSpacing: -0.045 * taille, lineHeight: taille * 1.15 };
 
   return (
