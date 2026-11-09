@@ -1,4 +1,4 @@
-# Architecture technique — Linkee
+# Architecture technique — Outsee
 
 ## Vue d'ensemble
 
@@ -45,7 +45,7 @@ Requête utilisateur
 
 ## Pattern MVC simplifié
 
-Linkee utilise un **pattern PHP procédural MVC léger** sans framework :
+Outsee utilise un **pattern PHP procédural MVC léger** sans framework :
 
 | Couche | Implémentation |
 |--------|---------------|

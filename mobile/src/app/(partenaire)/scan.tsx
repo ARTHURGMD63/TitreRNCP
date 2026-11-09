@@ -119,7 +119,7 @@ export default function ScanPass() {
           Accès à la caméra nécessaire
         </Display>
         <T taille={fs[4]} couleur={fixe.craie} interligne={lh.normal} style={{ textAlign: 'center', marginBottom: 24, opacity: 0.8 }}>
-          Pour scanner les pass à l&apos;entrée, autorise Linkee à utiliser la caméra.
+          Pour scanner les pass à l&apos;entrée, autorise Outsee à utiliser la caméra.
         </T>
         <Bouton libelle="Autoriser la caméra" plein onPress={() => void demanderPermission()} style={{ marginBottom: 12 }} />
         <Bouton libelle="Retour" variante="contour" plein onPress={() => router.back()}

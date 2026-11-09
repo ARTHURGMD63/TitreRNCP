@@ -1,5 +1,5 @@
 -- ============================================================
---  Linkee — migration v22
+--  Outsee — migration v22
 --  Une seule photo d'événement par personne et par soirée
 --
 --  Reposter en pleine soirée remplace la précédente plutôt que d'en

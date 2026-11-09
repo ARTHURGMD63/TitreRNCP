@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
  * La base doit déjà contenir le schéma (db_setup.sql). Le test se saute sans
  * TEST_MYSQL_DSN ; l'intégration continue la fournit (service MariaDB).
  *
- *   TEST_MYSQL_DSN="mysql:host=127.0.0.1;port=3306;dbname=linkee_test;charset=utf8mb4"
+ *   TEST_MYSQL_DSN="mysql:host=127.0.0.1;port=3306;dbname=outsee_test;charset=utf8mb4"
  *   TEST_MYSQL_USER=root   TEST_MYSQL_PASS=
  */
 final class CompteMysqlTest extends TestCase
@@ -70,7 +70,7 @@ final class CompteMysqlTest extends TestCase
 
     private function creerCompte(string $type = 'etudiant'): int
     {
-        $email = 'essai-' . bin2hex(random_bytes(6)) . '@linkee.test';
+        $email = 'essai-' . bin2hex(random_bytes(6)) . '@outsee.test';
         $this->pdo->prepare(
             "INSERT INTO users (nom, prenom, email, password, ecole, ville, photo, date_naissance, interests, type)
              VALUES ('Essai', 'Prenom', ?, ?, 'UCA', 'Lyon', 'photo.jpg', '2002-04-12', 'sport,musique', ?)"
@@ -100,7 +100,7 @@ final class CompteMysqlTest extends TestCase
 
     public function testUnCompteInconnuNeRecoitPasDeCode(): void
     {
-        $this->assertNull(codeReinitialisationCreer($this->pdo, 'personne-' . bin2hex(random_bytes(4)) . '@linkee.test'));
+        $this->assertNull(codeReinitialisationCreer($this->pdo, 'personne-' . bin2hex(random_bytes(4)) . '@outsee.test'));
     }
 
     public function testLeCodeSeVerifieSeConsommeEtDeconnecteTousLesAppareils(): void

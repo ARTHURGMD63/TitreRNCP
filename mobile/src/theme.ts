@@ -1,5 +1,5 @@
 /**
- * Le design system de Linkee (charte v1.0), transposé pour React Native.
+ * Le design system de Outsee (charte v1.0), transposé pour React Native.
  *
  * Chaque valeur est reprise d'assets/css/style.css, jeton pour jeton : même
  * palette, mêmes graisses, même échelle typographique, mêmes rayons. Ce n'est

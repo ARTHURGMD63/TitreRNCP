@@ -1,4 +1,4 @@
-# Mettre Linkee en ligne, et l'application entre les mains de testeurs
+# Mettre Outsee en ligne, et l'application entre les mains de testeurs
 
 Deux choses distinctes, dans cet ordre : **le serveur** (l'API et la base, sans
 quoi aucun téléphone ne peut rien afficher), puis **la distribution** de
@@ -20,7 +20,7 @@ l'hébergeur, pas dans celles du poste de développement.
 | `docker/entrypoint.sh` | Fait écouter Apache sur le `$PORT` imposé par la plateforme |
 | `includes/db.php` | Lit `MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`, `MYSQLPASSWORD`, `MYSQLDATABASE` ; TLS avec `MYSQL_SSL` / `MYSQL_SSL_CA` |
 | `outils/installer.php` | Installe le schéma sur **n'importe quelle** base, TiDB compris |
-| `.github/workflows/mobile.yml` | Construit Linkee.apk et Linkee.ipa (non signé) |
+| `.github/workflows/mobile.yml` | Construit Outsee.apk et Outsee.ipa (non signé) |
 
 Rien n'est à écrire en dur : la plateforme fournit les variables, le code les
 lit. C'est déjà le cas depuis la refonte de `includes/config.php`.
@@ -50,7 +50,7 @@ l'utilisateur (`xxxxxxxx.root`), et générer le mot de passe. Créer la base
 dans l'onglet *SQL Editor* :
 
 ```sql
-CREATE DATABASE linkee CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE outsee CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 **2. Installer le schéma** depuis ce PC (PowerShell, à la racine du projet) :
@@ -60,7 +60,7 @@ $env:MYSQLHOST = 'gateway01.eu-central-1.prod.aws.tidbcloud.com'
 $env:MYSQLPORT = '4000'
 $env:MYSQLUSER = 'xxxxxxxx.root'
 $env:MYSQLPASSWORD = 'le-mot-de-passe'
-$env:MYSQLDATABASE = 'linkee'
+$env:MYSQLDATABASE = 'outsee'
 $env:MYSQL_SSL_CA = 'C:\chemin\vers\isrgrootx1.pem'
 C:\wamp64\bin\php\php8.3.14\php.exe outils\installer.php
 ```
@@ -80,11 +80,11 @@ MYSQLHOST=gateway01.eu-central-1.prod.aws.tidbcloud.com
 MYSQLPORT=4000
 MYSQLUSER=xxxxxxxx.root
 MYSQLPASSWORD=le-mot-de-passe
-MYSQLDATABASE=linkee
+MYSQLDATABASE=outsee
 ```
 
 Render construit l'image du `Dockerfile` et donne une adresse
-`https://linkee-xxxx.onrender.com`. Le site est à la racine de cette adresse.
+`https://outsee-xxxx.onrender.com`. Le site est à la racine de cette adresse.
 
 **4. Vérifier.**
 
@@ -142,14 +142,14 @@ L'application est construite sur les machines de GitHub par le workflow
    l'adresse Render, en https, sans barre finale.
 2. *Actions → Application mobile → Run workflow*. Compter une vingtaine de
    minutes ; deux fichiers apparaissent en bas de la page du run :
-   `linkee-android` (Linkee.apk) et `linkee-ios` (Linkee.ipa, non signé).
+   `outsee-android` (Outsee.apk) et `outsee-ios` (Outsee.ipa, non signé).
 
 **Android** : envoyer l'APK aux testeurs ; à l'ouverture, autoriser
 l'installation depuis cette source. Aucune expiration.
 
 **iPhone avec Sideloadly** : brancher l'iPhone en USB au PC où tourne
 [Sideloadly](https://sideloadly.io) (iTunes et iCloud installés depuis le site
-d'Apple, pas depuis le Microsoft Store), glisser `Linkee.ipa`, saisir un
+d'Apple, pas depuis le Microsoft Store), glisser `Outsee.ipa`, saisir un
 identifiant Apple, *Start*. Sur l'iPhone : *Réglages → Général → VPN et
 gestion de l'appareil* → faire confiance au profil, puis activer le *Mode
 développeur* (iOS 16 et plus).

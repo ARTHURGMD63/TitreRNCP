@@ -1,4 +1,4 @@
-/* Linkee — app.js */
+/* Outsee — app.js */
 
 // ─── Chemin d'installation ───────────────────────────────────────────────────
 //
@@ -29,7 +29,7 @@ const BASE = (function () {
 })();
 
 // Apply saved theme instantly (before first paint)
-// Basalte par defaut (charte Linkee : l'app etudiant est « la nuit »). Les
+// Basalte par defaut (charte Outsee : l'app etudiant est « la nuit »). Les
 // pages de l'espace pro portent data-theme-fixe : elles restent en craie,
 // quel que soit le theme choisi cote etudiant.
 (function(){
@@ -259,7 +259,7 @@ function initApp() {
           qrRevealText?.classList.add('hidden');
           qrBody.classList.add('revealed');
           new QRCode(qrCanvas, {
-            text: 'linkee:' + qrCanvas.dataset.code,
+            text: 'outsee:' + qrCanvas.dataset.code,
             width: 200, height: 200,
             // Couleurs ecrites en dur, et surtout PAS prises dans le theme.
             //

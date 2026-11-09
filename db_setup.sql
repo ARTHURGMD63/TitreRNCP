@@ -1,5 +1,5 @@
 -- ============================================================
---  Linkee — Installation complète de la base de données
+--  Outsee — Installation complète de la base de données
 --  Import UNIQUE : crée la base, les 16 tables et un jeu de
 --  données de démonstration (événements toujours à venir).
 --
@@ -12,8 +12,8 @@
 --   • Partenaire : jean@lebecquipique.fr
 -- ============================================================
 
-CREATE DATABASE IF NOT EXISTS linkee CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE linkee;
+CREATE DATABASE IF NOT EXISTS outsee CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE outsee;
 
 -- ─── Moteur de stockage ─────────────────────────────────────────────────────
 --
@@ -361,10 +361,10 @@ INSERT INTO etablissements (user_id, nom, type, adresse, ville) VALUES
 
 -- Événements toujours à venir grâce à NOW() + INTERVAL
 INSERT INTO evenements (etablissement_id, titre, description, type, style_musique, date_heure, quota, reduction, prix_normal, is_flash, flash_expiry, is_gratuit, lieu) VALUES
-(1, 'Happy Hour jusqu\'à minuit', 'Happy Hour prolongé exclusivement pour les membres Linkee. Cocktails à moitié prix toute la soirée !', 'bar', 'generaliste',       NOW() + INTERVAL 2 HOUR,  80,  50, 10.00, 1, NOW() + INTERVAL 3 HOUR,  0, 'Place de Jaude, Clermont-Ferrand'),
+(1, 'Happy Hour jusqu\'à minuit', 'Happy Hour prolongé exclusivement pour les membres Outsee. Cocktails à moitié prix toute la soirée !', 'bar', 'generaliste',       NOW() + INTERVAL 2 HOUR,  80,  50, 10.00, 1, NOW() + INTERVAL 3 HOUR,  0, 'Place de Jaude, Clermont-Ferrand'),
 (1, 'Beer Pong Tournament',      'Tournoi de beer pong par équipes de 2. Entrée gratuite, 50€ de conso pour les gagnants.',                    'afterwork', 'generaliste', NOW() + INTERVAL 5 HOUR,  40,  0,  0.00,  1, NOW() + INTERVAL 4 HOUR,  1, 'Place de Jaude, Clermont-Ferrand'),
 (1, 'Mojito Night',              '-60% sur tous les cocktails tiki entre 19h et 22h. Ambiance tropicale, DJ set live.',                          'bar', 'house',       NOW() + INTERVAL 27 HOUR, 80,  60, 10.00, 1, NOW() + INTERVAL 24 HOUR, 0, 'Place de Jaude, Clermont-Ferrand'),
-(2, 'Soirée Étudiante',          'Entrée gratuite avant 1h avec ton pass Linkee. DJ set toute la nuit.',                                   'boite', 'generaliste',     NOW() + INTERVAL 26 HOUR, 150, 100, 10.00, 0, NULL, 1, 'Montferrand, Clermont-Ferrand'),
+(2, 'Soirée Étudiante',          'Entrée gratuite avant 1h avec ton pass Outsee. DJ set toute la nuit.',                                   'boite', 'generaliste',     NOW() + INTERVAL 26 HOUR, 150, 100, 10.00, 0, NULL, 1, 'Montferrand, Clermont-Ferrand'),
 (1, 'After-work Jeudi',          'Bières à 2€, pintes à 3€ pour les étudiants munis de leur pass.',                                             'afterwork', 'pop', NOW() + INTERVAL 50 HOUR, 60,  30, 5.00,  0, NULL, 0, 'Place de Jaude, Clermont-Ferrand'),
 (1, 'Blind Test Géant',          'Blind test par équipes, lots à gagner, shooters offerts pour les gagnants.',                                 'bar', 'pop',       NOW() + INTERVAL 4 DAY,   60,  20, 12.00, 0, NULL, 0, 'Place de Jaude, Clermont-Ferrand'),
 (2, 'Latino Fever',              'Initiation salsa offerte à 22h30 puis reggaeton/latino jusqu\'au bout. Tequila à 4€.',                        'boite', 'latino',     NOW() + INTERVAL 5 DAY,   150, 30, 12.00, 0, NULL, 0, 'Montferrand, Clermont-Ferrand'),
@@ -418,7 +418,7 @@ INSERT INTO invitations (from_user_id, to_user_id, type, target_id, statut) VALU
 
 
 -- ============================================================
---  Linkee — migration v14
+--  Outsee — migration v14
 --  Montée en charge : index manquants et flux de révisions
 --
 --  Cette migration ne change aucune fonctionnalité. Elle prépare la
@@ -555,7 +555,7 @@ ON DUPLICATE KEY UPDATE canal = canal;
 
 
 -- ============================================================
---  Linkee — migration v15
+--  Outsee — migration v15
 --  Les centres d'intérêt deviennent indexables
 --
 --  Le problème, en une phrase : `users.interests` est une chaîne

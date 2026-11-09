@@ -1,5 +1,5 @@
 -- ============================================================
---  Linkee — installation sur hébergement mutualisé
+--  Outsee — installation sur hébergement mutualisé
 --  (InfinityFree, o2switch, OVH mutualisé…)
 --
 --  Import UNIQUE, sur une base DÉJÀ CRÉÉE par l'hébergeur.
@@ -8,7 +8,7 @@
 --  Différences avec db_setup.sql, et pourquoi :
 --
 --   • Pas de CREATE DATABASE ni de USE : sur un mutualisé le nom de la
---     base est imposé (« if0_xxxxxxx_linkee ») et le compte n'a pas
+--     base est imposé (« if0_xxxxxxx_outsee ») et le compte n'a pas
 --     le droit d'en créer. Ces deux lignes feraient échouer l'import.
 --
 --   • SET default_storage_engine=InnoDB : seules 3 des 19 tables de
@@ -30,7 +30,7 @@ SET NAMES utf8mb4;
 SET default_storage_engine=InnoDB;
 
 -- ============================================================
---  Linkee — Installation complète de la base de données
+--  Outsee — Installation complète de la base de données
 --  Import UNIQUE : crée la base, les 16 tables et un jeu de
 --  données de démonstration (événements toujours à venir).
 --
@@ -363,10 +363,10 @@ INSERT INTO etablissements (user_id, nom, type, adresse, ville) VALUES
 
 -- Événements toujours à venir grâce à NOW() + INTERVAL
 INSERT INTO evenements (etablissement_id, titre, description, type, style_musique, date_heure, quota, reduction, prix_normal, is_flash, flash_expiry, is_gratuit, lieu) VALUES
-(1, 'Happy Hour jusqu\'à minuit', 'Happy Hour prolongé exclusivement pour les membres Linkee. Cocktails à moitié prix toute la soirée !', 'bar', 'generaliste',       NOW() + INTERVAL 2 HOUR,  80,  50, 10.00, 1, NOW() + INTERVAL 3 HOUR,  0, 'Place de Jaude, Clermont-Ferrand'),
+(1, 'Happy Hour jusqu\'à minuit', 'Happy Hour prolongé exclusivement pour les membres Outsee. Cocktails à moitié prix toute la soirée !', 'bar', 'generaliste',       NOW() + INTERVAL 2 HOUR,  80,  50, 10.00, 1, NOW() + INTERVAL 3 HOUR,  0, 'Place de Jaude, Clermont-Ferrand'),
 (1, 'Beer Pong Tournament',      'Tournoi de beer pong par équipes de 2. Entrée gratuite, 50€ de conso pour les gagnants.',                    'afterwork', 'generaliste', NOW() + INTERVAL 5 HOUR,  40,  0,  0.00,  1, NOW() + INTERVAL 4 HOUR,  1, 'Place de Jaude, Clermont-Ferrand'),
 (1, 'Mojito Night',              '-60% sur tous les cocktails tiki entre 19h et 22h. Ambiance tropicale, DJ set live.',                          'bar', 'house',       NOW() + INTERVAL 27 HOUR, 80,  60, 10.00, 1, NOW() + INTERVAL 24 HOUR, 0, 'Place de Jaude, Clermont-Ferrand'),
-(2, 'Soirée Étudiante',          'Entrée gratuite avant 1h avec ton pass Linkee. DJ set toute la nuit.',                                   'boite', 'generaliste',     NOW() + INTERVAL 26 HOUR, 150, 100, 10.00, 0, NULL, 1, 'Montferrand, Clermont-Ferrand'),
+(2, 'Soirée Étudiante',          'Entrée gratuite avant 1h avec ton pass Outsee. DJ set toute la nuit.',                                   'boite', 'generaliste',     NOW() + INTERVAL 26 HOUR, 150, 100, 10.00, 0, NULL, 1, 'Montferrand, Clermont-Ferrand'),
 (1, 'After-work Jeudi',          'Bières à 2€, pintes à 3€ pour les étudiants munis de leur pass.',                                             'afterwork', 'pop', NOW() + INTERVAL 50 HOUR, 60,  30, 5.00,  0, NULL, 0, 'Place de Jaude, Clermont-Ferrand'),
 (1, 'Blind Test Géant',          'Blind test par équipes, lots à gagner, shooters offerts pour les gagnants.',                                 'bar', 'pop',       NOW() + INTERVAL 4 DAY,   60,  20, 12.00, 0, NULL, 0, 'Place de Jaude, Clermont-Ferrand'),
 (2, 'Latino Fever',              'Initiation salsa offerte à 22h30 puis reggaeton/latino jusqu\'au bout. Tequila à 4€.',                        'boite', 'latino',     NOW() + INTERVAL 5 DAY,   150, 30, 12.00, 0, NULL, 0, 'Montferrand, Clermont-Ferrand'),
@@ -422,7 +422,7 @@ INSERT INTO invitations (from_user_id, to_user_id, type, target_id, statut) VALU
 -- ═══════════ migration v5 ═══════════
 
 -- ============================================================
---  Linkee — migration v5
+--  Outsee — migration v5
 --  Photo de profil étudiant
 --
 --  Les établissements pouvaient déjà téléverser des photos ; les
@@ -446,7 +446,7 @@ PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 -- ═══════════ migration v6 ═══════════
 
 -- ============================================================
---  Linkee — migration v6
+--  Outsee — migration v6
 --  Rôle d'administration et traitement des signalements
 --
 --  Les signalements (table user_reports, migration v4) s'empilaient
@@ -477,7 +477,7 @@ PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
 -- ═══════════ migration v8 ═══════════
 
 -- ============================================================
---  Linkee — migration v8
+--  Outsee — migration v8
 --  Les badges cessent de stocker des emoji et l'ancienne palette
 --
 --  La colonne « icon » contenait des emoji (fête, flamme, personnes…) : dessinés par
@@ -513,7 +513,7 @@ UPDATE badges SET icon = 'etoile' WHERE icon IS NULL OR icon = '' OR icon NOT RE
 -- ═══════════ migration v9 ═══════════
 
 -- ============================================================
---  Linkee — migration v9
+--  Outsee — migration v9
 --  Trace des rappels envoyés
 --
 --  Sans elle, un rappel serait renvoyé à chaque passage de la tâche
@@ -537,7 +537,7 @@ CREATE TABLE IF NOT EXISTS rappels_envoyes (
 -- ═══════════ migration v10 ═══════════
 
 -- ============================================================
---  Linkee — migration v10
+--  Outsee — migration v10
 --  Date de naissance et acceptation des CGU
 --
 --  Les CGU annoncent une application « réservée aux étudiants
@@ -570,7 +570,7 @@ PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
 -- ═══════════ migration v11 ═══════════
 
 -- ============================================================
---  Linkee — migration v11
+--  Outsee — migration v11
 --  Posts sponsorisés & invitations non dupliquées
 --
 --  1. Sponsoring d'événement
@@ -644,7 +644,7 @@ PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
 -- ═══════════ migration v12 ═══════════
 
 -- ============================================================
---  Linkee — migration v12
+--  Outsee — migration v12
 --  Back-office fondateurs : CRM commercial et registre financier
 --
 --  Trois tables, et une raison pour chacune.
@@ -788,7 +788,7 @@ SELECT e.id, e.nom, e.type, e.ville, e.adresse, 'essai', 'aucune', 0
 -- ═══════════ migration v13 ═══════════
 
 -- ============================================================
---  Linkee — migration v13
+--  Outsee — migration v13
 --  Style de musique d'un événement
 --
 --  « Où sortir ce soir » se décide autant sur la musique que sur le
@@ -839,7 +839,7 @@ PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
 
 
 -- ============================================================
---  Linkee — migration v14
+--  Outsee — migration v14
 --  Montée en charge : index manquants et flux de révisions
 --
 --  Cette migration ne change aucune fonctionnalité. Elle prépare la
@@ -976,7 +976,7 @@ ON DUPLICATE KEY UPDATE canal = canal;
 
 
 -- ============================================================
---  Linkee — migration v15
+--  Outsee — migration v15
 --  Les centres d'intérêt deviennent indexables
 --
 --  Le problème, en une phrase : `users.interests` est une chaîne

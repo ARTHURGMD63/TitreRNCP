@@ -18,7 +18,7 @@ require_once __DIR__ . '/config.php';
 installerGardesErreurs();
 
 define('DB_HOST', reglage('MYSQLHOST',     'host', 'localhost'));
-define('DB_NAME', reglage('MYSQLDATABASE', 'name', 'linkee'));
+define('DB_NAME', reglage('MYSQLDATABASE', 'name', 'outsee'));
 define('DB_USER', reglage('MYSQLUSER',     'user', 'root'));
 define('DB_PASS', reglage('MYSQLPASSWORD', 'pass', ''));
 define('DB_PORT', reglage('MYSQLPORT',     'port', '3306'));

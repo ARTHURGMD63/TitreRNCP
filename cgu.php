@@ -14,7 +14,7 @@ $doc = textesLegaux()['cgu']; ?>
   .legal-page p, .legal-page li { color:var(--gris-fonce); }
   .legal-page strong { color:var(--noir); }
 </style>
-<?php pageDebut('Linkee — CGU', ['tete' => ob_get_clean()]); ?>
+<?php pageDebut('Outsee — CGU', ['tete' => ob_get_clean()]); ?>
 <div class="legal-page">
   <a href="javascript:history.back()" class="back">← Retour</a>
   <h1><?= htmlspecialchars($doc['titre'], ENT_QUOTES, 'UTF-8') ?></h1>

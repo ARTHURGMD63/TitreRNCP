@@ -59,7 +59,7 @@ require_once __DIR__ . '/marque.php';
  *                          que passe le <style> propre à une page, capturé
  *                          par ob_start()/ob_get_clean() pour que le PHP
  *                          qu'il contient parfois soit évalué normalement.
- *     'univers'  => string 'etudiant' (défaut) ou 'pro'. La charte Linkee
+ *     'univers'  => string 'etudiant' (défaut) ou 'pro'. La charte Outsee
  *                          donne « la nuit aux étudiants, le jour aux pros » :
  *                          l'espace partenaire et le back-office restent en
  *                          craie, quel que soit le thème choisi côté étudiant.
@@ -114,7 +114,7 @@ function pageDebut(string $titre, array $options = []): void
         echo '<link rel="manifest" href="' . htmlspecialchars(baseUrl('/manifest.json'), ENT_QUOTES) . "\">\n";
         echo "<meta name=\"apple-mobile-web-app-capable\" content=\"yes\">\n";
         echo "<meta name=\"apple-mobile-web-app-status-bar-style\" content=\"black-translucent\">\n";
-        echo "<meta name=\"apple-mobile-web-app-title\" content=\"Linkee\">\n";
+        echo "<meta name=\"apple-mobile-web-app-title\" content=\"Outsee\">\n";
     }
 
     foreach ($scripts as $script) {

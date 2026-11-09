@@ -378,12 +378,12 @@ function sendResetEmail(string $email, string $token, string $baseUrl): bool {
 
     return envoyerEmail(
         $email,
-        'Linkee — Réinitialisation de votre mot de passe',
+        'Outsee — Réinitialisation de votre mot de passe',
         "Bonjour,\n\n"
         . "Cliquez sur ce lien pour réinitialiser votre mot de passe (valable 1 heure) :\n\n"
         . "$link\n\n"
         . "Si vous n'avez pas fait cette demande, ignorez cet e-mail : votre mot de passe "
         . "reste inchangé.\n\n"
-        . "L'équipe Linkee"
+        . "L'équipe Outsee"
     );
 }

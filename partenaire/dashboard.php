@@ -106,13 +106,13 @@ $eventDayNum = $event ? date('j', strtotime($event['date_heure'])) : date('j');
 $eventType = $event ? mb_strtoupper($event['titre']) : 'HAPPY HOUR';
 $ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
 ?>
-<?php pageDebut('Linkee — Dashboard Partenaire', ['univers' => 'pro', 'scripts' => ['/assets/vendor/chart.umd.min.js', '/assets/vendor/html5-qrcode.min.js']]); ?>
+<?php pageDebut('Outsee — Dashboard Partenaire', ['univers' => 'pro', 'scripts' => ['/assets/vendor/chart.umd.min.js', '/assets/vendor/html5-qrcode.min.js']]); ?>
 <div class="partner-shell">
 
   <!-- Sidebar -->
   <aside class="partner-sidebar">
     <div class="sidebar-brand">
-      <?= marqueLinkee('pro') ?>
+      <?= marqueOutsee('pro') ?>
     </div>
 
     <nav class="sidebar-nav">

@@ -1,6 +1,6 @@
 {
-    "name": "linkee/app",
-    "description": "Linkee — Plateforme d'événements étudiants",
+    "name": "outsee/app",
+    "description": "Outsee — Plateforme d'événements étudiants",
     "type": "project",
     "license": "proprietary",
     "require": {

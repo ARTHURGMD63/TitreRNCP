@@ -1,4 +1,4 @@
-# Rapport d'accessibilité — Linkee
+# Rapport d'accessibilité — Outsee
 
 ## Cible WCAG
 

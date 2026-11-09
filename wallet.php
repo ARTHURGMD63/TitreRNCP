@@ -78,7 +78,7 @@ $moisFr = ['January'=>'Janvier','February'=>'Février','March'=>'Mars','April'=>
            'September'=>'Septembre','October'=>'Octobre','November'=>'Novembre','December'=>'Décembre'];
 $currentMonth = mb_strtoupper($moisFr[date('F')] ?? date('F'));
 ?>
-<?php pageDebut('Linkee — Pass', ['pwa' => true]); ?>
+<?php pageDebut('Outsee — Pass', ['pwa' => true]); ?>
 <a href="#main-content" class="skip-nav">Aller au contenu principal</a>
 <div class="app-shell">
 
@@ -290,7 +290,7 @@ $currentMonth = mb_strtoupper($moisFr[date('F')] ?? date('F'));
 
 <!-- Bottom Nav -->
 <nav class="bottom-nav" aria-label="Navigation principale">
-  <span class="nav-marque" aria-hidden="true"><?= marqueLinkee() ?></span>
+  <span class="nav-marque" aria-hidden="true"><?= marqueOutsee() ?></span>
   <a href="<?= baseUrl('/explore.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
     <span>Explorer</span>

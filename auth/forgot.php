@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-<?php pageDebut('Linkee — Mot de passe oublié'); ?>
+<?php pageDebut('Outsee — Mot de passe oublié'); ?>
 <div class="auth-page">
   <div class="auth-logo">
     <a class="bouton-retour" href="<?= baseUrl('/auth/login.php') ?>" aria-label="Retour à la connexion"><?= icon('fleche-g') ?></a>

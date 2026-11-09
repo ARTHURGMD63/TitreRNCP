@@ -1,5 +1,5 @@
 -- ============================================================
---  Linkee — migration v23
+--  Outsee — migration v23
 --  Check-in : horodatage, et qr_code vraiment unique
 --
 --  checkin_le retient QUAND une personne a ete validee a l'entree — jusqu'ici

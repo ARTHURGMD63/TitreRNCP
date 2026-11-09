@@ -1,6 +1,6 @@
 <?php
 /**
- * La marque Linkee : deux anneaux entrelacés et le logotype « linkee ».
+ * La marque Outsee : deux anneaux entrelacés et le logotype « outsee ».
  *
  * Un seul endroit pour la dessiner. Le logo était recomposé à la main dans
  * chaque en-tête (« StudentLink <em>/ Hub</em> », un <svg> différent sur le
@@ -20,7 +20,7 @@
  * c'est ce croisement qui les « entrelace ». aria-hidden : le symbole
  * accompagne toujours un nom lisible.
  */
-function anneauxLinkee(string $classe = 'marque__anneaux'): string
+function anneauxOutsee(string $classe = 'marque__anneaux'): string
 {
     return '<svg class="' . htmlspecialchars($classe, ENT_QUOTES) . '" viewBox="0 0 52 32" fill="none" aria-hidden="true" focusable="false">'
          . '<circle cx="16" cy="16" r="12.5" stroke="var(--rouge)" stroke-width="5"/>'
@@ -31,22 +31,22 @@ function anneauxLinkee(string $classe = 'marque__anneaux'): string
 }
 
 /**
- * Le logo complet : anneaux + « linkee », avec un suffixe d'univers
+ * Le logo complet : anneaux + « outsee », avec un suffixe d'univers
  * facultatif (« pro », « interne ») rendu en maigre, comme sur la charte
- * (« linkee pro »).
+ * (« outsee pro »).
  *
  * @param string $suffixe   Mot d'univers, échappé ici. Vide : logo seul.
  * @param string $href      Lien facultatif ; le logo devient alors un <a>.
  * @param bool   $anneaux   Faux pour le logotype seul.
  */
-function marqueLinkee(string $suffixe = '', string $href = '', bool $anneaux = true): string
+function marqueOutsee(string $suffixe = '', string $href = '', bool $anneaux = true): string
 {
-    $contenu = ($anneaux ? anneauxLinkee() : '')
+    $contenu = ($anneaux ? anneauxOutsee() : '')
              . '<span class="marque__mot" aria-hidden="true">link<span class="marque__ee">ee</span></span>'
              . ($suffixe !== '' ? '<span class="marque__suffixe" aria-hidden="true">' . htmlspecialchars($suffixe) . '</span>' : '');
 
-    // Le nom lisible par un lecteur d'écran : « Linkee pro », pas « l-i-n-k-e-e ».
-    $nom = 'Linkee' . ($suffixe !== '' ? ' ' . $suffixe : '');
+    // Le nom lisible par un lecteur d'écran : « Outsee pro », pas « l-i-n-k-e-e ».
+    $nom = 'Outsee' . ($suffixe !== '' ? ' ' . $suffixe : '');
     $sr  = '<span class="sr-only">' . htmlspecialchars($nom) . '</span>';
 
     if ($href !== '') {

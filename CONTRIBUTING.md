@@ -1,4 +1,4 @@
-# Contributing — Linkee
+# Contributing — Outsee
 
 ## Workflow Git
 

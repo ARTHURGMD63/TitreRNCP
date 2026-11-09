@@ -1,5 +1,5 @@
 -- ============================================================
---  Linkee — migration v11
+--  Outsee — migration v11
 --  Posts sponsorisés & invitations non dupliquées
 --
 --  1. Sponsoring d'événement

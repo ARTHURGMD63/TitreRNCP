@@ -1,6 +1,6 @@
 # Changelog
 
-Toutes les modifications notables de Linkee sont documentées dans ce fichier.
+Toutes les modifications notables d'Outsee sont documentées dans ce fichier.
 
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/),
 et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.html).
@@ -9,6 +9,11 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 
 ### Changed
 - **Ultraviolet.** L'accent passe du orange lave `#FF5424` au violet `#8E6BFF` (texte lisible `#5B3BD6` sur craie, teintes claires `#ECE6FF` / `#231B3F`) : site, mobile, icônes, `Logo.png`, supports `docs/`. Les jetons gardent leurs noms (`--rouge`, `lave`).
+- **Outsee.** Linkee devient Outsee : nom, logotype, textes légaux, e-mails,
+  `marqueOutsee()`, application mobile (`fr.outsee.app`, schéma `outsee`),
+  base par défaut `outsee`, QR codes `outsee:`. Les pass `linkee:` et
+  `studentlink:` déjà émis restent acceptés au scan ; le jeton de session, le
+  thème et le cache du service worker de l'ancien nom sont repris ou purgés.
 
 ### Added
 - **Mot de passe oublié sans page web.** Un code à six chiffres part par e-mail

@@ -13,7 +13,7 @@ import React, { useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import Svg, { Circle } from 'react-native-svg';
+import { AnneauxSeuls } from '../composants/Marque';
 import { Icone } from '../composants/Icone';
 import { Display, Mono, T } from '../composants/Texte';
 import { useSession } from '../session';
@@ -92,7 +92,7 @@ function GrandeIcone({ children }: { children: React.ReactNode }) {
 const DIAPOS: Diapo[] = [
   {
     fond: (c) => c.rouge,
-    tag: 'Bienvenue sur Linkee',
+    tag: 'Bienvenue sur Outsee',
     couleurTag: (c) => c.surRougeClair,
     titre: ['La vie étudiante\nà prix ', 'réduit.', ''],
     desc: 'Bars, boîtes, restos — accède aux meilleures sorties de ta ville avec des réductions exclusives réservées aux étudiants.',
@@ -154,7 +154,7 @@ const DIAPOS: Diapo[] = [
       <View style={{ alignItems: 'center', gap: 20 }}>
         <GrandeIcone><Icone nom="carte" taille={48} couleur={fixe.basalte} /></GrandeIcone>
         <View style={{ width: 210, backgroundColor: c.rouge, borderRadius: rayon.base, paddingVertical: 14, paddingHorizontal: 16 }}>
-          <Mono couleur={fixe.surLave} style={{ marginBottom: 4 }}>linkee pass</Mono>
+          <Mono couleur={fixe.surLave} style={{ marginBottom: 4 }}>outsee pass</Mono>
           <Display taille={fs[5]} couleur={fixe.surLave} style={{ marginBottom: 6 }}>{prenom}</Display>
           <T taille={fs[1]} poids={600} couleur="rgba(17,16,19,0.75)">Happy Hour · Ce soir</T>
           <View style={{ marginTop: 10, backgroundColor: '#FFFFFF', height: 48, width: 48, borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
@@ -166,14 +166,9 @@ const DIAPOS: Diapo[] = [
   },
 ];
 
-/** Écran 1 : les deux anneaux, basalte et craie, sur la lave (.onb-anneaux, 190 px). */
+/** Écran 1 : les deux anneaux entrelacés du logo, sur la lave (.onb-anneaux, 190 px). */
 function AnneauxAccueil() {
-  return (
-    <Svg width={190} height={190 * 32 / 52} viewBox="0 0 52 32" fill="none">
-      <Circle cx={16} cy={18} r={12} stroke="#111013" strokeWidth={4.5} />
-      <Circle cx={34} cy={14} r={12} stroke="#F5F1E8" strokeWidth={4.5} />
-    </Svg>
-  );
+  return <AnneauxSeuls largeur={190} />;
 }
 
 export default function Accueil() {

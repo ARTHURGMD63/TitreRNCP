@@ -66,7 +66,7 @@ $points = array_map(
   /* L'épingle : une vraie goutte (repère de lieu classique), pas un rond
      bricolé ni le pin par défaut de Leaflet. Même tracé SVG que côté mobile
      (carte.tsx) : rouge à venir, vert-volt et pulsante en cours. */
-  .epingle-linkee { filter: drop-shadow(0 2px 3px rgba(0,0,0,.3)); }
+  .epingle-outsee { filter: drop-shadow(0 2px 3px rgba(0,0,0,.3)); }
   .epingle-avenir svg path { fill: var(--rouge); }
   .epingle-encours svg path { fill: var(--lime); animation: epingle-pouls 1.4s ease-in-out infinite; }
   @keyframes epingle-pouls {
@@ -81,7 +81,7 @@ $points = array_map(
     box-shadow: var(--shadow); cursor: pointer;
   }
 </style>
-<?php pageDebut('Linkee — Carte des soirées', [
+<?php pageDebut('Outsee — Carte des soirées', [
     'pwa' => true,
     'scripts' => ['/assets/vendor/leaflet.js'],
     'tete' => ob_get_clean(),
@@ -108,7 +108,7 @@ $points = array_map(
 
   function icone(enCours) {
     return L.divIcon({
-      className: 'epingle-linkee ' + (enCours ? 'epingle-encours' : 'epingle-avenir'),
+      className: 'epingle-outsee ' + (enCours ? 'epingle-encours' : 'epingle-avenir'),
       html: '<svg width="36" height="36" viewBox="0 0 24 24"><path d="' + TRACE_EPINGLE + '" stroke="#F5F1E8" stroke-width="1"/></svg>',
       iconSize: [36, 36],
       iconAnchor: [18, 34],

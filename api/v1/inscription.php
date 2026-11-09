@@ -64,7 +64,7 @@ if (!$prenom || !$nom || !$email || !$pass) {
 } elseif ($age === null) {
     apiErreur('Merci d’indiquer une date de naissance valide.', 422, 'naissance');
 } elseif ($age < 18) {
-    apiErreur('Linkee est réservée aux personnes majeures : l’inscription n’est pas possible avant 18 ans.', 422, 'mineur');
+    apiErreur('Outsee est réservée aux personnes majeures : l’inscription n’est pas possible avant 18 ans.', 422, 'mineur');
 } elseif ($age > 120) {
     apiErreur('Cette date de naissance ne semble pas correcte.', 422, 'naissance');
 } elseif (!$cgu) {

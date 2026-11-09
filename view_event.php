@@ -151,7 +151,7 @@ $heroAccent = $heroPhoto ? '#8E6BFF' : ($isFlash ? 'inherit' : 'var(--sur-rouge-
     color: var(--gris); margin-bottom: 8px;
   }
 </style>
-<?php pageDebut($e['titre'] . ' — Linkee', ['pwa' => true, 'tete' => ob_get_clean()]); ?>
+<?php pageDebut($e['titre'] . ' — Outsee', ['pwa' => true, 'tete' => ob_get_clean()]); ?>
 <div class="app-shell">
 
   <main id="main-content" class="page-content">
@@ -316,7 +316,7 @@ $heroAccent = $heroPhoto ? '#8E6BFF' : ($isFlash ? 'inherit' : 'var(--sur-rouge-
 </div>
 
 <nav class="bottom-nav nav-ordinateur" aria-label="Navigation principale">
-  <span class="nav-marque" aria-hidden="true"><?= marqueLinkee() ?></span>
+  <span class="nav-marque" aria-hidden="true"><?= marqueOutsee() ?></span>
   <a href="<?= baseUrl('/explore.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
     <span>Explorer</span>

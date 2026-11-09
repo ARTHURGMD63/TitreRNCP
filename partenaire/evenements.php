@@ -43,12 +43,12 @@ $evenements = $stmt->fetchAll();
 
 $typeLabels = ['bar'=>'Bar','boite'=>'Boîte','resto'=>'Resto','afterwork'=>'Afterwork'];
 ?>
-<?php pageDebut('Linkee — Mes événements', ['univers' => 'pro', 'scripts' => ['/assets/vendor/html5-qrcode.min.js']]); ?>
+<?php pageDebut('Outsee — Mes événements', ['univers' => 'pro', 'scripts' => ['/assets/vendor/html5-qrcode.min.js']]); ?>
 <div class="partner-shell">
 
   <aside class="partner-sidebar">
     <div class="sidebar-brand">
-      <?= marqueLinkee('pro') ?>
+      <?= marqueOutsee('pro') ?>
     </div>
     <nav class="sidebar-nav">
       <a href="<?= baseUrl('/partenaire/dashboard.php') ?>" class="sidebar-link">

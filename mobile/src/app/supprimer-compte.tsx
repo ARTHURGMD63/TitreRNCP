@@ -101,13 +101,13 @@ export default function SupprimerCompte() {
       <Contenu>
         {demandeEnvoyee ? (
           <Encart genre="ok">
-            Demande envoyée. L’équipe Linkee la traite et te répond par email. D’ici là, ton compte reste ouvert.
+            Demande envoyée. L’équipe Outsee la traite et te répond par email. D’ici là, ton compte reste ouvert.
           </Encart>
         ) : (
           <>
             {partenaire ? (
               <T taille={fs[4]} couleur={c.grisFonce} interligne={lh.normal} style={{ marginBottom: 20 }}>
-                Un compte établissement porte un abonnement et des soirées auxquelles des étudiants sont inscrits. Pour ne rien casser, la suppression est traitée par l’équipe Linkee : ta demande lui est transmise, avec ton mot de passe comme confirmation.
+                Un compte établissement porte un abonnement et des soirées auxquelles des étudiants sont inscrits. Pour ne rien casser, la suppression est traitée par l’équipe Outsee : ta demande lui est transmise, avec ton mot de passe comme confirmation.
               </T>
             ) : (
               <>

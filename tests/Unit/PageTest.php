@@ -76,12 +76,12 @@ final class PageTest extends TestCase
 
     public function testLaCoquilleEmetLeMinimumAttendu(): void
     {
-        $html = $this->rendre('Linkee — Test');
+        $html = $this->rendre('Outsee — Test');
 
         $this->assertStringContainsString('<!DOCTYPE html>', $html);
         $this->assertStringContainsString('<html lang="fr">', $html);
         $this->assertStringContainsString('<meta charset="UTF-8">', $html);
-        $this->assertStringContainsString('<title>Linkee — Test</title>', $html);
+        $this->assertStringContainsString('<title>Outsee — Test</title>', $html);
         $this->assertStringContainsString('name="viewport"', $html);
         $this->assertStringContainsString('name="csrf-token"', $html);
         $this->assertStringContainsString('assets/css/style.css', $html);

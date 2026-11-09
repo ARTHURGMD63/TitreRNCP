@@ -1,5 +1,5 @@
 -- ============================================================
---  Linkee — migration v18
+--  Outsee — migration v18
 --  Rattrapage d'une base ancienne : jeu de caractères, moteur et
 --  clés étrangères
 --

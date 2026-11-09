@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($age === null) {
         $error = 'Merci d’indiquer une date de naissance valide.';
     } elseif ($age < 18) {
-        $error = 'Linkee est réservée aux personnes majeures : '
+        $error = 'Outsee est réservée aux personnes majeures : '
                . 'l’inscription n’est pas possible avant 18 ans.';
     } elseif ($age > 120) {
         $error = 'Cette date de naissance ne semble pas correcte.';
@@ -149,10 +149,10 @@ if (!in_array($selectedType, ['etudiant', 'partenaire'], true)) {
 // Une erreur de formulaire ne doit pas effacer les étiquettes déjà choisies.
 $interetsChoisis = filtrerInterets($_POST['interests'] ?? []);
 ?>
-<?php pageDebut('Linkee — Inscription'); ?>
+<?php pageDebut('Outsee — Inscription'); ?>
 <div class="auth-page" style="padding-top:24px;">
   <div class="auth-logo">
-    <?= marqueLinkee() ?>
+    <?= marqueOutsee() ?>
   </div>
 
   <h1 class="auth-headline titre-page">
@@ -212,7 +212,7 @@ $interetsChoisis = filtrerInterets($_POST['interests'] ?? []);
              value="<?= htmlspecialchars($_POST['date_naissance'] ?? '') ?>"
              aria-describedby="aide-naissance" required>
       <p class="aide-champ" id="aide-naissance">
-        Linkee donne accès à des soirées en bar et en discothèque :
+        Outsee donne accès à des soirées en bar et en discothèque :
         l’inscription est réservée aux personnes majeures.
       </p>
     </div>

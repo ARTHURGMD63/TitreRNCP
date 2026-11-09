@@ -146,7 +146,7 @@ rapport à un serveur où la base est adjacente.
 
 ```bash
 php outils/semer_charge.php --etudiants=5000 --evenements=1500
-docker build -t linkee:perf .
+docker build -t outsee:perf .
 ```
 
 ### 3.1 Latence d'une page, avant / après

@@ -5,9 +5,9 @@
 #  Run workflow. Deux fichiers sortent, à télécharger en bas de la page
 #  du run (« Artifacts ») :
 #
-#    linkee-android   Linkee.apk — s'installe directement sur un Android
+#    outsee-android   Outsee.apk — s'installe directement sur un Android
 #                     (autoriser les « sources inconnues »).
-#    linkee-ios       Linkee.ipa — NON signé. Sideloadly le signe avec
+#    outsee-ios       Outsee.ipa — NON signé. Sideloadly le signe avec
 #                     l'identifiant Apple de la personne qui l'installe.
 #
 #  Aucun compte Expo ni Apple Developer n'est nécessaire : tout est
@@ -17,7 +17,7 @@
 #  À régler UNE fois : Settings → Secrets and variables → Actions →
 #  onglet « Variables » → New repository variable :
 #
-#    EXPO_PUBLIC_API_URL   https://linkee-xxxx.onrender.com
+#    EXPO_PUBLIC_API_URL   https://outsee-xxxx.onrender.com
 #
 #  L'adresse publique du serveur, en https, sans barre finale. Elle est
 #  inscrite dans l'application au moment de la construction : la changer
@@ -76,12 +76,12 @@ jobs:
         run: ./gradlew assembleRelease --no-daemon
         working-directory: mobile/android
 
-      - run: cp android/app/build/outputs/apk/release/app-release.apk Linkee.apk
+      - run: cp android/app/build/outputs/apk/release/app-release.apk Outsee.apk
 
       - uses: actions/upload-artifact@v7
         with:
-          name: linkee-android
-          path: mobile/Linkee.apk
+          name: outsee-android
+          path: mobile/Outsee.apk
 
   ios:
     runs-on: macos-latest
@@ -114,23 +114,23 @@ jobs:
       - name: Construire l'application
         run: |
           xcodebuild \
-            -workspace ios/Linkee.xcworkspace \
-            -scheme Linkee \
+            -workspace ios/Outsee.xcworkspace \
+            -scheme Outsee \
             -configuration Release \
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
-            -archivePath build/Linkee.xcarchive \
+            -archivePath build/Outsee.xcarchive \
             archive \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
 
-      # Un .ipa n'est qu'une archive zip contenant Payload/Linkee.app.
+      # Un .ipa n'est qu'une archive zip contenant Payload/Outsee.app.
       - name: Empaqueter le .ipa
         run: |
           mkdir -p Payload
-          cp -R build/Linkee.xcarchive/Products/Applications/Linkee.app Payload/
-          zip -qr Linkee.ipa Payload
+          cp -R build/Outsee.xcarchive/Products/Applications/Outsee.app Payload/
+          zip -qr Outsee.ipa Payload
 
       - uses: actions/upload-artifact@v7
         with:
-          name: linkee-ios
-          path: mobile/Linkee.ipa
+          name: outsee-ios
+          path: mobile/Outsee.ipa

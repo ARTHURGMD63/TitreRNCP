@@ -78,10 +78,10 @@ final class PrefixeTest extends TestCase
     public function testSousDossierImbrique(): void
     {
         // Un mutualisé où le projet est posé deux niveaux sous la racine.
-        $this->assertSame('/clients/linkee', calculerPrefixe(
-            '/clients/linkee/explore.php',
-            '/home/u42/public_html/clients/linkee/explore.php',
-            '/home/u42/public_html/clients/linkee'
+        $this->assertSame('/clients/outsee', calculerPrefixe(
+            '/clients/outsee/explore.php',
+            '/home/u42/public_html/clients/outsee/explore.php',
+            '/home/u42/public_html/clients/outsee'
         ));
     }
 

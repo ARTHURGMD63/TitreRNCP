@@ -1,5 +1,5 @@
 -- ============================================================
---  Linkee — migration v17
+--  Outsee — migration v17
 --  Notifications lues (« Tout lire »)
 --
 --  Les notifications ne sont pas stockées : notificationsEtudiant()

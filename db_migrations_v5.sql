@@ -1,5 +1,5 @@
 -- ============================================================
---  Linkee — migration v5
+--  Outsee — migration v5
 --  Photo de profil étudiant
 --
 --  Les établissements pouvaient déjà téléverser des photos ; les

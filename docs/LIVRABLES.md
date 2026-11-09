@@ -22,13 +22,13 @@ documentation. Trois raisons de les en sortir :
 
 | Fichier | Poids | Nature |
 | --- | --- | --- |
-| `Linkee_Teaser.mp4` | 11,0 Mo | média |
-| `Presentation_Linkee.pptx` | 7,8 Mo | diaporama |
-| `Presentation_Linkee_v3.pptx` | 7,8 Mo | diaporama |
-| `Presentation_Linkee_v2.pptx` | 5,4 Mo | diaporama |
-| `Diaporama_Soutenance_Linkee.pptx` | 3,3 Mo | diaporama |
+| `Outsee_Teaser.mp4` | 11,0 Mo | média |
+| `Presentation_Outsee.pptx` | 7,8 Mo | diaporama |
+| `Presentation_Outsee_v3.pptx` | 7,8 Mo | diaporama |
+| `Presentation_Outsee_v2.pptx` | 5,4 Mo | diaporama |
+| `Diaporama_Soutenance_Outsee.pptx` | 3,3 Mo | diaporama |
 | `docs/*.pdf` (6 fichiers) | 8,1 Mo | **reconstructible** |
-| `Script_Oral_Linkee.pdf` | 0,7 Mo | **reconstructible** |
+| `Script_Oral_Outsee.pdf` | 0,7 Mo | **reconstructible** |
 
 ## Ce qui reste versionné, et pourquoi
 
@@ -46,18 +46,18 @@ seule source du dessin :
 
 | PDF | Source |
 | --- | --- |
-| `Affiches_Rue_Linkee.pdf` | `Affiches_Rue_Linkee.html` |
-| `Flyer_Bars_Linkee.pdf` | `Flyer_Bars_Linkee.html` |
-| `Flyer_Bars_Planche_A4.pdf` | `Flyer_Bars_Linkee.html`, imposé par `generate_planche.py` |
-| `Plaquette_Etudiants_Linkee.pdf` | `Plaquette_Etudiants_Linkee.html` |
-| `Plaquette_Partenaires_Linkee.pdf` | `Plaquette_Partenaires_Linkee.html` |
+| `Affiches_Rue_Outsee.pdf` | `Affiches_Rue_Outsee.html` |
+| `Flyer_Bars_Outsee.pdf` | `Flyer_Bars_Outsee.html` |
+| `Flyer_Bars_Planche_A4.pdf` | `Flyer_Bars_Outsee.html`, imposé par `generate_planche.py` |
+| `Plaquette_Etudiants_Outsee.pdf` | `Plaquette_Etudiants_Outsee.html` |
+| `Plaquette_Partenaires_Outsee.pdf` | `Plaquette_Partenaires_Outsee.html` |
 
 Ouvrir le HTML dans un navigateur, puis « Imprimer → Enregistrer au format
 PDF ». Les feuilles de style portent déjà les règles `@page` (format, fond
 perdu, marges).
 
-La charte graphique, `Charte_Graphique_Linkee.pdf`, est l'exception : c'est le
-document de marque Linkee v1.0 lui-même, fourni tel quel et sans source HTML.
+La charte graphique, `Charte_Graphique_Outsee.pdf`, est l'exception : c'est le
+document de marque Outsee v1.0 lui-même, fourni tel quel et sans source HTML.
 Il ne se régénère pas. À 2,5 Mo, il dépasse la limite des fichiers suivis
 (`tests/Unit/DepotTest.php`) : comme les diaporamas, il se dépose avec les
 livrables, pas dans le dépôt. Les couleurs, typographies et rayons qu'il

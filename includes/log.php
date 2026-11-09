@@ -20,7 +20,7 @@
  */
 function logErreur(string $message, ?Throwable $e = null, array $contexte = []): void
 {
-    $parties = ['[Linkee] ' . $message];
+    $parties = ['[Outsee] ' . $message];
 
     if ($e !== null) {
         $parties[] = sprintf(

@@ -1,4 +1,4 @@
-# Politique de sécurité — Linkee
+# Politique de sécurité — Outsee
 
 ## Versions supportées
 
@@ -10,7 +10,7 @@
 
 ## Signalement d'une vulnérabilité
 
-Si vous découvrez une faille de sécurité, contactez-nous à **security@linkee.app**.  
+Si vous découvrez une faille de sécurité, contactez-nous à **security@outsee.app**.  
 Réponse sous 48h. Merci de ne pas publier la vulnérabilité publiquement avant correction.
 
 ---
@@ -68,7 +68,7 @@ Réponse sous 48h. Merci de ne pas publier la vulnérabilité publiquement avant
 | Mesure | Implémentation |
 |--------|----------------|
 | Retour après échec CSRF | `urlInterneOuDefaut()` : seuls le chemin, la requête et le fragment d'une URL du même hôte sont conservés |
-| Cas couverts | Hôte étranger, hôte qui commence pareil (`linkee.example.evil.tld`), port différent, URL protocole-relatif (`//evil.tld`), `/\evil.tld`, chemin relatif |
+| Cas couverts | Hôte étranger, hôte qui commence pareil (`outsee.example.evil.tld`), port différent, URL protocole-relatif (`//evil.tld`), `/\evil.tld`, chemin relatif |
 
 > `csrfVerify()` renvoyait l'utilisateur vers `$_SERVER['HTTP_REFERER']` tel
 > quel. Cet en-tête est posé par le navigateur d'après la page précédente, qui

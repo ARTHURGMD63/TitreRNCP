@@ -260,7 +260,7 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
 
   .onb-btn:active { transform: scale(0.98); }
 </style>
-<?php pageDebut('Bienvenue — Linkee', ['pwa' => true, 'viewport' => 'width=device-width, initial-scale=1.0, viewport-fit=cover', 'tete' => ob_get_clean()]); ?>
+<?php pageDebut('Bienvenue — Outsee', ['pwa' => true, 'viewport' => 'width=device-width, initial-scale=1.0, viewport-fit=cover', 'tete' => ob_get_clean()]); ?>
 <div class="onb-wrapper">
 
   <button class="onb-skip" onclick="finish()">Passer</button>
@@ -290,7 +290,7 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
         </div>
       </div>
       <div class="onb-text">
-        <div class="onb-tag">Bienvenue sur Linkee</div>
+        <div class="onb-tag">Bienvenue sur Outsee</div>
         <h1 class="onb-title titre-page">La vie étudiante<br>à prix <em>réduit.</em></h1>
         <div class="onb-desc">Bars, boîtes, restos — accède aux meilleures sorties de ta ville avec des réductions exclusives réservées aux étudiants.</div>
       </div>
@@ -400,7 +400,7 @@ $prenom = $_SESSION['user_prenom'] ?? 'toi';
             </svg>
           </div>
           <div class="onb-mock-card" style="background:var(--rouge);border-color:var(--rouge);border-radius:var(--radius);">
-            <div class="mc-tag" style="color:var(--sur-lave);">linkee pass</div>
+            <div class="mc-tag" style="color:var(--sur-lave);">outsee pass</div>
             <div class="mc-title" style="color:var(--sur-lave);"><?= htmlspecialchars($prenom) ?></div>
             <div class="mc-meta" style="color:rgba(17,16,19,.75);">Happy Hour · Ce soir</div>
             <div style="margin-top:10px;background:#FFFFFF;height:48px;width:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;">

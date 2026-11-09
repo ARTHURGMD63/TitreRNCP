@@ -7,7 +7,7 @@
  * faire atterrir le logo exactement à sa place dans l'en-tête de l'écran
  * suivant (glissade + rétrécissement) — un calcul de position fragile, et le
  * résultat ne convainquait de toute façon pas. Celle-ci ne vise plus aucun
- * endroit précis : les anneaux et le mot « linkee » se composent au centre
+ * endroit précis : les anneaux et le mot « outsee » se composent au centre
  * de l'écran, chacun avec sa propre entrée, puis tout l'écran s'efface pour
  * révéler l'application, déjà montée dessous. Plus simple à régler, et plus
  * « motion design » qu'un simple fondu plat : un ressort sur les anneaux
@@ -28,6 +28,7 @@ import { fixe, fs, police } from '../theme';
 import { useTheme } from '../useTheme';
 
 const TAILLE = fs[9];
+const LOGO = 150;
 const MOT = { fontFamily: police.display, fontSize: TAILLE, letterSpacing: -0.045 * TAILLE, lineHeight: TAILLE * 1.15 };
 
 export function IntroSplash({ onTermine }: { onTermine: () => void }) {
@@ -56,15 +57,15 @@ export function IntroSplash({ onTermine }: { onTermine: () => void }) {
   const anneauxRotation = vAnneaux.interpolate({ inputRange: [0, 1], outputRange: ['-22deg', '0deg'] });
 
   const texteOpacite = vTexte.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' });
-  const texteDecalage = vTexte.interpolate({ inputRange: [0, 1], outputRange: [-14, 0], extrapolate: 'clamp' });
+  const texteDecalage = vTexte.interpolate({ inputRange: [0, 1], outputRange: [14, 0], extrapolate: 'clamp' });
 
   return (
     <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: fixe.basalte, opacity: vFondu }]}>
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 0.42 * TAILLE }}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 0.5 * TAILLE }}>
         <Animated.View style={{ opacity: anneauxOpacite, transform: [{ scale: anneauxEchelle }, { rotate: anneauxRotation }] }}>
-          <Anneaux hauteur={TAILLE} encre={fixe.craie} lave={c.rouge} />
+          <Anneaux hauteur={LOGO} />
         </Animated.View>
-        <Animated.View style={{ opacity: texteOpacite, transform: [{ translateX: texteDecalage }] }}>
+        <Animated.View style={{ opacity: texteOpacite, transform: [{ translateY: texteDecalage }] }}>
           <Text style={[MOT, { color: fixe.craie }]}>
             link<Text style={{ color: c.rouge }}>ee</Text>
           </Text>

@@ -1,5 +1,5 @@
 -- ============================================================
---  Linkee — migration v26
+--  Outsee — migration v26
 --  Mot de passe oublié par code, sans page web.
 --
 --  Le lien envoyé par e-mail ouvre auth/reset.php, une page du site : une

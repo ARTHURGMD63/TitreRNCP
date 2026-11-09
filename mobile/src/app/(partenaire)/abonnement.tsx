@@ -2,7 +2,7 @@
  * Abonnement établissement — partenaire/abonnement.php.
  *
  * Aucun paiement en ligne, comme sur le site : choisir une formule pose
- * l'engagement et la date de première facturation, l'équipe Linkee contacte
+ * l'engagement et la date de première facturation, l'équipe Outsee contacte
  * ensuite pour le prélèvement. Passage obligé avant le tableau de bord tant
  * qu'aucune formule n'est choisie (voir partenaire_dashboard.php,
  * code `abonnement_requis`).
@@ -146,7 +146,7 @@ export default function AbonnementPartenaire() {
         </Case>
 
         <T taille={fs[2]} couleur={c.gris} style={{ marginBottom: 18 }}>
-          Aucune donnée bancaire n&apos;est demandée ici. L&apos;équipe Linkee te contacte pour la mise
+          Aucune donnée bancaire n&apos;est demandée ici. L&apos;équipe Outsee te contacte pour la mise
           en place du prélèvement avant la première échéance.
         </T>
 

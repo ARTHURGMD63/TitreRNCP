@@ -1,5 +1,5 @@
 /* ============================================================
-   Linkee — Design System (charte graphique v1.0)
+   Outsee — Design System (charte graphique v1.0)
    Basalte, lave, craie. Garde le vocabulaire de classes existant
    (--noir, --rouge, .card, .btn, .pill, .event-card…) : seules les
    valeurs changent, pour que les styles en ligne des pages suivent.
@@ -854,7 +854,7 @@ button, input[type="submit"], input[type="button"] {
 .auth-link { text-align: center; margin-top: 20px; font-size: var(--fs-4); color: var(--gris); }
 .auth-link a { color: var(--noir); font-weight: var(--fw-bold); text-decoration: none; }
 
-/* ─── Espace partenaire (« linkee pro ») ───
+/* ─── Espace partenaire (« outsee pro ») ───
    Charte : le jour pour les pros. Fond craie, barre latérale en surface
    claire, tableaux et graphiques en basalte ; la lave ne sert qu'aux actions. */
 .partner-shell { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
@@ -1667,8 +1667,8 @@ h1.titre-page.partner-headline {
 a.interest-pill:hover { background: var(--rouge); color: var(--sur-lave); }
 
 /* ─── Logo ───
-   Deux anneaux entrelacés (l'étudiant et le lieu) et le logotype « linkee »,
-   dont le double « ee » est en lave. Rendu par marqueLinkee() (includes/
+   Deux anneaux entrelacés (l'étudiant et le lieu) et le logotype « outsee »,
+   dont le double « ee » est en lave. Rendu par marqueOutsee() (includes/
    marque.php) : ne jamais le recomposer dans une autre police.        */
 :root { --logo-accent: var(--rouge); }
 .marque {

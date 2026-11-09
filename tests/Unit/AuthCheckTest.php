@@ -36,7 +36,7 @@ final class AuthCheckTest extends TestCase
     {
         $reference = baseUrl('/explore.php');
 
-        foreach (['localhost', '127.0.0.1:8080', '192.168.1.82:8080', 'linkee.example.com'] as $hote) {
+        foreach (['localhost', '127.0.0.1:8080', '192.168.1.82:8080', 'outsee.example.com'] as $hote) {
             $_SERVER['HTTP_HOST'] = $hote;
             $this->assertSame($reference, baseUrl('/explore.php'), "l'hôte « $hote » a changé le préfixe");
         }
@@ -105,7 +105,7 @@ final class AuthCheckTest extends TestCase
 
     /**
      * La barre d'état doit suivre le thème : sombre (basalte) par défaut —
-     * l'app étudiant est « la nuit » dans la charte Linkee —, claire (craie)
+     * l'app étudiant est « la nuit » dans la charte Outsee —, claire (craie)
      * quand l'utilisateur a choisi le thème clair.
      */
     public function testThemeBootScriptColorsTheStatusBar(): void

@@ -1,5 +1,5 @@
 /**
- * Client de l'API Linkee.
+ * Client de l'API Outsee.
  *
  * Point de passage unique vers le serveur : aucun écran n'appelle fetch()
  * directement. Tout ce qui est commun à chaque requête vit ici : l'adresse du

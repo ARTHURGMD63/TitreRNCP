@@ -5,7 +5,7 @@ maison (photocopieuse d'ecole, imprimante perso) sans passer par un
 imprimeur.
 
 Le fichier produit n'est jamais edite a la main : il est reconstruit a
-partir de docs/Flyer_Bars_Linkee.html, qui reste la seule source du
+partir de docs/Flyer_Bars_Outsee.html, qui reste la seule source du
 dessin. Modifier le flyer, relancer ce script, reexporter les PDF.
 
     python docs/generate_planche.py
@@ -27,7 +27,7 @@ import io
 import os
 import re
 
-SRC = 'docs/Flyer_Bars_Linkee.html'
+SRC = 'docs/Flyer_Bars_Outsee.html'
 OUT = 'docs/Flyer_Bars_Planche_A4.html'
 
 ECHELLE = 0.88          # reduction appliquee a chaque exemplaire
@@ -63,7 +63,7 @@ def main():
             '  <section class="planche">\n'
             '    <div class="grille">\n%s\n    </div>\n'
             '%s'
-            '    <div class="note">Linkee — flyer A6 réduit à %d %%. '
+            '    <div class="note">Outsee — flyer A6 réduit à %d %%. '
             'Couper sur les repères. Page 1 : recto — page 2 : verso. '
             'Impression recto-verso, reliure sur le grand côté.</div>\n'
             '  </section>\n'
@@ -90,14 +90,14 @@ def main():
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Linkee — Planche A4, 4 flyers</title>
+<title>Outsee — Planche A4, 4 flyers</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
    FICHIER GENERE — ne pas modifier a la main.
-   Source : docs/Flyer_Bars_Linkee.html
+   Source : docs/Flyer_Bars_Outsee.html
    Regenerer : python docs/generate_planche.py
    ============================================================ */
 %(css)s

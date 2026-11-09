@@ -1,5 +1,5 @@
 -- ============================================================
---  Linkee — migration v20
+--  Outsee — migration v20
 --  Parrainage sur la liste d'attente
 --
 --  « Chaque pote inscrit avec ton lien te fait gagner 25 places » : pour que
