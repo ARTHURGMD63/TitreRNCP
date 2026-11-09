@@ -185,7 +185,7 @@ export default function FicheEvenement() {
   const flash = e.is_flash && ts(e.flash_expiry) > instant;
   const photo = e.photos[0]?.url ?? null;
   const encre = photo ? fixe.craie : flash ? fixe.surLave : c.noir;
-  const accent = photo ? '#FF5424' : flash ? fixe.surLave : c.surRougeClair;
+  const accent = photo ? '#8E6BFF' : flash ? fixe.surLave : c.surRougeClair;
   const pct = e.places.pourcentage ?? 0;
   const style = e.style_musique ? ' · ' + majuscules(libelleStyle(e.style_musique)) : '';
   const inscrit = e.deja_inscrit || inscription === 'vient';

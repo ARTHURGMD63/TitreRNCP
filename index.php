@@ -199,7 +199,7 @@ ob_start();
   }
   .ba-pilule__point { width: 8px; height: 8px; border-radius: 50%; background: var(--rouge); flex-shrink: 0; }
   @media (prefers-reduced-motion: no-preference) { .ba-pilule__point { animation: ba-pulse 1.7s ease-in-out infinite; } }
-  @keyframes ba-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,84,36,.6); } 70% { box-shadow: 0 0 0 9px rgba(255,84,36,0); } }
+  @keyframes ba-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(142,107,255,.6); } 70% { box-shadow: 0 0 0 9px rgba(142,107,255,0); } }
 
   /* ── Hero ── */
   .ba-hero {
@@ -384,7 +384,7 @@ ob_start();
   .ba-carte__titre { margin: 0; font-family: var(--font-display); font-weight: var(--fw-semibold); font-size: 22px; line-height: 1.15; }
   .ba-carte__texte { margin: 0; font-size: 15px; line-height: 1.55; color: var(--gris-fonce); }
   .ba-carte--secrete { border: 1.5px dashed var(--rouge); position: relative; overflow: hidden; }
-  .ba-carte--secrete:hover { box-shadow: 0 18px 40px rgba(255,84,36,.22); }
+  .ba-carte--secrete:hover { box-shadow: 0 18px 40px rgba(142,107,255,.22); }
   .ba-flou { filter: blur(6px); user-select: none; }
   .ba-carte__verrou { margin-top: auto; align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border-radius: var(--radius-pill); background: var(--rouge); color: var(--sur-lave); font-weight: var(--fw-bold); font-size: 13px; }
   .ba-carte__verrou svg { width: 15px; height: 15px; }
@@ -393,7 +393,7 @@ ob_start();
   .ba-bande-teasing { overflow: hidden; padding: 26px 0; margin: clamp(24px,5vw,56px) 0; }
   .ba-bande-teasing__ruban {
     background: var(--rouge); color: var(--sur-lave); transform: rotate(-2deg); margin: 0 -40px;
-    padding: 20px 0; overflow: hidden; box-shadow: 0 20px 60px rgba(255,84,36,.22);
+    padding: 20px 0; overflow: hidden; box-shadow: 0 20px 60px rgba(142,107,255,.22);
   }
   .ba-bande-teasing__groupe { display: flex; align-items: center; gap: 32px; padding-right: 32px; }
   .ba-bande-teasing__item { font-family: var(--font-display); font-weight: var(--fw-black); font-size: clamp(24px, 3.6vw, 42px); letter-spacing: -.03em; white-space: nowrap; flex: none; }

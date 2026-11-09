@@ -56,7 +56,7 @@ $isFlash = $e['is_flash'] && strtotime($e['flash_expiry'] ?? '') > time();
 // l'aplat lave d'un flash, encre du thème sur la surface de repli.
 $heroPhoto = !empty($venuePhotos);
 $heroEncre = $heroPhoto ? '#F5F1E8' : ($isFlash ? 'var(--sur-lave)' : 'var(--noir)');
-$heroAccent = $heroPhoto ? '#FF5424' : ($isFlash ? 'inherit' : 'var(--sur-rouge-clair)');
+$heroAccent = $heroPhoto ? '#8E6BFF' : ($isFlash ? 'inherit' : 'var(--sur-rouge-clair)');
 ?>
 <?php ob_start(); ?>
 <style>

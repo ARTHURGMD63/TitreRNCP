@@ -58,7 +58,7 @@ function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
   return (
     <View
       style={[
-        { width: largeur, backgroundColor: supprime ? '#767676' : '#FF5424', borderRadius: rayon.xl, marginBottom: 18, opacity: supprime ? 0.6 : 1 },
+        { width: largeur, backgroundColor: supprime ? '#767676' : '#8E6BFF', borderRadius: rayon.xl, marginBottom: 18, opacity: supprime ? 0.6 : 1 },
       ]}
     >
       <View style={{ paddingTop: 18, paddingHorizontal: 22, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>

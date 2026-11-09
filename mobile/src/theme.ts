@@ -31,8 +31,8 @@ export const fixe = {
 } as const;
 
 const marque = {
-  rouge: '#FF5424', // lave
-  rougeDeep: '#B8350D',
+  rouge: '#8E6BFF', // lave
+  rougeDeep: '#5B3BD6',
   bleu: '#5B8CFF', // dôme
   bleuDeep: '#2A56C0',
   lime: '#C8F547', // volt
@@ -61,12 +61,12 @@ const clair = {
   alerte: '#8A5A00',
   alerteClair: '#FFF1D1',
 
-  surRougeClair: '#B8350D',
+  surRougeClair: '#5B3BD6',
   surBleuClair: '#2A56C0',
   surLimeClair: '#4D6B00',
   surOrangeClair: '#8A5A00',
 
-  rougeClair: '#FFE3D9',
+  rougeClair: '#ECE6FF',
   bleuClair: '#E3EBFF',
   limeClair: '#EEF9CF',
   orangeClair: '#FFF1D1',
@@ -90,12 +90,12 @@ const sombre: typeof clair = {
   alerte: '#FFC23D',
   alerteClair: '#33280F',
 
-  surRougeClair: '#FF5424',
+  surRougeClair: '#8E6BFF',
   surBleuClair: '#5B8CFF',
   surLimeClair: '#C8F547',
   surOrangeClair: '#FFC23D',
 
-  rougeClair: '#3A1B12',
+  rougeClair: '#231B3F',
   bleuClair: '#18223D',
   limeClair: '#273011',
   orangeClair: '#33280F',
@@ -181,7 +181,7 @@ export function ombre(mode: Mode, niveau: 'sm' | 'base' | 'lg') {
 
 /** --halo-lave : carte flash, pass actif, et le liseré d'une soirée en cours. */
 export const haloLave = {
-  shadowColor: '#FF5424',
+  shadowColor: '#8E6BFF',
   shadowOffset: { width: 0, height: 18 },
   shadowOpacity: 0.45,
   shadowRadius: 26,

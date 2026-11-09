@@ -20,7 +20,7 @@ import { useJeton } from '../../session';
 import { fixe, fs, lh, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 
-const COULEURS_ECOLE = ['#FF5424', '#5B8CFF', '#C8F547', '#FFC23D', '#8A858F'];
+const COULEURS_ECOLE = ['#8E6BFF', '#5B8CFF', '#C8F547', '#FFC23D', '#8A858F'];
 
 function Carte({ children, style }: { children: React.ReactNode; style?: object }) {
   const { c, ombre } = useTheme();

@@ -622,8 +622,8 @@ function initApp() {
     new Chart(chartCtx, {
       type: 'line',
       data: { labels, datasets: [{ data: values, fill: true,
-        backgroundColor: jeton('--rouge-clair', '#FFE3D9'),
-        borderColor: jeton('--rouge', '#FF5424'),
+        backgroundColor: jeton('--rouge-clair', '#ECE6FF'),
+        borderColor: jeton('--rouge', '#8E6BFF'),
         borderWidth: 2, pointRadius: 0, tension: 0.4 }] },
       options: { responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false } },

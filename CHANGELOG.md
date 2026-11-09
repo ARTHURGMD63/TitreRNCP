@@ -7,6 +7,9 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+- **Ultraviolet.** L'accent passe du orange lave `#FF5424` au violet `#8E6BFF` (texte lisible `#5B3BD6` sur craie, teintes claires `#ECE6FF` / `#231B3F`) : site, mobile, icônes, `Logo.png`, supports `docs/`. Les jetons gardent leurs noms (`--rouge`, `lave`).
+
 ### Added
 - **Mot de passe oublié sans page web.** Un code à six chiffres part par e-mail
   et se saisit dans l'application (`mot_de_passe_oublie.php`, puis

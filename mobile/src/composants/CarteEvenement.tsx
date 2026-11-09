@@ -59,7 +59,7 @@ function usePouls() {
 }
 
 /**
- * « EN COURS », en lave (#FF5424) : le point pulse plutôt que la carte
+ * « EN COURS », en lave (#8E6BFF) : le point pulse plutôt que la carte
  * entière ne s'aplatisse de cette couleur — c'est ce qui la distingue d'un
  * coup d'œil de la carte flash, déjà un aplat rouge. Une soirée en cours
  * reste une carte blanche, juste bordée du même rouge.

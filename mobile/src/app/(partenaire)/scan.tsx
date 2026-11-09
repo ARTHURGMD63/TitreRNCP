@@ -128,7 +128,7 @@ export default function ScanPass() {
     );
   }
 
-  const cadre = personneValidee ? '#C8F547' : messageEchec ? '#FF5424' : fixe.craie;
+  const cadre = personneValidee ? '#C8F547' : messageEchec ? '#FF4D6A' : fixe.craie;
 
   return (
     <View style={{ flex: 1, backgroundColor: fixe.basalte }}>
@@ -192,7 +192,7 @@ export default function ScanPass() {
         </View>
       ) : messageEchec ? (
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: bottom + 40, alignItems: 'center', paddingHorizontal: 24 }}>
-          <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: '#FF5424', textAlign: 'center' }}>{messageEchec}</Text>
+          <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: '#FF4D6A', textAlign: 'center' }}>{messageEchec}</Text>
         </View>
       ) : (
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: bottom + 40, alignItems: 'center', paddingHorizontal: 24 }}>
