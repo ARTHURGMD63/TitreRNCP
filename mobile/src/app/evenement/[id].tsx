@@ -28,6 +28,7 @@ import { Icone, type NomIcone } from '../../composants/Icone';
 import { Display, Mono, T } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
+import { libelleApresEchecInscription, libelleInscription } from '../../regles';
 import { dateFr, heure, majuscules, ts } from '../../format';
 import { useJeton } from '../../session';
 import { fixe, fs, gutter, lh, lsEm, mono, rayon, sans } from '../../theme';
@@ -209,7 +210,7 @@ export default function FicheEvenement() {
       toast('Tu es inscrit ! Rendez-vous ce soir.', 'success');
     } catch (err) {
       const msg = err instanceof ErreurApi ? err.message : 'Erreur réseau';
-      setLibelleErreur(err instanceof ErreurApi && err.statut !== 0 ? msg : '→ je rejoins');
+      setLibelleErreur(libelleApresEchecInscription(err instanceof ErreurApi ? err.statut : null, msg));
       setInscription('libre');
       toast(msg, 'error');
     }
@@ -412,8 +413,9 @@ export default function FicheEvenement() {
         <View style={{ marginTop: 40, marginBottom: 60 }}>
           <Bouton
             plein
+            testID="evenement-rejoindre"
             variante={inscription === 'vient' ? 'contour' : 'primaire'}
-            libelle={inscription === 'vient' ? 'Inscrit' : inscrit ? 'Tu es inscrit·e' : libelleErreur ?? "Rejoindre l'événement"}
+            libelle={libelleInscription(inscription, !!e.deja_inscrit, libelleErreur)}
             icone={inscrit ? 'check' : undefined}
             desactive={inscrit}
             chargement={inscription === 'attente'}

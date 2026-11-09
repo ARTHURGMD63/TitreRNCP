@@ -101,6 +101,7 @@ export default function TableauDeBordPartenaire() {
             <Pressable
               onPress={() => router.push({ pathname: '/scan', params: { evenementId: String(evenement.id) } })}
               accessibilityRole="button"
+              testID="partenaire-scanner"
               style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: c.rouge, borderRadius: rayon.pill, paddingVertical: 16, marginBottom: 16 }}
             >
               <Icone nom="qr" taille={18} couleur={fixe.surLave} />

@@ -342,7 +342,7 @@ export default function Moi() {
             <Mono>Depuis</Mono>
             <T taille={fs[2]} poids={600}>{moi.depuis}</T>
           </View>
-          <Pressable onPress={deconnexion} accessibilityRole="button" style={{ paddingVertical: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <Pressable onPress={deconnexion} accessibilityRole="button" testID="deconnexion" style={{ paddingVertical: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             <Icone nom="deconnexion" taille={16} couleur={c.surRougeClair} />
             <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: c.surRougeClair }}>Se déconnecter</Text>
           </Pressable>

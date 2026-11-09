@@ -1,0 +1,44 @@
+# Le partenaire valide une présence à la main, quand le scan ne marche pas.
+# La caméra d'un émulateur ne lit pas de QR code : c'est le seul chemin du
+# scanner que Maestro peut parcourir de bout en bout. Léa Dubois est
+# inscrite à « Happy Hour jusqu'à minuit » dans le jeu de démonstration.
+# Rejouable une seule fois par base : voir LISEZMOI.md.
+appId: fr.outsee.app
+tags:
+  - critique
+---
+- launchApp:
+    clearState: true
+    permissions:
+      camera: allow
+- runFlow:
+    file: ../sous-flows/connexion.yaml
+    env:
+      EMAIL: jean@lebecquipique.fr
+      MOT_DE_PASSE: password
+- extendedWaitUntil:
+    visible:
+      id: partenaire-scanner
+    timeout: 20000
+- tapOn:
+    id: partenaire-scanner
+- extendedWaitUntil:
+    visible:
+      id: scan-manuel
+    timeout: 15000
+- tapOn:
+    id: scan-manuel
+- extendedWaitUntil:
+    visible: Valider manuellement
+    timeout: 10000
+# Du texte ASCII : adb ne saisit pas les accents.
+- inputText: Dubois
+- extendedWaitUntil:
+    visible: Léa Dubois
+    timeout: 10000
+- tapOn: Valider
+- extendedWaitUntil:
+    visible: Léa Dubois validé·e
+    timeout: 10000
+# Elle a quitté la liste des invités à valider.
+- assertNotVisible: Léa Dubois

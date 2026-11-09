@@ -16,6 +16,15 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
   thème et le cache du service worker de l'ancien nom sont repris ou purgés.
 
 ### Added
+- **Tests mobile des écrans critiques.** Les règles de la connexion, de
+  l'inscription à une soirée et du scan des pass (`mobile/src/regles.ts`) sont
+  sorties des composants et couvertes par 26 tests unitaires
+  (`tests/regles.test.ts`), dans le même lanceur Node que le reste. Six
+  parcours Maestro (`mobile/.maestro/`, `npm run e2e`) rejouent connexion,
+  refus, champs vides, inscription à une soirée, validation manuelle d'une
+  présence par le partenaire et déconnexion ; mode d'emploi dans
+  `mobile/.maestro/LISEZMOI.md`. Des `testID` repèrent les éléments clés. Un
+  même invité n'apparaît plus deux fois dans la liste des check-in du scanner.
 - **Mot de passe oublié sans page web.** Un code à six chiffres part par e-mail
   et se saisit dans l'application (`mot_de_passe_oublie.php`, puis
   `mot_de_passe_reinitialiser.php`). Le code est stocké haché, valable quinze

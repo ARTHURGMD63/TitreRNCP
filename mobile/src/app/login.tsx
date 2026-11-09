@@ -17,6 +17,7 @@ import { Encart } from '../composants/Elements';
 import { Champ } from '../composants/Formulaire';
 import { Marque } from '../composants/Marque';
 import { T, TitreEcran } from '../composants/Texte';
+import { connexionComplete, messageConnexion } from '../regles';
 import { useSession } from '../session';
 import { fs, sans } from '../theme';
 import { useTheme } from '../useTheme';
@@ -30,7 +31,7 @@ export default function Connexion() {
   const [erreur, setErreur] = useState<string | null>(null);
 
   async function valider() {
-    if (!email.trim() || !motDePasse) {
+    if (!connexionComplete(email, motDePasse)) {
       setErreur('Merci de remplir tous les champs.');
       return;
     }
@@ -39,9 +40,7 @@ export default function Connexion() {
       await connexion(email, motDePasse);
     } catch (e) {
       // Mêmes phrases que le site : « Email ou mot de passe incorrect. »
-      if (e instanceof ErreurApi && e.code === 'identifiants') setErreur('Email ou mot de passe incorrect.');
-      else if (e instanceof ErreurApi && e.code === 'trop_de_tentatives') setErreur('Trop de tentatives. Réessaye dans 15 minutes.');
-      else setErreur(e instanceof ErreurApi ? e.message : 'Connexion impossible.');
+      setErreur(messageConnexion(e instanceof ErreurApi ? { code: e.code, message: e.message } : null));
     }
   }
 
@@ -57,10 +56,11 @@ export default function Connexion() {
 
         <TitreEcran lignes={['Content de te', 'revoir.']} taille={fs[9]} style={{ marginBottom: 30 }} />
 
-        {erreur ? <Encart genre="erreur">{erreur}</Encart> : null}
+        {erreur ? <View testID="connexion-erreur"><Encart genre="erreur">{erreur}</Encart></View> : null}
 
         <Champ
           etiquette="Email"
+          testID="connexion-email"
           value={email}
           onChangeText={setEmail}
           placeholder="arthur@uca.fr"
@@ -73,6 +73,7 @@ export default function Connexion() {
         />
         <Champ
           etiquette="Mot de passe"
+          testID="connexion-mot-de-passe"
           value={motDePasse}
           onChangeText={setMotDePasse}
           placeholder="••••••••"
@@ -89,7 +90,7 @@ export default function Connexion() {
           </Link>
         </View>
 
-        <Bouton libelle="Se connecter" plein onPress={valider} chargement={enCours} />
+        <Bouton testID="connexion-valider" libelle="Se connecter" plein onPress={valider} chargement={enCours} />
 
         <View style={{ flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', marginTop: 20 }}>
           <T taille={fs[4]} couleur={c.gris}>Pas encore de compte ? </T>

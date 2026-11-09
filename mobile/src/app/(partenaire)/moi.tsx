@@ -142,7 +142,7 @@ export default function MoiPartenaire() {
         <Bouton libelle="Photos de l'établissement" variante="contour" plein onPress={() => router.push('/photos')} style={{ marginBottom: 12 }} />
         <Bouton libelle="Mon abonnement" variante="contour" plein onPress={() => router.push('/abonnement')} style={{ marginBottom: 20 }} />
 
-        <Bouton libelle="Se déconnecter" variante="contour" plein onPress={deconnexion} />
+        <Bouton testID="deconnexion" libelle="Se déconnecter" variante="contour" plein onPress={deconnexion} />
         <Bouton libelle="Supprimer mon compte" variante="texte" plein onPress={() => router.push('/supprimer-compte' as never)} style={{ marginTop: 12 }} />
       </Contenu>
     </Ecran>

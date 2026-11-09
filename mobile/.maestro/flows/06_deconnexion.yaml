@@ -1,0 +1,32 @@
+# Se déconnecter ramène à l'écran de connexion, et la session ne revient
+# pas après un redémarrage de l'application.
+appId: fr.outsee.app
+tags:
+  - critique
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../sous-flows/connexion.yaml
+    env:
+      EMAIL: arthur@uca.fr
+      MOT_DE_PASSE: password
+- extendedWaitUntil:
+    visible: Explorer
+    timeout: 20000
+- tapOn: Moi
+- scrollUntilVisible:
+    element:
+      id: deconnexion
+- tapOn:
+    id: deconnexion
+- extendedWaitUntil:
+    visible:
+      id: connexion-valider
+    timeout: 15000
+# Sans clearState : seul le jeton stocké décide.
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: connexion-valider
+    timeout: 30000

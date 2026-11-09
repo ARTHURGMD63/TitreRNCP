@@ -36,11 +36,13 @@ type Props = {
   styleTexte?: StyleProp<TextStyle>;
   taillePolice?: number;
   accessibilityLabel?: string;
+  /** Repère des tests de bout en bout (Maestro) ; sans effet à l'écran. */
+  testID?: string;
 };
 
 export function Bouton({
   libelle, onPress, variante = 'primaire', plein, desactive, chargement, icone, iconeADroite,
-  style, styleTexte, taillePolice = fs[5], accessibilityLabel,
+  style, styleTexte, taillePolice = fs[5], accessibilityLabel, testID,
 }: Props) {
   const { c } = useTheme();
   const inactif = desactive || chargement;
@@ -72,6 +74,7 @@ export function Bouton({
     <Pressable
       onPress={onPress}
       disabled={inactif}
+      testID={testID}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? libelle}
       accessibilityState={{ disabled: !!inactif, busy: !!chargement }}

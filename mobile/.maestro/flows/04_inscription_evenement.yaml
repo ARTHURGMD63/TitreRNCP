@@ -1,0 +1,40 @@
+# Un étudiant s'inscrit à une soirée depuis sa fiche, puis la retrouve dans
+# ses pass. Camille n'a aucune inscription dans le jeu de démonstration.
+# Rejouable une seule fois par base : voir LISEZMOI.md.
+appId: fr.outsee.app
+tags:
+  - critique
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../sous-flows/connexion.yaml
+    env:
+      EMAIL: camille@demo.sl
+      MOT_DE_PASSE: password
+- extendedWaitUntil:
+    visible: Explorer
+    timeout: 20000
+- scrollUntilVisible:
+    element: Mojito Night
+    timeout: 30000
+- tapOn: Mojito Night
+- extendedWaitUntil:
+    visible:
+      id: evenement-rejoindre
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: evenement-rejoindre
+- assertVisible: Rejoindre l'événement
+- tapOn:
+    id: evenement-rejoindre
+- extendedWaitUntil:
+    visible: Inscrit
+    timeout: 15000
+# Le pass est dans le portefeuille.
+- back
+- tapOn: Pass
+- extendedWaitUntil:
+    visible: Mojito Night
+    timeout: 15000

@@ -1,0 +1,12 @@
+# Valider sans rien saisir ne part pas au serveur.
+appId: fr.outsee.app
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: connexion-valider
+    timeout: 30000
+- tapOn:
+    id: connexion-valider
+- assertVisible: Merci de remplir tous les champs.

@@ -1,0 +1,6 @@
+# Parcours de bout en bout de l'application Outsee (Maestro).
+# Mode d'emploi : .maestro/LISEZMOI.md
+flows:
+  - flows/*.yaml
+# Les sous-flows (sous-flows/) sont appelés par les parcours ; ils ne
+# se lancent jamais seuls, d'où leur dossier à part.
