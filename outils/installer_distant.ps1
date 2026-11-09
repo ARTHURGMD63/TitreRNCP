@@ -1,5 +1,5 @@
 # ============================================================
-#  Linkee — installer la base sur un serveur distant (TiDB Cloud…)
+#  Outsee — installer la base sur un serveur distant (TiDB Cloud…)
 #
 #  Depuis PowerShell, a la racine du projet :
 #
@@ -16,7 +16,7 @@ param(
     [Parameter(Mandatory = $true)] [string] $Hote,
     [Parameter(Mandatory = $true)] [string] $Utilisateur,
     [string] $Port = '4000',
-    [string] $Base = 'linkee',
+    [string] $Base = 'outsee',
     [string] $Certificat = 'C:\Program Files\Git\mingw64\etc\ssl\certs\ca-bundle.crt'
 )
 
