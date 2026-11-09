@@ -88,6 +88,8 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 - **Base par défaut** : `linkee` (au lieu de `studentlink`).
 
 ### Fixed
+- **Logotype « outsee » sur mobile.** L'en-tête et l'animation d'ouverture
+  écrivaient encore « link » + « ee », soit « linkee », après le renommage.
 - **Emoji et caractères hors latin1 refusés** par une base créée avant
   `utf8mb4` : 17 tables étaient restées en latin1, et un titre de squad, un
   avis ou un nom contenant un emoji ou un « Ł » échouait (« Incorrect string

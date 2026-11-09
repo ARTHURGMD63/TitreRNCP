@@ -67,7 +67,7 @@ export function IntroSplash({ onTermine }: { onTermine: () => void }) {
         </Animated.View>
         <Animated.View style={{ opacity: texteOpacite, transform: [{ translateY: texteDecalage }] }}>
           <Text style={[MOT, { color: fixe.craie }]}>
-            link<Text style={{ color: c.rouge }}>ee</Text>
+            outs<Text style={{ color: c.rouge }}>ee</Text>
           </Text>
         </Animated.View>
       </View>

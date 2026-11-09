@@ -80,7 +80,7 @@ export function Marque({ taille = fs[6], suffixe, accent }: Props) {
     >
       <Anneaux hauteur={taille * 1.6} />
       <Text style={[mot, { color: c.noir }]}>
-        link<Text style={{ color: teinte }}>ee</Text>
+        outs<Text style={{ color: teinte }}>ee</Text>
         {suffixe ? (
           <Text style={{ fontFamily: police.displayRegular, letterSpacing: -0.03 * taille, color: c.gris }}>
             {' ' + suffixe}
