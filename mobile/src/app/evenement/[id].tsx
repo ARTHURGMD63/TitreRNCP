@@ -31,7 +31,7 @@ import { confirmer } from '../../confirmer';
 import { libelleApresEchecInscription, libelleInscription } from '../../regles';
 import { dateFr, heure, majuscules, ts } from '../../format';
 import { useJeton } from '../../session';
-import { fixe, fs, gutter, lh, lsEm, mono, rayon, sans } from '../../theme';
+import { couleurs, fixe, fs, gutter, lh, lsEm, mono, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 const MOTIFS_PHOTO = [
@@ -185,8 +185,8 @@ export default function FicheEvenement() {
 
   const flash = e.is_flash && ts(e.flash_expiry) > instant;
   const photo = e.photos[0]?.url ?? null;
-  const encre = photo ? fixe.craie : flash ? fixe.surLave : c.noir;
-  const accent = photo ? '#8E6BFF' : flash ? fixe.surLave : c.surRougeClair;
+  const encre = photo ? fixe.craie : flash ? fixe.surAccent : c.noir;
+  const accent = photo ? couleurs.sombre.surRougeClair : flash ? fixe.surAccent : c.surRougeClair;
   const pct = e.places.pourcentage ?? 0;
   const style = e.style_musique ? ' · ' + majuscules(libelleStyle(e.style_musique)) : '';
   const inscrit = e.deja_inscrit || inscription === 'vient';
@@ -223,7 +223,7 @@ export default function FicheEvenement() {
         {majuscules(e.etablissement.type)} · {dateFr(e.date_heure, 'D j M')}{style}
       </Text>
       {e.sponsorise ? (
-        <Badge libelle="Sponsorisé" fond="rgba(17,16,19,0.1)" encre={fixe.surLave} filet="rgba(17,16,19,0.3)" style={{ alignSelf: 'flex-start', marginBottom: 10 }} />
+        <Badge libelle="Sponsorisé" fond="rgba(17,16,19,0.1)" encre={encre} filet="rgba(17,16,19,0.3)" style={{ alignSelf: 'flex-start', marginBottom: 10 }} />
       ) : null}
       <View accessibilityRole="header">
         <Display taille={fs[9]} interligne={lh.display} couleur={encre}>{e.titre}</Display>
@@ -231,7 +231,7 @@ export default function FicheEvenement() {
       </View>
       {(e.reduction ?? 0) > 0 || e.is_gratuit ? (
         <View style={{ alignSelf: 'flex-start', marginTop: 18, backgroundColor: flash && !photo ? fixe.basalte : c.rouge, borderRadius: rayon.pill, paddingVertical: 8, paddingHorizontal: 20 }}>
-          <Display taille={fs[7]} interligne={1.2} couleur={flash && !photo ? fixe.craie : fixe.surLave}>
+          <Display taille={fs[7]} interligne={1.2} couleur={flash && !photo ? fixe.craie : fixe.surAccent}>
             {(e.reduction ?? 0) > 0 ? `-${e.reduction}%` : 'Gratuit'}
           </Display>
         </View>

@@ -20,7 +20,7 @@ import { useJeton } from '../../session';
 import { fixe, fs, lh, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 
-const COULEURS_ECOLE = ['#8E6BFF', '#5B8CFF', '#C8F547', '#FFC23D', '#8A858F'];
+const COULEURS_ECOLE = ['#0047BB', '#5B8CFF', '#C8F547', '#FFC23D', '#8A858F'];
 
 function Carte({ children, style }: { children: React.ReactNode; style?: object }) {
   const { c, ombre } = useTheme();
@@ -104,8 +104,8 @@ export default function TableauDeBordPartenaire() {
               testID="partenaire-scanner"
               style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: c.rouge, borderRadius: rayon.pill, paddingVertical: 16, marginBottom: 16 }}
             >
-              <Icone nom="qr" taille={18} couleur={fixe.surLave} />
-              <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: fixe.surLave }}>Scanner un pass</Text>
+              <Icone nom="qr" taille={18} couleur={fixe.surAccent} />
+              <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: fixe.surAccent }}>Scanner un pass</Text>
             </Pressable>
 
             <Carte>

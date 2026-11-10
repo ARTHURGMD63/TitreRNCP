@@ -175,7 +175,7 @@ export default function Hub() {
               <Icone nom="cloche" taille={22} couleur={c.noir} />
               {notifs?.a_traiter ? (
                 <View style={{ position: 'absolute', top: -3, right: -3, minWidth: 19, height: 19, paddingHorizontal: 5, borderRadius: rayon.pill, backgroundColor: c.rouge, borderWidth: 2, borderColor: c.bg, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontFamily: mono(600), fontSize: fs[1], lineHeight: fs[1] + 1, color: fixe.surLave }}>{notifs.a_traiter}</Text>
+                  <Text style={{ fontFamily: mono(600), fontSize: fs[1], lineHeight: fs[1] + 1, color: fixe.surAccent }}>{notifs.a_traiter}</Text>
                 </View>
               ) : null}
             </Pressable>

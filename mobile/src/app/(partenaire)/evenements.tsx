@@ -79,8 +79,8 @@ function CarteEvenementPartenaire({ ev, onSupprime }: { ev: EvenementPartenaire;
             accessibilityRole="button"
             style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.rouge, borderRadius: rayon.pill, paddingVertical: 9, paddingHorizontal: 16 }}
           >
-            <Icone nom="qr" taille={14} couleur={fixe.surLave} />
-            <T taille={fs[3]} poids={700} couleur={fixe.surLave}>Scanner</T>
+            <Icone nom="qr" taille={14} couleur={fixe.surAccent} />
+            <T taille={fs[3]} poids={700} couleur={fixe.surAccent}>Scanner</T>
           </Pressable>
         ) : null}
         <Pressable

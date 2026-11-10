@@ -18,6 +18,12 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
   et le « ee » du logotype passent au bleu `#0047BB` (`fixe.logo`), icônes,
   écran de lancement et favicon compris. Le reste de l'interface garde ses
   accents. Teinte exacte même sur basalte, par choix de marque.
+- **Accent mobile au bleu du logo.** Dans l'application, l'accent (`rouge`,
+  ex-lave) passe du violet `#8E6BFF` au Pantone 2728 C `#0047BB`, dans les deux
+  thèmes. Le texte posé dessus passe du basalte à la craie (`fixe.surAccent`,
+  7,1:1) ; le texte d'accent devient `#00368F` sur craie et `#7FA5FF` sur
+  basalte, où le 2728 C serait illisible. `encreSur()` choisit l'encre des
+  pastilles et avatars dont la couleur varie. Le site, figé, garde le violet.
 
 ### Added
 - **Tests mobile des écrans critiques.** Les règles de la connexion, de

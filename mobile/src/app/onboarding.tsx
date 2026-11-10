@@ -17,7 +17,7 @@ import { AnneauxSeuls } from '../composants/Marque';
 import { Icone } from '../composants/Icone';
 import { Display, Mono, T } from '../composants/Texte';
 import { useSession } from '../session';
-import { fixe, fs, lh, lsEm, mono, police, rayon, sans, type Couleurs } from '../theme';
+import { encreSur, fixe, fs, lh, lsEm, mono, police, rayon, sans, type Couleurs } from '../theme';
 import { useTheme } from '../useTheme';
 
 type Diapo = {
@@ -47,7 +47,7 @@ function CarteMaquette({ c, tag, titre, meta, badge, badgeFond, decale }: { c: C
       <Display taille={fs[5]} style={{ marginBottom: 6 }}>{titre}</Display>
       <T taille={fs[1]} poids={600} couleur={c.gris}>{meta}</T>
       <View style={{ alignSelf: 'flex-start', marginTop: 8, borderRadius: rayon.pill, backgroundColor: badgeFond ?? c.rouge, paddingVertical: 3, paddingHorizontal: 10 }}>
-        <T taille={fs[2]} poids={700} couleur={fixe.surLave}>{badge}</T>
+        <T taille={fs[2]} poids={700} couleur={encreSur(badgeFond ?? c.rouge)}>{badge}</T>
       </View>
     </View>
   );
@@ -59,7 +59,7 @@ function CartePersonne({ c, initiale, fond, nom, meta, tags }: { c: Couleurs; in
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: fond, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontFamily: police.display, fontSize: fs[4], color: fixe.surLave }}>{initiale}</Text>
+            <Text style={{ fontFamily: police.display, fontSize: fs[4], color: encreSur(fond) }}>{initiale}</Text>
           </View>
           <View>
             <T taille={fs[4]} poids={700}>{nom}</T>
@@ -67,7 +67,7 @@ function CartePersonne({ c, initiale, fond, nom, meta, tags }: { c: Couleurs; in
           </View>
         </View>
         <View style={{ backgroundColor: c.rouge, paddingVertical: 5, paddingHorizontal: 12, borderRadius: rayon.pill }}>
-          <T taille={fs[2]} poids={700} couleur={fixe.surLave}>+ Suivre</T>
+          <T taille={fs[2]} poids={700} couleur={fixe.surAccent}>+ Suivre</T>
         </View>
       </View>
       <View style={{ marginTop: 8, flexDirection: 'row', gap: 4 }}>
@@ -154,8 +154,8 @@ const DIAPOS: Diapo[] = [
       <View style={{ alignItems: 'center', gap: 20 }}>
         <GrandeIcone><Icone nom="carte" taille={48} couleur={fixe.basalte} /></GrandeIcone>
         <View style={{ width: 210, backgroundColor: c.rouge, borderRadius: rayon.base, paddingVertical: 14, paddingHorizontal: 16 }}>
-          <Mono couleur={fixe.surLave} style={{ marginBottom: 4 }}>outsee pass</Mono>
-          <Display taille={fs[5]} couleur={fixe.surLave} style={{ marginBottom: 6 }}>{prenom}</Display>
+          <Mono couleur={fixe.surAccent} style={{ marginBottom: 4 }}>outsee pass</Mono>
+          <Display taille={fs[5]} couleur={fixe.surAccent} style={{ marginBottom: 6 }}>{prenom}</Display>
           <T taille={fs[1]} poids={600} couleur="rgba(17,16,19,0.75)">Happy Hour · Ce soir</T>
           <View style={{ marginTop: 10, backgroundColor: '#FFFFFF', height: 48, width: 48, borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
             <Icone nom="qr" taille={32} couleur={fixe.basalte} trait={1.5} />
@@ -232,8 +232,8 @@ export default function Accueil() {
           accessibilityRole="button"
           style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.rouge, borderColor: c.rouge, borderWidth: 1, borderRadius: rayon.pill, paddingVertical: 14, paddingHorizontal: 26, transform: pressed ? [{ scale: 0.98 }] : [] })}
         >
-          <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: fixe.surLave }}>{dernier ? 'Explorer' : 'Suivant'}</Text>
-          <Icone nom="fleche-d" taille={14} couleur={fixe.surLave} trait={2.5} />
+          <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: fixe.surAccent }}>{dernier ? 'Explorer' : 'Suivant'}</Text>
+          <Icone nom="fleche-d" taille={14} couleur={fixe.surAccent} trait={2.5} />
         </Pressable>
       </View>
     </View>

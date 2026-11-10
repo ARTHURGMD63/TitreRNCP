@@ -61,7 +61,7 @@ export function useSuivi(cible: number, initial: EtatSuivi) {
 export function couleursSuivi(etat: EtatSuivi, c: ReturnType<typeof useTheme>['c']) {
   if (etat === 'accepted') return { fond: c.surface2, encre: c.noir };
   if (etat === 'pending') return { fond: c.surface2, encre: c.grisFonce };
-  return { fond: c.rouge, encre: fixe.surLave };
+  return { fond: c.rouge, encre: fixe.surAccent };
 }
 
 export function BoutonSuivre({ cible, etatInitial, largeur }: { cible: number; etatInitial: EtatSuivi; largeur?: 'pleine' }) {
@@ -213,7 +213,7 @@ export function ElementNotification({ n, onTraitee }: { n: Notification; onTrait
   const actionsOuiNon = (onOui: () => void, onNon: () => void) => (
     <View style={{ flexDirection: 'row', gap: 8 }}>
       <Pressable onPress={onOui} disabled={!!attente} accessibilityRole="button" style={{ flex: 1, minHeight: 40, paddingHorizontal: 12, borderRadius: rayon.pill, backgroundColor: c.rouge, borderWidth: 1, borderColor: c.rouge, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontFamily: sans(700), fontSize: fs[3], color: fixe.surLave }}>{attente === 'oui' ? '…' : 'Accepter'}</Text>
+        <Text style={{ fontFamily: sans(700), fontSize: fs[3], color: fixe.surAccent }}>{attente === 'oui' ? '…' : 'Accepter'}</Text>
       </Pressable>
       <Pressable onPress={onNon} disabled={!!attente} accessibilityRole="button" style={{ flex: 1, minHeight: 40, paddingHorizontal: 12, borderRadius: rayon.pill, borderWidth: 1, borderColor: c.line2, alignItems: 'center', justifyContent: 'center' }}>
         <Text style={{ fontFamily: sans(700), fontSize: fs[3], color: c.noir }}>{attente === 'non' ? '…' : 'Refuser'}</Text>

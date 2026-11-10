@@ -21,7 +21,7 @@ import { Pressable, Text, View, useWindowDimensions } from 'react-native';
 import type { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { fixe, fs, rayon, sans } from '../theme';
+import { encreSur, fs, rayon, sans } from '../theme';
 import { useTheme } from '../useTheme';
 import { Icone, type NomIcone } from './Icone';
 
@@ -139,7 +139,7 @@ export function BarreOnglets({ state, navigation, onglets = ONGLETS, parent = PA
             ombre('lg'),
           ]}
         >
-          <Icone nom={actionCentrale.icone} taille={24} couleur={fixe.surLave} />
+          <Icone nom={actionCentrale.icone} taille={24} couleur={encreSur(actionCentrale.couleur)} />
         </Pressable>
       ) : null}
     </View>

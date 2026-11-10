@@ -53,12 +53,12 @@ function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
   }
 
   const supprime = p.evenement_supprime;
-  const encre = fixe.surLave;
+  const encre = supprime ? fixe.surLave : fixe.surAccent;
 
   return (
     <View
       style={[
-        { width: largeur, backgroundColor: supprime ? '#767676' : '#8E6BFF', borderRadius: rayon.xl, marginBottom: 18, opacity: supprime ? 0.6 : 1 },
+        { width: largeur, backgroundColor: supprime ? '#767676' : fixe.logo, borderRadius: rayon.xl, marginBottom: 18, opacity: supprime ? 0.6 : 1 },
       ]}
     >
       <View style={{ paddingTop: 18, paddingHorizontal: 22, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>

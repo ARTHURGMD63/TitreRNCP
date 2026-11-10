@@ -24,14 +24,22 @@ export const fixe = {
   qrClair: '#FFFFFF',
   basalte: '#111013',
   craie: '#F5F1E8',
-  /** --sur-lave : sur un aplat vif, le texte est toujours en basalte. */
+  /**
+   * --sur-lave : texte basalte sur les aplats vifs et clairs (volt, dôme,
+   * moutarde, alerte). Malgré son nom, il ne va plus sur l'accent : voir
+   * surAccent.
+   */
   surLave: '#111013',
+  /**
+   * Texte sur l'aplat d'accent (bleu Pantone 2728 C). Le basalte n'y
+   * atteindrait qu'environ 2,4:1 ; la craie y dépasse 7:1.
+   */
+  surAccent: '#F5F1E8',
   /** --sur-media : texte clair posé sur une photo. */
   surMedia: '#F5F1E8',
   /**
-   * Le bleu du logo : Pantone 2728 C (sRGB #0047BB). Il ne sert qu'à la
-   * marque — la tuile des anneaux et le « ee » du logotype. Le reste de
-   * l'interface garde ses accents (lave, dôme…).
+   * Le bleu du logo : Pantone 2728 C (sRGB #0047BB). Depuis le 2026-11-10,
+   * c'est aussi l'accent de l'interface (le jeton `rouge`, ex-lave).
    *
    * La teinte reste exacte même sur basalte, où le « ee » n'atteint
    * qu'environ 2,4:1 : choix de marque assumé (2026-11-09), à ne pas
@@ -40,9 +48,16 @@ export const fixe = {
   logo: '#0047BB',
 } as const;
 
+/**
+ * L'accent garde son nom de jeton historique, `rouge` (« lave » dans la
+ * charte), pour ne pas toucher aux règles qui l'emploient. Il vaut le bleu du
+ * logo, identique dans les deux thèmes : les aplats portent du texte craie
+ * (fixe.surAccent). Sur basalte, le texte d'accent passe par `surRougeClair`,
+ * un bleu éclairci, car le 2728 C n'y serait pas lisible.
+ */
 const marque = {
-  rouge: '#8E6BFF', // lave
-  rougeDeep: '#5B3BD6',
+  rouge: '#0047BB', // accent : Pantone 2728 C, le bleu du logo
+  rougeDeep: '#00368F',
   bleu: '#5B8CFF', // dôme
   bleuDeep: '#2A56C0',
   lime: '#C8F547', // volt
@@ -71,12 +86,12 @@ const clair = {
   alerte: '#8A5A00',
   alerteClair: '#FFF1D1',
 
-  surRougeClair: '#5B3BD6',
+  surRougeClair: '#00368F',
   surBleuClair: '#2A56C0',
   surLimeClair: '#4D6B00',
   surOrangeClair: '#8A5A00',
 
-  rougeClair: '#ECE6FF',
+  rougeClair: '#E0E9FA',
   bleuClair: '#E3EBFF',
   limeClair: '#EEF9CF',
   orangeClair: '#FFF1D1',
@@ -100,12 +115,12 @@ const sombre: typeof clair = {
   alerte: '#FFC23D',
   alerteClair: '#33280F',
 
-  surRougeClair: '#8E6BFF',
+  surRougeClair: '#7FA5FF',
   surBleuClair: '#5B8CFF',
   surLimeClair: '#C8F547',
   surOrangeClair: '#FFC23D',
 
-  rougeClair: '#231B3F',
+  rougeClair: '#0F1D3A',
   bleuClair: '#18223D',
   limeClair: '#273011',
   orangeClair: '#33280F',
@@ -113,6 +128,29 @@ const sombre: typeof clair = {
 
 export const couleurs = { clair, sombre } as const;
 export type Couleurs = typeof clair;
+
+function luminance(hex: string): number | null {
+  const m = /^#([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return null;
+  const canal = (i: number) => {
+    const v = parseInt(m[1].slice(i, i + 2), 16) / 255;
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * canal(0) + 0.7152 * canal(2) + 0.0722 * canal(4);
+}
+
+/**
+ * L'encre à poser sur un aplat dont la couleur varie (pastille, avatar,
+ * badge) : craie ou basalte, celle qui contraste le plus. Une couleur qui
+ * n'est pas un « #rrggbb » garde le basalte.
+ */
+export function encreSur(fond: string): string {
+  const l = luminance(fond);
+  if (l === null) return fixe.surLave;
+  const lBasalte = luminance(fixe.basalte)!;
+  const lCraie = luminance(fixe.craie)!;
+  return (lCraie + 0.05) / (l + 0.05) > (l + 0.05) / (lBasalte + 0.05) ? fixe.surAccent : fixe.surLave;
+}
 
 /**
  * « var(--rouge) » → la couleur du thème. Les badges portent leur couleur en
@@ -191,7 +229,7 @@ export function ombre(mode: Mode, niveau: 'sm' | 'base' | 'lg') {
 
 /** --halo-lave : carte flash, pass actif, et le liseré d'une soirée en cours. */
 export const haloLave = {
-  shadowColor: '#8E6BFF',
+  shadowColor: '#0047BB',
   shadowOffset: { width: 0, height: 18 },
   shadowOpacity: 0.45,
   shadowRadius: 26,

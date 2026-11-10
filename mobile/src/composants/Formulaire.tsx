@@ -176,7 +176,7 @@ export function Case({ coche, onChange, children, style }: {
       style={[{ flexDirection: 'row', alignItems: 'center', gap: 9, minHeight: 44 }, style]}
     >
       <View style={{ width: 19, height: 19, borderRadius: 6, borderWidth: 1.5, borderColor: coche ? c.rouge : c.line2, backgroundColor: coche ? c.rouge : c.blanc, alignItems: 'center', justifyContent: 'center' }}>
-        {coche ? <Icone nom="check" taille={13} couleur={fixe.surLave} trait={3.2} /> : null}
+        {coche ? <Icone nom="check" taille={13} couleur={fixe.surAccent} trait={3.2} /> : null}
       </View>
       <View style={{ flex: 1 }}>
         {typeof children === 'string' ? <T taille={fs[2]} couleur={c.grisFonce}>{children}</T> : children}
@@ -332,7 +332,7 @@ export function ChampDate({ etiquette, valeur, onChange, mode = 'date', min, max
           accessibilityRole="button"
           style={{ marginTop: 12, minHeight: 52, borderRadius: rayon.pill, backgroundColor: c.rouge, alignItems: 'center', justifyContent: 'center' }}
         >
-          <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: fixe.surLave }}>Valider</Text>
+          <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: fixe.surAccent }}>Valider</Text>
         </Pressable>
       </Feuille>
     </View>

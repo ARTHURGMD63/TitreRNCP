@@ -24,7 +24,7 @@ import { Marque } from '../../composants/Marque';
 import { Display, Mono, T, TitreEcran } from '../../composants/Texte';
 import { nombre } from '../../format';
 import { useJeton, useSession } from '../../session';
-import { couleurCss, fixe, fs, lh, mono, police, rayon, sans } from '../../theme';
+import { couleurCss, encreSur, fixe, fs, lh, mono, police, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 function CarteProfil({ children, style }: { children: React.ReactNode; style?: object }) {
@@ -56,7 +56,7 @@ function PastilleBadge({ b, verrouille, largeur }: { b: Badge; verrouille?: bool
         </View>
       ) : (
         <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: couleurCss(b.couleur, c, c.lime), alignItems: 'center', justifyContent: 'center' }}>
-          {estIcone(b.icon) ? <Icone nom={b.icon} taille={22} couleur={fixe.surLave} /> : null}
+          {estIcone(b.icon) ? <Icone nom={b.icon} taille={22} couleur={encreSur(couleurCss(b.couleur, c, c.lime))} /> : null}
         </View>
       )}
       <T taille={fs[2]} interligne={lh.snug} couleur={verrouille ? c.gris : c.grisFonce} style={{ textAlign: 'center' }}>{b.nom}</T>

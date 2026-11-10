@@ -59,7 +59,7 @@ function usePouls() {
 }
 
 /**
- * « EN COURS », en lave (#8E6BFF) : le point pulse plutôt que la carte
+ * « EN COURS », en accent (#0047BB) : le point pulse plutôt que la carte
  * entière ne s'aplatisse de cette couleur — c'est ce qui la distingue d'un
  * coup d'œil de la carte flash, déjà un aplat rouge. Une soirée en cours
  * reste une carte blanche, juste bordée du même rouge.
@@ -142,8 +142,8 @@ function BoutonSuivreLieu({ etabId, suivi, media }: { etabId: number; suivi: boo
 
   const abonne = etat === 'accepted';
   const fond = media ? (abonne ? fixe.basalte : 'rgba(17,16,19,0.08)') : abonne ? c.noir : 'transparent';
-  const encre = media ? (abonne ? fixe.craie : fixe.surLave) : abonne ? c.blanc : c.noir;
-  const filet = media ? fixe.surLave : c.line2;
+  const encre = media ? (abonne ? fixe.craie : fixe.surAccent) : abonne ? c.blanc : c.noir;
+  const filet = media ? fixe.surAccent : c.line2;
 
   return (
     <Pressable
@@ -206,19 +206,19 @@ function CarteFlash({ ev, premiere, onInviter: _onInviter }: { ev: Evenement; pr
   return (
     <View style={[{ backgroundColor: c.rouge, padding: 22, borderRadius: rayon.base, marginBottom: 20 }, haloLave]}>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <Mono poids={600} couleur={fixe.surLave} style={{ opacity: 0.8 }}>CE SOIR · {heure(ev.date_heure)}</Mono>
-        <Badge libelle={ev.flash_expiry ? libelleFlash(ts(ev.flash_expiry), maintenant) : 'FLASH'} fond="rgba(17,16,19,0.12)" encre={fixe.surLave} style={{ paddingVertical: 4 }} />
-        {ev.style_musique ? <Badge libelle={libelleStyle(ev.style_musique)} fond="rgba(17,16,19,0.1)" encre={fixe.surLave} filet="rgba(17,16,19,0.3)" espacement={lsEm.wide} style={{ paddingVertical: 2, paddingHorizontal: 9 }} /> : null}
-        {ev.sponsorise ? <Badge libelle="Sponsorisé" fond="rgba(17,16,19,0.1)" encre={fixe.surLave} filet="rgba(17,16,19,0.3)" /> : null}
+        <Mono poids={600} couleur={fixe.surAccent} style={{ opacity: 0.8 }}>CE SOIR · {heure(ev.date_heure)}</Mono>
+        <Badge libelle={ev.flash_expiry ? libelleFlash(ts(ev.flash_expiry), maintenant) : 'FLASH'} fond="rgba(17,16,19,0.12)" encre={fixe.surAccent} style={{ paddingVertical: 4 }} />
+        {ev.style_musique ? <Badge libelle={libelleStyle(ev.style_musique)} fond="rgba(17,16,19,0.1)" encre={fixe.surAccent} filet="rgba(17,16,19,0.3)" espacement={lsEm.wide} style={{ paddingVertical: 2, paddingHorizontal: 9 }} /> : null}
+        {ev.sponsorise ? <Badge libelle="Sponsorisé" fond="rgba(17,16,19,0.1)" encre={fixe.surAccent} filet="rgba(17,16,19,0.3)" /> : null}
       </View>
 
       <Pressable onPress={ouvrir} accessibilityRole="link">
-        <Display taille={fs[7]} interligne={lh.tight} couleur={fixe.surLave} style={{ marginBottom: 6 }}>{ev.titre}</Display>
+        <Display taille={fs[7]} interligne={lh.tight} couleur={fixe.surAccent} style={{ marginBottom: 6 }}>{ev.titre}</Display>
       </Pressable>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
         <Pressable onPress={ouvrir} style={{ flex: 1, minWidth: 0, marginBottom: 12 }}>
-          <T numberOfLines={1} taille={fs[3]} couleur={fixe.surLave}>{ev.etablissement.nom} — {ev.etablissement.ville}</T>
+          <T numberOfLines={1} taille={fs[3]} couleur={fixe.surAccent}>{ev.etablissement.nom} — {ev.etablissement.ville}</T>
         </Pressable>
         <BoutonSuivreLieu etabId={ev.etablissement.id} suivi={ev.etablissement.suivi} media />
       </View>
@@ -235,8 +235,8 @@ function CarteFlash({ ev, premiere, onInviter: _onInviter }: { ev: Evenement; pr
 
       {amis ? (
         <View style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Icone nom="personnes" taille={14} couleur={fixe.surLave} />
-          <T taille={fs[3]} poids={600} couleur={fixe.surLave}>
+          <Icone nom="personnes" taille={14} couleur={fixe.surAccent} />
+          <T taille={fs[3]} poids={600} couleur={fixe.surAccent}>
             {amis.prenoms.slice(0, 2).join(', ')}{amis.nb > 2 ? ` +${amis.nb - 2}` : ''} y vont
           </T>
         </View>
@@ -244,10 +244,10 @@ function CarteFlash({ ev, premiere, onInviter: _onInviter }: { ev: Evenement; pr
 
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 16 }}>
         <View>
-          <Display taille={fs[8]} couleur={fixe.surLave} style={{ fontVariant: ['tabular-nums'] }}>
+          <Display taille={fs[8]} couleur={fixe.surAccent} style={{ fontVariant: ['tabular-nums'] }}>
             {reduction > 0 ? `-${reduction}%` : ev.is_gratuit ? 'Gratuit' : 'Soirée'}
           </Display>
-          <T taille={fs[3]} couleur={fixe.surLave} style={{ opacity: 0.85 }}>
+          <T taille={fs[3]} couleur={fixe.surAccent} style={{ opacity: 0.85 }}>
             {reduction > 0 ? (ev.is_gratuit ? 'entrée gratuite' : 'sur conso') : 'sans remise'}
           </T>
         </View>
@@ -262,10 +262,10 @@ function CarteFlash({ ev, premiere, onInviter: _onInviter }: { ev: Evenement; pr
       </View>
 
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, marginBottom: 6 }}>
-        <Mono poids={600} couleur={fixe.surLave}>Remplissage</Mono>
-        <Mono poids={600} couleur={fixe.surLave}>{pct}%</Mono>
+        <Mono poids={600} couleur={fixe.surAccent}>Remplissage</Mono>
+        <Mono poids={600} couleur={fixe.surAccent}>{pct}%</Mono>
       </View>
-      <Jauge pourcentage={pct} piste="rgba(17,16,19,0.2)" remplissage={c.blanc} />
+      <Jauge pourcentage={pct} piste="rgba(17,16,19,0.2)" remplissage={fixe.craie} />
     </View>
   );
 }
