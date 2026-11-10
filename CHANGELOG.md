@@ -25,6 +25,16 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
   basalte, où le 2728 C serait illisible. `encreSur()` choisit l'encre des
   pastilles et avatars dont la couleur varie. Le site, figé, garde le violet.
 
+### Fixed
+- **Soirée en cours côté partenaire.** La liste ne la marque plus « Passé » et
+  garde son bouton « Scanner » ; le tableau de bord l'affiche au lieu de la
+  suivante. Les deux s'appuient sur la fin effective de la soirée, à l'heure
+  de Paris plutôt qu'à celle de la base.
+- **Revue de design mobile.** Une soirée complète affiche « Complet » d'emblée ;
+  le compte à rebours flash passe en heures (« 2H55 » et non « 175MIN 59S ») ;
+  les pastilles de la carte prennent une encre lisible sur le volt ; la fiche
+  écrit « BOÎTE » ; le wallet remplace le caractère « ✓ » par l'icône.
+
 ### Added
 - **Tests mobile des écrans critiques.** Les règles de la connexion, de
   l'inscription à une soirée et du scan des pass (`mobile/src/regles.ts`) sont

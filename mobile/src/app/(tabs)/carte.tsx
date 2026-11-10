@@ -39,7 +39,7 @@ import { Display, Mono, T } from '../../composants/Texte';
 import { LIBELLES_TYPE } from '../../catalogue';
 import { dateFr } from '../../format';
 import { useJeton } from '../../session';
-import { fixe, fs, lh, rayon, sans } from '../../theme';
+import { encreSur, fixe, fs, lh, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 // Clermont-Ferrand, cœur de la charte : la carte s'ouvre là par défaut, avant
@@ -99,7 +99,7 @@ function grouper(evenements: Evenement[], seuilLat: number, seuilLon: number): G
 function PastilleGrappe({ grappe, couleur }: { grappe: Grappe; couleur: string }) {
   return (
     <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: couleur, borderWidth: 3, borderColor: fixe.craie, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 3, shadowOffset: { width: 0, height: 2 }, elevation: 5 }}>
-      <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: fixe.craie }}>{grappe.evenements.length}</Text>
+      <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: encreSur(couleur) }}>{grappe.evenements.length}</Text>
     </View>
   );
 }
@@ -146,7 +146,7 @@ function Epingle({ type, enCours, actif }: { type: string; enCours: boolean; act
           <Path d={TRACE_EPINGLE} fill={teinte} stroke={fixe.craie} strokeWidth={1} />
         </Svg>
         <View pointerEvents="none" style={{ position: 'absolute', top: centreTeteY - taille * 0.19, left: 0, right: 0, alignItems: 'center' }}>
-          <Icone nom={ICONE_TYPE[type] ?? 'epingle'} taille={Math.round(taille * 0.38)} couleur={fixe.craie} trait={2.4} />
+          <Icone nom={ICONE_TYPE[type] ?? 'epingle'} taille={Math.round(taille * 0.38)} couleur={encreSur(teinte)} trait={2.4} />
         </View>
       </View>
     </View>

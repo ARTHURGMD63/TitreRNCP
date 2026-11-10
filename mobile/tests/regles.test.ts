@@ -67,6 +67,13 @@ test('libelleInscription : être inscrit l\'emporte sur une erreur passée', () 
   assert.equal(libelleInscription('libre', true, 'Complet'), 'Tu es inscrit·e');
 });
 
+test('libelleInscription : une soirée complète le dit avant tout essai', () => {
+  assert.equal(libelleInscription('libre', false, null, true), 'Complet');
+  // Un inscrit garde sa place même quand la soirée se remplit.
+  assert.equal(libelleInscription('libre', true, null, true), 'Tu es inscrit·e');
+  assert.equal(libelleInscription('vient', false, null, true), 'Inscrit');
+});
+
 test('libelleApresEchecInscription : le serveur a répondu, sa phrase reste', () => {
   assert.equal(libelleApresEchecInscription(409, 'Déjà inscrit'), 'Déjà inscrit');
   assert.equal(libelleApresEchecInscription(403, 'Complet'), 'Complet');

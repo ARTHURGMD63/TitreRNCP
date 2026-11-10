@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { actions, adresseServeur, api, ErreurApi, type EvenementDetail, type PhotoEvenement, type ReponsePhotosEvenement } from '../../api';
 import { Bouton } from '../../composants/Bouton';
+import { LIBELLES_TYPE } from '../../catalogue';
 import { libelleStyle } from '../../composants/CarteEvenement';
 import { Chargement, Ecran, Erreur } from '../../composants/Ecran';
 import { Avatar, Badge, BoutonRetour, Jauge } from '../../composants/Elements';
@@ -220,7 +221,7 @@ export default function FicheEvenement() {
   const contenuHero = (
     <View style={{ paddingTop: 100 + top, paddingHorizontal: 20, paddingBottom: 32 }}>
       <Text style={{ fontFamily: mono(500), fontSize: fs[2], letterSpacing: lsEm.label * fs[2], textTransform: 'uppercase', color: accent, marginBottom: 10 }}>
-        {majuscules(e.etablissement.type)} · {dateFr(e.date_heure, 'D j M')}{style}
+        {majuscules(LIBELLES_TYPE[e.etablissement.type] ?? e.etablissement.type)} · {dateFr(e.date_heure, 'D j M')}{style}
       </Text>
       {e.sponsorise ? (
         <Badge libelle="Sponsorisé" fond="rgba(17,16,19,0.1)" encre={encre} filet="rgba(17,16,19,0.3)" style={{ alignSelf: 'flex-start', marginBottom: 10 }} />
@@ -415,9 +416,9 @@ export default function FicheEvenement() {
             plein
             testID="evenement-rejoindre"
             variante={inscription === 'vient' ? 'contour' : 'primaire'}
-            libelle={libelleInscription(inscription, !!e.deja_inscrit, libelleErreur)}
+            libelle={libelleInscription(inscription, !!e.deja_inscrit, libelleErreur, e.places.complet)}
             icone={inscrit ? 'check' : undefined}
-            desactive={inscrit}
+            desactive={inscrit || e.places.complet}
             chargement={inscription === 'attente'}
             onPress={rejoindre}
             style={{ paddingVertical: 18 }}

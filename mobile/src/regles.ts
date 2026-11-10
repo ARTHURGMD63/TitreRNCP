@@ -30,10 +30,14 @@ export function connexionComplete(email: string, motDePasse: string): boolean {
 
 export type EtatInscription = 'libre' | 'attente' | 'vient';
 
-/** Le texte du bouton de la fiche d'une soirée. */
-export function libelleInscription(etat: EtatInscription, dejaInscrit: boolean, libelleErreur: string | null): string {
+/**
+ * Le texte du bouton de la fiche d'une soirée. Une soirée déjà complète le
+ * dit d'emblée, sans attendre le refus du serveur.
+ */
+export function libelleInscription(etat: EtatInscription, dejaInscrit: boolean, libelleErreur: string | null, complet = false): string {
   if (etat === 'vient') return 'Inscrit';
   if (dejaInscrit) return 'Tu es inscrit·e';
+  if (complet) return 'Complet';
   return libelleErreur ?? "Rejoindre l'événement";
 }
 

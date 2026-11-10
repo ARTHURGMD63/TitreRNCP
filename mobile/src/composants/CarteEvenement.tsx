@@ -99,8 +99,12 @@ function PastilleAVenir() {
 function libelleFlash(expiry: number, maintenant: number) {
   const diff = Math.max(0, expiry * 1000 - maintenant);
   if (diff <= 0) return 'EXPIRÉ';
-  const mins = Math.floor(diff / 60000);
+  const h = Math.floor(diff / 3600000);
+  const mins = Math.floor((diff % 3600000) / 60000);
   const secs = Math.floor((diff % 60000) / 1000);
+  // Au-delà d'une heure, les secondes n'apprennent rien : « 2H55 », pas
+  // « 175MIN 59S ».
+  if (h > 0) return `FLASH · ${h}H${mins < 10 ? '0' : ''}${mins}`;
   return `FLASH · ${mins}MIN ${secs < 10 ? '0' : ''}${secs}S`;
 }
 
@@ -253,9 +257,9 @@ function CarteFlash({ ev, premiere, onInviter: _onInviter }: { ev: Evenement; pr
         </View>
         <Bouton
           variante="basalte"
-          libelle={etat === 'inscrit' || etat === 'vient' ? 'Inscrit' : libelleErreur ?? 'Je fonce'}
+          libelle={etat === 'inscrit' || etat === 'vient' ? 'Inscrit' : ev.places.complet ? 'Complet' : libelleErreur ?? 'Je fonce'}
           icone={etat === 'inscrit' || etat === 'vient' ? 'check' : undefined}
-          desactive={etat === 'inscrit' || etat === 'vient'}
+          desactive={etat === 'inscrit' || etat === 'vient' || ev.places.complet}
           chargement={etat === 'attente'}
           onPress={inscrire}
         />
@@ -341,9 +345,9 @@ function CarteClassique({ ev, onInviter }: { ev: Evenement; onInviter: () => voi
           </Pressable>
           <Bouton
             variante={etat === 'vient' ? 'contour' : 'primaire'}
-            libelle={inscrit ? 'Inscrit' : libelleErreur ?? 'Rejoindre'}
+            libelle={inscrit ? 'Inscrit' : ev.places.complet ? 'Complet' : libelleErreur ?? 'Rejoindre'}
             icone={inscrit ? 'check' : undefined}
-            desactive={inscrit}
+            desactive={inscrit || ev.places.complet}
             chargement={etat === 'attente'}
             onPress={inscrire}
             taillePolice={fs[3]}

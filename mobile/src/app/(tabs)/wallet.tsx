@@ -292,7 +292,12 @@ export default function Wallet() {
                       <View style={{ flex: 1 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                           <T taille={fs[4]} poids={600}>{p.etablissement}</T>
-                          {avis ? <T taille={fs[1]} poids={700} couleur={c.surLimeClair}>· CHECK-IN ✓</T> : null}
+                          {avis ? (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                              <T taille={fs[1]} poids={700} couleur={c.surLimeClair}>· CHECK-IN</T>
+                              <Icone nom="check" taille={11} couleur={c.surLimeClair} trait={3} />
+                            </View>
+                          ) : null}
                         </View>
                         <T taille={fs[2]} couleur={c.gris} style={{ marginTop: 2 }}>{p.titre} · {dateFr(p.date_heure, 'D j M')}</T>
                         {avis && p.evenement_id ? (
