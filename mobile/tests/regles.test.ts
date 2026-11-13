@@ -141,3 +141,64 @@ test('libelleInscrits : aucun, un, plusieurs', () => {
   assert.equal(libelleInscrits(1), '1 inscrit');
   assert.equal(libelleInscrits(42), '42 inscrits');
 });
+
+// ─── Sport ──────────────────────────────────────────────────────────────────
+
+import {
+  amisMax, debutsCreneaux, formatEuros, joursRecurrents, libellePlaces, libelleVisibilite,
+  niveauCompatible, prixParJoueur,
+} from '../src/regles.ts';
+
+test('formatEuros : entier sans décimales, sinon deux décimales à virgule', () => {
+  assert.equal(formatEuros(12), '12 €');
+  assert.equal(formatEuros(12.5), '12,50 €');
+  assert.equal(formatEuros(48 / 4), '12 €');
+});
+
+test('prixParJoueur : la part de chacun, payée au club', () => {
+  assert.equal(prixParJoueur(48, 4), '12 € / joueur sur place');
+  assert.equal(prixParJoueur(50, 4), '12,50 € / joueur sur place');
+  assert.equal(prixParJoueur(30, 1), '30 € sur place');
+  assert.equal(prixParJoueur(0, 4), 'Gratuit');
+});
+
+test('libellePlaces : complet, singulier, pluriel', () => {
+  assert.equal(libellePlaces(0), 'Complet');
+  assert.equal(libellePlaces(1), '1 place');
+  assert.equal(libellePlaces(3), '3 places');
+});
+
+test('amisMax : le terrain moins soi-même', () => {
+  assert.equal(amisMax(4), 3);
+  assert.equal(amisMax(1), 0);
+});
+
+test('niveauCompatible : « tous » laisse passer, sinon niveau égal', () => {
+  assert.equal(niveauCompatible('inter', 'tous'), true);
+  assert.equal(niveauCompatible('tous', 'avance'), true);
+  assert.equal(niveauCompatible('inter', 'inter'), true);
+  assert.equal(niveauCompatible('debutant', 'avance'), false);
+});
+
+test('libelleVisibilite : abonnés par défaut', () => {
+  assert.equal(libelleVisibilite('public'), 'Public');
+  assert.equal(libelleVisibilite('abonnes'), 'Abonnés');
+  assert.equal(libelleVisibilite(undefined), 'Abonnés');
+});
+
+test('joursRecurrents : même jour de semaine en semaine, passage de mois compris', () => {
+  assert.deepEqual(joursRecurrents('2026-11-24', 3), ['2026-11-24', '2026-12-01', '2026-12-08']);
+  assert.deepEqual(joursRecurrents('2026-11-24', 0), ['2026-11-24']);
+  assert.deepEqual(joursRecurrents('pas une date', 2), []);
+});
+
+test('debutsCreneaux : créneaux entiers dans la plage, pour chaque jour', () => {
+  assert.deepEqual(debutsCreneaux(['2026-11-15'], '10:00', '14:30', 90), [
+    '2026-11-15 10:00', '2026-11-15 11:30', '2026-11-15 13:00',
+  ]);
+  // Le dernier créneau qui finirait après la fermeture n'est pas publié.
+  assert.deepEqual(debutsCreneaux(['2026-11-15'], '10:00', '13:00', 90), ['2026-11-15 10:00', '2026-11-15 11:30']);
+  assert.equal(debutsCreneaux(['2026-11-15', '2026-11-22'], '18:00', '21:00', 60).length, 6);
+  assert.deepEqual(debutsCreneaux(['2026-11-15'], '14:00', '10:00', 60), []);
+  assert.deepEqual(debutsCreneaux(['2026-11-15'], '25:00', '26:00', 60), []);
+});

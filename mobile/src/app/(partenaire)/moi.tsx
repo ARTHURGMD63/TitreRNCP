@@ -28,6 +28,7 @@ const TYPES = [
   { valeur: 'boite', libelle: 'Boîte de nuit' },
   { valeur: 'resto', libelle: 'Restaurant' },
   { valeur: 'afterwork', libelle: 'Afterwork' },
+  { valeur: 'club', libelle: 'Club sportif' },
 ];
 
 export default function MoiPartenaire() {

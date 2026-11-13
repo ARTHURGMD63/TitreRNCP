@@ -11,6 +11,7 @@ import { Pressable, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 
 import { api, ErreurApi, type EvenementPartenaire } from '../../api';
+import { FORMATS_SPORT, SPORTS } from '../../catalogue';
 import { Bouton } from '../../composants/Bouton';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Badge, Jauge } from '../../composants/Elements';
@@ -23,7 +24,7 @@ import { useJeton } from '../../session';
 import { fixe, fs, rayon } from '../../theme';
 import { useTheme } from '../../useTheme';
 
-const LIBELLES_TYPE: Record<string, string> = { bar: 'Bar', boite: 'Boîte', resto: 'Resto', afterwork: 'Afterwork' };
+const LIBELLES_TYPE: Record<string, string> = { bar: 'Bar', boite: 'Boîte', resto: 'Resto', afterwork: 'Afterwork', sport: 'Sport' };
 const LIBELLES_STATUT: Record<EvenementPartenaire['statut'], string> = { passe: 'Passé', complet: 'Complet', actif: 'Actif' };
 
 function CarteEvenementPartenaire({ ev, onSupprime }: { ev: EvenementPartenaire; onSupprime: () => void }) {
@@ -55,7 +56,8 @@ function CarteEvenementPartenaire({ ev, onSupprime }: { ev: EvenementPartenaire;
         <View style={{ flex: 1 }}>
           <T taille={fs[5]} poids={700} style={{ marginBottom: 4 }}>{ev.titre}</T>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-            <Badge libelle={majuscules(LIBELLES_TYPE[ev.type] ?? ev.type)} fond={c.surface2} encre={c.grisFonce} filet={c.line2} />
+            <Badge libelle={majuscules(ev.sport ? (SPORTS[ev.sport] ?? ev.sport) : (LIBELLES_TYPE[ev.type] ?? ev.type))} fond={c.surface2} encre={c.grisFonce} filet={c.line2} />
+            {ev.format ? <Badge libelle={majuscules(FORMATS_SPORT[ev.format] ?? ev.format)} fond={c.surface2} encre={c.grisFonce} filet={c.line2} /> : null}
             {ev.is_flash ? <Badge libelle="FLASH" fond={c.rouge} encre={c.blanc} /> : null}
             {ev.is_gratuit ? <Badge libelle="GRATUIT" fond={c.noir} encre={c.bg} /> : null}
             {ev.is_sponsorise ? <Badge libelle={ev.sponsorise_actif ? 'SPONSORISÉ' : 'SPONSO. TERMINÉ'} fond={c.surface2} encre={c.grisFonce} filet={c.line2} /> : null}

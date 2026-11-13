@@ -126,7 +126,9 @@ export default function AbonnementPartenaire() {
               <T taille={fs[2]} couleur={c.gris} style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: c.grisClair }}>
                 {f.code === 'fondateur'
                   ? `Offert ${f.mois_essai} mois, puis tarif gelé tant que l'abonnement n'est pas interrompu.`
-                  : "Offert jusqu'à ta première soirée test publiée et scannée."}
+                  : f.code === 'club'
+                    ? `Offert ${f.mois_essai} mois, puis facturé chaque mois.`
+                    : "Offert jusqu'à ta première soirée test publiée et scannée."}
               </T>
             </Pressable>
           );
@@ -135,8 +137,9 @@ export default function AbonnementPartenaire() {
         <View style={{ backgroundColor: c.grisClair, borderRadius: rayon.md, padding: 16, marginTop: 8, marginBottom: 20 }}>
           <T taille={fs[3]} poids={700} style={{ marginBottom: 6 }}>Dans toutes les formules</T>
           <T taille={fs[3]} couleur={c.gris}>
-            Soirées illimitées, page établissement avec photos, tableau de bord des inscrits et des présents,
-            scan des pass à l&apos;entrée. Tu fixes ta remise étudiante, y compris à zéro.
+            {donnees.est_club
+              ? 'Événements sportifs et créneaux de terrain illimités, page établissement avec photos, tableau de bord des inscrits, scan des pass. Les joueurs règlent leurs terrains chez toi : Outsee ne prend aucune commission.'
+              : 'Soirées illimitées, page établissement avec photos, tableau de bord des inscrits et des présents, scan des pass à l’entrée. Tu fixes ta remise étudiante, y compris à zéro.'}
           </T>
         </View>
 

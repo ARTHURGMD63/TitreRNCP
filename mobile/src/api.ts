@@ -159,6 +159,9 @@ export type Evenement = {
   description: string;
   type: string;
   style_musique: string | null;
+  /** Événement d'un club (type 'sport') : discipline et format. */
+  sport?: string | null;
+  format?: string | null;
   date_heure: string;
   lieu: string;
   etablissement: { id: number; nom: string; type: string; ville: string; note: number | null; nb_avis: number; suivi: boolean; latitude: number | null; longitude: number | null };
@@ -228,7 +231,76 @@ export type Squad = {
   je_suis_abonne_au_createur: boolean;
   cree_par_association: boolean;
   membres: { id: number; prenom: string; photo_url: string | null }[];
+  /** 'abonnes' : visible des seuls abonnés du créateur (v28). */
+  visibilite?: 'public' | 'abonnes';
 };
+
+// ─── Sport ──────────────────────────────────────────────────────────────────
+
+export type NiveauSport = 'tous' | 'debutant' | 'inter' | 'avance';
+
+export type JoueurCreneau = { id: number; prenom: string; nom: string; photo_url: string | null; invite_par: number | null };
+
+/** Un créneau de terrain : libre, ou partie réservée (ouverte ou non). */
+export type Creneau = {
+  id: number;
+  debut: string;
+  fin: string;
+  sport: string;
+  terrain: { id: number; nom: string };
+  club: { id: number; nom: string; ville: string; adresse: string };
+  /** Prix du terrain pour le créneau, réglé au club. */
+  prix: number;
+  statut: 'libre' | 'reserve' | 'annule';
+  ouvert: boolean;
+  niveau: NiveauSport;
+  places: { total: number; prises: number; restantes: number };
+  organisateur: { id: number; prenom: string; nom: string; photo_url: string | null } | null;
+  joueurs: JoueurCreneau[];
+  je_joue: boolean;
+  je_organise: boolean;
+};
+
+export type CreneauDetail = Creneau & { peut_reserver: boolean; peut_rejoindre: boolean; peut_quitter: boolean };
+
+export type EvenementSport = {
+  id: number;
+  titre: string;
+  sport: string;
+  format: string;
+  date_heure: string;
+  date_fin: string | null;
+  lieu: string;
+  club: { id: number; nom: string; ville: string };
+  places: { quota: number; inscrits: number; restantes: number | null; complet: boolean };
+  prix_normal: number;
+  reduction: number;
+  is_gratuit: boolean;
+  deja_inscrit: boolean;
+};
+
+export type ReponseSport = {
+  sports: { code: string; libelle: string }[];
+  parties: Creneau[];
+  libres: Creneau[];
+  mes_parties: Creneau[];
+  evenements: EvenementSport[];
+  squads: Squad[];
+};
+
+export type TerrainClub = {
+  id: number;
+  nom: string;
+  sport: string;
+  joueurs: number;
+  duree_min: number;
+  prix: number;
+  actif: boolean;
+  creneaux_libres: number;
+  creneaux_reserves: number;
+};
+
+export type ReponseTerrainsClub = { terrains: TerrainClub[]; sports_club: string[]; sports: { code: string; libelle: string }[] };
 
 export type Notification = {
   type: 'demande' | 'invitation' | 'ami' | 'lieu';
@@ -373,6 +445,8 @@ export type EvenementPartenaire = {
   id: number;
   titre: string;
   type: string;
+  sport: string | null;
+  format: string | null;
   date_heure: string;
   quota: number;
   inscrits: number;
@@ -393,6 +467,8 @@ export type EvenementFormulairePartenaire = {
   description: string;
   type: string;
   style_musique: string | null;
+  sport: string | null;
+  format: string | null;
   date_heure: string;
   date_fin: string | null;
   quota: number;
@@ -408,6 +484,10 @@ export type EvenementFormulairePartenaire = {
 
 export type ReponseFormulaireEvenementPartenaire = {
   evenement: EvenementFormulairePartenaire | null;
+  /** Un club ne publie que des événements sportifs (type 'sport'). */
+  est_club: boolean;
+  sports: { code: string; libelle: string }[];
+  formats: { code: string; libelle: string }[];
   lieu_defaut: string;
   styles_musique: { code: string; libelle: string }[];
   formules_sponsoring: FormulePartenaire[];
@@ -435,6 +515,7 @@ export type ClientPartenaireAbonnement = {
 export type ReponseAbonnementPartenaire = {
   client: ClientPartenaireAbonnement | null;
   formules: FormulePartenaireAbonnement[];
+  est_club: boolean;
 };
 
 export type PhotoEtablissement = { id: number; url: string | null; legende: string | null; position: number };
@@ -619,6 +700,34 @@ export const api = {
     appelApi<Ok>('evenement_photo_supprimer.php', { methode: 'POST', jeton, corps: { photo_id: photoId } }),
   signalerPhotoEvenement: (jeton: string, corps: { photo_id: number; motif: string; details?: string }) =>
     appelApi<Ok>('evenement_photo_signaler.php', { methode: 'POST', jeton, corps }),
+
+  // ─── Sport ────────────────────────────────────────────────────────────────
+  sport: (jeton: string, sport?: string) => appelApi<{ success: true } & ReponseSport>('sport.php', { jeton, params: { sport } }),
+  creneau: (jeton: string, id: number) => appelApi<{ creneau: CreneauDetail }>('sport_creneau.php', { jeton, params: { id } }),
+  reserverCreneau: (jeton: string, id: number, choix: { amis: number[]; ouvert: boolean; niveau: NiveauSport }) =>
+    appelApi<Ok & { creneau: CreneauDetail }>('sport_creneau.php', { methode: 'POST', jeton, corps: { action: 'reserver', id, ...choix } }),
+  rejoindreCreneau: (jeton: string, id: number) =>
+    appelApi<Ok & { creneau: CreneauDetail }>('sport_creneau.php', { methode: 'POST', jeton, corps: { action: 'rejoindre', id } }),
+  quitterCreneau: (jeton: string, id: number) =>
+    appelApi<Ok & { creneau: CreneauDetail }>('sport_creneau.php', { methode: 'POST', jeton, corps: { action: 'quitter', id } }),
+  modifierPartie: (jeton: string, id: number, ouvert: boolean, niveau: NiveauSport) =>
+    appelApi<Ok & { creneau: CreneauDetail }>('sport_creneau.php', { methode: 'POST', jeton, corps: { action: 'modifier', id, ouvert, niveau } }),
+  /** Événement d'étudiant : gratuit, visible de ses abonnés (public pour une association). */
+  creerEvenementSport: (jeton: string, corps: { titre: string; type: string; niveau: string; date_heure: string; quota: number; lieu: string; description: string; cree_par_association: boolean }) =>
+    appelApi<Ok & { id: number }>('sport_squad.php', { methode: 'POST', jeton, corps }),
+
+  // ─── Club ─────────────────────────────────────────────────────────────────
+  clubTerrains: (jeton: string) => appelApi<{ success: true } & ReponseTerrainsClub>('club_terrains.php', { jeton }),
+  clubEnregistrerTerrain: (jeton: string, terrain: { id?: number; nom: string; sport: string; joueurs: number; duree_min: number; prix: number; actif: boolean }) =>
+    appelApi<Ok & ReponseTerrainsClub>('club_terrains.php', { methode: 'POST', jeton, corps: { action: 'enregistrer', ...terrain } }),
+  clubSupprimerTerrain: (jeton: string, id: number) =>
+    appelApi<Ok & ReponseTerrainsClub>('club_terrains.php', { methode: 'POST', jeton, corps: { action: 'supprimer', id } }),
+  clubCreneaux: (jeton: string, du: string, jours = 7) =>
+    appelApi<{ success: true; du: string; jours: number; creneaux: Creneau[] }>('club_creneaux.php', { jeton, params: { du, jours } }),
+  clubPublierCreneaux: (jeton: string, terrainId: number, debuts: string[]) =>
+    appelApi<Ok & { crees: number; ignores: number }>('club_creneaux.php', { methode: 'POST', jeton, corps: { action: 'publier', terrain_id: terrainId, debuts } }),
+  clubSupprimerCreneau: (jeton: string, id: number) =>
+    appelApi<Ok>('club_creneaux.php', { methode: 'POST', jeton, corps: { action: 'supprimer', id } }),
 };
 
 // ─── Écritures partagées avec le site ────────────────────────────────────────

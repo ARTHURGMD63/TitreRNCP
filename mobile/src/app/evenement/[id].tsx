@@ -19,7 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { actions, adresseServeur, api, ErreurApi, type EvenementDetail, type PhotoEvenement, type ReponsePhotosEvenement } from '../../api';
 import { Bouton } from '../../composants/Bouton';
-import { LIBELLES_TYPE } from '../../catalogue';
+import { FORMATS_SPORT, LIBELLES_TYPE, SPORTS } from '../../catalogue';
 import { libelleStyle } from '../../composants/CarteEvenement';
 import { Chargement, Ecran, Erreur } from '../../composants/Ecran';
 import { Avatar, Badge, BoutonRetour, Jauge } from '../../composants/Elements';
@@ -221,7 +221,7 @@ export default function FicheEvenement() {
   const contenuHero = (
     <View style={{ paddingTop: 100 + top, paddingHorizontal: 20, paddingBottom: 32 }}>
       <Text style={{ fontFamily: mono(500), fontSize: fs[2], letterSpacing: lsEm.label * fs[2], textTransform: 'uppercase', color: accent, marginBottom: 10 }}>
-        {majuscules(LIBELLES_TYPE[e.etablissement.type] ?? e.etablissement.type)} · {dateFr(e.date_heure, 'D j M')}{style}
+        {majuscules(e.sport ? `${SPORTS[e.sport] ?? e.sport}${e.format ? ` · ${FORMATS_SPORT[e.format] ?? e.format}` : ''}` : (LIBELLES_TYPE[e.etablissement.type] ?? e.etablissement.type))} · {dateFr(e.date_heure, 'D j M')}{style}
       </Text>
       {e.sponsorise ? (
         <Badge libelle="Sponsorisé" fond="rgba(17,16,19,0.1)" encre={encre} filet="rgba(17,16,19,0.3)" style={{ alignSelf: 'flex-start', marginBottom: 10 }} />

@@ -6,6 +6,11 @@
  * Mêmes validations qu'en PHP, mais uniquement côté affichage : le serveur
  * revérifie tout (le quota flash en particulier), jamais confiance au
  * client sur le tarif de sponsoring.
+ *
+ * Pour un club sportif (est_club, v28), le formulaire devient celui d'un
+ * événement sportif : un sport et un format (tournoi, stage…) à la place du
+ * type et du style de musique, et ni offre flash ni sponsoring — tous deux
+ * visent le fil des soirées, où un événement sportif n'apparaît pas.
  */
 
 import React, { useCallback, useState } from 'react';
@@ -43,6 +48,8 @@ export default function FormulaireEvenementPartenaire() {
   const [description, setDescription] = useState('');
   const [type, setType] = useState('bar');
   const [styleMusique, setStyleMusique] = useState('');
+  const [sport, setSport] = useState('padel');
+  const [format, setFormat] = useState('tournoi');
   const [date, setDate] = useState<Date | null>(null);
   const [dateFin, setDateFin] = useState<Date | null>(null);
   const [lieu, setLieu] = useState('');
@@ -66,6 +73,8 @@ export default function FormulaireEvenementPartenaire() {
         setDescription(e.description);
         setType(e.type);
         setStyleMusique(e.style_musique ?? '');
+        if (e.sport) setSport(e.sport);
+        if (e.format) setFormat(e.format);
         setDate(new Date(e.date_heure.replace(' ', 'T')));
         setDateFin(e.date_fin ? new Date(e.date_fin.replace(' ', 'T')) : null);
         setLieu(e.lieu);
@@ -95,13 +104,16 @@ export default function FormulaireEvenementPartenaire() {
       const rep = await api.partenaireEnregistrerEvenement(jeton, {
         id: evenementId ?? undefined,
         titre, description, type,
-        style_musique: styleMusique || undefined,
+        style_musique: donnees?.est_club ? undefined : styleMusique || undefined,
+        sport: donnees?.est_club ? sport : undefined,
+        format: donnees?.est_club ? format : undefined,
         date_heure: date ? isoDateHeure(date) : '',
         date_fin: dateFin ? isoDateHeure(dateFin) : undefined,
         lieu, quota: Number(quota), prix_normal: Number(prixNormal), reduction: Number(reduction),
-        is_gratuit: isGratuit, is_flash: isFlash,
-        flash_expiry: isFlash && flashExpiry ? isoDateHeure(flashExpiry) : undefined,
-        is_sponsorise: isSponsorise, sponsor_formule: isSponsorise ? sponsorFormule : undefined,
+        is_gratuit: isGratuit, is_flash: !donnees?.est_club && isFlash,
+        flash_expiry: !donnees?.est_club && isFlash && flashExpiry ? isoDateHeure(flashExpiry) : undefined,
+        is_sponsorise: !donnees?.est_club && isSponsorise,
+        sponsor_formule: !donnees?.est_club && isSponsorise ? sponsorFormule : undefined,
       });
       toast(rep.message ?? 'Enregistré.', 'success');
       router.replace('/evenements');
@@ -121,6 +133,7 @@ export default function FormulaireEvenementPartenaire() {
   }
 
   const optionsMusique = [{ valeur: '', libelle: 'Non précisé' }, ...donnees.styles_musique.map((s) => ({ valeur: s.code, libelle: s.libelle }))];
+  const club = donnees.est_club;
 
   return (
     <Ecran>
@@ -131,16 +144,23 @@ export default function FormulaireEvenementPartenaire() {
         {erreurEnregistrement ? <Encart genre="erreur">{erreurEnregistrement}</Encart> : null}
 
         <Mono style={{ marginBottom: 12 }}>Informations générales</Mono>
-        <Champ etiquette="Titre *" value={titre} onChangeText={setTitre} placeholder="ex : Soirée Étudiants — DJ Groove" />
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <Selecteur style={{ flex: 1 }} etiquette="Type *" valeur={type} onChange={setType} options={TYPES} />
-          <Selecteur style={{ flex: 1 }} etiquette="Style de musique" valeur={styleMusique} onChange={setStyleMusique} options={optionsMusique} />
-        </View>
+        <Champ etiquette="Titre *" value={titre} onChangeText={setTitre} placeholder={club ? 'ex : Open étudiant de padel' : 'ex : Soirée Étudiants — DJ Groove'} />
+        {club ? (
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <Selecteur style={{ flex: 1 }} etiquette="Sport *" valeur={sport} onChange={setSport} options={donnees.sports.map((s) => ({ valeur: s.code, libelle: s.libelle }))} />
+            <Selecteur style={{ flex: 1 }} etiquette="Format *" valeur={format} onChange={setFormat} options={donnees.formats.map((f) => ({ valeur: f.code, libelle: f.libelle }))} />
+          </View>
+        ) : (
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <Selecteur style={{ flex: 1 }} etiquette="Type *" valeur={type} onChange={setType} options={TYPES} />
+            <Selecteur style={{ flex: 1 }} etiquette="Style de musique" valeur={styleMusique} onChange={setStyleMusique} options={optionsMusique} />
+          </View>
+        )}
         <ChampDate etiquette="Début *" mode="datetime" valeur={date} onChange={setDate} min={new Date()} />
         <ChampDate etiquette="Fin" mode="datetime" valeur={dateFin} onChange={setDateFin} min={date ?? new Date()} />
         <Champ etiquette="Description" value={description} onChangeText={setDescription} multiligne numberOfLines={3}
-          placeholder="Ambiance, animations, dress code..." />
-        <Champ etiquette="Lieu / Salle" value={lieu} onChangeText={setLieu} />
+          placeholder={club ? 'Tableau, niveau attendu, lots, matériel...' : 'Ambiance, animations, dress code...'} />
+        <Champ etiquette={club ? 'Lieu / Terrains' : 'Lieu / Salle'} value={lieu} onChangeText={setLieu} />
 
         <Mono style={{ marginTop: 8, marginBottom: 12 }}>Capacité & tarifs</Mono>
         <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -148,8 +168,11 @@ export default function FormulaireEvenementPartenaire() {
           <Champ style={{ flex: 1 }} etiquette="Prix normal (€)" value={prixNormal} onChangeText={setPrixNormal} keyboardType="decimal-pad" />
         </View>
         <Champ etiquette="Réduction étudiants (%)" value={reduction} onChangeText={setReduction} keyboardType="number-pad" aide="Affichée sur le pass étudiant." />
-        <Case coche={isGratuit} onChange={setIsGratuit} style={{ marginBottom: 20 }}>Entrée gratuite — le pass sera 100% offert</Case>
+        <Case coche={isGratuit} onChange={setIsGratuit} style={{ marginBottom: 20 }}>
+          {club ? 'Inscription gratuite — le pass sera 100% offert' : 'Entrée gratuite — le pass sera 100% offert'}
+        </Case>
 
+        {club ? null : (<>
         <Mono style={{ marginBottom: 12 }}>Options avancées</Mono>
         <Case coche={isFlash} onChange={setIsFlash} style={{ marginBottom: isFlash ? 12 : 20 }}>
           Event Flash — offre limitée dans le temps, en tête du fil
@@ -172,6 +195,7 @@ export default function FormulaireEvenementPartenaire() {
             options={donnees.formules_sponsoring.map((f) => ({ valeur: f.code, libelle: `${f.nom} — ${f.tarif} €` }))}
           />
         ) : null}
+        </>)}
 
         <Bouton libelle={evenementId ? 'Enregistrer les modifications' : "Publier l'événement"} plein
           chargement={enregistrement} onPress={enregistrer} style={{ marginTop: 12 }} />

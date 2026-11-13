@@ -23,11 +23,29 @@ export const TYPES_ETABLISSEMENT = [
   { valeur: 'boite', libelle: 'Boîte' },
   { valeur: 'resto', libelle: 'Restaurant' },
   { valeur: 'afterwork', libelle: 'Afterwork' },
+  { valeur: 'club', libelle: 'Club sportif' },
 ];
 
 /** Les libellés des types sur les cartes (explore.php, $typeLabels). */
-export const LIBELLES_TYPE: Record<string, string> = { bar: 'Bar', boite: 'Boîte', resto: 'Resto', afterwork: 'Afterwork' };
+export const LIBELLES_TYPE: Record<string, string> = { bar: 'Bar', boite: 'Boîte', resto: 'Resto', afterwork: 'Afterwork', club: 'Club', sport: 'Sport' };
 
-/** squads.php */
-export const TYPES_SQUAD: Record<string, string> = { running: 'Running', velo: 'Vélo', muscu: 'Muscu', autre: 'Autre' };
+/**
+ * Les sports, recopiés de catalogueSports() (includes/sports.php) : si l'un
+ * change côté serveur, il change ici. Le serveur renvoie aussi la liste avec
+ * le fil Sport ; celle-ci sert à afficher un libellé sans l'attendre.
+ */
+export const SPORTS: Record<string, string> = {
+  padel: 'Padel', tennis: 'Tennis', golf: 'Golf', squash: 'Squash', badminton: 'Badminton',
+  foot5: 'Foot à 5', basket: 'Basket', escalade: 'Escalade', running: 'Running', velo: 'Vélo',
+  muscu: 'Muscu', yoga: 'Yoga', autre: 'Autre',
+};
+
+/** Formats d'un événement de club (formatsEvenementSport()). */
+export const FORMATS_SPORT: Record<string, string> = {
+  tournoi: 'Tournoi', stage: 'Stage', initiation: 'Initiation', cours: 'Cours collectif',
+  match: 'Match', soiree: 'Soirée sportive', autre: 'Autre',
+};
+
+/** Le libellé d'un type de squad : un sport, ou « culture » d'avant le sport. */
+export const TYPES_SQUAD: Record<string, string> = { ...SPORTS, culture: 'Culture' };
 export const NIVEAUX_SQUAD: Record<string, string> = { tous: 'Tous niveaux', debutant: 'Débutant', inter: 'Inter.', avance: 'Avancé' };

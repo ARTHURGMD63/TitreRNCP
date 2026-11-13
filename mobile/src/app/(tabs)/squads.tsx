@@ -1,20 +1,27 @@
 /**
- * Squads — squads.php, dans l'univers sport : le dôme remplace la lave pour
- * l'accent du titre, la pilule active et l'action principale.
+ * Sport — l'onglet de l'univers sport, dôme pour l'accent.
  *
- * « Ne fais pas / de sport tout seul. », les filtres de sport (côté appareil, comme le
- * site), le bandeau de suggestion, « + Créer un squad », puis les cartes :
- * niveau en haut à droite, étiquette « RUNNING · MAR 07H00 », lieu,
- * description, pastilles des membres, et l'action — Gérer, Rejoint, Complet
- * ou Rejoindre. Les deux feuilles du site : créer un squad, gérer le sien.
+ * « Ne fais pas / de sport tout seul. », puis :
+ *   - les filtres par sport (Tout, Padel, Tennis…) ;
+ *   - « Mes parties » quand j'en ai, en tête : c'est ce qui me concerne ;
+ *   - quatre rubriques :
+ *       Parties à compléter : des étudiants ont réservé un terrain et ouvert
+ *         les places restantes aux inconnus, filtrables par niveau ;
+ *       Terrains libres : les créneaux que les clubs ont mis en ligne ;
+ *       Clubs : les événements des clubs (tournois, stages…) ;
+ *       Mes abonnements : les événements d'étudiants que je peux voir —
+ *         ceux des personnes qui m'ont accepté, et ceux des associations.
+ *
+ * Tout vient d'un seul appel (api/v1/sport.php). Créer un événement est
+ * gratuit et le réserve à mes abonnés (sport_squad.php).
  */
 
 import React, { useCallback, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 
-import { actions, api, ErreurApi, type Squad } from '../../api';
-import { NIVEAUX_SQUAD, TYPES_SQUAD } from '../../catalogue';
+import { actions, api, ErreurApi, type ReponseSport, type Squad } from '../../api';
+import { NIVEAUX_SQUAD, SPORTS, TYPES_SQUAD } from '../../catalogue';
 import { Bouton } from '../../composants/Bouton';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Pilule, Separateur } from '../../composants/Elements';
@@ -22,27 +29,37 @@ import { Feuille } from '../../composants/Feuille';
 import { Case, Champ, ChampDate, isoDateHeure, Selecteur } from '../../composants/Formulaire';
 import { Icone } from '../../composants/Icone';
 import { Marque } from '../../composants/Marque';
+import { CarteCreneau, CarteEvenementSport, VideSport } from '../../composants/Sport';
 import { Display, Mono, T, TitreEcran } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
 import { court, dateFr, majuscules } from '../../format';
+import { libelleVisibilite, niveauCompatible } from '../../regles';
 import { useJeton } from '../../session';
 import { fixe, fs, gutter, lh, police, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 
-const FILTRES = [
-  { code: 'all', libelle: 'Tout' },
-  { code: 'running', libelle: 'Running' },
-  { code: 'velo', libelle: 'Vélo' },
-  { code: 'muscu', libelle: 'Muscu' },
-  { code: 'autre', libelle: 'Autre' },
+type Rubrique = 'parties' | 'terrains' | 'clubs' | 'abonnements';
+
+const RUBRIQUES: { code: Rubrique; libelle: string }[] = [
+  { code: 'parties', libelle: 'Parties à compléter' },
+  { code: 'terrains', libelle: 'Terrains libres' },
+  { code: 'clubs', libelle: 'Clubs' },
+  { code: 'abonnements', libelle: 'Mes abonnements' },
 ];
 
-const SCOPES = [
-  { code: 'tous', libelle: 'Tout le monde' },
-  { code: 'potes', libelle: 'Mes potes' },
-  { code: 'associations', libelle: 'Associations' },
+const NIVEAUX = [
+  { code: 'tous', libelle: 'Tous niveaux' },
+  { code: 'debutant', libelle: 'Débutant' },
+  { code: 'inter', libelle: 'Inter.' },
+  { code: 'avance', libelle: 'Avancé' },
 ];
+
+function ouvrirCreneau(id: number) {
+  router.push({ pathname: '/creneau/[id]', params: { id: String(id) } });
+}
+
+// ─── Événement d'étudiant (squad) ───────────────────────────────────────────
 
 function CarteSquad({ s, onGerer }: { s: Squad; onGerer: () => void }) {
   const { c, ombre } = useTheme();
@@ -60,7 +77,7 @@ function CarteSquad({ s, onGerer }: { s: Squad; onGerer: () => void }) {
       const rep = await actions.rejoindreSquad(jeton, s.id);
       setRejoint(true);
       if (rep.membres) setMembres(rep.membres);
-      toast('Tu rejoins le squad !', 'success');
+      toast('Tu participes !', 'success');
     } catch (e) {
       toast(e instanceof ErreurApi ? e.message : 'Erreur réseau', 'error');
     } finally {
@@ -85,37 +102,37 @@ function CarteSquad({ s, onGerer }: { s: Squad; onGerer: () => void }) {
       <View style={{ position: 'absolute', top: 16, right: 16, borderWidth: 1, borderColor: c.line2, borderRadius: rayon.pill, paddingVertical: 4, paddingHorizontal: 10 }}>
         <T taille={fs[2]} poids={500} couleur={c.grisFonce}>{NIVEAUX_SQUAD[s.niveau] ?? s.niveau}</T>
       </View>
-      {s.cree_par_association ? (
-        <View style={{ position: 'absolute', top: 16, left: 16, borderWidth: 1, borderColor: c.line2, borderRadius: rayon.pill, paddingVertical: 4, paddingHorizontal: 10 }}>
-          <T taille={fs[2]} poids={500} couleur={c.grisFonce}>Association</T>
-        </View>
-      ) : null}
 
       <Mono couleur={c.surBleuClair} style={{ marginBottom: 6, paddingRight: 96 }}>
-        {majuscules(TYPES_SQUAD[s.type] ?? s.type)} · {dateFr(s.date_heure, 'D H\\hi')}
+        {majuscules(TYPES_SQUAD[s.type] ?? s.type)} · {dateFr(s.date_heure, 'D H\\hi')} ·{' '}
+        <Text style={{ color: s.visibilite === 'public' ? c.surBleuClair : c.surLimeClair }}>
+          {majuscules(s.cree_par_association ? 'Association' : libelleVisibilite(s.visibilite))}
+        </Text>
       </Mono>
       <Display taille={fs[6]} interligne={lh.tight} style={{ marginBottom: 6, paddingRight: 70 }}>{s.titre}</Display>
-      {s.lieu ? <T taille={fs[3]} couleur={c.grisFonce} style={{ marginBottom: 12 }}>{s.lieu}</T> : null}
-      {s.description ? <T taille={fs[3]} couleur={c.grisFonce} style={{ marginBottom: 12 }}>{Array.from(s.description).slice(0, 80).join('')}…</T> : null}
+      <T taille={fs[3]} couleur={c.grisFonce} style={{ marginBottom: 12 }}>
+        {s.est_createur ? 'Ton événement' : `Par ${court(s.createur.prenom, s.createur.nom)}`}{s.lieu ? ` · ${s.lieu}` : ''}
+      </T>
+      {s.description ? <T taille={fs[3]} couleur={c.grisFonce} style={{ marginBottom: 12 }}>{Array.from(s.description).slice(0, 80).join('')}{Array.from(s.description).length > 80 ? '…' : ''}</T> : null}
 
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingTop: 15, borderTopWidth: 1, borderTopColor: c.grisClair }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <View style={{ flexDirection: 'row' }}>
             {initiales.map((l, i) => (
-              <View key={i} style={{ width: 30 + 5, height: 30 + 5, borderRadius: 18, marginLeft: i === 0 ? 0 : -10 - 5, backgroundColor: c.blanc, alignItems: 'center', justifyContent: 'center' }}>
+              <View key={i} style={{ width: 35, height: 35, borderRadius: 18, marginLeft: i === 0 ? 0 : -15, backgroundColor: c.blanc, alignItems: 'center', justifyContent: 'center' }}>
                 <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c.bleu, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ fontFamily: police.display, fontSize: fs[1], color: fixe.surLave }}>{l}</Text>
                 </View>
               </View>
             ))}
           </View>
-          <T taille={fs[3]} poids={500} couleur={c.grisFonce} style={{ marginLeft: 9 - 6 }}>{membres}/{s.places.quota}</T>
+          <T taille={fs[3]} poids={500} couleur={c.grisFonce} style={{ marginLeft: 3 }}>{membres}/{s.places.quota}</T>
         </View>
 
         {s.est_createur
           ? cta('Gérer', { backgroundColor: 'transparent', borderColor: c.noir }, c.noir, { onPress: onGerer, icone: 'engrenage' })
           : s.deja_membre
-            ? cta('Rejoint', { backgroundColor: c.surface2, borderColor: c.line2 }, c.grisFonce, { disabled: true, icone: 'check' })
+            ? cta('Inscrit', { backgroundColor: c.surface2, borderColor: c.line2 }, c.grisFonce, { disabled: true, icone: 'check' })
             : rejoint
               ? cta(null, { backgroundColor: c.bleu }, fixe.surLave, { disabled: true, icone: 'check' })
               : complet
@@ -126,15 +143,18 @@ function CarteSquad({ s, onGerer }: { s: Squad; onGerer: () => void }) {
   );
 }
 
-export default function Squads() {
+// ─── Écran ──────────────────────────────────────────────────────────────────
+
+export default function Sport() {
   const { c } = useTheme();
   const jeton = useJeton();
   const toast = useToast();
-  const [squads, setSquads] = useState<Squad[] | null>(null);
+  const [donnees, setDonnees] = useState<ReponseSport | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [rafraichit, setRafraichit] = useState(false);
-  const [filtre, setFiltre] = useState('all');
-  const [scope, setScope] = useState('tous');
+  const [sport, setSport] = useState('');
+  const [rubrique, setRubrique] = useState<Rubrique>('parties');
+  const [niveau, setNiveau] = useState('tous');
 
   const [creation, setCreation] = useState(false);
   const [gestion, setGestion] = useState<number | null>(null);
@@ -142,22 +162,25 @@ export default function Squads() {
   const charger = useCallback(async () => {
     try {
       setErreur(null);
-      setSquads((await api.squads(jeton)).squads);
+      setDonnees(await api.sport(jeton, sport || undefined));
     } catch (e) {
       setErreur(e instanceof Error ? e.message : 'Chargement impossible.');
     } finally {
       setRafraichit(false);
     }
-  }, [jeton]);
+  }, [jeton, sport]);
 
   useFocusEffect(useCallback(() => { void charger(); }, [charger]));
 
-  const visibles = (squads ?? []).filter((s) => {
-    if (filtre !== 'all' && s.type !== filtre) return false;
-    if (scope === 'potes' && !s.je_suis_abonne_au_createur) return false;
-    if (scope === 'associations' && !s.cree_par_association) return false;
-    return true;
-  });
+  const sports = [{ code: '', libelle: 'Tout' }, ...(donnees?.sports ?? Object.entries(SPORTS).map(([code, libelle]) => ({ code, libelle })))];
+  const parties = (donnees?.parties ?? []).filter((p) => niveauCompatible(p.niveau, niveau));
+
+  const nombre: Record<Rubrique, number> = {
+    parties: donnees?.parties.length ?? 0,
+    terrains: donnees?.libres.length ?? 0,
+    clubs: donnees?.evenements.length ?? 0,
+    abonnements: donnees?.squads.length ?? 0,
+  };
 
   return (
     <Ecran
@@ -165,7 +188,7 @@ export default function Squads() {
       onRafraichir={() => { setRafraichit(true); void charger(); }}
       horsDefilement={
         <>
-          <FeuilleCreation visible={creation} onClose={() => setCreation(false)} onCree={() => { toast('Squad créé !', 'success'); setCreation(false); void charger(); }} />
+          <FeuilleCreation visible={creation} onClose={() => setCreation(false)} onCree={(m) => { toast(m, 'success'); setCreation(false); setRubrique('abonnements'); void charger(); }} />
           <FeuilleGestion squadId={gestion} onClose={() => setGestion(null)} onSupprime={() => { setGestion(null); void charger(); }} />
         </>
       }
@@ -178,45 +201,75 @@ export default function Squads() {
       </EnTete>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ gap: 8, paddingHorizontal: gutter, paddingBottom: 8 }}>
-        {FILTRES.map((f) => (
-          <Pilule key={f.code} libelle={f.libelle} actif={filtre === f.code} accent={c.bleu} onPress={() => setFiltre(f.code)} />
+        {sports.map((s) => (
+          <Pilule key={s.code || 'tout'} libelle={s.libelle} actif={sport === s.code} accent={c.bleu} onPress={() => setSport(s.code)} />
         ))}
       </ScrollView>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ gap: 8, paddingHorizontal: gutter, paddingBottom: 16 }}>
-        {SCOPES.map((s) => (
-          <Pilule key={s.code} libelle={s.libelle} actif={scope === s.code} accent={c.bleu} onPress={() => setScope(s.code)} />
+        {RUBRIQUES.map((r) => (
+          <Pilule
+            key={r.code}
+            libelle={donnees && nombre[r.code] > 0 ? `${r.libelle} · ${nombre[r.code]}` : r.libelle}
+            actif={rubrique === r.code}
+            accent={c.bleu}
+            onPress={() => setRubrique(r.code)}
+          />
         ))}
       </ScrollView>
 
       <Contenu>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13, backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.md, paddingVertical: 16, paddingHorizontal: 18, marginBottom: 16 }}>
-          <Icone nom="eclair" taille={20} couleur={c.surBleuClair} />
-          <View style={{ flex: 1 }}>
-            <T taille={fs[3]} poids={700} interligne={lh.snug}>3 squads pour ton niveau</T>
-            <T taille={fs[3]} couleur={c.gris} interligne={lh.snug}>Running inter. · &lt; 5 min à pied</T>
-          </View>
-        </View>
+        <Bouton libelle="+ Créer un événement" variante="contour" plein onPress={() => setCreation(true)} style={{ marginBottom: 16 }} />
 
-        <Bouton libelle="+ Créer un squad" variante="contour" plein onPress={() => setCreation(true)} style={{ marginBottom: 16 }} />
-
-        {erreur ? <Erreur message={erreur} onReessayer={charger} /> : squads === null ? <Chargement /> : (
+        {erreur ? <Erreur message={erreur} onReessayer={charger} /> : donnees === null ? <Chargement /> : (
           <>
-            {squads.length === 0 ? (
-              <View style={{ alignItems: 'center', paddingVertical: 48 }}>
-                <View style={{ marginBottom: 12 }}><Icone nom="marque-page" taille={40} couleur={c.gris} /></View>
-                <T taille={fs[5]} poids={600} couleur={c.gris}>Pas encore de squads.</T>
-                <T taille={fs[3]} couleur={c.gris} style={{ marginTop: 6 }}>Crée le premier !</T>
-              </View>
+            {donnees.mes_parties.length > 0 ? (
+              <>
+                <Mono accessibilityRole="header" style={{ marginBottom: 12 }}>Mes parties</Mono>
+                {donnees.mes_parties.map((p) => (
+                  <CarteCreneau key={`m${p.id}`} cr={p} action={p.statut === 'annule' ? 'Annulée' : 'Ma partie'} onPress={() => ouvrirCreneau(p.id)} />
+                ))}
+                <Separateur />
+              </>
             ) : null}
 
-            {visibles.map((s) => <CarteSquad key={s.id} s={s} onGerer={() => setGestion(s.id)} />)}
+            {rubrique === 'parties' ? (
+              <>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 14 }} contentContainerStyle={{ gap: 8 }}>
+                  {NIVEAUX.map((n) => (
+                    <Pilule key={n.code} libelle={n.libelle} actif={niveau === n.code} accent={c.bleu} onPress={() => setNiveau(n.code)} />
+                  ))}
+                </ScrollView>
+                {parties.map((p) => <CarteCreneau key={p.id} cr={p} action="Compléter" onPress={() => ouvrirCreneau(p.id)} />)}
+                {parties.length === 0 ? (
+                  <VideSport titre="Aucune partie à compléter." texte="Réserve un terrain libre et ouvre les places restantes : d'autres viendront compléter." />
+                ) : null}
+              </>
+            ) : null}
 
-            {squads.length > 0 && visibles.length === 0 ? (
-              <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-                <T taille={fs[5]} poids={600} couleur={c.gris}>Aucun squad dans cette catégorie.</T>
-                <T taille={fs[3]} couleur={c.gris} style={{ marginTop: 6, textAlign: 'center' }}>Crée le premier, ou reviens à « Tout ».</T>
-              </View>
+            {rubrique === 'terrains' ? (
+              <>
+                {donnees.libres.map((p) => <CarteCreneau key={p.id} cr={p} action="Réserver" onPress={() => ouvrirCreneau(p.id)} />)}
+                {donnees.libres.length === 0 ? <VideSport titre="Aucun terrain libre." texte="Les clubs n'ont pas encore mis de créneaux en ligne." /> : null}
+              </>
+            ) : null}
+
+            {rubrique === 'clubs' ? (
+              <>
+                {donnees.evenements.map((ev) => (
+                  <CarteEvenementSport key={ev.id} ev={ev} onPress={() => router.push({ pathname: '/evenement/[id]', params: { id: String(ev.id) } })} />
+                ))}
+                {donnees.evenements.length === 0 ? <VideSport titre="Aucun événement de club." texte="Tournois, stages et initiations apparaîtront ici." /> : null}
+              </>
+            ) : null}
+
+            {rubrique === 'abonnements' ? (
+              <>
+                {donnees.squads.map((s) => <CarteSquad key={s.id} s={s} onGerer={() => setGestion(s.id)} />)}
+                {donnees.squads.length === 0 ? (
+                  <VideSport titre="Rien chez tes abonnements." texte="Tu vois ici les événements des personnes qui ont accepté que tu les suives." />
+                ) : null}
+              </>
             ) : null}
           </>
         )}
@@ -225,9 +278,10 @@ export default function Squads() {
   );
 }
 
-// ─── Créer un squad ─────────────────────────────────────────────────────────
+// ─── Créer un événement ─────────────────────────────────────────────────────
 
-function FeuilleCreation({ visible, onClose, onCree }: { visible: boolean; onClose: () => void; onCree: () => void }) {
+function FeuilleCreation({ visible, onClose, onCree }: { visible: boolean; onClose: () => void; onCree: (message: string) => void }) {
+  const { c } = useTheme();
   const jeton = useJeton();
   const toast = useToast();
   const [titre, setTitre] = useState('');
@@ -243,13 +297,13 @@ function FeuilleCreation({ visible, onClose, onCree }: { visible: boolean; onClo
   async function creer() {
     setAttente(true);
     try {
-      await actions.creerSquad(jeton, {
+      const rep = await api.creerEvenementSport(jeton, {
         titre: titre.trim(), type, niveau, date_heure: date ? isoDateHeure(date) : '',
         quota: parseInt(quota, 10) || 0, lieu: lieu.trim(), description: description.trim(),
         cree_par_association: association,
       });
       setTitre(''); setDate(null); setQuota('10'); setLieu(''); setDescription(''); setAssociation(false);
-      onCree();
+      onCree(rep.message ?? 'Événement publié.');
     } catch (e) {
       toast(e instanceof ErreurApi ? e.message : 'Erreur réseau', 'error');
     } finally {
@@ -259,13 +313,13 @@ function FeuilleCreation({ visible, onClose, onCree }: { visible: boolean; onClo
 
   return (
     <Feuille visible={visible} onClose={onClose}>
-      <Display taille={fs[7]} style={{ marginBottom: 20 }}>Créer un squad</Display>
+      <Display taille={fs[7]} style={{ marginBottom: 20 }}>Créer un événement</Display>
       <Champ etiquette="Titre" value={titre} onChangeText={setTitre} placeholder="Sortie Puy-de-Dôme" />
       <View style={{ flexDirection: 'row', gap: 12 }}>
         <Selecteur style={{ flex: 1 }} etiquette="Sport" valeur={type} onChange={setType}
-          options={Object.entries(TYPES_SQUAD).map(([valeur, libelle]) => ({ valeur, libelle }))} />
+          options={Object.entries(SPORTS).map(([valeur, libelle]) => ({ valeur, libelle }))} />
         <Selecteur style={{ flex: 1 }} etiquette="Niveau" valeur={niveau} onChange={setNiveau}
-          options={[{ valeur: 'tous', libelle: 'Tous' }, { valeur: 'debutant', libelle: 'Débutant' }, { valeur: 'inter', libelle: 'Inter.' }, { valeur: 'avance', libelle: 'Avancé' }]} />
+          options={NIVEAUX.map((n) => ({ valeur: n.code, libelle: n.code === 'tous' ? 'Tous' : n.libelle }))} />
       </View>
       <View style={{ flexDirection: 'row', gap: 12 }}>
         <View style={{ flex: 1 }}>
@@ -275,16 +329,24 @@ function FeuilleCreation({ visible, onClose, onCree }: { visible: boolean; onClo
       </View>
       <Champ etiquette="Lieu de rendez-vous" value={lieu} onChangeText={setLieu} placeholder="Parking Royat" />
       <Champ etiquette="Description" value={description} onChangeText={setDescription} placeholder="Détails sur la sortie..." multiligne />
-      <Case coche={association} onChange={setAssociation} style={{ marginBottom: 16 }}>
+      <Case coche={association} onChange={setAssociation} style={{ marginBottom: 12 }}>
         <T taille={fs[4]}>Créé par une association étudiante</T>
       </Case>
-      <Bouton libelle="Créer le squad" variante="bleu" plein chargement={attente} onPress={creer} />
+      <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start', backgroundColor: c.surface2, borderRadius: rayon.md, padding: 14, marginBottom: 16 }}>
+        <Icone nom={association ? 'personnes' : 'cadenas'} taille={16} couleur={c.grisFonce} />
+        <T taille={fs[3]} couleur={c.grisFonce} style={{ flex: 1 }}>
+          {association
+            ? 'Public : un événement d’association est visible de tous les étudiants.'
+            : 'Gratuit et réservé à tes abonnés : seules les personnes dont tu as accepté la demande le voient et peuvent le rejoindre.'}
+        </T>
+      </View>
+      <Bouton libelle="Publier" variante="bleu" plein chargement={attente} onPress={creer} />
       <Bouton libelle="Annuler" variante="contour" plein onPress={onClose} style={{ marginTop: 8 }} />
     </Feuille>
   );
 }
 
-// ─── Gérer mon Squad ────────────────────────────────────────────────────────
+// ─── Gérer mon événement ────────────────────────────────────────────────────
 
 function FeuilleGestion({ squadId, onClose, onSupprime }: { squadId: number | null; onClose: () => void; onSupprime: () => void }) {
   const { c } = useTheme();
@@ -305,22 +367,22 @@ function FeuilleGestion({ squadId, onClose, onSupprime }: { squadId: number | nu
   }, [squadId, jeton, toast]);
 
   async function retirer(membreId: number) {
-    if (squadId === null || !(await confirmer('Retirer cette personne du groupe ?'))) return;
+    if (squadId === null || !(await confirmer('Retirer cette personne de l’événement ?'))) return;
     try {
       await actions.retirerMembre(jeton, squadId, membreId);
       setDonnees((d) => d && { ...d, membres: d.membres.filter((m) => m.id !== membreId) });
-      toast('Membre retiré', 'success');
+      toast('Participant retiré', 'success');
     } catch (e) {
       toast(e instanceof ErreurApi ? e.message : 'Erreur', 'error');
     }
   }
 
   async function supprimer() {
-    if (squadId === null || !(await confirmer('Veux-tu vraiment supprimer définitivement ce groupe ?'))) return;
+    if (squadId === null || !(await confirmer('Veux-tu vraiment supprimer définitivement cet événement ?'))) return;
     setSuppression(true);
     try {
       await actions.supprimerSquad(jeton, squadId);
-      toast('Squad supprimé !', 'success');
+      toast('Événement supprimé', 'success');
       onSupprime();
     } catch (e) {
       toast(e instanceof ErreurApi ? e.message : 'Erreur réseau', 'error');
@@ -331,7 +393,7 @@ function FeuilleGestion({ squadId, onClose, onSupprime }: { squadId: number | nu
 
   return (
     <Feuille visible={squadId !== null} onClose={onClose}>
-      <Display taille={fs[7]} style={{ marginBottom: 20 }}>Gérer mon Squad</Display>
+      <Display taille={fs[7]} style={{ marginBottom: 20 }}>Gérer mon événement</Display>
       {donnees === null ? (
         <T taille={fs[5]} style={{ textAlign: 'center', padding: 20 }}>Chargement...</T>
       ) : (
@@ -347,7 +409,7 @@ function FeuilleGestion({ squadId, onClose, onSupprime }: { squadId: number | nu
                 {m.id === donnees.my_id ? (
                   <T taille={12} couleur={c.grisFonce} style={{ paddingRight: 8 }}>Créateur</T>
                 ) : (
-                  <Pressable onPress={() => retirer(m.id)} accessibilityRole="button" accessibilityLabel="Retirer ce membre" hitSlop={10}>
+                  <Pressable onPress={() => retirer(m.id)} accessibilityRole="button" accessibilityLabel="Retirer ce participant" hitSlop={10}>
                     <Icone nom="croix" taille={16} couleur={c.surRougeClair} />
                   </Pressable>
                 )}
@@ -355,7 +417,7 @@ function FeuilleGestion({ squadId, onClose, onSupprime }: { squadId: number | nu
             ))}
           </View>
           <Separateur />
-          <Bouton libelle="Supprimer définitivement le Squad" variante="alerte" plein chargement={suppression} onPress={supprimer} style={{ marginTop: 16 }} />
+          <Bouton libelle="Supprimer définitivement l'événement" variante="alerte" plein chargement={suppression} onPress={supprimer} style={{ marginTop: 16 }} />
           <Bouton libelle="Fermer" variante="contour" plein onPress={onClose} style={{ marginTop: 8 }} />
         </>
       )}

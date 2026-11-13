@@ -109,3 +109,87 @@ export function libelleInscrits(inscrits: number): string {
   if (inscrits <= 0) return 'Aucun inscrit';
   return `${inscrits} inscrit${inscrits > 1 ? 's' : ''}`;
 }
+
+// ─── Sport ──────────────────────────────────────────────────────────────────
+
+/** Un montant en euros, à la française : « 12 € », « 12,50 € ». */
+export function formatEuros(montant: number): string {
+  const arrondi = Math.round(montant * 100) / 100;
+  const texte = Number.isInteger(arrondi) ? String(arrondi) : arrondi.toFixed(2).replace('.', ',');
+  return `${texte} €`;
+}
+
+/**
+ * La part de chacun : le club fixe le prix du terrain, l'application le
+ * divise par le nombre de joueurs d'une partie complète. Le paiement se fait
+ * au club, d'où « sur place ».
+ */
+export function prixParJoueur(prixTerrain: number, joueurs: number): string {
+  if (prixTerrain <= 0) return 'Gratuit';
+  if (joueurs <= 1) return `${formatEuros(prixTerrain)} sur place`;
+  return `${formatEuros(prixTerrain / joueurs)} / joueur sur place`;
+}
+
+/** « Complet », « 1 place », « 3 places ». */
+export function libellePlaces(restantes: number): string {
+  if (restantes <= 0) return 'Complet';
+  return `${restantes} place${restantes > 1 ? 's' : ''}`;
+}
+
+/** Combien d'amis on peut ajouter en réservant : le terrain moins soi-même. */
+export function amisMax(joueursTerrain: number): number {
+  return Math.max(0, joueursTerrain - 1);
+}
+
+/**
+ * Une partie passe-t-elle le filtre de niveau ? « Tous » d'un côté ou de
+ * l'autre laisse tout passer : une partie « tous niveaux » accueille un
+ * débutant comme un avancé.
+ */
+export function niveauCompatible(niveauPartie: string, filtre: string): boolean {
+  return filtre === 'tous' || niveauPartie === 'tous' || niveauPartie === filtre;
+}
+
+/** L'étiquette de visibilité d'un événement d'étudiant. */
+export function libelleVisibilite(visibilite: 'public' | 'abonnes' | undefined): string {
+  return visibilite === 'public' ? 'Public' : 'Abonnés';
+}
+
+function versMinutes(heure: string): number | null {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(heure.trim());
+  if (!m) return null;
+  const h = Number(m[1]);
+  const mn = Number(m[2]);
+  if (h > 23 || mn > 59) return null;
+  return h * 60 + mn;
+}
+
+function versHeure(minutes: number): string {
+  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+}
+
+/**
+ * Les jours d'une publication récurrente : le premier jour, puis le même jour
+ * les semaines suivantes. `semaines` = 1 ne publie que le premier.
+ */
+export function joursRecurrents(premier: string, semaines: number): string[] {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(premier);
+  if (!m) return [];
+  const base = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const n = Math.max(1, Math.min(12, Math.floor(semaines)));
+  return Array.from({ length: n }, (_, i) => new Date(base + i * 7 * 86400000).toISOString().slice(0, 10));
+}
+
+/**
+ * Les débuts de créneaux à publier : de `de` à `a`, un créneau toutes les
+ * `dureeMin` minutes, chacun devant se terminer au plus tard à `a`. Renvoie
+ * « 2026-11-15 10:00 », le format qu'attend club_creneaux.php.
+ */
+export function debutsCreneaux(jours: string[], de: string, a: string, dureeMin: number): string[] {
+  const debut = versMinutes(de);
+  const fin = versMinutes(a);
+  if (debut === null || fin === null || dureeMin < 15 || fin <= debut) return [];
+  const heures: string[] = [];
+  for (let t = debut; t + dureeMin <= fin; t += dureeMin) heures.push(versHeure(t));
+  return jours.flatMap((j) => heures.map((h) => `${j} ${h}`));
+}
