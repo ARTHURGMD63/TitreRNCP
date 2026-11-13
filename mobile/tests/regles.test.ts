@@ -9,7 +9,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ajouterCheckin, connexionComplete, delaiResultatScan, libelleApresEchecInscription,
-  libelleInscription, messageConnexion, messageEchecScan, retirerInvite,
+  libelleInscription, libelleInscrits, libellesAffluence, messageConnexion, messageEchecScan,
+  palierAffluence, retirerInvite,
 } from '../src/regles.ts';
 
 // ─── Connexion ──────────────────────────────────────────────────────────────
@@ -123,4 +124,20 @@ test('messageEchecScan : la phrase du serveur, sinon une panne de connexion', ()
 test('delaiResultatScan : un succès reste affiché plus longtemps qu\'un échec', () => {
   assert.equal(delaiResultatScan(true), 2200);
   assert.equal(delaiResultatScan(false), 2000);
+});
+
+// ─── Carte des soirées ──────────────────────────────────────────────────────
+
+test('palierAffluence : le repère change de couleur à 10, 30 et 60 inscrits', () => {
+  assert.deepEqual([0, 9, 10, 29, 30, 59, 60, 250].map(palierAffluence), [0, 0, 1, 1, 2, 2, 3, 3]);
+});
+
+test('libellesAffluence : un libellé de légende par palier', () => {
+  assert.deepEqual(libellesAffluence(), ['< 10', '10+', '30+', '60+']);
+});
+
+test('libelleInscrits : aucun, un, plusieurs', () => {
+  assert.equal(libelleInscrits(0), 'Aucun inscrit');
+  assert.equal(libelleInscrits(1), '1 inscrit');
+  assert.equal(libelleInscrits(42), '42 inscrits');
 });

@@ -78,3 +78,34 @@ export function messageEchecScan(erreur: { message: string } | null): string {
 export function delaiResultatScan(succes: boolean): number {
   return succes ? 2200 : 2000;
 }
+
+// ─── Carte des soirées ──────────────────────────────────────────────────────
+
+/**
+ * Le nombre d'inscrits à partir duquel un repère de la carte change de
+ * couleur : calme en dessous de 10, puis ça monte, chaud, et plein à craquer.
+ * Un nombre absolu, pas un taux de remplissage : une soirée sans quota a
+ * quand même une affluence.
+ */
+export const SEUILS_AFFLUENCE = [10, 30, 60] as const;
+
+export type PalierAffluence = 0 | 1 | 2 | 3;
+
+/** Le palier d'affluence d'une soirée, de 0 (calme) à 3 (plein à craquer). */
+export function palierAffluence(inscrits: number): PalierAffluence {
+  if (inscrits >= SEUILS_AFFLUENCE[2]) return 3;
+  if (inscrits >= SEUILS_AFFLUENCE[1]) return 2;
+  if (inscrits >= SEUILS_AFFLUENCE[0]) return 1;
+  return 0;
+}
+
+/** Les libellés de la légende, un par palier : « < 10 », « 10+ », « 30+ », « 60+ ». */
+export function libellesAffluence(): string[] {
+  return [`< ${SEUILS_AFFLUENCE[0]}`, ...SEUILS_AFFLUENCE.map((s) => `${s}+`)];
+}
+
+/** « Aucun inscrit », « 1 inscrit », « 42 inscrits ». */
+export function libelleInscrits(inscrits: number): string {
+  if (inscrits <= 0) return 'Aucun inscrit';
+  return `${inscrits} inscrit${inscrits > 1 ? 's' : ''}`;
+}
