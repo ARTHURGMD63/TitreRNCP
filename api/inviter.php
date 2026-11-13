@@ -12,6 +12,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/places.php';
 require_once __DIR__ . '/../includes/temps_reel.php';
+require_once __DIR__ . '/../includes/culture.php';
 header('Content-Type: application/json');
 
 // Ecriture : POST obligatoire, jeton CSRF et origine verifies.
@@ -44,6 +45,15 @@ function cibleValide(PDO $pdo, string $type, int $id): ?array
                FROM evenements e
               WHERE e.id = ? AND e.date_heure >= NOW()"
         );
+    } elseif ($type === 'culture') {
+        // Une exposition commencée reste une invitation valable jusqu'à sa
+        // fermeture : on compare à la fin, pas au début.
+        $stmt = $pdo->prepare(
+            "SELECT c.titre, c.quota,
+                    (SELECT COUNT(*) FROM culture_inscriptions ci WHERE ci.evenement_id = c.id) AS nb
+               FROM culture_evenements c
+              WHERE c.id = ? AND " . cultureSqlFin('c') . " >= NOW()"
+        );
     } else {
         $stmt = $pdo->prepare(
             "SELECT s.titre, s.quota,
@@ -65,6 +75,8 @@ function dejaParticipant(PDO $pdo, string $type, int $cibleId, int $userId): boo
             "SELECT COUNT(*) FROM inscriptions
               WHERE evenement_id = ? AND user_id = ? AND statut != 'annule'"
         );
+    } elseif ($type === 'culture') {
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM culture_inscriptions WHERE evenement_id = ? AND user_id = ?");
     } else {
         $stmt = $pdo->prepare("SELECT COUNT(*) FROM squad_membres WHERE squad_id = ? AND user_id = ?");
     }
@@ -75,7 +87,7 @@ function dejaParticipant(PDO $pdo, string $type, int $cibleId, int $userId): boo
 // ─── Envoi ──────────────────────────────────────────────────────────────────
 if ($action === 'send') {
     $vers  = (int) ($data['to_user_id'] ?? 0);
-    $type  = in_array($data['type'] ?? '', ['event', 'squad'], true) ? $data['type'] : null;
+    $type  = in_array($data['type'] ?? '', ['event', 'squad', 'culture'], true) ? $data['type'] : null;
     $cible = (int) ($data['target_id'] ?? 0);
 
     if (!$vers || !$type || !$cible) {
@@ -198,6 +210,9 @@ if ($action === 'accept') {
             // Meme identifiant de pass que l'inscription directe : imprevisible.
             $pdo->prepare("INSERT INTO inscriptions (user_id, evenement_id, qr_code, statut) VALUES (?,?,?,'inscrit')")
                 ->execute([$moi, $cibleId, bin2hex(random_bytes(32))]);
+        } elseif ($invite['type'] === 'culture') {
+            $pdo->prepare("INSERT INTO culture_inscriptions (user_id, evenement_id) VALUES (?,?)")
+                ->execute([$moi, $cibleId]);
         } else {
             $pdo->prepare("INSERT INTO squad_membres (squad_id, user_id) VALUES (?,?)")
                 ->execute([$cibleId, $moi]);
@@ -219,7 +234,11 @@ if ($action === 'accept') {
         $pdo,
         canalUtilisateur($moi),
         canalUtilisateur((int) $invite['from_user_id']),
-        $invite['type'] === 'event' ? canalEvenement($cibleId) : canalSquad($cibleId)
+        match ($invite['type']) {
+            'event'   => canalEvenement($cibleId),
+            'culture' => canalCulture($cibleId),
+            default   => canalSquad($cibleId),
+        }
     );
 
     echo json_encode(['success' => true, 'message' => 'Invitation acceptée !']);

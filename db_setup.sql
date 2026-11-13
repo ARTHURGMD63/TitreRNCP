@@ -307,7 +307,7 @@ CREATE TABLE IF NOT EXISTS invitations (
     id           INT AUTO_INCREMENT PRIMARY KEY,
     from_user_id INT NOT NULL,
     to_user_id   INT NOT NULL,
-    type         ENUM('event','squad') NOT NULL,
+    type         ENUM('event','squad','culture') NOT NULL,
     target_id    INT NOT NULL,
     statut       ENUM('pending','accepted','declined') NOT NULL DEFAULT 'pending',
     created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -920,6 +920,58 @@ CREATE TABLE IF NOT EXISTS evenement_photo_signalements (
     FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Espace Culture (migration v29) : les événements mis en avant par la ville.
+CREATE TABLE IF NOT EXISTS culture_evenements (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    titre VARCHAR(255) NOT NULL,
+    description TEXT,
+    -- Catalogue PHP : includes/culture.php (CULTURE_CATEGORIES).
+    categorie ENUM('expo','concert','spectacle','festival','patrimoine','cinema','atelier','conference','autre') NOT NULL DEFAULT 'autre',
+    -- Qui porte l'événement : la ville, un musée municipal, l'office de
+    -- tourisme. Affiché sur la carte, à la place de l'établissement.
+    organisateur VARCHAR(150) NOT NULL DEFAULT 'Ville de Clermont-Ferrand',
+    lieu VARCHAR(255) NOT NULL,
+    ville VARCHAR(100) NOT NULL DEFAULT 'Clermont-Ferrand',
+    date_heure DATETIME NOT NULL,
+    -- Fin annoncée. Indispensable pour une exposition, qui reste « en cours »
+    -- jusqu'à sa fermeture ; NULL pour un concert, qui se termine trois
+    -- heures après son début (cultureSqlFin()).
+    date_fin DATETIME NULL DEFAULT NULL,
+    -- 0 = entrée libre, sans limite de places (même règle que remplissage()).
+    quota INT NOT NULL DEFAULT 0,
+    prix DECIMAL(8,2) NOT NULL DEFAULT 0,
+    -- Page officielle de l'événement, quand la ville en publie une.
+    lien VARCHAR(500) NULL DEFAULT NULL,
+    -- « À la une » : passe en tête de l'espace Culture.
+    mis_en_avant TINYINT(1) NOT NULL DEFAULT 0,
+    cree_par INT NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_culture_date (date_heure),
+    INDEX idx_culture_categorie (categorie, date_heure),
+    FOREIGN KEY (cree_par) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Pas de QR ni de statut « checkin » : personne ne scanne l'entrée d'une
+-- exposition municipale. S'inscrire dit « j'y vais » à ses amis et réserve
+-- une place quand il y a un quota ; se désinscrire supprime la ligne.
+CREATE TABLE IF NOT EXISTS culture_inscriptions (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    evenement_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_culture_inscription (user_id, evenement_id),
+    KEY k_culture_evenement (evenement_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (evenement_id) REFERENCES culture_evenements(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Démonstration de l'espace Culture : toujours à venir grâce à NOW() + INTERVAL.
+INSERT INTO culture_evenements (titre, description, categorie, organisateur, lieu, date_heure, date_fin, quota, prix, mis_en_avant) VALUES
+('Nuit des musées', 'Le musée d''art Roger-Quilliot ouvre gratuitement ses portes jusqu''à minuit : visites flash, performances et DJ set dans le hall.', 'patrimoine', 'Ville de Clermont-Ferrand', 'Musée d''art Roger-Quilliot', NOW() + INTERVAL 2 DAY, NOW() + INTERVAL 2 DAY + INTERVAL 6 HOUR, 300, 0, 1),
+('Volcans, regards croisés', 'Exposition photo sur la chaîne des Puys, vue par douze photographes auvergnats.', 'expo', 'Ville de Clermont-Ferrand', 'Hôtel Fontfreyde', NOW() - INTERVAL 3 DAY, NOW() + INTERVAL 20 DAY, 0, 0, 0),
+('Concert du kiosque', 'Le conservatoire joue au jardin Lecoq : jazz, cuivres et répertoire de film.', 'concert', 'Conservatoire Emmanuel-Chabrier', 'Jardin Lecoq', NOW() + INTERVAL 4 DAY, NULL, 0, 0, 0),
+('Atelier sérigraphie', 'Initiation à la sérigraphie avec un collectif d''artistes, matériel fourni.', 'atelier', 'Ville de Clermont-Ferrand', 'La Cour des Trois Coquins', NOW() + INTERVAL 6 DAY, NULL, 16, 5.00, 0);
+
 CREATE TABLE IF NOT EXISTS schema_migrations (
     version     VARCHAR(20) NOT NULL,
     applique_le DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -928,4 +980,4 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 
 INSERT IGNORE INTO schema_migrations (version) VALUES
 ('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
-('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27');
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27'), ('v29');
