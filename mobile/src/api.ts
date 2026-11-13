@@ -219,6 +219,10 @@ export type ReponseCulture = {
   filtres: { categorie: string; categories: CategorieCulture[] };
 };
 
+export type EvenementCultureAdmin = Omit<EvenementCulture, 'amis' | 'deja_inscrit'> & { termine: boolean };
+
+export type ReponseCultureAdmin = { a_venir: EvenementCultureAdmin[]; termines: EvenementCultureAdmin[]; categories: CategorieCulture[] };
+
 /** Ce que l'invitation sait viser : une soirée, une squad, un événement culturel. */
 export type CibleInvitation = 'event' | 'squad' | 'culture';
 
@@ -665,6 +669,11 @@ export const api = {
     appelApi<Ok & { inscrit: boolean; inscrits: number }>('culture_inscription.php', {
       methode: 'POST', jeton, corps: { evenement_id: evenementId, action: annuler ? 'annuler' : 'inscrire' },
     }),
+  adminCulture: (jeton: string) => appelApi<{ success: true } & ReponseCultureAdmin>('admin_culture.php', { jeton }),
+  adminEnregistrerCulture: (jeton: string, corps: Record<string, unknown>) =>
+    appelApi<Ok & { id: number }>('admin_culture.php', { methode: 'POST', jeton, corps: { ...corps, action: 'enregistrer' } }),
+  adminSupprimerCulture: (jeton: string, id: number) =>
+    appelApi<Ok>('admin_culture.php', { methode: 'POST', jeton, corps: { action: 'supprimer', id } }),
 };
 
 // ─── Écritures partagées avec le site ────────────────────────────────────────
