@@ -17,7 +17,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 
-import { api, type Evenement, type Notification } from '../../api';
+import { api, type CibleInvitation, type Evenement, type Notification } from '../../api';
 import { Bouton } from '../../composants/Bouton';
 import { CarteEvenement, enregistrerStyles } from '../../composants/CarteEvenement';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
@@ -62,7 +62,7 @@ export default function Hub() {
   // ── Cloche ──
   const [notifs, setNotifs] = useState<{ a_traiter: number; items: Notification[] } | null>(null);
   const [cloche, setCloche] = useState(false);
-  const [invitation, setInvitation] = useState<{ type: 'event' | 'squad'; id: number; nom: string } | null>(null);
+  const [invitation, setInvitation] = useState<{ type: CibleInvitation; id: number; nom: string } | null>(null);
 
   const chargerNotifs = useCallback(async () => {
     try { setNotifs(await api.notifications(jeton)); } catch { /* la cloche reste telle quelle */ }
@@ -218,7 +218,13 @@ export default function Hub() {
                 />
                 {/* Juste après « Pour moi », avant les types de lieu : une
                     action (ouvrir la carte), pas un filtre de plus. */}
-                {pourMoi ? <Pilule libelle="Carte" icone="epingle" actif={false} onPress={() => router.push('/carte')} /> : null}
+                {pourMoi ? (
+                  <>
+                    <Pilule libelle="Carte" icone="epingle" actif={false} onPress={() => router.push('/carte')} />
+                    {/* L'espace Culture : les événements mis en avant par la ville. */}
+                    <Pilule libelle="Culture" icone="musee" actif={false} onPress={() => router.push('/culture')} />
+                  </>
+                ) : null}
               </React.Fragment>
             );
           })}

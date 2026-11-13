@@ -44,6 +44,7 @@ const PARENT: Record<string, string> = {
   classement: 'moi',
   abonnements: 'moi',
   carte: 'index',
+  culture: 'index',
 };
 
 /** Les propriétés que Tabs passe à une barre personnalisée. */

@@ -16,7 +16,7 @@ import { Pressable, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 
-import { actions, api, ErreurApi, type EtatSuivi, type Notification, type Personne } from '../api';
+import { actions, api, ErreurApi, type CibleInvitation, type EtatSuivi, type Notification, type Personne } from '../api';
 import { court } from '../format';
 import { useJeton } from '../session';
 import { fixe, fs, lh, police, rayon, sans } from '../theme';
@@ -242,7 +242,7 @@ export function ElementNotification({ n, onTraitee }: { n: Notification; onTrait
     return (
       <View style={carte}>
         <View style={ligne}>
-          <Avatar photo={inv.de.photo_url} prenom={inv.de.prenom} taille={38} fond={inv.cible_type === 'event' ? c.rouge : c.bleu} />
+          <Avatar photo={inv.de.photo_url} prenom={inv.de.prenom} taille={38} fond={inv.cible_type === 'squad' ? c.bleu : c.rouge} />
           <View style={{ flex: 1, gap: 2 }}>
             <Texte><Gras>{court(inv.de.prenom, inv.de.nom)}</Gras> t&apos;invite à <Italique>{inv.cible_nom ?? 'une sortie'}</Italique></Texte>
             <Date_>{n.depuis}</Date_>
@@ -318,7 +318,7 @@ export function FermerFeuille({ onPress }: { onPress: () => void }) {
 
 // ─── « Inviter un ami » ─────────────────────────────────────────────────────
 
-export function FeuilleInvitation({ cible, onClose }: { cible: { type: 'event' | 'squad'; id: number; nom: string } | null; onClose: () => void }) {
+export function FeuilleInvitation({ cible, onClose }: { cible: { type: CibleInvitation; id: number; nom: string } | null; onClose: () => void }) {
   const { c } = useTheme();
   const jeton = useJeton();
   const toast = useToast();
