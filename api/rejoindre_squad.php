@@ -26,6 +26,13 @@ $stmt = $pdo->prepare("SELECT quota FROM squads WHERE id = ? AND date_heure >= N
 $stmt->execute([$squad_id]);
 $squad = $stmt->fetch();
 
+// Un squad réservé aux abonnés de son créateur (v28) ne se rejoint pas en
+// devinant son identifiant : même réponse que s'il n'existait pas.
+require_once __DIR__ . '/../includes/sports.php';
+if ($squad && !squadVisiblePour($pdo, (int) $squad_id, (int) $_SESSION['user_id'])) {
+    $squad = false;
+}
+
 if (!$squad) {
     echo json_encode(['success' => false, 'message' => 'Squad introuvable']);
     exit;

@@ -40,7 +40,7 @@ $ecole      = $texte('ecole');
 $promo      = $texte('promo');
 $etudiantVille = $texte('ville_etudiant') !== '' ? $texte('ville_etudiant') : null;
 $etablNom   = $texte('etablissement_nom');
-$etablType  = in_array($corps['etablissement_type'] ?? '', ['bar', 'boite', 'resto', 'afterwork'], true)
+$etablType  = in_array($corps['etablissement_type'] ?? '', ['bar', 'boite', 'resto', 'afterwork', 'club'], true)
     ? (string) $corps['etablissement_type'] : 'bar';
 $etablVille = $texte('ville') !== '' ? $texte('ville') : 'Clermont-Ferrand';
 $naissance  = $texte('date_naissance');

@@ -19,6 +19,7 @@ require_once __DIR__ . '/../../includes/sponsoring.php';
 require_once __DIR__ . '/../../includes/capacites.php';
 require_once __DIR__ . '/../../includes/musique.php';
 require_once __DIR__ . '/../../includes/temps_reel.php';
+require_once __DIR__ . '/../../includes/sports.php';
 
 $u   = apiPartenaire($pdo);
 $uid = (int) $u['id'];
@@ -33,15 +34,22 @@ if (!abonnementChoisi(abonnementEtablissement($pdo, (int) $etab['id']))) {
 
 $capacites = capacitesEtablissement($pdo, (int) $etab['id']);
 
+// Un club (v28) ne publie que des événements sportifs, un bar jamais : le
+// type n'est pas un choix du formulaire, il découle de l'établissement.
+$estClub = ($etab['type'] ?? '') === 'club';
+
 /**
  * Catalogues partagés entre GET (préremplissage) et les erreurs de POST.
  *
  * @param array<string, mixed> $capacites
  * @return array<string, mixed>
  */
-function catalogues(array $capacites): array
+function catalogues(array $capacites, bool $estClub): array
 {
     return [
+        'est_club' => $estClub,
+        'sports'   => apiCatalogue(catalogueSports()),
+        'formats'  => apiCatalogue(formatsEvenementSport()),
         'styles_musique' => array_map(
             static fn (string $code, string $libelle): array => ['code' => $code, 'libelle' => $libelle],
             array_keys(stylesMusique()),
@@ -71,6 +79,8 @@ function apiEvenementPourEdition(array $e): array
         'description' => (string) ($e['description'] ?? ''),
         'type' => (string) $e['type'],
         'style_musique' => $e['style_musique'] !== null ? (string) $e['style_musique'] : null,
+        'sport' => isset($e['sport']) && $e['sport'] !== null ? (string) $e['sport'] : null,
+        'format' => isset($e['format']) && $e['format'] !== null ? (string) $e['format'] : null,
         'date_heure' => (string) $e['date_heure'],
         'date_fin' => $e['date_fin'] !== null ? (string) $e['date_fin'] : null,
         'quota' => (int) $e['quota'],
@@ -101,7 +111,7 @@ if ($methode === 'GET') {
         $evenement = apiEvenementPourEdition($ligne);
     }
 
-    apiReponse(['success' => true, 'evenement' => $evenement, 'lieu_defaut' => (string) ($etab['adresse'] ?? $etab['nom'])] + catalogues($capacites));
+    apiReponse(['success' => true, 'evenement' => $evenement, 'lieu_defaut' => (string) ($etab['adresse'] ?? $etab['nom'])] + catalogues($capacites, $estClub));
 }
 
 apiExigerMethode('POST');
@@ -126,6 +136,12 @@ $titre        = trim((string) ($corps['titre'] ?? ''));
 $description  = trim((string) ($corps['description'] ?? ''));
 $type         = (string) ($corps['type'] ?? '');
 $musique      = trim((string) ($corps['style_musique'] ?? ''));
+$sport        = $estClub ? trim((string) ($corps['sport'] ?? '')) : '';
+$format       = $estClub ? trim((string) ($corps['format'] ?? '')) : '';
+if ($estClub) {
+    $type    = 'sport';
+    $musique = '';
+}
 $dateHeure    = trim((string) ($corps['date_heure'] ?? ''));
 $dateFin      = trim((string) ($corps['date_fin'] ?? '')) ?: null;
 $quota        = (int) ($corps['quota'] ?? 100);
@@ -140,7 +156,9 @@ $sponsorFormule = $isSponsorise ? (string) ($corps['sponsor_formule'] ?? '') : n
 
 $erreurs = [];
 if ($titre === '') $erreurs[] = 'Le titre est obligatoire.';
-if (!in_array($type, ['bar', 'boite', 'resto', 'afterwork'], true)) $erreurs[] = 'Type invalide.';
+if (!$estClub && !in_array($type, ['bar', 'boite', 'resto', 'afterwork'], true)) $erreurs[] = 'Type invalide.';
+if ($estClub && !sportValide($sport)) $erreurs[] = 'Choisis un sport.';
+if ($estClub && !formatSportValide($format)) $erreurs[] = 'Choisis un format.';
 if ($musique !== '' && !styleMusiqueValide($musique)) $erreurs[] = 'Style de musique invalide.';
 if ($dateHeure === '') $erreurs[] = 'La date est obligatoire.';
 if ($dateFin && strtotime($dateFin) <= strtotime($dateHeure)) $erreurs[] = 'La fin doit être après le début.';
@@ -152,7 +170,7 @@ if ($isFlash && !flashDisponible($pdo, (int) $etab['id'], $capacites, $eid ?: nu
 }
 
 if ($erreurs) {
-    apiReponse(['success' => false, 'message' => implode(' ', $erreurs), 'erreurs' => $erreurs] + catalogues($capacites), 422);
+    apiReponse(['success' => false, 'message' => implode(' ', $erreurs), 'erreurs' => $erreurs] + catalogues($capacites, $estClub), 422);
 }
 
 if ($evenementExistant) {
@@ -175,13 +193,13 @@ if ($evenementExistant) {
 
     $pdo->prepare(
         'UPDATE evenements SET
-            titre=?, description=?, type=?, style_musique=?, date_heure=?, date_fin=?,
+            titre=?, description=?, type=?, style_musique=?, sport=?, format=?, date_heure=?, date_fin=?,
             quota=?, reduction=?, prix_normal=?,
             is_flash=?, flash_expiry=?, is_gratuit=?, lieu=?,
             is_sponsorise=?, sponsor_formule=?, sponsor_tarif=?, sponsor_jusqu_au=?
           WHERE id=? AND etablissement_id=?'
     )->execute([
-        $titre, $description, $type, $musique ?: null, $dateHeure, $dateFin,
+        $titre, $description, $type, $musique ?: null, $sport ?: null, $format ?: null, $dateHeure, $dateFin,
         $quota, $reduction, $prixNormal,
         $isFlash, $flashExpiry ?: null, $isGratuit, $lieu,
         $isSponsorise, $sponsorFormule, $sponsorTarif, $sponsorFin,
@@ -199,11 +217,11 @@ $sponsorFin = $isSponsorise ? finSponsoring((string) $sponsorFormule, $dateHeure
 
 $pdo->prepare(
     'INSERT INTO evenements
-        (etablissement_id, titre, description, type, style_musique, date_heure, date_fin, quota, reduction, prix_normal, is_flash, flash_expiry, is_gratuit, lieu,
+        (etablissement_id, titre, description, type, style_musique, sport, format, date_heure, date_fin, quota, reduction, prix_normal, is_flash, flash_expiry, is_gratuit, lieu,
          is_sponsorise, sponsor_formule, sponsor_tarif, sponsor_jusqu_au)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
 )->execute([
-    (int) $etab['id'], $titre, $description, $type, $musique ?: null, $dateHeure, $dateFin,
+    (int) $etab['id'], $titre, $description, $type, $musique ?: null, $sport ?: null, $format ?: null, $dateHeure, $dateFin,
     $quota, $reduction, $prixNormal, $isFlash,
     $flashExpiry ?: null, $isGratuit, $lieu,
     $isSponsorise, $sponsorFormule, $sponsorTarif, $sponsorFin,

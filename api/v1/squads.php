@@ -12,11 +12,17 @@
 require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/places.php';
 require_once __DIR__ . '/../../includes/uploads.php';
+require_once __DIR__ . '/../../includes/sports.php';
 
 apiExigerMethode('GET');
 
 $u   = apiEtudiant($pdo);
 $uid = (int) $u['id'];
+
+// Un squad n'est visible que des abonnés de son créateur (v28) : voir
+// sqlSquadVisible(). L'onglet Sport passe désormais par sport.php ; ce point
+// garde la même règle pour qui l'appellerait encore.
+[$visible, $paramsVisible] = sqlSquadVisible('s', $uid);
 
 $stmt = $pdo->prepare("
     SELECT s.*,
@@ -28,10 +34,10 @@ $stmt = $pdo->prepare("
                     WHERE f.follower_id = ? AND f.followed_id = s.createur_id AND f.statut = 'accepted') AS je_suis_abonne
       FROM squads s
       JOIN users u ON u.id = s.createur_id
-     WHERE s.date_heure >= NOW()
+     WHERE s.date_heure >= NOW() AND $visible
      ORDER BY s.date_heure ASC
 ");
-$stmt->execute([$uid, $uid]);
+$stmt->execute(array_merge([$uid, $uid], $paramsVisible));
 $squads = $stmt->fetchAll();
 
 // Les membres de toutes les squads en une requete, plutot qu'une par squad.

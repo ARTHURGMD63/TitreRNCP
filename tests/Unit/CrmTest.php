@@ -37,9 +37,14 @@ final class CrmTest extends TestCase
     public function testLeVocabulaireCouvreToutesLesOffresDeLaGrille(): void
     {
         $this->assertSame(
-            ['aucune', 'fondateur', 'essentiel', 'premium', 'bde'],
+            ['aucune', 'fondateur', 'essentiel', 'premium', 'bde', 'club'],
             array_keys(crmOffres())
         );
+    }
+
+    public function testLaFormuleClubEstMensuelleA49(): void
+    {
+        $this->assertSame(49, crmOffres()['club']['tarif']);
     }
 
     public function testLesTarifsSuiventLaGrilleDeSl03(): void

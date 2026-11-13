@@ -77,6 +77,8 @@ apiReponse([
                 'id'             => (int) $e['id'],
                 'titre'          => (string) $e['titre'],
                 'type'           => (string) $e['type'],
+                'sport'          => isset($e['sport']) && $e['sport'] !== null ? (string) $e['sport'] : null,
+                'format'         => isset($e['format']) && $e['format'] !== null ? (string) $e['format'] : null,
                 'date_heure'     => (string) $e['date_heure'],
                 'quota'          => $quota,
                 'inscrits'       => $inscrits,

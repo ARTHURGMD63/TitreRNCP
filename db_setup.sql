@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS etablissements (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     nom VARCHAR(200) NOT NULL,
-    type ENUM('bar', 'boite', 'resto', 'afterwork') NOT NULL,
+    type ENUM('bar', 'boite', 'resto', 'afterwork', 'club') NOT NULL,
     adresse VARCHAR(255),
     ville VARCHAR(100) DEFAULT 'Clermont-Ferrand',
     -- Position sur la carte interactive (migration v25) : réglée par le
@@ -82,11 +82,15 @@ CREATE TABLE IF NOT EXISTS evenements (
     etablissement_id INT NOT NULL,
     titre VARCHAR(255) NOT NULL,
     description TEXT,
-    type ENUM('bar', 'boite', 'resto', 'afterwork') NOT NULL,
+    type ENUM('bar', 'boite', 'resto', 'afterwork', 'sport') NOT NULL,
     -- Style de musique annonce (catalogue PHP : includes/musique.php).
     -- VARCHAR et non ENUM : les styles suivent les modes, en ajouter un
     -- ne doit pas demander une migration de schema.
     style_musique VARCHAR(20) NULL DEFAULT NULL,
+    -- Événement d'un club (type 'sport', migration v28) : discipline et
+    -- format (tournoi, stage…), catalogue includes/sports.php.
+    sport VARCHAR(20) NULL DEFAULT NULL,
+    format VARCHAR(20) NULL DEFAULT NULL,
     date_heure DATETIME NOT NULL,
     -- Fin declaree de l'evenement (migration v24) ; NULL pour les evenements
     -- crees avant, ou pour une soiree sans fin annoncee.
@@ -130,10 +134,14 @@ CREATE TABLE IF NOT EXISTS inscriptions (
 CREATE TABLE IF NOT EXISTS squads (
     id INT PRIMARY KEY AUTO_INCREMENT,
     createur_id INT NOT NULL,
-    type ENUM('running', 'velo', 'muscu', 'culture', 'autre') NOT NULL,
+    -- VARCHAR depuis v28 : catalogue des sports dans includes/sports.php.
+    type VARCHAR(20) NOT NULL,
     -- Coche par le createur a la creation (migration v24) : alimente le
     -- filtre « Associations uniquement » de l'onglet Sport.
     cree_par_association TINYINT(1) NOT NULL DEFAULT 0,
+    -- Un événement d'étudiant n'est visible que de ses abonnés (v28), sauf
+    -- celui d'une association.
+    visibilite ENUM('public','abonnes') NOT NULL DEFAULT 'abonnes',
     titre VARCHAR(255) NOT NULL,
     description TEXT,
     niveau ENUM('tous', 'debutant', 'inter', 'avance') DEFAULT 'tous',
@@ -689,7 +697,7 @@ CREATE TABLE IF NOT EXISTS crm_clients (
     -- NULL tant que le partenaire n'a pas créé son compte dans l'app.
     etablissement_id INT NULL,
     nom              VARCHAR(191) NOT NULL,
-    categorie        ENUM('bar','boite','resto','afterwork','bde','autre') NOT NULL DEFAULT 'bar',
+    categorie        ENUM('bar','boite','resto','afterwork','club','bde','autre') NOT NULL DEFAULT 'bar',
     ville            VARCHAR(100) NOT NULL DEFAULT 'Clermont-Ferrand',
     adresse          VARCHAR(255) NULL,
     contact_nom      VARCHAR(191) NULL,
@@ -700,7 +708,7 @@ CREATE TABLE IF NOT EXISTS crm_clients (
     -- « pause » et « perdu » sont des sorties, pas des étapes.
     statut           ENUM('prospect','contacte','rdv','essai','actif','pause','perdu')
                      NOT NULL DEFAULT 'prospect',
-    offre            ENUM('aucune','fondateur','essentiel','premium','bde')
+    offre            ENUM('aucune','fondateur','essentiel','premium','bde','club')
                      NOT NULL DEFAULT 'aucune',
     -- Montant mensuel HT réellement facturé. Recopié depuis la grille à la
     -- signature, puis figé : le tarif fondateur est gelé, une grille qui
@@ -920,6 +928,63 @@ CREATE TABLE IF NOT EXISTS evenement_photo_signalements (
     FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ─── Sport : clubs, terrains, créneaux (v28) ────────────────────────────────
+-- Voir db_migrations_v28.sql pour le détail des choix.
+
+CREATE TABLE IF NOT EXISTS etablissement_sports (
+    etablissement_id INT NOT NULL,
+    sport VARCHAR(20) NOT NULL,
+    PRIMARY KEY (etablissement_id, sport),
+    KEY k_sport (sport),
+    FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS terrains (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    etablissement_id INT NOT NULL,
+    nom VARCHAR(100) NOT NULL,
+    sport VARCHAR(20) NOT NULL,
+    joueurs TINYINT UNSIGNED NOT NULL DEFAULT 4,
+    duree_min SMALLINT UNSIGNED NOT NULL DEFAULT 90,
+    prix DECIMAL(8,2) NOT NULL DEFAULT 0,
+    actif TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY k_etab (etablissement_id, actif),
+    FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS creneaux (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    terrain_id INT NOT NULL,
+    debut DATETIME NOT NULL,
+    fin DATETIME NOT NULL,
+    prix DECIMAL(8,2) NOT NULL DEFAULT 0,
+    joueurs TINYINT UNSIGNED NOT NULL DEFAULT 4,
+    statut ENUM('libre','reserve','annule') NOT NULL DEFAULT 'libre',
+    organisateur_id INT NULL DEFAULT NULL,
+    ouvert TINYINT(1) NOT NULL DEFAULT 0,
+    niveau ENUM('tous','debutant','inter','avance') NOT NULL DEFAULT 'tous',
+    reserve_le DATETIME NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_terrain_debut (terrain_id, debut),
+    KEY k_statut_debut (statut, debut),
+    KEY k_organisateur (organisateur_id),
+    FOREIGN KEY (terrain_id) REFERENCES terrains(id) ON DELETE CASCADE,
+    FOREIGN KEY (organisateur_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS creneau_joueurs (
+    creneau_id INT NOT NULL,
+    user_id INT NOT NULL,
+    invite_par INT NULL DEFAULT NULL,
+    rejoint_le TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (creneau_id, user_id),
+    KEY k_user (user_id),
+    FOREIGN KEY (creneau_id) REFERENCES creneaux(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (invite_par) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS schema_migrations (
     version     VARCHAR(20) NOT NULL,
     applique_le DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -928,4 +993,4 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 
 INSERT IGNORE INTO schema_migrations (version) VALUES
 ('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
-('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27');
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27'), ('v28');

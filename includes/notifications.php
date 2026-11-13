@@ -168,6 +168,14 @@ function notificationsEtudiant(PDO $pdo, int $uid, int $limite = 25): array
         JOIN users u ON u.id = fu.followed_id
         WHERE fu.follower_id = ? AND fu.statut = 'accepted'
           AND sm.joined_at >= NOW() - INTERVAL " . NOTIF_FENETRE_HEURES . " HOUR
+          -- Un squad réservé aux abonnés de son créateur (v28) ne se révèle
+          -- pas par l'activité d'un ami : seulement si je le vois moi-même.
+          AND (s.visibilite = 'public'
+               OR s.createur_id = fu.follower_id
+               OR EXISTS (SELECT 1 FROM squad_membres smv WHERE smv.squad_id = s.id AND smv.user_id = fu.follower_id)
+               OR EXISTS (SELECT 1 FROM follows_users fv
+                           WHERE fv.follower_id = fu.follower_id AND fv.followed_id = s.createur_id
+                             AND fv.statut = 'accepted'))
 
         ORDER BY ts DESC
         LIMIT 25
