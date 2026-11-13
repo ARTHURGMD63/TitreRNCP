@@ -114,7 +114,9 @@ if ($action === 'send') {
         echo json_encode(['success' => false, 'message' => "Cette sortie n'est plus disponible"]);
         exit;
     }
-    if (estComplet((int) $infos['nb'], (int) $infos['quota'])) {
+    // remplissage() et non estComplet() : un quota de 0 veut dire « entrée
+    // libre », pas « aucune place ».
+    if (remplissage((int) $infos['quota'], (int) $infos['nb'])['complet']) {
         echo json_encode(['success' => false, 'message' => "C'est complet, plus de place à offrir"]);
         exit;
     }
@@ -186,7 +188,7 @@ if ($action === 'accept') {
     }
 
     $dedans = dejaParticipant($pdo, $invite['type'], $cibleId, $moi);
-    if (!$dedans && estComplet((int) $infos['nb'], (int) $infos['quota'])) {
+    if (!$dedans && remplissage((int) $infos['quota'], (int) $infos['nb'])['complet']) {
         echo json_encode(['success' => false, 'message' => "Trop tard, c'est complet"]);
         exit;
     }
