@@ -49,3 +49,13 @@ export const FORMATS_SPORT: Record<string, string> = {
 /** Le libellé d'un type de squad : un sport, ou « culture » d'avant le sport. */
 export const TYPES_SQUAD: Record<string, string> = { ...SPORTS, culture: 'Culture' };
 export const NIVEAUX_SQUAD: Record<string, string> = { tous: 'Tous niveaux', debutant: 'Débutant', inter: 'Inter.', avance: 'Avancé' };
+
+/**
+ * Espace Culture : libellés des catégories (CULTURE_CATEGORIES,
+ * includes/culture.php). Le fil reçoit la liste du serveur pour ses filtres ;
+ * celle-ci sert de repli aux cartes et à la fiche.
+ */
+export const LIBELLES_CULTURE: Record<string, string> = {
+  expo: 'Expo', concert: 'Concert', spectacle: 'Spectacle', festival: 'Festival', patrimoine: 'Patrimoine',
+  cinema: 'Cinéma', atelier: 'Atelier', conference: 'Conférence', autre: 'Autre',
+};

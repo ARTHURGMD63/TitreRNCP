@@ -64,12 +64,12 @@ function usePouls() {
  * coup d'œil de la carte flash, déjà un aplat rouge. Une soirée en cours
  * reste une carte blanche, juste bordée du même rouge.
  */
-function PastilleEnCours() {
+export function PastilleEnCours({ quoi = 'Soirée' }: { quoi?: string }) {
   const { c } = useTheme();
   const opacite = usePouls();
   return (
     <View
-      accessible accessibilityLabel="Soirée en cours"
+      accessible accessibilityLabel={`${quoi} en cours`}
       style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 5, paddingHorizontal: 11, borderRadius: rayon.pill, backgroundColor: c.rougeClair }}
     >
       <Animated.View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: c.rouge, opacity: opacite }} />
@@ -81,11 +81,11 @@ function PastilleEnCours() {
 }
 
 /** Pendant statique de PastilleEnCours pour les soirées pas encore commencées. */
-function PastilleAVenir() {
+export function PastilleAVenir({ quoi = 'Soirée' }: { quoi?: string }) {
   const { c } = useTheme();
   return (
     <View
-      accessible accessibilityLabel="Soirée à venir"
+      accessible accessibilityLabel={`${quoi} à venir`}
       style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 5, paddingHorizontal: 11, borderRadius: rayon.pill, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.line2 }}
     >
       <Text style={{ fontFamily: mono(600), fontSize: fs[1], letterSpacing: lsEm.label * fs[1], textTransform: 'uppercase', color: c.grisFonce }}>

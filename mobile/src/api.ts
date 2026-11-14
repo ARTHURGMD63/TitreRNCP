@@ -190,6 +190,45 @@ export type ReponseEvenements = {
   filtres: { type: string; musique: string; styles_musique: { code: string; libelle: string }[] };
 };
 
+/** Un événement de l'espace Culture (api/v1/culture.php) : mis en avant par la ville. */
+export type EvenementCulture = {
+  id: number;
+  titre: string;
+  description: string;
+  categorie: string;
+  organisateur: string;
+  lieu: string;
+  ville: string;
+  date_heure: string;
+  date_fin: string | null;
+  /** quota 0 : entrée libre, sans limite — restantes vaut alors null. */
+  places: { quota: number; inscrits: number; restantes: number | null; complet: boolean };
+  prix: number;
+  is_gratuit: boolean;
+  lien: string | null;
+  mis_en_avant: boolean;
+  en_cours: boolean;
+  deja_inscrit: boolean;
+  amis: { prenoms: string[]; nb: number };
+};
+
+export type EvenementCultureDetail = EvenementCulture & { termine: boolean; amis_detail: Personne[] };
+
+export type CategorieCulture = { code: string; libelle: string };
+
+export type ReponseCulture = {
+  evenements: EvenementCulture[];
+  pagination: { page: number; a_suivre: boolean };
+  filtres: { categorie: string; categories: CategorieCulture[] };
+};
+
+export type EvenementCultureAdmin = Omit<EvenementCulture, 'amis' | 'deja_inscrit'> & { termine: boolean };
+
+export type ReponseCultureAdmin = { a_venir: EvenementCultureAdmin[]; termines: EvenementCultureAdmin[]; categories: CategorieCulture[] };
+
+/** Ce que l'invitation sait viser : une soirée, une squad, un événement culturel. */
+export type CibleInvitation = 'event' | 'squad' | 'culture';
+
 export type Pass = {
   id: number;
   evenement_id: number | null;
@@ -310,7 +349,7 @@ export type Notification = {
   nouvelle: boolean;
   section: string;
   acteur?: Personne;
-  invitation?: { id: number; cible_type: 'event' | 'squad'; cible_nom: string | null; de: Personne };
+  invitation?: { id: number; cible_type: CibleInvitation; cible_nom: string | null; de: Personne };
   activite?: { cible_type: 'event' | 'squad'; cible_id: number; cible_nom: string; lieu: string; acteur: Personne };
   evenement?: { id: number; titre: string; lieu: string; date: string };
 };
@@ -728,6 +767,21 @@ export const api = {
     appelApi<Ok & { crees: number; ignores: number }>('club_creneaux.php', { methode: 'POST', jeton, corps: { action: 'publier', terrain_id: terrainId, debuts } }),
   clubSupprimerCreneau: (jeton: string, id: number) =>
     appelApi<Ok>('club_creneaux.php', { methode: 'POST', jeton, corps: { action: 'supprimer', id } }),
+  // ── Espace Culture ──
+  culture: (jeton: string, params?: { categorie?: string; pe?: number }) =>
+    appelApi<ReponseCulture>('culture.php', { jeton, params }),
+  cultureEvenement: (jeton: string, id: number) =>
+    appelApi<{ evenement: EvenementCultureDetail }>('culture_evenement.php', { jeton, params: { id } }),
+  /** S'inscrire, ou se désinscrire avec annuler = true. Un refus (complet, terminé) arrive en ErreurApi 409. */
+  cultureInscription: (jeton: string, evenementId: number, annuler = false) =>
+    appelApi<Ok & { inscrit: boolean; inscrits: number }>('culture_inscription.php', {
+      methode: 'POST', jeton, corps: { evenement_id: evenementId, action: annuler ? 'annuler' : 'inscrire' },
+    }),
+  adminCulture: (jeton: string) => appelApi<{ success: true } & ReponseCultureAdmin>('admin_culture.php', { jeton }),
+  adminEnregistrerCulture: (jeton: string, corps: Record<string, unknown>) =>
+    appelApi<Ok & { id: number }>('admin_culture.php', { methode: 'POST', jeton, corps: { ...corps, action: 'enregistrer' } }),
+  adminSupprimerCulture: (jeton: string, id: number) =>
+    appelApi<Ok>('admin_culture.php', { methode: 'POST', jeton, corps: { action: 'supprimer', id } }),
 };
 
 // ─── Écritures partagées avec le site ────────────────────────────────────────
@@ -750,7 +804,7 @@ export const actions = {
     // etat est null pour accept/decline : l'action porte sur la demande d'un
     // tiers, pas sur « mon » état de suivi envers cible (voir api/follow.php).
     action<Ok & { etat: EtatSuivi | null; count: number }>('follow.php', jeton, { action: act, type, target_id: cible }),
-  inviter: (jeton: string, destinataire: number, type: 'event' | 'squad', cible: number) =>
+  inviter: (jeton: string, destinataire: number, type: CibleInvitation, cible: number) =>
     action<Ok>('inviter.php', jeton, { action: 'send', to_user_id: destinataire, type, target_id: cible }),
   repondreInvitation: (jeton: string, invitationId: number, accepter: boolean) =>
     action<Ok>('inviter.php', jeton, { action: accepter ? 'accept' : 'decline', invite_id: invitationId }),

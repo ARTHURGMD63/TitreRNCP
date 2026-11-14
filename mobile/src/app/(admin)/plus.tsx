@@ -23,6 +23,7 @@ import { fs, rayon } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 const LIEN_FINANCES = { libelle: 'Finances', description: 'Trésorerie, MRR, derniers mouvements', icone: 'piece' as NomIcone };
+const LIEN_CULTURE = { libelle: 'Culture', description: 'Publier les événements mis en avant par la ville', icone: 'musee' as NomIcone };
 
 const LIENS_SITE: { chemin: string; libelle: string; description: string; icone: NomIcone }[] = [
   { chemin: '/admin/index.php', libelle: 'Tableau de bord', description: 'North Star, alertes, pipeline, point mort', icone: 'activite' },
@@ -60,6 +61,7 @@ export default function PlusAdmin() {
       <Contenu style={{ paddingTop: 0 }}>
         <Mono style={{ marginBottom: 12 }}>Dans l&apos;application</Mono>
         <LigneLien {...LIEN_FINANCES} onPress={() => router.navigate('/finances')} />
+        <LigneLien {...LIEN_CULTURE} onPress={() => router.navigate('/culture')} />
 
         <Mono style={{ marginTop: 8, marginBottom: 12 }}>Sur le site</Mono>
         {LIENS_SITE.map((l) => (
