@@ -15,7 +15,8 @@ import { api, type CategorieCulture, type EvenementCulture } from '../../api';
 import { Bouton } from '../../composants/Bouton';
 import { CarteCulture } from '../../composants/CarteCulture';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
-import { BoutonRetour, Pilule } from '../../composants/Elements';
+import { Pilule } from '../../composants/Elements';
+import { Marque } from '../../composants/Marque';
 import { Icone } from '../../composants/Icone';
 import { FeuilleInvitation } from '../../composants/Social';
 import { Display, T, TitreEcran } from '../../composants/Texte';
@@ -68,11 +69,13 @@ export default function EspaceCulture() {
       horsDefilement={<FeuilleInvitation cible={invitation} onClose={() => setInvitation(null)} />}
     >
       <EnTete style={{ paddingBottom: 4 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginBottom: 12 }}>
-          <BoutonRetour vers="/" libelle="Retour à Explorer" />
-          <View style={{ flex: 1 }}>
-            <TitreEcran lignes={['La culture', 'en ville.']} />
-          </View>
+        {/* Un onglet à part entière, comme Personnes ou Sport : la marque en
+            tête, pas de retour vers Explorer. */}
+        <View style={{ marginBottom: 14 }}>
+          <Marque taille={fs[6]} />
+        </View>
+        <View style={{ marginBottom: 12 }}>
+          <TitreEcran lignes={['La culture', 'en ville.']} />
         </View>
         <T taille={fs[4]} couleur={c.grisFonce} interligne={lh.snug} style={{ marginBottom: 16 }}>
           Expos, concerts, patrimoine : ce que la ville met en avant. Inscris-toi et embarque tes potes.

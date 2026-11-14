@@ -87,7 +87,8 @@ export function Erreur({ message, onReessayer }: { message: string; onReessayer:
   return (
     <View style={{ paddingVertical: 48, paddingHorizontal: gutter, alignItems: 'center', gap: 16 }}>
       <T taille={fs[5]} couleur={c.grisFonce} style={{ textAlign: 'center' }}>{message}</T>
-      <Bouton libelle="Réessayer" variante="contour" onPress={onReessayer} />
+      {/* Bouton se cale à gauche par défaut (alignSelf) : on le recentre ici. */}
+      <Bouton libelle="Réessayer" variante="contour" onPress={onReessayer} style={{ alignSelf: 'center' }} />
     </View>
   );
 }
