@@ -221,8 +221,6 @@ export default function Hub() {
                 {pourMoi ? (
                   <>
                     <Pilule libelle="Carte" icone="epingle" actif={false} onPress={() => router.push('/carte')} />
-                    {/* L'espace Culture : les événements mis en avant par la ville. */}
-                    <Pilule libelle="Culture" icone="musee" actif={false} onPress={() => router.push('/culture')} />
                   </>
                 ) : null}
               </React.Fragment>

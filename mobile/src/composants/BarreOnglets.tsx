@@ -34,6 +34,7 @@ const ONGLETS: OngletBarre[] = [
   { route: 'index', libelle: 'Explorer', icone: 'loupe' },
   { route: 'personnes', libelle: 'Personnes', icone: 'personnes' },
   { route: 'squads', libelle: 'Sport', icone: 'trophee' },
+  { route: 'culture', libelle: 'Culture', icone: 'musee' },
   { route: 'wallet', libelle: 'Pass', icone: 'carte' },
   { route: 'moi', libelle: 'Moi', icone: 'personne' },
 ];
@@ -44,7 +45,6 @@ const PARENT: Record<string, string> = {
   classement: 'moi',
   abonnements: 'moi',
   carte: 'index',
-  culture: 'index',
 };
 
 /** Les propriétés que Tabs passe à une barre personnalisée. */
