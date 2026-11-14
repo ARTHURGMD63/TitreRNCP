@@ -4,7 +4,7 @@
  * Une pilule de surface posée à 16 px du bas, 64 px de haut, 408 px de large
  * au plus ; les onglets, l'icône au-dessus du libellé. L'onglet actif est
  * en gras, son icône en lave. Mêmes libellés, même ordre, mêmes icônes que le
- * site : Explorer, Squads, Pass, Moi — Personnes en plus, propre à
+ * site : Explorer, Squads, Pass, Moi — Personnes et Culture en plus, propres à
  * l'application (explore.php le proposait en sélecteur en haut d'Explorer,
  * pas en onglet).
  *
@@ -25,14 +25,15 @@ import { encreSur, fs, rayon, sans } from '../theme';
 import { useTheme } from '../useTheme';
 import { Icone, type NomIcone } from './Icone';
 
-export type OngletBarre = { route: string; libelle: string; icone: NomIcone };
+/** `court` : libellé affiché quand la barre est compacte (petit écran, six onglets). */
+export type OngletBarre = { route: string; libelle: string; icone: NomIcone; court?: string };
 
 /** Le bouton central surélevé (espace partenaire : « + Créer une soirée »). */
 export type ActionCentraleBarre = { libelle: string; icone: NomIcone; couleur: string; onPress: () => void };
 
 const ONGLETS: OngletBarre[] = [
   { route: 'index', libelle: 'Explorer', icone: 'loupe' },
-  { route: 'personnes', libelle: 'Personnes', icone: 'personnes' },
+  { route: 'personnes', libelle: 'Personnes', icone: 'personnes', court: 'Réseau' },
   { route: 'squads', libelle: 'Sport', icone: 'trophee' },
   { route: 'culture', libelle: 'Culture', icone: 'musee' },
   { route: 'wallet', libelle: 'Pass', icone: 'carte' },
@@ -62,6 +63,37 @@ export function ecartBasBarre(zoneBasse: number): number {
   return zoneBasse > 0 ? Math.max(8, zoneBasse - 20) : 12;
 }
 
+/** Largeur qu'il faut à un onglet pour garder son libellé au corps normal. */
+const LARGEUR_ONGLET_CONFORT = 68;
+
+/**
+ * Taille de la pilule selon l'écran et le nombre d'onglets.
+ *
+ * Le site : calc(100% - 32px), 408 px au plus — pensé pour quatre ou cinq
+ * onglets. À six (Culture en plus), 408 px ne laissent que 64 px par onglet,
+ * moins sur un petit téléphone : la pilule s'élargit jusqu'à ce qu'il faut,
+ * toujours à 16 px des bords, et passe en mode compact (marges et corps
+ * réduits, 10 px des bords) quand chaque onglet reste trop étroit. Le corps
+ * du libellé se calcule alors sur le plus long : tous gardent la même taille
+ * et aucun n'est coupé, de 320 px de large à une tablette.
+ */
+export function gabaritBarre(
+  largeurEcran: number,
+  nbOnglets: number,
+  plusLongLibelle = 9,
+): { largeur: number; marge: number; compacte: boolean; corps: number } {
+  const n = Math.max(1, nbOnglets);
+  const confort = Math.min(largeurEcran - 32, Math.max(408, n * LARGEUR_ONGLET_CONFORT + 20));
+  if ((confort - 20) / n >= LARGEUR_ONGLET_CONFORT) {
+    return { largeur: Math.max(0, confort), marge: 10, compacte: false, corps: fs[3] };
+  }
+  const largeur = Math.max(0, Math.min(largeurEcran - 20, confort + 12));
+  const parOnglet = (largeur - 4) / n;
+  // 0,62 em : chasse moyenne d'une capitale suivie de minuscules en gras.
+  const corps = Math.max(fs[1] - 1, Math.min(fs[2], Math.floor(parOnglet / (Math.max(1, plusLongLibelle) * 0.62))));
+  return { largeur, marge: 2, compacte: true, corps };
+}
+
 /** Hauteur de la pilule. */
 export const HAUTEUR_PILULE = 64;
 
@@ -82,8 +114,10 @@ export function reserveBarre(zoneBasse: number): number {
 export function BarreOnglets({ state, navigation, onglets = ONGLETS, parent = PARENT, actionCentrale }: BottomTabBarProps & { onglets?: OngletBarre[]; parent?: Record<string, string>; actionCentrale?: ActionCentraleBarre }) {
   const { c, ombre } = useTheme();
   const bas = useSafeAreaInsets().bottom;
-  // width: calc(100% - 32px) ; max-width: 408px
-  const largeur = Math.min(useWindowDimensions().width - 32, 408);
+  const largeurEcran = useWindowDimensions().width;
+  const enCompact = gabaritBarre(largeurEcran, onglets.length).compacte;
+  const libelles = onglets.map((o) => (enCompact && o.court ? o.court : o.libelle));
+  const { largeur, marge, compacte, corps } = gabaritBarre(largeurEcran, onglets.length, Math.max(...libelles.map((l) => l.length)));
   const courant = state.routes[state.index]?.name ?? onglets[0]?.route;
   const actif = parent[courant] ?? courant;
 
@@ -93,14 +127,14 @@ export function BarreOnglets({ state, navigation, onglets = ONGLETS, parent = PA
         accessibilityRole="tablist"
         style={[
           {
-            width: largeur, paddingHorizontal: 10, height: HAUTEUR_PILULE,
+            width: largeur, paddingHorizontal: marge, height: HAUTEUR_PILULE,
             flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',
             backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.pill,
           },
           ombre('lg'),
         ]}
       >
-        {onglets.map((o) => {
+        {onglets.map((o, i) => {
           const estActif = o.route === actif;
           const couleur = estActif ? c.noir : c.gris;
           return (
@@ -116,10 +150,19 @@ export function BarreOnglets({ state, navigation, onglets = ONGLETS, parent = PA
                   if (!evenement?.defaultPrevented) navigation.navigate(o.route);
                 }
               }}
-              style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 8, minHeight: 44 }}
+              style={{ flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 8, paddingHorizontal: 1, minHeight: 44 }}
             >
-              <Icone nom={o.icone} taille={21} couleur={estActif ? c.rouge : couleur} />
-              <Text style={{ fontFamily: sans(estActif ? 700 : 500), fontSize: fs[3], color: couleur }}>{o.libelle}</Text>
+              <Icone nom={o.icone} taille={compacte ? 20 : 21} couleur={estActif ? c.rouge : couleur} />
+              {/* Une seule ligne, quitte à réduire un peu le corps : un libellé
+                  coupé en deux faisait déborder la pilule. */}
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+                style={{ fontFamily: sans(estActif ? 700 : 500), fontSize: corps, color: couleur, textAlign: 'center' }}
+              >
+                {libelles[i]}
+              </Text>
             </Pressable>
           );
         })}
