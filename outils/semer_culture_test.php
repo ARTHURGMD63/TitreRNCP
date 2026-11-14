@@ -14,7 +14,7 @@
  *   php outils/semer_culture_test.php             # sème (sans doublon)
  *   php outils/semer_culture_test.php --nettoyer  # retire tout
  * Variables : MYSQLHOST, MYSQLPORT, MYSQLUSER, MYSQLPASSWORD, MYSQLDATABASE
- * (défaut : localhost, 3306, root, base « linkee »).
+ * (défaut : localhost, 3306, root, base « outsee », comme includes/db.php).
  *
  * ATTENTION : avec les variables de production, ceci écrit dans la vraie base.
  */
@@ -29,7 +29,7 @@ date_default_timezone_set('Europe/Paris');
 const PREFIXE = '[TEST] ';
 
 $host = getenv('MYSQLHOST') ?: 'localhost';
-$name = getenv('MYSQLDATABASE') ?: 'linkee';
+$name = getenv('MYSQLDATABASE') ?: 'outsee';
 $user = getenv('MYSQLUSER') ?: 'root';
 $pass = getenv('MYSQLPASSWORD') ?: '';
 $port = getenv('MYSQLPORT') ?: '3306';
