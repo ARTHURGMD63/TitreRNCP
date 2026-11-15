@@ -85,7 +85,11 @@ $ajoute  = $pdo->prepare(
      VALUES (?,?,?,?,?,?,?,?,?,?,?)'
 );
 $inscrit = $pdo->prepare('INSERT IGNORE INTO culture_inscriptions (user_id, evenement_id) VALUES (?, ?)');
-$etudiants = $pdo->query("SELECT id FROM users ORDER BY id LIMIT 30")->fetchAll(PDO::FETCH_COLUMN);
+// Les inscrits fictifs viennent des comptes de test (semer_test_app.php,
+// semer_sport_test.php) : jamais un vrai compte. Sans eux, pas d'inscrits.
+$etudiants = $pdo->query(
+    "SELECT id FROM users WHERE type = 'etudiant' AND email LIKE 'test-%@outsee.invalid' ORDER BY id LIMIT 30"
+)->fetchAll(PDO::FETCH_COLUMN);
 
 $crees = 0;
 foreach ($evenements as [$titre, $cat, $orga, $lieu, $ville, $debut, $fin, $quota, $prix, $une, $nbInscrits]) {
