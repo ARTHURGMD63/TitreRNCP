@@ -78,7 +78,12 @@ CREATE TABLE IF NOT EXISTS etablissements (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     nom VARCHAR(200) NOT NULL,
-    type ENUM('bar', 'boite', 'resto', 'afterwork', 'club') NOT NULL,
+    type ENUM('bar', 'boite', 'resto', 'afterwork', 'club', 'bde') NOT NULL,
+    -- Validation des BDE par l'administrateur (migration v32).
+    verification ENUM('non_requise','en_attente','validee','refusee') NOT NULL DEFAULT 'non_requise',
+    verifie_par INT NULL DEFAULT NULL,
+    verifie_le DATETIME NULL DEFAULT NULL,
+    verification_note VARCHAR(255) NULL DEFAULT NULL,
     adresse VARCHAR(255),
     ville VARCHAR(100) DEFAULT 'Clermont-Ferrand',
     latitude DECIMAL(10,7) DEFAULT NULL,
@@ -117,6 +122,8 @@ CREATE TABLE IF NOT EXISTS evenements (
     sponsor_formule ENUM('boost24','top7','premium30') DEFAULT NULL,
     sponsor_tarif DECIMAL(8,2) NOT NULL DEFAULT 0,
     sponsor_jusqu_au DATETIME DEFAULT NULL,
+    -- Prix d'un événement publié au-delà du quota mensuel (migration v30).
+    supplement_tarif DECIMAL(8,2) NOT NULL DEFAULT 0,
     lieu VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_sponsor (is_sponsorise, sponsor_jusqu_au),
@@ -709,6 +716,8 @@ CREATE TABLE IF NOT EXISTS crm_clients (
     mrr              DECIMAL(8,2) NOT NULL DEFAULT 0,
     -- Fin des 3 mois offerts, pour savoir quand la facturation démarre.
     essai_jusqu_au   DATE NULL,
+    -- Dernier changement de formule (migration v31) : un par mois au plus.
+    offre_changee_le DATE NULL DEFAULT NULL,
     signe_le         DATE NULL,
     perdu_le         DATE NULL,
     motif_perte      VARCHAR(255) NULL,
@@ -1288,6 +1297,36 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
     PRIMARY KEY (version)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Notifications comprises dans un post sponsorisé (migration v30).
+CREATE TABLE IF NOT EXISTS sponsor_notifications (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    evenement_id INT NOT NULL,
+    envoyer_le DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY k_sponsor_notif_evenement (evenement_id),
+    KEY k_sponsor_notif_date (envoyer_le),
+    FOREIGN KEY (evenement_id) REFERENCES evenements(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Registre des achats des partenaires (migration v31).
+CREATE TABLE IF NOT EXISTS achats_partenaires (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    etablissement_id INT NOT NULL,
+    evenement_id INT NULL DEFAULT NULL,
+    nature ENUM('evenement','flash','sponsoring') NOT NULL,
+    -- 'AAAA-MM' : le mois (de Paris) où l'achat a été fait.
+    mois CHAR(7) NOT NULL,
+    -- 0 quand c'est compris dans l'abonnement (quota, flash, mise en avant offerte).
+    montant DECIMAL(8,2) NOT NULL DEFAULT 0,
+    formule VARCHAR(20) NULL DEFAULT NULL,
+    libelle VARCHAR(255) NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY k_achats_mois (etablissement_id, mois, nature),
+    KEY k_achats_evenement (evenement_id),
+    FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE CASCADE,
+    FOREIGN KEY (evenement_id) REFERENCES evenements(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 INSERT IGNORE INTO schema_migrations (version) VALUES
 ('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
-('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27'), ('v28'), ('v29');
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27'), ('v28'), ('v29'), ('v30'), ('v31'), ('v32');
