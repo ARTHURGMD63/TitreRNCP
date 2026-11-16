@@ -28,7 +28,7 @@ import { fixe, fs, police } from '../theme';
 
 const TAILLE = fs[9];
 const LOGO = 150;
-const MOT = { fontFamily: police.display, fontSize: TAILLE, letterSpacing: -0.045 * TAILLE, lineHeight: TAILLE * 1.15 };
+const MOT = { fontFamily: police.display, fontSize: TAILLE, letterSpacing: -0.035 * TAILLE, lineHeight: TAILLE * 1.15 };
 
 export function IntroSplash({ onTermine }: { onTermine: () => void }) {
   const [vAnneaux] = useState(() => new Animated.Value(0));
@@ -65,7 +65,7 @@ export function IntroSplash({ onTermine }: { onTermine: () => void }) {
         </Animated.View>
         <Animated.View style={{ opacity: texteOpacite, transform: [{ translateY: texteDecalage }] }}>
           <Text style={[MOT, { color: fixe.craie }]}>
-            outs<Text style={{ color: fixe.logo }}>ee</Text>
+            Outs<Text style={{ color: fixe.logo }}>ee</Text>
           </Text>
         </Animated.View>
       </View>

@@ -1,17 +1,13 @@
 /**
- * Les deux cartes d'événement du hub (explore.php).
+ * La carte d'événement du hub (Explorer).
  *
- *  - Flash : aplat lave, texte basalte, halo lave. « CE SOIR · 20H30 », le
- *    badge FLASH qui décompte, le lieu et sa ville, le compte à rebours sur
- *    la première carte, les amis qui y vont, la réduction en grand, « Je
- *    fonce », et la jauge de remplissage.
- *  - Classique : surface, étiquette « BAR · JEU 12 MARS » teintée par le type,
- *    badges (style, gratuit, sponsorisé), note du lieu, description coupée à
- *    cent caractères, places, « Inviter » et « Rejoindre », taux d'inscription.
+ * Refonte 2026-11 : une seule carte, accent pour la première de la liste,
+ * blanche pour les suivantes. Une offre flash garde son décompte, sa
+ * réduction et son compte à rebours ; seul l'habillage change.
  *
- * Suivre le lieu et s'inscrire passent par les mêmes points d'API que le site,
- * avec les mêmes libellés, les mêmes couleurs après le clic et les mêmes
- * toasts.
+ * Suivre le lieu et s'inscrire passent par les mêmes points d'API que
+ * toujours, avec les mêmes libellés d'erreur et les mêmes toasts. Les
+ * confettis ne partent qu'après une inscription réussie.
  */
 
 import React, { useEffect, useState } from 'react';
@@ -20,14 +16,14 @@ import { router } from 'expo-router';
 
 import { actions, ErreurApi, type Evenement } from '../api';
 import { LIBELLES_TYPE } from '../catalogue';
-import { dateFr, heure, majuscules, ts } from '../format';
+import { dateFr, ts } from '../format';
 import { useJeton } from '../session';
-import { fixe, fs, haloLave, lh, lsEm, mono, rayon, sans } from '../theme';
+import { fixe, fs, lh, rayon, sans } from '../theme';
 import { useTheme } from '../useTheme';
-import { Bouton } from './Bouton';
-import { Badge, Jauge } from './Elements';
+import { PressableAnime } from './Animations';
+import { BoutonAction, BoutonContour, CarteRefonte, Pastille, QuiYVa, useRubrique } from './Design';
 import { Icone } from './Icone';
-import { Display, Mono, T } from './Texte';
+import { T } from './Texte';
 import { useToast } from './Toast';
 
 // ─── Comptes à rebours ──────────────────────────────────────────────────────
@@ -59,53 +55,46 @@ function usePouls() {
 }
 
 /**
- * « EN COURS », en accent (#0047BB) : le point pulse plutôt que la carte
- * entière ne s'aplatisse de cette couleur — c'est ce qui la distingue d'un
- * coup d'œil de la carte flash, déjà un aplat rouge. Une soirée en cours
- * reste une carte blanche, juste bordée du même rouge.
+ * « En cours » : le point vert respire pour dire « ça se passe
+ * maintenant ». Sur une carte accent, la pastille est un voile blanc.
  */
-export function PastilleEnCours({ quoi = 'Soirée' }: { quoi?: string }) {
+export function PastilleEnCours({ quoi = 'Soirée', surAccent }: { quoi?: string; surAccent?: boolean }) {
   const { c } = useTheme();
   const opacite = usePouls();
   return (
     <View
       accessible accessibilityLabel={`${quoi} en cours`}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 5, paddingHorizontal: 11, borderRadius: rayon.pill, backgroundColor: c.rougeClair }}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 6, paddingHorizontal: 12, borderRadius: rayon.bouton, backgroundColor: surAccent ? 'rgba(255,255,255,0.18)' : c.surface2 }}
     >
-      <Animated.View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: c.rouge, opacity: opacite }} />
-      <Text style={{ fontFamily: mono(600), fontSize: fs[1], letterSpacing: lsEm.label * fs[1], textTransform: 'uppercase', color: c.surRougeClair }}>
-        En cours
-      </Text>
+      <Animated.View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: fixe.enCours, opacity: opacite }} />
+      <Text style={{ fontFamily: sans(500), fontSize: fs[4], color: surAccent ? '#FFFFFF' : c.noir }}>En cours</Text>
     </View>
   );
 }
 
-/** Pendant statique de PastilleEnCours pour les soirées pas encore commencées. */
-export function PastilleAVenir({ quoi = 'Soirée' }: { quoi?: string }) {
+/** Pendant statique de PastilleEnCours pour ce qui n'a pas encore commencé. */
+export function PastilleAVenir({ quoi = 'Soirée', surAccent }: { quoi?: string; surAccent?: boolean }) {
   const { c } = useTheme();
   return (
     <View
       accessible accessibilityLabel={`${quoi} à venir`}
-      style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 5, paddingHorizontal: 11, borderRadius: rayon.pill, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.line2 }}
+      style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 12, borderRadius: rayon.bouton, backgroundColor: surAccent ? 'rgba(255,255,255,0.18)' : c.surface2 }}
     >
-      <Text style={{ fontFamily: mono(600), fontSize: fs[1], letterSpacing: lsEm.label * fs[1], textTransform: 'uppercase', color: c.grisFonce }}>
-        À venir
-      </Text>
+      <Text style={{ fontFamily: sans(500), fontSize: fs[4], color: surAccent ? '#FFFFFF' : c.noir }}>À venir</Text>
     </View>
   );
 }
 
-/** « FLASH · 12MIN 05S », puis « EXPIRÉ » (app.js, [data-expiry]). */
+/** « Flash · 12min 05s », puis « Expiré » (app.js, [data-expiry]). */
 function libelleFlash(expiry: number, maintenant: number) {
   const diff = Math.max(0, expiry * 1000 - maintenant);
-  if (diff <= 0) return 'EXPIRÉ';
+  if (diff <= 0) return 'Expiré';
   const h = Math.floor(diff / 3600000);
   const mins = Math.floor((diff % 3600000) / 60000);
   const secs = Math.floor((diff % 60000) / 1000);
-  // Au-delà d'une heure, les secondes n'apprennent rien : « 2H55 », pas
-  // « 175MIN 59S ».
-  if (h > 0) return `FLASH · ${h}H${mins < 10 ? '0' : ''}${mins}`;
-  return `FLASH · ${mins}MIN ${secs < 10 ? '0' : ''}${secs}S`;
+  // Au-delà d'une heure, les secondes n'apprennent rien : « 2h55 ».
+  if (h > 0) return `Flash · ${h}h${mins < 10 ? '0' : ''}${mins}`;
+  return `Flash · ${mins}min ${secs < 10 ? '0' : ''}${secs}s`;
 }
 
 /** « dans 2h05 », « dans 12min04s », « dans 3j », « EN COURS » (app.js). */
@@ -122,6 +111,10 @@ export function libelleDebut(debut: number, maintenant: number) {
 
 // ─── Suivre un lieu (.btn-suivre-lieu) ──────────────────────────────────────
 
+/**
+ * « + Suivre » / « Suivi ». `media` : posé sur une carte accent ou une
+ * photo — contour blanc translucide.
+ */
 function BoutonSuivreLieu({ etabId, suivi, media }: { etabId: number; suivi: boolean; media?: boolean }) {
   const { c } = useTheme();
   const jeton = useJeton();
@@ -145,29 +138,26 @@ function BoutonSuivreLieu({ etabId, suivi, media }: { etabId: number; suivi: boo
   }
 
   const abonne = etat === 'accepted';
-  const fond = media ? (abonne ? fixe.basalte : 'rgba(17,16,19,0.08)') : abonne ? c.noir : 'transparent';
-  const encre = media ? (abonne ? fixe.craie : fixe.surAccent) : abonne ? c.blanc : c.noir;
-  const filet = media ? fixe.surAccent : c.line2;
+  const fond = abonne ? (media ? '#FFFFFF' : c.noir) : 'transparent';
+  const encre = abonne ? (media ? '#111116' : c.surEncre) : media ? '#FFFFFF' : c.noir;
+  const filet = abonne ? fond : media ? 'rgba(255,255,255,0.45)' : c.line2;
 
   return (
-    <Pressable
+    <PressableAnime
       onPress={basculer}
       accessibilityRole="button"
       accessibilityLabel={abonne ? 'Ne plus suivre ce lieu' : 'Suivre ce lieu'}
-      hitSlop={{ top: 8, bottom: 8 }}
-      style={{ flexShrink: 0, flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1.5, borderColor: filet, borderRadius: rayon.pill, paddingVertical: 5, paddingHorizontal: 12, backgroundColor: fond }}
+      style={{ flexShrink: 0, flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1.5, borderColor: filet, borderRadius: rayon.bouton, minHeight: 44, paddingHorizontal: 16, backgroundColor: fond }}
     >
       {attente ? (
-        <Text style={{ fontFamily: sans(700), fontSize: fs[2], color: encre }}>...</Text>
+        <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: encre }}>…</Text>
       ) : (
         <>
-          {abonne ? <Icone nom="check" taille={16} couleur={encre} /> : null}
-          <Text style={{ fontFamily: sans(700), fontSize: fs[2], letterSpacing: lsEm.wide * fs[2], color: encre }}>
-            {abonne ? 'SUIVI' : '+ SUIVRE'}
-          </Text>
+          {abonne ? <Icone nom="check" taille={16} couleur={encre} trait={2.5} /> : null}
+          <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: encre }}>{abonne ? 'Suivi' : '+ Suivre'}</Text>
         </>
       )}
-    </Pressable>
+    </PressableAnime>
   );
 }
 
@@ -178,12 +168,15 @@ function useInscription(ev: Evenement) {
   const toast = useToast();
   const [etat, setEtat] = useState<'libre' | 'attente' | 'inscrit' | 'vient'>(ev.deja_inscrit ? 'inscrit' : 'libre');
   const [libelleErreur, setLibelleErreur] = useState<string | null>(null);
+  // Refonte : les confettis ne partent qu'après la réussite réelle.
+  const [fete, setFete] = useState(0);
 
   async function inscrire() {
     setEtat('attente');
     try {
       await actions.inscrire(jeton, ev.id);
       setEtat('vient');
+      setFete((n) => n + 1);
       toast('Tu es inscrit ! Rendez-vous ce soir.', 'success');
     } catch (e) {
       const msg = e instanceof ErreurApi ? e.message : 'Erreur réseau';
@@ -193,175 +186,103 @@ function useInscription(ev: Evenement) {
       toast(msg, 'error');
     }
   }
-  return { etat, libelleErreur, inscrire };
+  return { etat, libelleErreur, inscrire, fete };
 }
 
-// ─── Carte flash ────────────────────────────────────────────────────────────
+// ─── Carte d'événement ──────────────────────────────────────────────────────
 
-function CarteFlash({ ev, premiere, onInviter: _onInviter }: { ev: Evenement; premiere: boolean; onInviter: () => void }) {
+/**
+ *  - en haut : pastille de statut (« En cours », « À venir », ou le
+ *    décompte d'une offre flash) et pastille de date ;
+ *  - réduction, gratuité, sponsorisé, s'il y a lieu ;
+ *  - le surtitre (style de musique, sinon type de lieu), le titre ;
+ *  - le lieu, ses places et sa note, avec « + Suivre » ;
+ *  - le compte à rebours de la première offre flash, comme avant ;
+ *  - « qui y va », si des amis y vont ;
+ *  - « Inviter » et l'action principale.
+ *
+ * La description et la jauge d'inscription vivent dans la fiche de
+ * l'événement, qui les affichait déjà.
+ */
+function Carte({ ev, accent, premiere, flash, onInviter }: { ev: Evenement; accent: boolean; premiere: boolean; flash: boolean; onInviter: () => void }) {
   const { c } = useTheme();
-  const maintenant = useMaintenant();
-  const { etat, libelleErreur, inscrire } = useInscription(ev);
-  const pct = ev.places.quota > 0 ? Math.round((ev.places.inscrits / ev.places.quota) * 100) : 0;
-  const amis = ev.amis.nb > 0 ? ev.amis : null;
+  const bleu = useRubrique('bleu');
+  const maintenant = useMaintenant(flash);
+  const { etat, libelleErreur, inscrire, fete } = useInscription(ev);
+  const inscrit = etat === 'inscrit' || etat === 'vient';
   const ouvrir = () => router.push({ pathname: '/evenement/[id]', params: { id: String(ev.id) } });
   const reduction = ev.reduction ?? 0;
 
+  const encre = accent ? '#FFFFFF' : c.noir;
+  const secondaire = accent ? bleu.surAccent2 : c.gris;
+  const voile = 'rgba(255,255,255,0.18)';
+  const dateType = `${dateFr(ev.date_heure, 'D j M')} · ${LIBELLES_TYPE[ev.type] ?? ev.type}`;
+  const surtitre = ev.style_musique ? libelleStyle(ev.style_musique) : LIBELLES_TYPE[ev.type] ?? ev.type;
+
   return (
-    <View style={[{ backgroundColor: c.rouge, padding: 22, borderRadius: rayon.base, marginBottom: 20 }, haloLave]}>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <Mono poids={600} couleur={fixe.surAccent} style={{ opacity: 0.8 }}>CE SOIR · {heure(ev.date_heure)}</Mono>
-        <Badge libelle={ev.flash_expiry ? libelleFlash(ts(ev.flash_expiry), maintenant) : 'FLASH'} fond="rgba(17,16,19,0.12)" encre={fixe.surAccent} style={{ paddingVertical: 4 }} />
-        {ev.style_musique ? <Badge libelle={libelleStyle(ev.style_musique)} fond="rgba(17,16,19,0.1)" encre={fixe.surAccent} filet="rgba(17,16,19,0.3)" espacement={lsEm.wide} style={{ paddingVertical: 2, paddingHorizontal: 9 }} /> : null}
-        {ev.sponsorise ? <Badge libelle="Sponsorisé" fond="rgba(17,16,19,0.1)" encre={fixe.surAccent} filet="rgba(17,16,19,0.3)" /> : null}
+    <CarteRefonte accent={accent ? bleu.accent : undefined}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        {flash && ev.flash_expiry ? (
+          <Pastille libelle={libelleFlash(ts(ev.flash_expiry), maintenant)} icone="eclair" fond={accent ? voile : c.surface2} encre={encre} />
+        ) : ev.en_cours ? <PastilleEnCours surAccent={accent} /> : <PastilleAVenir surAccent={accent} />}
+        <Pastille libelle={dateType} fond={accent ? '#FFFFFF' : c.noir} encre={accent ? '#111116' : c.surEncre} style={{ flexShrink: 1 }} />
       </View>
 
-      <Pressable onPress={ouvrir} accessibilityRole="link">
-        <Display taille={fs[7]} interligne={lh.tight} couleur={fixe.surAccent} style={{ marginBottom: 6 }}>{ev.titre}</Display>
-      </Pressable>
-
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <Pressable onPress={ouvrir} style={{ flex: 1, minWidth: 0, marginBottom: 12 }}>
-          <T numberOfLines={1} taille={fs[3]} couleur={fixe.surAccent}>{ev.etablissement.nom} — {ev.etablissement.ville}</T>
-        </Pressable>
-        <BoutonSuivreLieu etabId={ev.etablissement.id} suivi={ev.etablissement.suivi} media />
-      </View>
-
-      {premiere ? (
-        <Pressable onPress={ouvrir} style={{ marginTop: 14, paddingVertical: 12, paddingHorizontal: 16, backgroundColor: fixe.basalte, borderRadius: rayon.md, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Icone nom="horloge" taille={16} couleur="rgba(245,241,232,0.6)" />
-          <Mono couleur="rgba(245,241,232,0.7)">Commence dans</Mono>
-          <Text style={{ marginLeft: 'auto', fontFamily: mono(600), fontSize: fs[6], color: fixe.craie, fontVariant: ['tabular-nums'] }}>
-            {libelleDebut(ts(ev.date_heure), maintenant)}
-          </Text>
-        </Pressable>
-      ) : null}
-
-      {amis ? (
-        <View style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Icone nom="personnes" taille={14} couleur={fixe.surAccent} />
-          <T taille={fs[3]} poids={600} couleur={fixe.surAccent}>
-            {amis.prenoms.slice(0, 2).join(', ')}{amis.nb > 2 ? ` +${amis.nb - 2}` : ''} y vont
-          </T>
+      {reduction > 0 || ev.is_gratuit || ev.sponsorise ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+          {reduction > 0 ? (
+            <Pastille libelle={`-${reduction}% ${ev.is_gratuit ? '· entrée gratuite' : 'sur conso'}`} fond={accent ? voile : c.succesClair} encre={accent ? '#FFFFFF' : c.succes} />
+          ) : null}
+          {ev.is_gratuit && reduction <= 0 ? <Pastille libelle="Gratuit" fond={accent ? voile : c.surface2} encre={encre} /> : null}
+          {ev.sponsorise ? <Pastille libelle="Sponsorisé" fond={accent ? voile : c.surface2} encre={accent ? '#FFFFFF' : c.grisFonce} /> : null}
         </View>
       ) : null}
 
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 16 }}>
-        <View>
-          <Display taille={fs[8]} couleur={fixe.surAccent} style={{ fontVariant: ['tabular-nums'] }}>
-            {reduction > 0 ? `-${reduction}%` : ev.is_gratuit ? 'Gratuit' : 'Soirée'}
-          </Display>
-          <T taille={fs[3]} couleur={fixe.surAccent} style={{ opacity: 0.85 }}>
-            {reduction > 0 ? (ev.is_gratuit ? 'entrée gratuite' : 'sur conso') : 'sans remise'}
-          </T>
-        </View>
-        <Bouton
-          variante="basalte"
-          libelle={etat === 'inscrit' || etat === 'vient' ? 'Inscrit' : ev.places.complet ? 'Complet' : libelleErreur ?? 'Je fonce'}
-          icone={etat === 'inscrit' || etat === 'vient' ? 'check' : undefined}
-          desactive={etat === 'inscrit' || etat === 'vient' || ev.places.complet}
-          chargement={etat === 'attente'}
-          onPress={inscrire}
-        />
-      </View>
-
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, marginBottom: 6 }}>
-        <Mono poids={600} couleur={fixe.surAccent}>Remplissage</Mono>
-        <Mono poids={600} couleur={fixe.surAccent}>{pct}%</Mono>
-      </View>
-      <Jauge pourcentage={pct} piste="rgba(17,16,19,0.2)" remplissage={fixe.craie} />
-    </View>
-  );
-}
-
-// ─── Carte classique ────────────────────────────────────────────────────────
-
-function CarteClassique({ ev, onInviter }: { ev: Evenement; onInviter: () => void }) {
-  const { c, ombre } = useTheme();
-  const { etat, libelleErreur, inscrire } = useInscription(ev);
-  const pct = ev.places.quota > 0 ? Math.round((ev.places.inscrits / ev.places.quota) * 100) : 0;
-  const accent = ev.type === 'resto' ? c.surOrangeClair : c.surRougeClair;
-  const ouvrir = () => router.push({ pathname: '/evenement/[id]', params: { id: String(ev.id) } });
-  const inscrit = etat === 'inscrit' || etat === 'vient';
-
-  return (
-    <View
-      style={[
-        { backgroundColor: c.blanc, padding: 20, borderRadius: rayon.base, borderWidth: 1, borderColor: c.grisClair, marginBottom: 20 },
-        ev.en_cours ? [{ borderWidth: 2, borderColor: c.rouge }, haloLave] : ombre('base'),
-      ]}
-    >
-      <View style={{ marginBottom: 10, alignSelf: 'flex-start' }}>
-        {ev.en_cours ? <PastilleEnCours /> : <PastilleAVenir />}
-      </View>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <Mono couleur={accent}>{majuscules(LIBELLES_TYPE[ev.type] ?? ev.type)} · {dateFr(ev.date_heure, 'D j M')}</Mono>
-        {ev.style_musique ? <Badge libelle={libelleStyle(ev.style_musique)} icone="musique" fond="transparent" encre={c.grisFonce} filet={c.line2} espacement={lsEm.wide} style={{ paddingVertical: 2, paddingHorizontal: 9, gap: 4 }} /> : null}
-        {ev.is_gratuit ? <Badge libelle="GRATUIT" fond={c.noir} encre={c.bg} /> : null}
-        {ev.sponsorise ? <Badge libelle="Sponsorisé" fond={c.surface2} encre={c.grisFonce} filet={c.line2} /> : null}
-      </View>
-
-      <Pressable onPress={ouvrir} accessibilityRole="link">
-        <Display taille={fs[6]} interligne={lh.tight} style={{ marginBottom: 6 }}>{ev.titre}</Display>
+      <Pressable onPress={ouvrir} accessibilityRole="link" accessibilityHint="Ouvre la fiche de l'événement" style={{ gap: 4, marginTop: 4 }}>
+        <Text style={{ fontFamily: sans(600), fontSize: 12, letterSpacing: 0.06 * 12, textTransform: 'uppercase', color: secondaire }}>{surtitre}</Text>
+        <Text style={{ fontFamily: sans(700), fontSize: 26, lineHeight: 26 * 1.15, letterSpacing: -0.03 * 26, color: encre }}>{ev.titre}</Text>
       </Pressable>
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <Pressable onPress={ouvrir} style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-          <T numberOfLines={1} taille={fs[3]} couleur={c.grisFonce} style={{ flexShrink: 1 }}>{ev.etablissement.nom}</T>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <Pressable onPress={ouvrir} style={{ flex: 1, minWidth: 0 }}>
+          <T taille={fs[5]} couleur={secondaire} interligne={lh.snug}>
+            {ev.etablissement.nom} · {ev.places.inscrits}/{ev.places.quota} places
+          </T>
           {ev.etablissement.nb_avis > 0 ? (
-            <>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                <Icone nom="etoile" taille={16} couleur={c.surOrangeClair} />
-                <T taille={fs[3]} poids={700} couleur={c.surOrangeClair}>{formaterNote(ev.etablissement.note)}</T>
-              </View>
-              <T taille={fs[3]} couleur={c.gris} style={{ flexShrink: 0 }}>({ev.etablissement.nb_avis})</T>
-            </>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+              <Icone nom="etoile" taille={14} couleur={accent ? '#FFFFFF' : c.surOrangeClair} />
+              <T taille={fs[3]} poids={700} couleur={accent ? '#FFFFFF' : c.surOrangeClair}>{formaterNote(ev.etablissement.note)}</T>
+              <T taille={fs[3]} couleur={secondaire}>({ev.etablissement.nb_avis} avis)</T>
+            </View>
           ) : null}
         </Pressable>
-        <BoutonSuivreLieu etabId={ev.etablissement.id} suivi={ev.etablissement.suivi} />
+        <BoutonSuivreLieu etabId={ev.etablissement.id} suivi={ev.etablissement.suivi} media={accent} />
       </View>
 
-      {ev.amis.nb > 0 ? (
-        <View style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Icone nom="personnes" taille={14} couleur={c.surRougeClair} />
-          <T taille={fs[3]} poids={600} couleur={c.surRougeClair}>{ev.amis.prenoms.slice(0, 2).join(', ')} y vont</T>
+      {flash && premiere ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Icone nom="horloge" taille={16} couleur={secondaire} />
+          <T taille={fs[4]} couleur={secondaire}>Commence</T>
+          <T taille={fs[4]} poids={700} couleur={encre} style={{ fontVariant: ['tabular-nums'] }}>{libelleDebut(ts(ev.date_heure), maintenant)}</T>
         </View>
       ) : null}
 
-      <T taille={fs[3]} couleur={c.grisFonce} interligne={lh.snug} style={{ marginVertical: 12 }}>
-        {Array.from(ev.description ?? '').slice(0, 100).join('')}...
-      </T>
+      <QuiYVa prenoms={ev.amis.prenoms} nb={ev.amis.nb} surAccent={accent} fond={accent ? bleu.accent : c.blanc} />
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <T taille={fs[3]} couleur={c.gris}>{ev.places.inscrits}/{ev.places.quota} places</T>
-        <View style={{ flexDirection: 'row', gap: 6 }}>
-          <Pressable
-            onPress={onInviter}
-            accessibilityRole="button"
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1.5, borderColor: c.line2, borderRadius: rayon.pill, paddingVertical: 8, paddingHorizontal: 14, minHeight: 44 }}
-          >
-            <Icone nom="ajout-personne" taille={13} couleur={c.noir} />
-            <T taille={fs[3]} poids={700}>Inviter</T>
-          </Pressable>
-          <Bouton
-            variante={etat === 'vient' ? 'contour' : 'primaire'}
-            libelle={inscrit ? 'Inscrit' : ev.places.complet ? 'Complet' : libelleErreur ?? 'Rejoindre'}
-            icone={inscrit ? 'check' : undefined}
-            desactive={inscrit || ev.places.complet}
-            chargement={etat === 'attente'}
-            onPress={inscrire}
-            taillePolice={fs[3]}
-            style={{ paddingVertical: 8, paddingHorizontal: 18 }}
-          />
-        </View>
+      <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+        <BoutonContour libelle="Inviter" icone="ajout-personne" onPress={onInviter} surAccent={accent} />
+        <BoutonAction
+          libelle={inscrit ? 'Inscrit' : ev.places.complet ? 'Complet' : libelleErreur ?? "S'inscrire"}
+          accent={bleu.accent}
+          surAccent={accent}
+          fait={inscrit}
+          desactive={inscrit || ev.places.complet}
+          chargement={etat === 'attente'}
+          onPress={inscrire}
+          confettis={fete}
+        />
       </View>
-
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 14, marginBottom: 6 }}>
-        <Mono>Taux d&apos;inscription</Mono>
-        <Mono>{pct}%</Mono>
-      </View>
-      <Jauge pourcentage={pct} piste={c.grisClair} remplissage={c.rouge} />
-    </View>
+    </CarteRefonte>
   );
 }
 
@@ -382,10 +303,15 @@ function formaterNote(n: number | null) {
   return String(Math.round(n * 10) / 10);
 }
 
-export function CarteEvenement({ ev, premiere, onInviter }: { ev: Evenement; premiere: boolean; onInviter: () => void }) {
+/**
+ * @param accent   La 1ʳᵉ carte de la liste : aplat de la couleur de la rubrique.
+ * @param premiere La première offre flash encore valable : elle porte le
+ *        compte à rebours avant le début, comme avant.
+ */
+export function CarteEvenement({ ev, premiere, accent = false, onInviter }: { ev: Evenement; premiere: boolean; accent?: boolean; onInviter: () => void }) {
   const [instant] = useState(() => Date.now() / 1000);
   const flash = ev.is_flash && ts(ev.flash_expiry) > instant;
-  return flash ? <CarteFlash ev={ev} premiere={premiere} onInviter={onInviter} /> : <CarteClassique ev={ev} onInviter={onInviter} />;
+  return <Carte ev={ev} accent={accent} premiere={premiere} flash={flash} onInviter={onInviter} />;
 }
 
 export { BoutonSuivreLieu };

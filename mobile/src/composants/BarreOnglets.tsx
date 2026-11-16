@@ -76,11 +76,10 @@ export function gabaritBarre(
 ): { largeur: number; marge: number; compacte: boolean; corps: number } {
   const largeur = Math.max(0, Math.min(440, largeurEcran - 2 * MARGE_BARRE));
   const n = Math.max(1, nbOnglets);
-  // L'onglet actif prend icône + libellé ; les autres 44 px au moins.
-  const resteActif = largeur - 16 - (n - 1) * 46;
-  const besoin = 56 + plusLongLibelle * 8.6;
-  const compacte = resteActif < besoin;
-  const corps = compacte ? Math.max(fs[2], Math.min(fs[4], Math.floor((resteActif - 50) / (plusLongLibelle * 0.6)))) : fs[5];
+  // Les onglets inactifs gardent 40 px au moins ; l'actif prend le reste.
+  const resteActif = largeur - 16 - (n - 1) * 40;
+  const compacte = resteActif < 40 + plusLongLibelle * 9;
+  const corps = compacte ? fs[4] : fs[5] - 1;
   return { largeur, marge: 8, compacte, corps };
 }
 
@@ -138,13 +137,13 @@ export function BarreOnglets({ state, navigation, onglets = ONGLETS, parent = PA
               }}
               style={
                 estActif
-                  ? { flexDirection: 'row', alignItems: 'center', gap: 8, height: 52, paddingHorizontal: 16, borderRadius: 20, backgroundColor: '#FFFFFF', flexShrink: 1 }
-                  : { width: 44, height: 52, alignItems: 'center', justifyContent: 'center' }
+                  ? { flexDirection: 'row', alignItems: 'center', gap: 8, height: 52, paddingHorizontal: 14, borderRadius: 20, backgroundColor: '#FFFFFF', flexShrink: 1 }
+                  : { flex: 1, minWidth: 40, height: 52, alignItems: 'center', justifyContent: 'center' }
               }
             >
               <Icone nom={o.icone} taille={22} couleur={estActif ? '#111116' : fixe.barreIcone} />
               {estActif ? (
-                <Text numberOfLines={1} style={{ fontFamily: sans(600), fontSize: corps, color: '#111116', flexShrink: 1 }}>
+                <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ fontFamily: sans(600), fontSize: corps, color: '#111116', flexShrink: 1 }}>
                   {o.libelle}
                 </Text>
               ) : null}

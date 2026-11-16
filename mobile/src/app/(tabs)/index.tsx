@@ -1,9 +1,11 @@
 /**
  * Le hub étudiant — explore.php.
  *
- * En-tête : « Les bons plans / du moment. », la cloche et sa pastille. Les
- * filtres de type (dont « Pour moi ») et de musique, les cartes flash et
- * classiques, l'état vide, « Voir plus d'événements ».
+ * En-tête : le logo, la recherche et la cloche, puis « Les bons plans [du
+ * moment.] ». Une rangée de chips : Filtres, Tout, Pour moi, Carte, Bars,
+ * Boîtes, Restos. Les styles de musique sont dans le panneau Filtres
+ * (refonte 2026-11) ; le filtrage, lui, n'a pas changé. Puis les cartes —
+ * la première en couleur accent —, l'état vide, « Voir plus d'événements ».
  *
  * La partie Personnes de l'ancien sélecteur Événements / Personnes vit
  * maintenant dans son propre onglet (personnes.tsx) — plus lisible qu'un
@@ -20,17 +22,26 @@ import { router, useFocusEffect } from 'expo-router';
 import { api, type CibleInvitation, type Evenement, type Notification } from '../../api';
 import { Bouton } from '../../composants/Bouton';
 import { CarteEvenement, enregistrerStyles } from '../../composants/CarteEvenement';
+import { Apparition } from '../../composants/Animations';
+import { EnTeteApp, PanneauFiltres, rangeeChips, useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Pilule } from '../../composants/Elements';
 import { Feuille } from '../../composants/Feuille';
-import { Icone } from '../../composants/Icone';
-import { Marque } from '../../composants/Marque';
+import { Icone, type NomIcone } from '../../composants/Icone';
 import { ElementNotification, FeuilleInvitation, FermerFeuille, NotificationsVides, SurtitreFeuille } from '../../composants/Social';
 import { Display, T, TitreEcran } from '../../composants/Texte';
 import { ts } from '../../format';
 import { useJeton } from '../../session';
-import { fixe, fs, gutter, lh, mono, rayon, sans } from '../../theme';
+import { couleursCategorie, fs, lh, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
+
+/** L'icône du petit carré coloré de chaque chip (« Tout » n'en a pas). */
+const ICONES_TYPE: Record<string, NomIcone | undefined> = {
+  'pour-moi': 'etoile-fine',
+  bar: 'verre',
+  boite: 'musique',
+  resto: 'billet',
+};
 
 const TYPES = [
   { code: 'all', libelle: 'Tout' },
@@ -41,8 +52,10 @@ const TYPES = [
 ];
 
 export default function Hub() {
-  const { c, ombre } = useTheme();
+  const { c } = useTheme();
+  const bleu = useRubrique('bleu');
   const jeton = useJeton();
+  const [panneau, setPanneau] = useState(false);
 
   const [rechercheOuverte, setRechercheOuverte] = useState(false);
   const [saisie, setSaisie] = useState('');
@@ -139,48 +152,30 @@ export default function Hub() {
             </View>
           </Feuille>
           <FeuilleInvitation cible={invitation} onClose={() => setInvitation(null)} />
+          <PanneauFiltres
+            visible={panneau}
+            onClose={() => setPanneau(false)}
+            section="Musique"
+            options={[{ code: '', libelle: 'Toute musique' }, ...styles]}
+            valeur={musique}
+            onAppliquer={choisirMusique}
+            accent={bleu.accent}
+          />
         </>
       }
     >
       <EnTete style={{ paddingBottom: 4 }}>
-        <View style={{ marginBottom: 14 }}>
-          <Marque taille={fs[6]} />
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
-          <View style={{ flex: 1 }}>
-            <TitreEcran lignes={['Les bons plans', 'du moment.']} />
-          </View>
-          <View style={{ gap: 8, alignItems: 'flex-end', marginTop: -16 }}>
-            {/* Recherche au-dessus des notifications : « en haut à droite ».
-                Le marginTop négatif rattrape le blanc au-dessus des
-                majuscules du titre (métrique de la police Unbounded) : sans
-                lui, les deux pilules de 44 px semblaient posées plus bas que
-                le texte et le logo. */}
-            <Pressable
-              onPress={() => setRechercheOuverte((o) => !o)}
-              accessibilityRole="button"
-              accessibilityLabel="Rechercher"
-              accessibilityState={{ expanded: rechercheOuverte }}
-              style={[{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.blanc, borderWidth: 1, borderColor: c.line2 }, ombre('sm')]}
-            >
-              <Icone nom="loupe" taille={20} couleur={c.noir} />
-            </Pressable>
-
-            <Pressable
-              onPress={() => { setCloche(true); void chargerNotifs(); }}
-              accessibilityRole="button"
-              accessibilityLabel="Notifications"
-              style={[{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.blanc, borderWidth: 1, borderColor: c.line2 }, ombre('sm')]}
-            >
-              <Icone nom="cloche" taille={22} couleur={c.noir} />
-              {notifs?.a_traiter ? (
-                <View style={{ position: 'absolute', top: -3, right: -3, minWidth: 19, height: 19, paddingHorizontal: 5, borderRadius: rayon.pill, backgroundColor: c.rouge, borderWidth: 2, borderColor: c.bg, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontFamily: mono(600), fontSize: fs[1], lineHeight: fs[1] + 1, color: fixe.surAccent }}>{notifs.a_traiter}</Text>
-                </View>
-              ) : null}
-            </Pressable>
-          </View>
-        </View>
+        <Apparition index={0}>
+          <EnTeteApp
+            onRecherche={() => setRechercheOuverte((o) => !o)}
+            rechercheOuverte={rechercheOuverte}
+            onNotifications={() => { setCloche(true); void chargerNotifs(); }}
+            nonLues={!!notifs?.a_traiter}
+          />
+        </Apparition>
+        <Apparition index={1}>
+          <TitreEcran avant="Les bons plans" surligne="du moment." style={{ marginBottom: 16 }} />
+        </Apparition>
 
         {rechercheOuverte ? (
           <View style={{ marginBottom: 16 }}>
@@ -192,54 +187,57 @@ export default function Hub() {
               placeholder="Chercher une soirée, un lieu..."
               placeholderTextColor={c.gris}
               returnKeyType="search"
-              style={{ paddingVertical: 14, paddingLeft: 20, paddingRight: 52, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.pill, fontFamily: sans(400), fontSize: fs[4], backgroundColor: c.blanc, color: c.noir }}
+              accessibilityLabel="Chercher une soirée ou un lieu"
+              style={{ minHeight: 52, paddingVertical: 14, paddingLeft: 18, paddingRight: 52, borderRadius: rayon.bouton, fontFamily: sans(400), fontSize: fs[5], backgroundColor: c.blanc, color: c.noir }}
             />
-            <Pressable onPress={() => { setQ(saisie.trim()); setPageE(1); setEvenements(null); }} accessibilityLabel="Chercher" style={{ position: 'absolute', right: 14, top: 0, bottom: 0, justifyContent: 'center' }}>
+            <Pressable onPress={() => { setQ(saisie.trim()); setPageE(1); setEvenements(null); }} accessibilityRole="button" accessibilityLabel="Chercher" style={{ position: 'absolute', right: 4, top: 0, bottom: 0, width: 44, alignItems: 'center', justifyContent: 'center' }}>
               <Icone nom="loupe" taille={20} couleur={c.gris} />
             </Pressable>
           </View>
         ) : null}
       </EnTete>
 
-      <View style={{ paddingTop: 2 }}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 20 }} contentContainerStyle={{ gap: 8, paddingHorizontal: gutter, paddingBottom: 16 }}>
-          {TYPES.map((t) => {
-            const actif = type === t.code;
-            const pourMoi = t.code === 'pour-moi';
-            return (
-              <React.Fragment key={t.code}>
-                <Pilule
-                  libelle={t.libelle}
-                  actif={actif}
-                  onPress={() => choisirType(t.code)}
-                  icone={pourMoi ? 'etoile-fine' : undefined}
-                  style={pourMoi && !actif ? { borderColor: c.surRougeClair } : undefined}
-                  couleurTexte={pourMoi && !actif ? c.surRougeClair : undefined}
-                />
-                {/* Juste après « Pour moi », avant les types de lieu : une
-                    action (ouvrir la carte), pas un filtre de plus. */}
-                {pourMoi ? (
-                  <>
-                    <Pilule libelle="Carte" icone="epingle" actif={false} onPress={() => router.push('/carte')} />
-                  </>
-                ) : null}
-              </React.Fragment>
-            );
-          })}
-        </ScrollView>
-
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginTop: -12, marginBottom: 24 }} contentContainerStyle={{ gap: 8, paddingHorizontal: gutter, paddingBottom: 16 }}>
-          <Pilule libelle="Toute musique" icone="musique" musique actif={musique === ''} onPress={() => choisirMusique('')} />
-          {styles.map((s) => (
-            <Pilule key={s.code} libelle={s.libelle} musique actif={musique === s.code} onPress={() => choisirMusique(s.code)} />
-          ))}
-        </ScrollView>
+      <View>
+        <Apparition index={2}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 16 }} contentContainerStyle={rangeeChips}>
+            {/* La musique est passée dans le panneau Filtres ; la chip le
+                signale quand un style est choisi. */}
+            <Pilule
+              libelle={musique ? 'Filtres · 1' : 'Filtres'}
+              icone="reglages"
+              contour
+              actif={false}
+              onPress={() => setPanneau(true)}
+              accessibilityLabel={musique ? `Filtres, musique : ${styles.find((s) => s.code === musique)?.libelle ?? musique}` : 'Filtres'}
+            />
+            {TYPES.map((t) => {
+              const actif = type === t.code;
+              const pourMoi = t.code === 'pour-moi';
+              return (
+                <React.Fragment key={t.code}>
+                  <Pilule
+                    libelle={t.libelle}
+                    actif={actif}
+                    onPress={() => choisirType(t.code)}
+                    icone={ICONES_TYPE[t.code]}
+                    carre={couleursCategorie[t.code]}
+                  />
+                  {/* Juste après « Pour moi », avant les types de lieu : une
+                      action (ouvrir la carte), pas un filtre de plus. */}
+                  {pourMoi ? (
+                    <Pilule libelle="Carte" icone="epingle" carre={couleursCategorie.carte} actif={false} onPress={() => router.push('/carte')} />
+                  ) : null}
+                </React.Fragment>
+              );
+            })}
+          </ScrollView>
+        </Apparition>
 
         <Contenu>
           {erreur ? <Erreur message={erreur} onReessayer={charger} /> : evenements === null ? <Chargement /> : (
             <>
               {evenements.length === 0 ? (
-                <View style={[{ backgroundColor: c.blanc, borderRadius: rayon.base, borderWidth: 1, borderColor: c.grisClair, paddingVertical: 36, paddingHorizontal: 26, alignItems: 'center', marginBottom: 14 }, ombre('sm')]}>
+                <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, paddingVertical: 36, paddingHorizontal: 26, alignItems: 'center', marginBottom: 16 }}>
                   <View style={{ marginBottom: 14 }}><Icone nom={filtreActif ? 'loupe' : 'vide'} taille={24} couleur={c.gris} /></View>
                   <Display taille={fs[6]} interligne={lh.tight} style={{ marginBottom: 6, textAlign: 'center', letterSpacing: -0.02 * fs[6] }}>
                     {filtreActif ? 'Aucun résultat' : 'Rien de prévu pour le moment'}
@@ -255,13 +253,15 @@ export default function Hub() {
                 </View>
               ) : null}
 
-              {evenements.map((e) => (
-                <CarteEvenement
-                  key={e.id}
-                  ev={e}
-                  premiere={e.id === premiereFlash}
-                  onInviter={() => setInvitation({ type: 'event', id: e.id, nom: e.titre })}
-                />
+              {evenements.map((e, i) => (
+                <Apparition key={e.id} index={3 + Math.min(i, 3)}>
+                  <CarteEvenement
+                    ev={e}
+                    accent={i === 0}
+                    premiere={e.id === premiereFlash}
+                    onInviter={() => setInvitation({ type: 'event', id: e.id, nom: e.titre })}
+                  />
+                </Apparition>
               ))}
 
               {resteE ? (
