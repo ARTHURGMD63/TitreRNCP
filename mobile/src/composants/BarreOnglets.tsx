@@ -18,7 +18,7 @@
  */
 
 import React from 'react';
-import { Pressable, Text, View, useWindowDimensions } from 'react-native';
+import { Text, View, useWindowDimensions } from 'react-native';
 import type { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -95,17 +95,20 @@ export function reserveBarre(zoneBasse: number): number {
  * @param onglets Par défaut les six onglets étudiant. L'espace partenaire
  *        passe sa propre liste, plus courte — même barre, mêmes règles.
  * @param parent Onglet allumé par un écran secondaire sans onglet propre.
- * @param actionCentrale Bouton surélevé au centre de la barre, pour une
+ * @param actionCentrale Bouton d'action au centre de la barre, pour une
  *        action plutôt qu'une navigation (créer une soirée, côté partenaire).
+ *        Depuis la refonte, il est placé dans la rangée, au milieu des
+ *        onglets : posé par-dessus, il recouvrait l'onglet actif élargi.
  */
 export function BarreOnglets({ state, navigation, onglets = ONGLETS, parent = PARENT, actionCentrale }: BottomTabBarProps & { onglets?: OngletBarre[]; parent?: Record<string, string>; actionCentrale?: ActionCentraleBarre }) {
-  const { c, ombre } = useTheme();
+  const { ombre } = useTheme();
   const bas = useSafeAreaInsets().bottom;
   const largeurEcran = useWindowDimensions().width;
   const courant = state.routes[state.index]?.name ?? onglets[0]?.route;
   const actif = parent[courant] ?? courant;
   const libelleActif = onglets.find((o) => o.route === actif)?.libelle ?? '';
-  const { largeur, marge, corps } = gabaritBarre(largeurEcran, onglets.length, libelleActif.length);
+  const { largeur, marge, corps } = gabaritBarre(largeurEcran, onglets.length + (actionCentrale ? 1 : 0), libelleActif.length);
+  const milieu = Math.ceil(onglets.length / 2);
 
   return (
     <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, bottom: ecartBasBarre(bas), alignItems: 'center' }}>
@@ -120,11 +123,21 @@ export function BarreOnglets({ state, navigation, onglets = ONGLETS, parent = PA
           ombre('lg'),
         ]}
       >
-        {onglets.map((o) => {
+        {onglets.map((o, i) => {
           const estActif = o.route === actif;
           return (
+            <React.Fragment key={o.route}>
+            {actionCentrale && i === milieu ? (
+              <PressableAnime
+                onPress={actionCentrale.onPress}
+                accessibilityRole="button"
+                accessibilityLabel={actionCentrale.libelle}
+                style={{ width: 48, height: 48, marginHorizontal: 2, borderRadius: rayon.bouton, backgroundColor: actionCentrale.couleur, alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Icone nom={actionCentrale.icone} taille={24} couleur={encreSur(actionCentrale.couleur)} trait={2.5} />
+              </PressableAnime>
+            ) : null}
             <PressableAnime
-              key={o.route}
               accessibilityRole="tab"
               accessibilityState={{ selected: estActif }}
               accessibilityLabel={o.libelle}
@@ -148,28 +161,10 @@ export function BarreOnglets({ state, navigation, onglets = ONGLETS, parent = PA
                 </Text>
               ) : null}
             </PressableAnime>
+            </React.Fragment>
           );
         })}
       </View>
-
-      {actionCentrale ? (
-        <Pressable
-          onPress={actionCentrale.onPress}
-          accessibilityRole="button"
-          accessibilityLabel={actionCentrale.libelle}
-          style={[
-            {
-              position: 'absolute', top: -22, alignSelf: 'center',
-              width: 56, height: 56, borderRadius: 28,
-              backgroundColor: actionCentrale.couleur, borderWidth: 3, borderColor: c.bg,
-              alignItems: 'center', justifyContent: 'center',
-            },
-            ombre('lg'),
-          ]}
-        >
-          <Icone nom={actionCentrale.icone} taille={24} couleur={encreSur(actionCentrale.couleur)} />
-        </Pressable>
-      ) : null}
     </View>
   );
 }

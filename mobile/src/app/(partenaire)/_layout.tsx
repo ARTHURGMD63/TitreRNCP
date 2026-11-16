@@ -61,7 +61,7 @@ export default function OngletsPartenaire() {
           {...props}
           onglets={estClub ? ONGLETS_CLUB : ONGLETS}
           parent={PARENT}
-          actionCentrale={estClub ? undefined : { libelle: 'Créer une soirée', icone: 'plus', couleur: c.orange, onPress: () => router.push({ pathname: '/evenement-form' }) }}
+          actionCentrale={estClub ? undefined : { libelle: 'Créer une soirée', icone: 'plus', couleur: c.rouge, onPress: () => router.push({ pathname: '/evenement-form' }) }}
         />
       )}
       screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: c.bg }, animation: 'none', lazy: false }}
