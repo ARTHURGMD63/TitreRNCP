@@ -38,7 +38,7 @@ export function Aide({ children, style }: { children: React.ReactNode; style?: o
 
 // ─── Cadre commun d'un champ, avec l'anneau de focus ────────────────────────
 
-function Cadre({ focus, children, style, arrondi = rayon.sm }: { focus: boolean; children: React.ReactNode; style?: StyleProp<ViewStyle>; arrondi?: number }) {
+function Cadre({ focus, children, style, arrondi = rayon.bouton }: { focus: boolean; children: React.ReactNode; style?: StyleProp<ViewStyle>; arrondi?: number }) {
   const { c } = useTheme();
   return (
     <View style={style}>
@@ -75,9 +75,12 @@ export function Champ({ etiquette, aide, multiligne, style, marge = 16, ...input
           onFocus={(e) => { setFocus(true); input.onFocus?.(e); }}
           onBlur={(e) => { setFocus(false); input.onBlur?.(e); }}
           style={{
-            paddingVertical: 15, paddingHorizontal: 18, borderWidth: 1, borderRadius: rayon.sm,
-            borderColor: focus ? c.rouge : c.grisClair, backgroundColor: c.blanc, color: c.noir,
-            fontFamily: sans(400), fontSize: fs[5], minHeight: multiligne ? 80 : undefined,
+            // Refonte 2026-11 : même champ que les menus déroulants — fond
+            // gris clair, fin contour (visible sur une carte comme sur le
+            // fond de page), rayon 16, 52 px de haut.
+            paddingVertical: 14, paddingHorizontal: 18, borderWidth: 1, borderRadius: rayon.bouton,
+            borderColor: focus ? c.rouge : c.line2, backgroundColor: c.surface2, color: c.noir,
+            fontFamily: sans(400), fontSize: fs[5], minHeight: multiligne ? 96 : 52,
           }}
         />
       </Cadre>
@@ -117,7 +120,7 @@ export function Selecteur({ etiquette, valeur, options, onChange, titre, style, 
         chevron: filtreActif ? c.surEncre : c.noir,
       }
     : {
-        conteneur: { minHeight: 52, paddingVertical: 14, paddingLeft: 18, paddingRight: 40, borderRadius: rayon.bouton, backgroundColor: c.surface2 },
+        conteneur: { minHeight: 52, paddingVertical: 14, paddingLeft: 18, paddingRight: 40, borderRadius: rayon.bouton, borderWidth: 1, borderColor: c.line2, backgroundColor: c.surface2 },
         texte: { fontFamily: sans(500), fontSize: fs[5], color: c.noir },
         chevron: c.noir,
       };
@@ -311,7 +314,7 @@ export function ChampDate({ etiquette, valeur, onChange, mode = 'date', min, max
         onPress={ouvrir}
         accessibilityRole="button"
         accessibilityLabel={etiquette}
-        style={{ paddingVertical: 15, paddingHorizontal: 18, borderWidth: 1, borderRadius: rayon.sm, borderColor: c.grisClair, backgroundColor: c.blanc }}
+        style={{ minHeight: 52, justifyContent: 'center', paddingVertical: 14, paddingHorizontal: 18, borderWidth: 1, borderRadius: rayon.bouton, borderColor: c.line2, backgroundColor: c.surface2 }}
       >
         <Text style={{ fontFamily: sans(400), fontSize: fs[5], color: valeur ? c.noir : c.gris }}>{texte}</Text>
       </Pressable>
