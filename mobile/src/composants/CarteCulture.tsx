@@ -46,6 +46,14 @@ export function useInscriptionCulture(ev: { id: number; deja_inscrit: boolean })
   const toast = useToast();
   const [etat, setEtat] = useState<EtatInscriptionCulture>(ev.deja_inscrit ? 'inscrit' : 'libre');
   const [inscrits, setInscrits] = useState<number | null>(null);
+  // Le serveur a le dernier mot : une désinscription faite ailleurs (onglet
+  // Pass) doit rendre le bouton « S'inscrire » au prochain chargement.
+  const [inscritVu, setInscritVu] = useState(ev.deja_inscrit);
+  if (ev.deja_inscrit !== inscritVu) {
+    setInscritVu(ev.deja_inscrit);
+    setEtat(ev.deja_inscrit ? 'inscrit' : 'libre');
+    setInscrits(null);
+  }
   // Refonte : les confettis ne partent qu'après une inscription réussie.
   const [fete, setFete] = useState(0);
 

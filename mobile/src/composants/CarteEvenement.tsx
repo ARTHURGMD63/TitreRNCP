@@ -169,6 +169,15 @@ function useInscription(ev: Evenement) {
   const toast = useToast();
   const [etat, setEtat] = useState<'libre' | 'attente' | 'inscrit' | 'vient'>(ev.deja_inscrit ? 'inscrit' : 'libre');
   const [libelleErreur, setLibelleErreur] = useState<string | null>(null);
+  // Le serveur a le dernier mot : quand la liste rechargée dit autre chose
+  // (pass annulé depuis l'onglet Pass), la carte suit au lieu de garder
+  // l'état de sa première apparition.
+  const [inscritVu, setInscritVu] = useState(ev.deja_inscrit);
+  if (ev.deja_inscrit !== inscritVu) {
+    setInscritVu(ev.deja_inscrit);
+    setEtat(ev.deja_inscrit ? 'inscrit' : 'libre');
+    setLibelleErreur(null);
+  }
   // Refonte : les confettis ne partent qu'après la réussite réelle.
   const [fete, setFete] = useState(0);
 

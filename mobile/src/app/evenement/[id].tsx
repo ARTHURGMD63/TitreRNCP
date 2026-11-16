@@ -94,6 +94,11 @@ export default function FicheEvenement() {
     try {
       setErreur(null);
       setE((await api.evenement(jeton, Number(id))).evenement);
+      // L'inscription faite ici n'est qu'une avance sur le serveur : au
+      // rechargement (retour de l'onglet Pass après une annulation), c'est
+      // deja_inscrit qui décide, sinon le bouton restait sur « Inscrit ».
+      setInscription('libre');
+      setLibelleErreur(null);
     } catch (err) {
       setErreur(err instanceof Error ? err.message : 'Événement introuvable.');
     }

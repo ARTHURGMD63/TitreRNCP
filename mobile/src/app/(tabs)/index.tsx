@@ -15,7 +15,7 @@
  * feuille — les deux fenêtres du site.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 
@@ -97,12 +97,9 @@ export default function Hub() {
     }
   }, [jeton, type, musique, q, pageE]);
 
-  useEffect(() => {
-    // Toutes les écritures d'état de charger() suivent l'attente réseau ;
-    // l'analyse statique ne peut pas le démontrer à travers l'appel.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void charger();
-  }, [charger]);
+  // Rechargé à chaque retour sur l'onglet, et non plus au seul montage : un
+  // pass annulé depuis l'onglet Pass laissait la carte afficher « Inscrit ».
+  useFocusEffect(useCallback(() => { void charger(); }, [charger]));
   useFocusEffect(useCallback(() => { void chargerNotifs(); }, [chargerNotifs]));
 
   const filtreActif = type !== 'all' || musique !== '' || q !== '';

@@ -7,9 +7,9 @@
  * d'un ami. Un onglet à part entière, accent violet depuis la refonte.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 
 import { api, type CategorieCulture, type EvenementCulture } from '../../api';
 import { Apparition } from '../../composants/Animations';
@@ -63,11 +63,9 @@ export default function EspaceCulture() {
     }
   }, [jeton, categorie, page]);
 
-  useEffect(() => {
-    // Les écritures d'état de charger() suivent l'attente réseau.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void charger();
-  }, [charger]);
+  // Rechargé à chaque retour sur l'onglet : une désinscription faite depuis
+  // l'onglet Pass ou la fiche doit se voir sur la carte.
+  useFocusEffect(useCallback(() => { void charger(); }, [charger]));
 
   const choisir = (code: string) => { setCategorie(code); setPage(1); setEvenements(null); };
 
