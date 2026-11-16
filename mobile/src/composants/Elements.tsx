@@ -209,12 +209,13 @@ export function BoutonRetour({ media, vers, style, libelle = 'Retour' }: {
       accessibilityRole="button"
       accessibilityLabel={libelle}
       style={[
-        { width: toucheMin, height: toucheMin, borderRadius: toucheMin / 2, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
-        media ? { backgroundColor: fixe.basalte, borderColor: fixe.basalte } : { backgroundColor: c.blanc, borderColor: c.grisClair },
+        // Refonte 2026-11 : carré arrondi de 46 px, comme les boutons d'en-tête.
+        { width: 46, height: 46, borderRadius: rayon.bouton, alignItems: 'center', justifyContent: 'center' },
+        media ? { backgroundColor: fixe.basalte } : { backgroundColor: c.blanc },
         style,
       ]}
     >
-      <Icone nom="fleche-g" taille={20} couleur={media ? fixe.craie : c.noir} />
+      <Icone nom="chevron-g" taille={22} couleur={media ? fixe.craie : c.noir} />
     </Pressable>
   );
 }

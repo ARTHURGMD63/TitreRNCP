@@ -14,7 +14,7 @@ import React, { useState } from 'react';
 import { Platform, Pressable, Text, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 
-import { fixe, fs, lh, lsEm, mono, rayon, sans } from '../theme';
+import { fixe, fs, lh, rayon, sans } from '../theme';
 import { useTheme } from '../useTheme';
 import { Feuille } from './Feuille';
 import { Icone } from './Icone';
@@ -25,7 +25,7 @@ import { Display, T } from './Texte';
 export function Etiquette({ children, style }: { children: React.ReactNode; style?: object }) {
   const { c } = useTheme();
   return (
-    <Text style={[{ fontFamily: mono(500), fontSize: fs[1], letterSpacing: lsEm.label * fs[1], textTransform: 'uppercase', color: c.gris, marginBottom: 8 }, style]}>
+    <Text style={[{ fontFamily: sans(500), fontSize: fs[4], color: c.gris, marginBottom: 8 }, style]}>
       {children}
     </Text>
   );
@@ -182,7 +182,7 @@ export function Case({ coche, onChange, children, style }: {
         {coche ? <Icone nom="check" taille={13} couleur={fixe.surAccent} trait={3.2} /> : null}
       </View>
       <View style={{ flex: 1 }}>
-        {typeof children === 'string' ? <T taille={fs[2]} couleur={c.grisFonce}>{children}</T> : children}
+        {typeof children === 'string' ? <T taille={fs[4]} couleur={c.grisFonce}>{children}</T> : children}
       </View>
     </Pressable>
   );
@@ -225,9 +225,9 @@ export function SelecteurInterets({ catalogue, choisis, onChange, max = 4 }: {
       onPress={() => basculer(i)}
       accessibilityRole="checkbox"
       accessibilityState={{ checked: coche }}
-      style={{ paddingVertical: 9, paddingHorizontal: 15, borderRadius: rayon.pill, borderWidth: 1, borderColor: coche ? c.noir : c.line2, backgroundColor: coche ? c.noir : 'transparent' }}
+      style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 16, borderRadius: rayon.bouton, backgroundColor: coche ? c.noir : c.surface2 }}
     >
-      <Text style={{ fontFamily: sans(600), fontSize: fs[2], color: coche ? c.bg : c.noir }}>{i}</Text>
+      <Text style={{ fontFamily: sans(500), fontSize: fs[5] - 1, color: coche ? c.surEncre : c.noir }}>{i}</Text>
     </Pressable>
   );
 
@@ -239,9 +239,9 @@ export function SelecteurInterets({ catalogue, choisis, onChange, max = 4 }: {
           onPress={() => setDeplie(!deplie)}
           accessibilityRole="button"
           accessibilityLabel={deplie ? "Replier les centres d'intérêt" : `Afficher ${surplus} centre${surplus > 1 ? 's' : ''} d'intérêt de plus`}
-          style={{ minWidth: 46, alignItems: 'center', paddingVertical: 9, paddingHorizontal: 15, borderRadius: rayon.pill, borderWidth: 1, borderStyle: 'dashed', borderColor: c.line2 }}
+          style={{ minWidth: 46, minHeight: 44, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 15, borderRadius: rayon.bouton, borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.line2 }}
         >
-          <Text style={{ fontFamily: sans(600), fontSize: fs[2], color: c.grisFonce }}>{deplie ? '−' : '+' + surplus}</Text>
+          <Text style={{ fontFamily: sans(600), fontSize: fs[5] - 1, color: c.grisFonce }}>{deplie ? '−' : '+' + surplus}</Text>
         </Pressable>
       ) : null}
       {nonCoches.map((i) => etiquette(i, false))}

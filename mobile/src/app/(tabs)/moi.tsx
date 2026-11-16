@@ -1,36 +1,38 @@
 /**
  * Moi — profil.php.
  *
- * L'identité (avatar lave, prénom, nom à l'encre, école · promo), les
- * centres d'intérêt en pilules, les compteurs d'abonnés, les trois tuiles
- * (sorties en lave, squads en dôme, économies en volt), puis les cartes :
- * « Mon Profil » (photo, école, promo, intérêts), XP et badges, Apparence,
+ * Refonte 2026-11 : une vitrine. Une carte bleue porte l'avatar, le nom,
+ * « école · promo » et les compteurs d'abonnés et d'abonnements ; dessous,
+ * les hashtags (les centres d'intérêt), « Modifier », et les trois tuiles
+ * Sorties, Squads et Économies. Puis, comme avant : XP et badges, Apparence,
  * liens légaux, compte et déconnexion.
+ *
+ * Le formulaire « Mon Profil » est parti dans son propre écran, Modifier le
+ * profil (profil/modifier.tsx), ouvert par « Modifier ».
  */
 
-import React, { useCallback, useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
 
-import { api, ErreurApi, type Badge, type ReponseMoi } from '../../api';
+import { api, type Badge, type ReponseMoi } from '../../api';
 import { PAGES_LEGALES } from '../../legal';
+import { Apparition, Compteur, PressableAnime } from '../../composants/Animations';
 import { Bouton } from '../../composants/Bouton';
+import { CarreIcone, EnTeteApp, useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
-import { Avatar, Encart, Jauge } from '../../composants/Elements';
-import { Aide, Case, Etiquette, SelecteurInterets, Selecteur } from '../../composants/Formulaire';
+import { Avatar, Jauge } from '../../composants/Elements';
 import { estIcone, Icone, type NomIcone } from '../../composants/Icone';
-import { Marque } from '../../composants/Marque';
-import { Display, Mono, T, TitreEcran } from '../../composants/Texte';
+import { Display, Mono, T } from '../../composants/Texte';
 import { nombre } from '../../format';
 import { useJeton, useSession } from '../../session';
-import { couleurCss, encreSur, fixe, fs, lh, mono, police, rayon, sans } from '../../theme';
+import { couleurCss, encreSur, fs, halo, lh, mono, police, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 function CarteProfil({ children, style }: { children: React.ReactNode; style?: object }) {
-  const { c, ombre } = useTheme();
+  const { c } = useTheme();
   return (
-    <View style={[{ backgroundColor: c.blanc, borderRadius: rayon.base, borderWidth: 1, borderColor: c.grisClair, padding: 22, marginBottom: 20 }, ombre('base'), style]}>
+    <View style={[{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 20, marginBottom: 16 }, style]}>
       {children}
     </View>
   );
@@ -40,8 +42,8 @@ function TitreSection({ icone, children }: { icone: NomIcone; children: string }
   const { c } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-      <View style={{ marginRight: 8 }}><Icone nom={icone} taille={20} couleur={c.noir} /></View>
-      <Display taille={fs[6]} accessibilityRole="header">{children}</Display>
+      <View style={{ marginRight: 4 }}><Icone nom={icone} taille={20} couleur={c.noir} /></View>
+      <T taille={19} poids={700} accessibilityRole="header" style={{ letterSpacing: -0.02 * 19 }}>{children}</T>
     </View>
   );
 }
@@ -66,37 +68,20 @@ function PastilleBadge({ b, verrouille, largeur }: { b: Badge; verrouille?: bool
 
 export default function Moi() {
   const { c, choisir, preference } = useTheme();
+  const bleu = useRubrique('bleu');
+  const violet = useRubrique('culture');
   const jeton = useJeton();
-  const { deconnexion, mettreAJour } = useSession();
-  const defilement = useRef<ScrollView>(null);
-  const [yFormulaire, setYFormulaire] = useState(0);
+  const { deconnexion } = useSession();
   const [largeurGrille, setLargeurGrille] = useState(0);
 
   const [donnees, setDonnees] = useState<ReponseMoi | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [rafraichit, setRafraichit] = useState(false);
 
-  // Formulaire
-  const [ecole, setEcole] = useState('UCA');
-  const [promo, setPromo] = useState('L1');
-  const [interets, setInterets] = useState<string[]>([]);
-  const [comptePrive, setComptePrive] = useState(true);
-  const [photo, setPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
-  const [retirer, setRetirer] = useState(false);
-  const [enregistrement, setEnregistrement] = useState(false);
-  const [succes, setSucces] = useState<string | null>(null);
-  const [erreurPhoto, setErreurPhoto] = useState<string | null>(null);
-
   const charger = useCallback(async () => {
     try {
       setErreur(null);
-      const r = await api.pageMoi(jeton);
-      setDonnees(r);
-      // <select> sans valeur correspondante : le navigateur montre la première option.
-      setEcole(r.moi.ecole && r.choix.ecoles.includes(r.moi.ecole) ? r.moi.ecole : r.choix.ecoles[0]);
-      setPromo(r.moi.promo && r.choix.promos.includes(r.moi.promo) ? r.moi.promo : r.choix.promos[0]);
-      setInterets(r.moi.interets);
-      setComptePrive(r.moi.compte_prive);
+      setDonnees(await api.pageMoi(jeton));
     } catch (e) {
       setErreur(e instanceof Error ? e.message : 'Chargement impossible.');
     } finally {
@@ -106,46 +91,7 @@ export default function Moi() {
 
   useFocusEffect(useCallback(() => { void charger(); }, [charger]));
 
-  async function choisirPhoto() {
-    const choix = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.9 });
-    if (!choix.canceled && choix.assets[0]) {
-      setPhoto(choix.assets[0]);
-      // Choisir une photo annule l'intention de la retirer.
-      setRetirer(false);
-    }
-  }
-
-  async function enregistrer() {
-    setEnregistrement(true);
-    setSucces(null);
-    setErreurPhoto(null);
-    try {
-      const f = new FormData();
-      f.append('ecole', ecole);
-      f.append('promo', promo);
-      f.append('compte_prive', comptePrive ? '1' : '0');
-      interets.forEach((i) => f.append('interets[]', i));
-      if (retirer) f.append('supprimer_photo', '1');
-      if (photo && !retirer) {
-        const nom = photo.fileName ?? 'photo.jpg';
-        f.append('photo', { uri: photo.uri, name: nom, type: photo.mimeType ?? 'image/jpeg' } as unknown as Blob);
-      }
-      const rep = await api.enregistrerProfil(jeton, f);
-      mettreAJour(rep.utilisateur);
-      setSucces(rep.message);
-      setErreurPhoto(rep.erreur_photo);
-      setPhoto(null);
-      setRetirer(false);
-      await charger();
-      defilement.current?.scrollTo({ y: 0, animated: true });
-    } catch (e) {
-      setErreurPhoto(e instanceof ErreurApi ? e.message : 'Erreur réseau');
-    } finally {
-      setEnregistrement(false);
-    }
-  }
-
-  const allerAuFormulaire = () => defilement.current?.scrollTo({ y: yFormulaire, animated: true });
+  const modifier = () => router.push('/profil/modifier' as never);
 
   if (!donnees) {
     return (
@@ -155,131 +101,101 @@ export default function Moi() {
     );
   }
 
-  const { moi, xp, choix } = donnees;
-  const apercu = retirer ? null : photo?.uri ?? moi.photo_url;
+  const { moi, xp } = donnees;
 
   return (
-    <Ecran defilementRef={defilement} rafraichit={rafraichit} onRafraichir={() => { setRafraichit(true); void charger(); }}>
-      <EnTete style={{ marginBottom: 24 }}>
-        <View style={{ marginBottom: 18 }}>
-          <Marque taille={fs[6]} />
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 16 }}>
-          <Avatar photo={moi.photo_url} prenom={moi.prenom} taille={72} fond={c.rouge} />
-          <View style={{ flex: 1 }}>
-            <TitreEcran lignes={[moi.prenom, moi.nom]} accent={c.noir} />
-            <T taille={fs[3]} couleur={c.gris} style={{ marginTop: 6 }}>{moi.ecole ?? '—'} · {moi.promo ?? '—'}</T>
-          </View>
-        </View>
-
-        <View style={{ marginBottom: 14 }}>
-          {moi.interets.length ? (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-              {moi.interets.map((i) => (
-                <Pressable key={i} onPress={() => router.navigate({ pathname: '/personnes', params: { interest: i } })} accessibilityRole="link"
-                  accessibilityLabel={`Voir les étudiants qui aiment ${i}`}
-                  style={{ paddingVertical: 7, paddingHorizontal: 14, backgroundColor: c.noir, borderRadius: rayon.pill }}>
-                  <T taille={fs[3]} poids={600} couleur={c.bg}>#{i}</T>
-                </Pressable>
-              ))}
-              <Text onPress={allerAuFormulaire} style={{ fontFamily: sans(700), fontSize: fs[3], color: c.surRougeClair, marginLeft: 4 }}>Modifier</Text>
-            </View>
-          ) : (
-            <Text onPress={allerAuFormulaire} style={{ fontFamily: sans(700), fontSize: fs[2], color: c.surRougeClair }}>+ Ajoute tes centres d&apos;intérêt</Text>
-          )}
-        </View>
-
-        <View style={{ flexDirection: 'row', gap: 28, paddingVertical: 14, borderTopWidth: 1, borderTopColor: c.grisClair, marginBottom: 10 }}>
-          {[
-            { n: moi.nb_abonnes, l: 'Abonnés', type: 'abonnes' },
-            { n: moi.nb_abonnements, l: 'Abonnements', type: 'abonnements' },
-          ].map((x) => (
-            <Pressable key={x.type} onPress={() => router.navigate({ pathname: '/abonnements', params: { type: x.type } })} accessibilityRole="link" style={{ alignItems: 'center' }}>
-              <Display taille={fs[7]}>{x.n}</Display>
-              <Mono>{x.l}</Mono>
-            </Pressable>
-          ))}
-        </View>
+    <Ecran rafraichit={rafraichit} onRafraichir={() => { setRafraichit(true); void charger(); }}>
+      <EnTete style={{ paddingBottom: 4 }}>
+        <Apparition index={0}>
+          <EnTeteApp onNotifications={() => router.navigate('/notifications')} />
+        </Apparition>
       </EnTete>
 
       <Contenu style={{ paddingTop: 0 }}>
-        <View style={{ flexDirection: 'row', gap: 10, marginTop: -20, marginBottom: 24 }}>
-          {[
-            { l: 'Sorties', v: String(moi.nb_sorties), couleur: c.surRougeClair },
-            { l: 'Squads', v: String(moi.nb_squads), couleur: c.surBleuClair },
-            { l: 'Économies', v: nombre(Math.round(moi.economies), 0, '') + '€', couleur: c.surLimeClair },
-          ].map((t) => (
-            <View key={t.l} style={{ flex: 1, backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.md, paddingVertical: 14, paddingHorizontal: 12 }}>
-              <Mono couleur={t.couleur} style={{ marginBottom: 6 }}>{t.l}</Mono>
-              <Display taille={fs[7]}>{t.v}</Display>
-            </View>
-          ))}
-        </View>
-
-        {succes ? <Encart genre="ok">{succes}</Encart> : null}
-
-        {/* Mon Profil */}
-        <View onLayout={(e) => setYFormulaire(e.nativeEvent.layout.y)}>
-          <CarteProfil>
-            <TitreSection icone="personne">Mon Profil</TitreSection>
-            {erreurPhoto ? <Encart genre="erreur">{erreurPhoto}</Encart> : null}
-
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 22 }}>
-              <Avatar photo={apercu} prenom={moi.prenom} taille={72} fond={c.rouge} />
+        {/* La carte de profil : aplat bleu, texte blanc. */}
+        <Apparition index={1}>
+          <View style={[{ backgroundColor: bleu.accent, borderRadius: rayon.carte, padding: 20, gap: 18, marginBottom: 16 }, halo(bleu.accent)]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+              <Avatar photo={moi.photo_url} prenom={moi.prenom} taille={72} fond="#FFFFFF" />
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Mono style={{ marginBottom: 9 }}>Photo de profil</Mono>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                  <Bouton variante="contour" icone="envoi" libelle={moi.photo_url ? 'Changer la photo' : 'Choisir une photo'} onPress={choisirPhoto} />
-                  <T numberOfLines={1} taille={fs[2]} couleur={photo ? c.grisFonce : c.gris} style={{ maxWidth: 190 }}>
-                    {photo ? photo.fileName ?? 'photo.jpg' : 'Aucune image choisie'}
-                  </T>
-                </View>
-                <T taille={fs[2]} couleur={c.gris} style={{ marginTop: 8 }}>JPG, PNG ou WebP — 2 Mo maximum.</T>
-                {moi.photo_url ? (
-                  <Case coche={retirer} onChange={(v) => { setRetirer(v); if (v) setPhoto(null); }} style={{ marginTop: 4 }}>Retirer ma photo</Case>
-                ) : null}
+                <Text accessibilityRole="header" numberOfLines={2} style={{ fontFamily: sans(700), fontSize: 28, lineHeight: 28 * 1.15, letterSpacing: -0.035 * 28, color: '#FFFFFF' }}>
+                  {moi.prenom} {moi.nom}
+                </Text>
+                <T taille={fs[5]} couleur={bleu.surAccent2} style={{ marginTop: 4 }}>{moi.ecole ?? '—'} · {moi.promo ?? '—'}</T>
               </View>
             </View>
-
-            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
-              <Selecteur style={{ flex: 1 }} marge={0} etiquette="École" valeur={ecole} onChange={setEcole} options={choix.ecoles.map((e) => ({ valeur: e, libelle: e }))} />
-              <Selecteur style={{ flex: 1 }} marge={0} etiquette="Promo" valeur={promo} onChange={setPromo} options={choix.promos.map((p) => ({ valeur: p, libelle: p }))} />
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              {[
+                { n: moi.nb_abonnes, l: moi.nb_abonnes > 1 ? 'abonnés' : 'abonné', type: 'abonnes' },
+                { n: moi.nb_abonnements, l: moi.nb_abonnements > 1 ? 'abonnements' : 'abonnement', type: 'abonnements' },
+              ].map((x, i) => (
+                <PressableAnime
+                  key={x.type}
+                  onPress={() => router.navigate({ pathname: '/abonnements', params: { type: x.type } })}
+                  accessibilityRole="link"
+                  accessibilityLabel={`${x.n} ${x.l}`}
+                  style={{ flex: 1, flexDirection: 'row', alignItems: 'baseline', gap: 8, minHeight: 52, paddingVertical: 12, paddingHorizontal: 16, borderRadius: rayon.bouton, backgroundColor: 'rgba(255,255,255,0.16)' }}
+                >
+                  <Compteur valeur={x.n} delai={i * 120} style={{ fontFamily: sans(700), fontSize: 22, color: '#FFFFFF', fontVariant: ['tabular-nums'] }} />
+                  <T taille={fs[5]} couleur={bleu.surAccent2}>{x.l}</T>
+                </PressableAnime>
+              ))}
             </View>
+          </View>
+        </Apparition>
 
-            <View style={{ marginBottom: 20 }}>
-              <Etiquette style={{ marginBottom: 12 }}>Centres d&apos;intérêt</Etiquette>
-              <SelecteurInterets catalogue={choix.interets} choisis={interets} onChange={setInterets} />
-            </View>
+        {/* Les hashtags (centres d'intérêt) et « Modifier ». */}
+        <Apparition index={2}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+            {moi.interets.map((i) => (
+              <PressableAnime key={i} onPress={() => router.navigate({ pathname: '/personnes', params: { interest: i } })} accessibilityRole="link"
+                accessibilityLabel={`Voir les étudiants qui aiment ${i}`}
+                style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 16, backgroundColor: c.blanc, borderRadius: rayon.bouton }}>
+                <T taille={fs[5]} poids={500}>#{i}</T>
+              </PressableAnime>
+            ))}
+            <PressableAnime onPress={modifier} accessibilityRole="button" accessibilityLabel={moi.interets.length ? 'Modifier mon profil' : 'Ajouter mes centres d\'intérêt'}
+              style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, backgroundColor: c.noir, borderRadius: rayon.bouton }}>
+              <Icone nom="crayon" taille={17} couleur={c.surEncre} />
+              <T taille={fs[5]} poids={700} couleur={c.surEncre}>{moi.interets.length ? 'Modifier' : 'Ajoute tes centres d\'intérêt'}</T>
+            </PressableAnime>
+          </View>
+        </Apparition>
 
-            <View style={{ marginBottom: 20 }}>
-              <Case coche={!comptePrive} onChange={(v) => setComptePrive(!v)}>Compte public</Case>
-              <Aide>
-                {comptePrive
-                  ? "Compte privé : tes abonnés doivent être acceptés, et tes photos de soirée ne sont visibles que d'eux."
-                  : 'Compte public : tout le monde peut te suivre sans demande, et voir tes photos de soirée.'}
-              </Aide>
-            </View>
-
-            <Bouton libelle="Enregistrer les modifications" plein chargement={enregistrement} onPress={enregistrer} />
-          </CarteProfil>
-        </View>
+        {/* Les trois tuiles. */}
+        <Apparition index={3}>
+          <View style={{ flexDirection: 'row', gap: 10, marginBottom: 24 }}>
+            {[
+              { l: 'Sorties', v: moi.nb_sorties, format: (n: number) => String(Math.round(n)), icone: 'musique' as const, fond: bleu.doux, encre: bleu.texteDoux },
+              { l: 'Squads', v: moi.nb_squads, format: (n: number) => String(Math.round(n)), icone: 'personnes' as const, fond: violet.doux, encre: violet.texteDoux },
+              { l: 'Économies', v: moi.economies, format: (n: number) => nombre(Math.round(n), 0, '') + ' €', icone: 'portefeuille' as const, fond: c.succesClair, encre: c.succes },
+            ].map((t, i) => (
+              <View key={t.l} style={{ flex: 1, backgroundColor: c.blanc, borderRadius: rayon.tuile, padding: 14, gap: 10 }}>
+                <CarreIcone icone={t.icone} fond={t.fond} encre={t.encre} />
+                <Compteur valeur={t.v} format={t.format} delai={240 + i * 120}
+                  style={{ fontFamily: sans(700), fontSize: 26, letterSpacing: -0.03 * 26, color: c.noir, fontVariant: ['tabular-nums'] }} />
+                <T taille={fs[4]} couleur={c.gris}>{t.l}</T>
+              </View>
+            ))}
+          </View>
+        </Apparition>
 
         {/* XP et badges */}
         <CarteProfil>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-            <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: c.lime, alignItems: 'center', justifyContent: 'center' }}>
-              <Display taille={fs[7]} couleur={fixe.surLave}>{xp.niveau}</Display>
+            <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: bleu.accent, alignItems: 'center', justifyContent: 'center' }}>
+              <Display taille={fs[7]} couleur="#FFFFFF">{xp.niveau}</Display>
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
                 <Mono couleur={c.grisFonce}>Niveau {xp.niveau}</Mono>
-                <Text style={{ fontFamily: mono(400), fontSize: fs[2], color: c.surLimeClair }}>{nombre(xp.total)} / {nombre(xp.suivant)} XP</Text>
+                <Text style={{ fontFamily: mono(500), fontSize: fs[4], color: bleu.texteDoux }}>{nombre(xp.total)} / {nombre(xp.suivant)} XP</Text>
               </View>
-              <Jauge pourcentage={xp.progres} piste={c.grisClair} remplissage={c.lime} hauteur={8} />
+              <Jauge pourcentage={xp.progres} piste={c.surface2} remplissage={bleu.accent} hauteur={8} />
             </View>
           </View>
 
-          <T taille={fs[3]} couleur={c.gris} style={{ marginTop: 16, marginBottom: 18 }}>
+          <T taille={fs[4]} couleur={c.gris} style={{ marginTop: 16, marginBottom: 18 }}>
             {xp.stats.events} sorties · {xp.stats.squads} squads · {xp.stats.follows} abonnements · {xp.stats.avis} avis
           </T>
 
@@ -304,19 +220,19 @@ export default function Moi() {
           <TitreSection icone="soleil">Apparence</TitreSection>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Pressable onPress={() => choisir('systeme')} accessibilityRole="button" accessibilityState={{ selected: preference === 'systeme' }}
-              style={{ flex: 1, paddingVertical: 14, paddingHorizontal: 6, borderRadius: rayon.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: c.blanc, borderWidth: preference === 'systeme' ? 2 : 1, borderColor: preference === 'systeme' ? c.rouge : c.grisClair }}>
+              style={{ flex: 1, minHeight: 48, paddingHorizontal: 6, borderRadius: rayon.bouton, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: c.surface2, borderWidth: 2, borderColor: preference === 'systeme' ? bleu.accent : c.surface2 }}>
               <Icone nom="engrenage" taille={15} couleur={c.noir} />
-              <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: fs[3], color: c.noir }}>Système</Text>
+              <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: fs[4], color: c.noir }}>Système</Text>
             </Pressable>
             <Pressable onPress={() => choisir('clair')} accessibilityRole="button" accessibilityState={{ selected: preference === 'clair' }}
-              style={{ flex: 1, paddingVertical: 14, paddingHorizontal: 6, borderRadius: rayon.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: '#F5F1E8', borderWidth: preference === 'clair' ? 2 : 1, borderColor: preference === 'clair' ? c.rouge : '#DCD5C7' }}>
-              <Icone nom="soleil-petit" taille={15} couleur="#111013" />
-              <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: fs[3], color: '#111013' }}>Clair</Text>
+              style={{ flex: 1, minHeight: 48, paddingHorizontal: 6, borderRadius: rayon.bouton, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: '#F2F2F5', borderWidth: 2, borderColor: preference === 'clair' ? bleu.accent : '#D4D4DC' }}>
+              <Icone nom="soleil-petit" taille={15} couleur="#111116" />
+              <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: fs[4], color: '#111116' }}>Clair</Text>
             </Pressable>
             <Pressable onPress={() => choisir('sombre')} accessibilityRole="button" accessibilityState={{ selected: preference === 'sombre' }}
-              style={{ flex: 1, paddingVertical: 14, paddingHorizontal: 6, borderRadius: rayon.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: '#111013', borderWidth: preference === 'sombre' ? 2 : 1, borderColor: preference === 'sombre' ? c.rouge : '#36323B' }}>
-              <Icone nom="lune" taille={15} couleur="#F5F1E8" />
-              <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: fs[3], color: '#F5F1E8' }}>Sombre</Text>
+              style={{ flex: 1, minHeight: 48, paddingHorizontal: 6, borderRadius: rayon.bouton, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: '#0E0E12', borderWidth: 2, borderColor: preference === 'sombre' ? bleu.accent : '#3A3A44' }}>
+              <Icone nom="lune" taille={15} couleur="#F2F2F5" />
+              <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: fs[4], color: '#F2F2F5' }}>Sombre</Text>
             </Pressable>
           </View>
         </CarteProfil>
@@ -325,8 +241,8 @@ export default function Moi() {
         <CarteProfil style={{ padding: 0, overflow: 'hidden' }}>
           {PAGES_LEGALES.map(({ slug, libelle: l }, i) => (
             <Pressable key={slug} onPress={() => router.push(`/legal/${slug}` as never)} accessibilityRole="link"
-              style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 20, borderBottomWidth: i < 2 ? 1 : 0, borderBottomColor: c.grisClair }}>
-              <T taille={fs[4]} poids={600}>{l}</T>
+              style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 52, paddingVertical: 14, paddingHorizontal: 20, borderBottomWidth: i < 2 ? 1 : 0, borderBottomColor: c.grisClair }}>
+              <T taille={fs[5]} poids={500}>{l}</T>
               <Icone nom="chevron-d" taille={18} couleur={c.gris} />
             </Pressable>
           ))}
