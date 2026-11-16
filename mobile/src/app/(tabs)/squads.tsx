@@ -112,38 +112,38 @@ function CarteSquad({ s, onGerer }: { s: Squad; onGerer: () => void }) {
       disabled={props.disabled}
       accessibilityRole="button"
       accessibilityLabel={libelle ?? 'Inscrit'}
-      style={[{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, minWidth: 44, justifyContent: 'center', paddingHorizontal: 18, borderRadius: rayon.bouton, borderWidth: 1.5, borderColor: 'transparent' }, style]}
+      style={[{ flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 36, minWidth: 40, justifyContent: 'center', paddingHorizontal: 12, borderRadius: rayon.sm, borderWidth: 1, borderColor: 'transparent' }, style]}
     >
-      {props.icone ? <Icone nom={props.icone} taille={16} couleur={couleur} trait={props.icone === 'check' ? 2.5 : 2} /> : null}
-      {libelle ? <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: couleur }}>{libelle}</Text> : null}
+      {props.icone ? <Icone nom={props.icone} taille={14} couleur={couleur} trait={props.icone === 'check' ? 2.5 : 2} /> : null}
+      {libelle ? <Text style={{ fontFamily: sans(600), fontSize: fs[4], color: couleur }}>{libelle}</Text> : null}
     </PressableAnime>
   );
 
   return (
-    <View style={{ borderRadius: rayon.carte, padding: 20, marginBottom: 16, backgroundColor: c.blanc, gap: 10 }}>
+    <View style={{ borderRadius: rayon.carte, padding: 14, marginBottom: 12, backgroundColor: c.blanc, gap: 8 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <Pastille libelle={NIVEAUX_SQUAD[s.niveau] ?? s.niveau} fond={sport.doux} encre={sport.texteDoux} />
         <Pastille libelle={dateFr(s.date_heure, 'D j M · H\\hi')} fond={c.noir} encre={c.surEncre} style={{ flexShrink: 1 }} />
       </View>
 
-      <View style={{ gap: 4 }}>
-        <Text style={{ fontFamily: sans(600), fontSize: 12, letterSpacing: 0.06 * 12, textTransform: 'uppercase', color: c.gris, marginTop: 4 }}>
+      <View style={{ gap: 1 }}>
+        <Text style={{ fontFamily: sans(600), fontSize: 10, letterSpacing: 0.06 * 10, textTransform: 'uppercase', color: c.gris, marginTop: 2 }}>
           {TYPES_SQUAD[s.type] ?? s.type} ·{' '}
           <Text style={{ color: s.visibilite === 'public' ? c.gris : c.succes }}>
             {s.cree_par_association ? 'Association' : libelleVisibilite(s.visibilite)}
           </Text>
         </Text>
-        <Text style={{ fontFamily: sans(700), fontSize: taille.titreCarteSport, lineHeight: taille.titreCarteSport * 1.15, letterSpacing: -0.03 * taille.titreCarteSport, color: c.noir }}>{s.titre}</Text>
-        <T taille={fs[5]} couleur={c.gris}>
+        <Text numberOfLines={2} style={{ fontFamily: sans(700), fontSize: taille.titreCarte, lineHeight: taille.titreCarte * 1.2, letterSpacing: -0.02 * taille.titreCarte, color: c.noir }}>{s.titre}</Text>
+        <T taille={fs[3]} couleur={c.gris} numberOfLines={1} style={{ marginTop: 2 }}>
           {s.est_createur ? 'Ton événement' : `Par ${court(s.createur.prenom, s.createur.nom)}`}{s.lieu ? ` · ${s.lieu}` : ''}
         </T>
-        {s.description ? <T taille={fs[4]} couleur={c.gris}>{Array.from(s.description).slice(0, 80).join('')}{Array.from(s.description).length > 80 ? '…' : ''}</T> : null}
+        {s.description ? <T taille={fs[3]} couleur={c.gris} numberOfLines={2}>{Array.from(s.description).slice(0, 80).join('')}{Array.from(s.description).length > 80 ? '…' : ''}</T> : null}
       </View>
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingTop: 14, marginTop: 4, borderTopWidth: 1, borderTopColor: c.grisClair }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingTop: 10, marginTop: 2, borderTopWidth: 1, borderTopColor: c.grisClair }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <AvatarsEmpiles personnes={s.membres.slice(0, 3).map((m, i) => ({ cle: `${m.prenom}${i}`, prenom: m.prenom }))} fond={c.blanc} />
-          <T taille={fs[4]} couleur={c.gris}>{membres}/{s.places.quota}</T>
+          <AvatarsEmpiles personnes={s.membres.slice(0, 3).map((m, i) => ({ cle: `${m.prenom}${i}`, prenom: m.prenom }))} fond={c.blanc} taille={22} />
+          <T taille={fs[3]} couleur={c.gris}>{membres}/{s.places.quota}</T>
         </View>
 
         {s.est_createur
@@ -365,7 +365,7 @@ function FeuilleCreation({ visible, onClose, onCree }: { visible: boolean; onClo
 
   return (
     <Feuille visible={visible} onClose={onClose}>
-      <Display taille={fs[7]} style={{ marginBottom: 20 }}>Créer un événement</Display>
+      <Display taille={fs[6]} style={{ marginBottom: 20 }}>Créer un événement</Display>
       <Champ etiquette="Titre" value={titre} onChangeText={setTitre} placeholder="Sortie Puy-de-Dôme" />
       <View style={{ flexDirection: 'row', gap: 12 }}>
         <Selecteur style={{ flex: 1 }} etiquette="Sport" valeur={type} onChange={setType}
@@ -445,9 +445,9 @@ function FeuilleGestion({ squadId, onClose, onSupprime }: { squadId: number | nu
 
   return (
     <Feuille visible={squadId !== null} onClose={onClose}>
-      <Display taille={fs[7]} style={{ marginBottom: 20 }}>Gérer mon événement</Display>
+      <Display taille={fs[6]} style={{ marginBottom: 20 }}>Gérer mon événement</Display>
       {donnees === null ? (
-        <T taille={fs[5]} style={{ textAlign: 'center', padding: 20 }}>Chargement...</T>
+        <T taille={fs[4]} style={{ textAlign: 'center', padding: 14 }}>Chargement...</T>
       ) : (
         <>
           <Mono accessibilityRole="header" style={{ marginBottom: 12 }}>Participants inscrits</Mono>
@@ -455,7 +455,7 @@ function FeuilleGestion({ squadId, onClose, onSupprime }: { squadId: number | nu
             {donnees.membres.map((m) => (
               <View key={m.id} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.sm, backgroundColor: c.blanc }}>
                 <View>
-                  <T taille={fs[5]} poids={700}>{court(m.prenom, m.nom)}</T>
+                  <T taille={fs[4]} poids={700}>{court(m.prenom, m.nom)}</T>
                   <T taille={12} couleur={c.gris}>{m.ecole || 'Étudiant'}</T>
                 </View>
                 {m.id === donnees.my_id ? (

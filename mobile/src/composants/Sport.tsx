@@ -96,12 +96,12 @@ export function ActionCarte({ libelle, onPress, plein = true, icone }: { libelle
       disabled={!onPress}
       accessibilityRole="button"
       style={[
-        { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, paddingHorizontal: 18, borderRadius: rayon.bouton },
+        { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 36, paddingHorizontal: 12, borderRadius: rayon.sm },
         plein ? { backgroundColor: sport.accent } : { backgroundColor: c.surface2 },
       ]}
     >
-      {icone ? <Icone nom={icone} taille={16} couleur={plein ? '#FFFFFF' : c.grisFonce} trait={2.5} /> : null}
-      <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: plein ? '#FFFFFF' : c.grisFonce }}>{libelle}</Text>
+      {icone ? <Icone nom={icone} taille={14} couleur={plein ? '#FFFFFF' : c.grisFonce} trait={2.5} /> : null}
+      <Text style={{ fontFamily: sans(600), fontSize: fs[4], color: plein ? '#FFFFFF' : c.grisFonce }}>{libelle}</Text>
     </PressableAnime>
   );
 }
@@ -113,7 +113,7 @@ function CadreCarte({ children, onPress, libelleAcces }: { children: React.React
       onPress={onPress}
       accessibilityRole={onPress ? 'link' : undefined}
       accessibilityLabel={libelleAcces}
-      style={{ borderRadius: rayon.carte, padding: 20, marginBottom: 16, backgroundColor: c.blanc, gap: 10 }}
+      style={{ borderRadius: rayon.carte, padding: 14, marginBottom: 12, backgroundColor: c.blanc, gap: 8 }}
     >
       {children}
     </Pressable>
@@ -136,12 +136,12 @@ function Haut({ gauche, date, alerte }: { gauche?: string; date: string; alerte?
 
 function Surtitre({ children }: { children: React.ReactNode }) {
   const { c } = useTheme();
-  return <Text style={{ fontFamily: sans(600), fontSize: 12, letterSpacing: 0.06 * 12, textTransform: 'uppercase', color: c.gris, marginTop: 4 }}>{children}</Text>;
+  return <Text style={{ fontFamily: sans(600), fontSize: 10, letterSpacing: 0.06 * 10, textTransform: 'uppercase', color: c.gris, marginTop: 2 }}>{children}</Text>;
 }
 
 function Titre({ children }: { children: React.ReactNode }) {
   const { c } = useTheme();
-  return <Text style={{ fontFamily: sans(700), fontSize: taille.titreCarteSport, lineHeight: taille.titreCarteSport * 1.15, letterSpacing: -0.03 * taille.titreCarteSport, color: c.noir }}>{children}</Text>;
+  return <Text numberOfLines={2} style={{ fontFamily: sans(700), fontSize: taille.titreCarte, lineHeight: taille.titreCarte * 1.2, letterSpacing: -0.02 * taille.titreCarte, color: c.noir }}>{children}</Text>;
 }
 
 /** « Mar 17 nov · 19h30 » */
@@ -162,29 +162,29 @@ export function CarteCreneau({ cr, action, onPress }: { cr: Creneau; action: str
   return (
     <CadreCarte onPress={onPress} libelleAcces={`${libelleSport(cr.sport)} chez ${cr.club.nom}`}>
       <Haut gauche={libre ? undefined : annule ? 'Annulé' : (NIVEAUX_SQUAD[cr.niveau] ?? cr.niveau)} date={dateCourte(cr.debut)} alerte={annule} />
-      <View style={{ gap: 4 }}>
+      <View style={{ gap: 1 }}>
         <Surtitre>{libelleSport(cr.sport)} · {cr.terrain.nom}</Surtitre>
         <Titre>{cr.club.nom}</Titre>
-        <T taille={fs[5]} couleur={c.gris}>
+        <T taille={fs[3]} couleur={c.gris} numberOfLines={1} style={{ marginTop: 2 }}>
           {cr.places.total} joueurs · {prixParJoueur(cr.prix, cr.places.total)}
           {cr.organisateur && !libre ? ` · par ${cr.organisateur.prenom}` : ''}
         </T>
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingTop: 14, marginTop: 4, borderTopWidth: 1, borderTopColor: c.grisClair }}>
-        <View style={{ gap: 6, flex: 1, minWidth: 0, overflow: 'hidden' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingTop: 10, marginTop: 2, borderTopWidth: 1, borderTopColor: c.grisClair }}>
+        <View style={{ gap: 4, flex: 1, minWidth: 0, overflow: 'hidden' }}>
           {libre ? (
-            <T taille={fs[4]} poids={500} couleur={c.grisFonce}>Terrain libre · {formatEuros(cr.prix)}</T>
+            <T taille={fs[3]} poids={500} couleur={c.grisFonce}>Terrain libre · {formatEuros(cr.prix)}</T>
           ) : (
             <>
               <PastillesJoueurs joueurs={cr.joueurs} total={cr.places.total} maxJoueurs={4} maxVides={2} />
-              <T taille={fs[4]} couleur={c.gris}>{libellePlaces(cr.places.restantes)}</T>
+              <T taille={fs[2]} couleur={c.gris}>{libellePlaces(cr.places.restantes)}</T>
             </>
           )}
         </View>
         {annule || cr.je_joue ? (
           <ActionCarte libelle={action} onPress={onPress} plein={false} icone={cr.je_joue && !annule ? 'check' : undefined} />
         ) : (
-          <BoutonAction libelle={action} icone="fleche-d" iconeADroite accent={sport.accent} onPress={onPress} style={{ flex: 0, minWidth: 172 }} />
+          <BoutonAction fin libelle={action} icone="fleche-d" iconeADroite accent={sport.accent} onPress={onPress} style={{ flex: 0, minWidth: 136 }} />
         )}
       </View>
     </CadreCarte>
@@ -199,20 +199,20 @@ export function CarteEvenementSport({ ev, onPress }: { ev: EvenementSport; onPre
   return (
     <CadreCarte onPress={onPress} libelleAcces={ev.titre}>
       <Haut gauche="Club" date={dateCourte(ev.date_heure)} />
-      <View style={{ gap: 4 }}>
+      <View style={{ gap: 1 }}>
         <Surtitre>{libelleSport(ev.sport)} · {FORMATS_SPORT[ev.format] ?? ev.format}</Surtitre>
         <Titre>{ev.titre}</Titre>
-        <T taille={fs[5]} couleur={c.gris}>{ev.club.nom} · {prix}</T>
+        <T taille={fs[3]} couleur={c.gris} numberOfLines={1} style={{ marginTop: 2 }}>{ev.club.nom} · {prix}</T>
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingTop: 14, marginTop: 4, borderTopWidth: 1, borderTopColor: c.grisClair }}>
-        <T taille={fs[4]} couleur={c.gris} style={{ flexShrink: 1 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingTop: 10, marginTop: 2, borderTopWidth: 1, borderTopColor: c.grisClair }}>
+        <T taille={fs[3]} couleur={c.gris} style={{ flexShrink: 1 }}>
           {ev.places.quota > 0 ? `${ev.places.inscrits}/${ev.places.quota} inscrits` : `${ev.places.inscrits} inscrits`}
         </T>
         {ev.deja_inscrit
           ? <ActionCarte libelle="Inscrit" plein={false} icone="check" onPress={onPress} />
           : ev.places.complet
             ? <ActionCarte libelle="Complet" plein={false} onPress={onPress} />
-            : <BoutonAction libelle="S'inscrire" icone="fleche-d" iconeADroite accent={sport.accent} onPress={onPress} style={{ flex: 0, minWidth: 172 }} />}
+            : <BoutonAction fin libelle="S'inscrire" icone="fleche-d" iconeADroite accent={sport.accent} onPress={onPress} style={{ flex: 0, minWidth: 136 }} />}
       </View>
     </CadreCarte>
   );
