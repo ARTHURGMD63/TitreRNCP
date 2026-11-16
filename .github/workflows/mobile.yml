@@ -111,11 +111,20 @@ jobs:
 
       # Archive SANS signature : c'est Sideloadly qui signera, avec
       # l'identifiant Apple de la personne qui installe.
+      #
+      # Le nom du workspace et du scheme vient du champ « name » d'app.json,
+      # casse comprise (« outsee » donne outsee.xcworkspace et le scheme
+      # outsee). On le lit dans ce que prebuild a généré au lieu de l'écrire
+      # en dur : xcodebuild distingue les majuscules pour le scheme.
       - name: Construire l'application
         run: |
+          workspace=$(ls -d ios/*.xcworkspace | head -n 1)
+          scheme=$(basename "$workspace" .xcworkspace)
+          echo "Workspace : $workspace — scheme : $scheme"
+          xcodebuild -list -workspace "$workspace"
           xcodebuild \
-            -workspace ios/Outsee.xcworkspace \
-            -scheme Outsee \
+            -workspace "$workspace" \
+            -scheme "$scheme" \
             -configuration Release \
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
@@ -123,11 +132,11 @@ jobs:
             archive \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
 
-      # Un .ipa n'est qu'une archive zip contenant Payload/Outsee.app.
+      # Un .ipa n'est qu'une archive zip contenant Payload/<Nom>.app.
       - name: Empaqueter le .ipa
         run: |
           mkdir -p Payload
-          cp -R build/Outsee.xcarchive/Products/Applications/Outsee.app Payload/
+          cp -R build/Outsee.xcarchive/Products/Applications/*.app Payload/
           zip -qr Outsee.ipa Payload
 
       - uses: actions/upload-artifact@v7
