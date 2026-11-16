@@ -139,7 +139,9 @@ export function Pastille({ libelle, fond, encre, point, icone, filet, grande, st
  * `confettis` : chaque nouvelle valeur (> 0) lance l'explosion depuis le
  * bouton — à n'incrémenter qu'après la réussite de l'action réelle.
  */
-export function BoutonAction({ libelle, onPress, icone = 'chevron-d', surAccent, accent, fait, desactive, chargement, iconeADroite, confettis = 0, style, accessibilityLabel }: {
+export function BoutonAction({ libelle, onPress, icone = 'chevron-d', surAccent, accent, fait, desactive, chargement, iconeADroite, confettis = 0, style, accessibilityLabel, testID }: {
+  /** Repère des tests de bout en bout (Maestro). */
+  testID?: string;
   libelle: string;
   onPress?: () => void;
   icone?: NomIcone;
@@ -170,6 +172,7 @@ export function BoutonAction({ libelle, onPress, icone = 'chevron-d', surAccent,
       <PressableAnime
         onPress={onPress}
         disabled={inactif}
+        testID={testID}
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel ?? libelle}
         accessibilityState={{ disabled: !!inactif, busy: !!chargement, checked: fait }}

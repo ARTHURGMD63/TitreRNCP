@@ -2,37 +2,53 @@
  * Tableau de bord partenaire — partenaire/dashboard.php.
  *
  * La prochaine soirée, inscrits/check-in, âge moyen, qui vient ce soir
- * (répartition par école), le conseil du jour, les dernières inscriptions,
- * et l'accès au scan des pass.
+ * (répartition par école), le conseil du jour, les check-in et les dernières
+ * inscriptions, et l'accès au scan des pass.
+ *
+ * Refonte 2026-11 : même langage que l'espace étudiant — logo en tête,
+ * titre surligné, la prochaine soirée en carte bleue (ses trois compteurs
+ * et « Scanner un pass »), puis des cartes blanches sans bordure.
  */
 
 import React, { useCallback, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 
 import { api, ErreurApi, type ReponseDashboardPartenaire } from '../../api';
+import { Apparition, Compteur } from '../../composants/Animations';
 import { Bouton } from '../../composants/Bouton';
+import { BoutonAction, CarreIcone, CarteRefonte, EnTeteApp, Pastille, teinteAvatar, useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Avatar, Jauge } from '../../composants/Elements';
-import { Icone } from '../../composants/Icone';
-import { Display, Mono, T, TitreEcran } from '../../composants/Texte';
+import { Mono, T, TitreEcran, TitreSection } from '../../composants/Texte';
+import { dateFr } from '../../format';
 import { useJeton } from '../../session';
-import { fixe, fs, lh, rayon, sans } from '../../theme';
+import { fs, halo, lh, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 
-const COULEURS_ECOLE = ['#0047BB', '#5B8CFF', '#C8F547', '#FFC23D', '#8A858F'];
+/** Une couleur par école dans « Qui vient ce soir ? ». */
+const COULEURS_ECOLE = ['#1D55F0', '#7B4DF2', '#22B573', '#FF8A3D', '#F0508A', '#14B8A6'];
 
-function Carte({ children, style }: { children: React.ReactNode; style?: object }) {
-  const { c, ombre } = useTheme();
+/** Une ligne de personne : avatar, nom, école · promo, et l'heure à droite. */
+function LignePersonneSalle({ prenom, nom, ecole, promo, photo, heure, dernier }: {
+  prenom: string; nom: string; ecole: string | null; promo: string | null; photo: string | null; heure: string | null; dernier: boolean;
+}) {
+  const { c } = useTheme();
   return (
-    <View style={[{ backgroundColor: c.blanc, borderRadius: rayon.base, borderWidth: 1, borderColor: c.grisClair, padding: 20, marginBottom: 16 }, ombre('base'), style]}>
-      {children}
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: dernier ? 0 : 1, borderBottomColor: c.grisClair }}>
+      <Avatar photo={photo} prenom={prenom} taille={40} fond={teinteAvatar(prenom + nom)} />
+      <View style={{ flex: 1 }}>
+        <T taille={fs[5]} poids={600}>{prenom} {nom}</T>
+        <T taille={fs[4]} couleur={c.gris}>{ecole ?? '—'} · {promo ?? '—'}</T>
+      </View>
+      {heure ? <T taille={fs[4]} poids={600} couleur={c.gris}>{heure}</T> : null}
     </View>
   );
 }
 
 export default function TableauDeBordPartenaire() {
   const { c } = useTheme();
+  const bleu = useRubrique('bleu');
   const jeton = useJeton();
 
   const [donnees, setDonnees] = useState<ReponseDashboardPartenaire | null>(null);
@@ -70,95 +86,110 @@ export default function TableauDeBordPartenaire() {
 
   return (
     <Ecran rafraichit={rafraichit} onRafraichir={() => { setRafraichit(true); void charger(); }}>
-      <EnTete>
-        <Mono couleur={c.gris} style={{ marginBottom: 6 }}>{etablissement.nom.toUpperCase()} · {etablissement.ville.toUpperCase()}</Mono>
-        <TitreEcran lignes={[`${stats.total} étudiant${stats.total > 1 ? 's' : ''},`, 'en route.']} />
+      <EnTete style={{ paddingBottom: 4 }}>
+        <Apparition index={0}>
+          <EnTeteApp />
+        </Apparition>
+        <Apparition index={1}>
+          <Mono style={{ marginBottom: 8 }}>{etablissement.nom} · {etablissement.ville}</Mono>
+          <TitreEcran avant={`${stats.total} étudiant${stats.total > 1 ? 's' : ''},`} surligne="en route." style={{ marginBottom: 16 }} />
+        </Apparition>
       </EnTete>
 
       <Contenu style={{ paddingTop: 0 }}>
         {!evenement ? (
-          <Carte>
-            <T taille={fs[4]} poids={600} style={{ marginBottom: 4 }}>Aucune soirée à venir</T>
-            <T taille={fs[3]} couleur={c.gris}>Crée un événement pour voir ses statistiques ici.</T>
-          </Carte>
+          <Apparition index={2}>
+            <CarteRefonte style={{ alignItems: 'center', paddingVertical: 28 }}>
+              <CarreIcone icone="calendrier" fond={bleu.doux} encre={bleu.texteDoux} />
+              <T taille={20} poids={700} style={{ textAlign: 'center' }}>Aucune soirée à venir</T>
+              <T taille={fs[5]} couleur={c.gris} style={{ textAlign: 'center' }}>Crée un événement pour voir ses statistiques ici.</T>
+            </CarteRefonte>
+          </Apparition>
         ) : (
           <>
-            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
-              <View style={{ flex: 1, backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.md, padding: 14 }}>
-                <Mono style={{ marginBottom: 6 }}>Inscrits</Mono>
-                <Display taille={fs[7]}>{stats.inscrits}</Display>
-              </View>
-              <View style={{ flex: 1, backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.md, padding: 14 }}>
-                <Mono couleur={c.gris} style={{ marginBottom: 6 }}>Check-in</Mono>
-                <Display taille={fs[7]}>{stats.checkin}</Display>
-              </View>
-              <View style={{ flex: 1, backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.md, padding: 14 }}>
-                <Mono style={{ marginBottom: 6 }}>Âge moy.</Mono>
-                <Display taille={fs[7]}>{stats.age_moyen}</Display>
-              </View>
-            </View>
-
-            <Pressable
-              onPress={() => router.push({ pathname: '/scan', params: { evenementId: String(evenement.id) } })}
-              accessibilityRole="button"
-              testID="partenaire-scanner"
-              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: c.rouge, borderRadius: rayon.pill, paddingVertical: 16, marginBottom: 16 }}
-            >
-              <Icone nom="qr" taille={18} couleur={fixe.surAccent} />
-              <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: fixe.surAccent }}>Scanner un pass</Text>
-            </Pressable>
-
-            <Carte>
-              <T taille={fs[2]} couleur={c.gris} style={{ marginBottom: 4 }}>PROFIL DE SALLE</T>
-              <Display taille={fs[6]} style={{ marginBottom: 14 }}>Qui vient ce soir ?</Display>
-              {stats.ecoles.map((s, i) => (
-                <View key={s.nom} style={{ marginBottom: 10 }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <T taille={fs[3]} poids={600}>{s.nom}</T>
-                    <T taille={fs[3]} couleur={c.gris}>{s.pourcentage}%</T>
-                  </View>
-                  <Jauge pourcentage={s.pourcentage} piste={c.grisClair} remplissage={COULEURS_ECOLE[i % COULEURS_ECOLE.length]} hauteur={6} />
+            {/* La prochaine soirée : la carte bleue de l'écran. */}
+            <Apparition index={2}>
+              <View style={[{ backgroundColor: bleu.accent, borderRadius: rayon.carte, padding: 20, gap: 14, marginBottom: 16 }, halo(bleu.accent)]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <Text style={{ fontFamily: sans(600), fontSize: 12, letterSpacing: 0.06 * 12, textTransform: 'uppercase', color: bleu.surAccent2 }}>Prochaine soirée</Text>
+                  <Pastille libelle={dateFr(evenement.date_heure, 'D j M · H\\hi')} fond="#FFFFFF" encre="#111116" />
                 </View>
-              ))}
-            </Carte>
-
-            <View style={{ backgroundColor: '#FFF1D1', borderRadius: rayon.md, padding: 16, marginBottom: 16 }}>
-              <T taille={fs[3]} poids={700} couleur="#8A5A00" style={{ marginBottom: 4 }}>CONSEIL</T>
-              <T taille={fs[3]} couleur="#8A5A00" interligne={lh.snug}>{stats.conseil}</T>
-            </View>
-
-            {stats.checkins.length ? (
-              <Carte>
-                <T taille={fs[2]} couleur={c.gris} style={{ marginBottom: 12 }}>
-                  CHECK-IN · {stats.checkins.length}
-                </T>
-                {stats.checkins.map((p, i) => (
-                  <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, borderBottomWidth: i < stats.checkins.length - 1 ? 1 : 0, borderBottomColor: c.grisClair }}>
-                    <Avatar photo={p.photo_url} prenom={p.prenom} taille={32} fond={c.lime} />
-                    <View style={{ flex: 1 }}>
-                      <T taille={fs[4]} poids={600}>{p.prenom} {p.nom}</T>
-                      <T taille={fs[2]} couleur={c.gris}>{p.ecole ?? '—'} · {p.promo ?? '—'}</T>
+                <Text style={{ fontFamily: sans(700), fontSize: 26, lineHeight: 26 * 1.15, letterSpacing: -0.03 * 26, color: '#FFFFFF' }}>{evenement.titre}</Text>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  {[
+                    { l: 'Inscrits', v: stats.inscrits, format: (n: number) => String(Math.round(n)) },
+                    { l: 'Check-in', v: stats.checkin, format: (n: number) => String(Math.round(n)) },
+                    { l: 'Âge moy.', v: stats.age_moyen, format: (n: number) => (Math.round(n * 10) / 10).toString().replace('.', ',') },
+                  ].map((s, i) => (
+                    <View key={s.l} style={{ flex: 1, borderRadius: rayon.bouton, padding: 12, backgroundColor: 'rgba(255,255,255,0.16)', gap: 2 }}>
+                      <Compteur valeur={s.v} format={s.format} delai={i * 120}
+                        style={{ fontFamily: sans(700), fontSize: 24, color: '#FFFFFF', fontVariant: ['tabular-nums'] }} />
+                      <T taille={fs[4]} couleur={bleu.surAccent2}>{s.l}</T>
                     </View>
-                    {p.checkin_le ? <Mono couleur={c.gris}>{p.checkin_le.slice(11, 16).replace(':', 'h')}</Mono> : null}
+                  ))}
+                </View>
+                <BoutonAction
+                  libelle="Scanner un pass"
+                  icone="qr"
+                  accent={bleu.accent}
+                  surAccent
+                  testID="partenaire-scanner"
+                  onPress={() => router.push({ pathname: '/scan', params: { evenementId: String(evenement.id) } })}
+                  style={{ flex: 0 }}
+                />
+              </View>
+            </Apparition>
+
+            <Apparition index={3}>
+              <CarteRefonte>
+                <View>
+                  <Mono>Profil de salle</Mono>
+                  <TitreSection style={{ marginTop: 4 }}>Qui vient ce soir ?</TitreSection>
+                </View>
+                {stats.ecoles.map((s, i) => (
+                  <View key={s.nom}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <T taille={fs[5]} poids={600}>{s.nom}</T>
+                      <T taille={fs[5]} couleur={c.gris}>{s.pourcentage}%</T>
+                    </View>
+                    <Jauge pourcentage={s.pourcentage} piste={c.surface2} remplissage={COULEURS_ECOLE[i % COULEURS_ECOLE.length]} hauteur={8} />
                   </View>
                 ))}
-              </Carte>
+              </CarteRefonte>
+            </Apparition>
+
+            <Apparition index={4}>
+              <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', backgroundColor: c.alerteClair, borderRadius: rayon.carte, padding: 18, marginBottom: 16 }}>
+                <CarreIcone icone="eclair" fond="#FFB020" encre="#FFFFFF" taille={40} />
+                <View style={{ flex: 1, gap: 4 }}>
+                  <T taille={fs[5]} poids={700} couleur={c.alerte}>Conseil</T>
+                  <T taille={fs[5]} couleur={c.alerte} interligne={lh.snug}>{stats.conseil}</T>
+                </View>
+              </View>
+            </Apparition>
+
+            {stats.checkins.length ? (
+              <Apparition index={5}>
+                <CarteRefonte style={{ gap: 4 }}>
+                  <TitreSection style={{ marginBottom: 4 }}>Check-in · {stats.checkins.length}</TitreSection>
+                  {stats.checkins.map((p, i) => (
+                    <LignePersonneSalle key={p.id} prenom={p.prenom} nom={p.nom} ecole={p.ecole} promo={p.promo} photo={p.photo_url}
+                      heure={p.checkin_le ? p.checkin_le.slice(11, 16).replace(':', 'h') : null} dernier={i === stats.checkins.length - 1} />
+                  ))}
+                </CarteRefonte>
+              </Apparition>
             ) : null}
 
             {stats.recentes.length ? (
-              <Carte>
-                <T taille={fs[2]} couleur={c.gris} style={{ marginBottom: 12 }}>DERNIÈRES INSCRIPTIONS</T>
-                {stats.recentes.map((r, i) => (
-                  <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, borderBottomWidth: i < stats.recentes.length - 1 ? 1 : 0, borderBottomColor: c.grisClair }}>
-                    <Avatar photo={r.photo_url} prenom={r.prenom} taille={32} fond={c.bleu} />
-                    <View style={{ flex: 1 }}>
-                      <T taille={fs[4]} poids={600}>{r.prenom} {r.nom}</T>
-                      <T taille={fs[2]} couleur={c.gris}>{r.ecole ?? '—'} · {r.promo ?? '—'}</T>
-                    </View>
-                    <Mono couleur={c.gris}>{r.heure}</Mono>
-                  </View>
-                ))}
-              </Carte>
+              <Apparition index={6}>
+                <CarteRefonte style={{ gap: 4 }}>
+                  <TitreSection style={{ marginBottom: 4 }}>Dernières inscriptions</TitreSection>
+                  {stats.recentes.map((r, i) => (
+                    <LignePersonneSalle key={i} prenom={r.prenom} nom={r.nom} ecole={r.ecole} promo={r.promo} photo={r.photo_url}
+                      heure={r.heure} dernier={i === stats.recentes.length - 1} />
+                  ))}
+                </CarteRefonte>
+              </Apparition>
             ) : null}
           </>
         )}

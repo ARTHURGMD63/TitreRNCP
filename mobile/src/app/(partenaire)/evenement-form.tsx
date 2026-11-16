@@ -20,11 +20,13 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { api, ErreurApi, type ReponseFormulaireEvenementPartenaire } from '../../api';
 import { Bouton } from '../../composants/Bouton';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
-import { Encart } from '../../composants/Elements';
+import { BoutonRetour, Encart } from '../../composants/Elements';
 import { Case, Champ, ChampDate, isoDateHeure, Selecteur } from '../../composants/Formulaire';
-import { Mono, TitreEcran } from '../../composants/Texte';
+import { T, TitreEcran, TitreSection } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
 import { useJeton } from '../../session';
+import { fs, rayon } from '../../theme';
+import { useTheme } from '../../useTheme';
 
 const TYPES = [
   { valeur: 'bar', libelle: 'Bar' },
@@ -34,6 +36,7 @@ const TYPES = [
 ];
 
 export default function FormulaireEvenementPartenaire() {
+  const { c } = useTheme();
   const jeton = useJeton();
   const toast = useToast();
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -137,13 +140,17 @@ export default function FormulaireEvenementPartenaire() {
 
   return (
     <Ecran>
-      <EnTete>
-        <TitreEcran lignes={[evenementId ? 'Modifier' : 'Créer', 'un événement.']} />
+      <EnTete style={{ paddingBottom: 4 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+          <BoutonRetour vers="/evenements" libelle="Retour à mes événements" />
+        </View>
+        <TitreEcran avant={evenementId ? 'Modifier' : 'Créer'} surligne="un événement." rubrique={club ? 'sport' : 'bleu'} style={{ marginBottom: 16 }} />
       </EnTete>
       <Contenu style={{ paddingTop: 0 }}>
         {erreurEnregistrement ? <Encart genre="erreur">{erreurEnregistrement}</Encart> : null}
 
-        <Mono style={{ marginBottom: 12 }}>Informations générales</Mono>
+        <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 20, marginBottom: 16 }}>
+        <TitreSection style={{ marginBottom: 14 }}>Informations générales</TitreSection>
         <Champ etiquette="Titre *" value={titre} onChangeText={setTitre} placeholder={club ? 'ex : Open étudiant de padel' : 'ex : Soirée Étudiants — DJ Groove'} />
         {club ? (
           <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -160,20 +167,23 @@ export default function FormulaireEvenementPartenaire() {
         <ChampDate etiquette="Fin" mode="datetime" valeur={dateFin} onChange={setDateFin} min={date ?? new Date()} />
         <Champ etiquette="Description" value={description} onChangeText={setDescription} multiligne numberOfLines={3}
           placeholder={club ? 'Tableau, niveau attendu, lots, matériel...' : 'Ambiance, animations, dress code...'} />
-        <Champ etiquette={club ? 'Lieu / Terrains' : 'Lieu / Salle'} value={lieu} onChangeText={setLieu} />
+        <Champ etiquette={club ? 'Lieu / Terrains' : 'Lieu / Salle'} value={lieu} onChangeText={setLieu} marge={0} />
+        </View>
 
-        <Mono style={{ marginTop: 8, marginBottom: 12 }}>Capacité & tarifs</Mono>
+        <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 20, marginBottom: 16 }}>
+        <TitreSection style={{ marginBottom: 14 }}>Capacité &amp; tarifs</TitreSection>
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <Champ style={{ flex: 1 }} etiquette="Quota (places max) *" value={quota} onChangeText={setQuota} keyboardType="number-pad" />
           <Champ style={{ flex: 1 }} etiquette="Prix normal (€)" value={prixNormal} onChangeText={setPrixNormal} keyboardType="decimal-pad" />
         </View>
         <Champ etiquette="Réduction étudiants (%)" value={reduction} onChangeText={setReduction} keyboardType="number-pad" aide="Affichée sur le pass étudiant." />
-        <Case coche={isGratuit} onChange={setIsGratuit} style={{ marginBottom: 20 }}>
+        <Case coche={isGratuit} onChange={setIsGratuit}>
           {club ? 'Inscription gratuite — le pass sera 100% offert' : 'Entrée gratuite — le pass sera 100% offert'}
         </Case>
+        </View>
 
-        {club ? null : (<>
-        <Mono style={{ marginBottom: 12 }}>Options avancées</Mono>
+        {club ? null : (<View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 20, paddingBottom: 4, marginBottom: 16 }}>
+        <TitreSection style={{ marginBottom: 14 }}>Options avancées</TitreSection>
         <Case coche={isFlash} onChange={setIsFlash} style={{ marginBottom: isFlash ? 12 : 20 }}>
           Event Flash — offre limitée dans le temps, en tête du fil
         </Case>
@@ -181,7 +191,7 @@ export default function FormulaireEvenementPartenaire() {
           <ChampDate etiquette="Expiration de l'offre flash" mode="datetime" valeur={flashExpiry} onChange={setFlashExpiry} min={new Date()} />
         ) : null}
         {!donnees.flash_illimite ? (
-          <Mono couleur="#67626D" style={{ marginTop: -12, marginBottom: 16 }}>{donnees.flash_par_mois} offres flash / mois incluses dans ta formule</Mono>
+          <T taille={fs[4]} couleur={c.gris} style={{ marginTop: -8, marginBottom: 16 }}>{donnees.flash_par_mois} offres flash / mois incluses dans ta formule</T>
         ) : null}
 
         <Case coche={isSponsorise} onChange={setIsSponsorise} style={{ marginBottom: isSponsorise ? 12 : 20 }}>
@@ -195,10 +205,10 @@ export default function FormulaireEvenementPartenaire() {
             options={donnees.formules_sponsoring.map((f) => ({ valeur: f.code, libelle: `${f.nom} — ${f.tarif} €` }))}
           />
         ) : null}
-        </>)}
+        </View>)}
 
         <Bouton libelle={evenementId ? 'Enregistrer les modifications' : "Publier l'événement"} plein
-          chargement={enregistrement} onPress={enregistrer} style={{ marginTop: 12 }} />
+          variante={club ? 'bleu' : 'primaire'} chargement={enregistrement} onPress={enregistrer} style={{ marginTop: 4 }} />
       </Contenu>
     </Ecran>
   );

@@ -9,22 +9,25 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 
 import { api, ErreurApi, type FormulePartenaireAbonnement, type ReponseAbonnementPartenaire } from '../../api';
+import { Apparition, PressableAnime } from '../../composants/Animations';
 import { Bouton } from '../../composants/Bouton';
+import { CarreIcone, EnTeteApp, Pastille, useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Encart } from '../../composants/Elements';
 import { Case } from '../../composants/Formulaire';
-import { Display, Mono, T, TitreEcran } from '../../composants/Texte';
+import { T, TitreEcran, TitreSection } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
 import { useJeton } from '../../session';
-import { fs, rayon } from '../../theme';
+import { fs, halo, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 export default function AbonnementPartenaire() {
   const { c } = useTheme();
+  const bleu = useRubrique('bleu');
   const jeton = useJeton();
   const toast = useToast();
 
@@ -76,71 +79,82 @@ export default function AbonnementPartenaire() {
 
   return (
     <Ecran>
-      <EnTete>
-        <TitreEcran lignes={['Choisis ta', 'formule.']} />
-        <T taille={fs[3]} couleur={c.gris} style={{ marginTop: 10 }}>
-          Sans engagement de durée, résiliable au mois par simple message.
-        </T>
+      <EnTete style={{ paddingBottom: 4 }}>
+        <Apparition index={0}>
+          <EnTeteApp />
+        </Apparition>
+        <Apparition index={1}>
+          <TitreEcran avant="Choisis ta" surligne="formule." style={{ marginBottom: 12 }} />
+          <T taille={fs[5]} couleur={c.gris} style={{ marginBottom: 16 }}>
+            Sans engagement de durée, résiliable au mois par simple message.
+          </T>
+        </Apparition>
       </EnTete>
       <Contenu style={{ paddingTop: 0 }}>
         {erreurEnvoi ? <Encart genre="erreur">{erreurEnvoi}</Encart> : null}
 
         {client ? (
-          <View style={{ backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.base, padding: 18, marginBottom: 20 }}>
-            <Mono couleur={c.gris} style={{ marginBottom: 4 }}>FORMULE EN COURS</Mono>
-            <Display taille={fs[6]} style={{ marginBottom: 2 }}>{client.offre_libelle}</Display>
-            <T taille={fs[3]} couleur={c.gris}>
+          <View style={[{ backgroundColor: bleu.accent, borderRadius: rayon.carte, padding: 20, gap: 4, marginBottom: 20 }, halo(bleu.accent)]}>
+            <Text style={{ fontFamily: sans(600), fontSize: 12, letterSpacing: 0.06 * 12, textTransform: 'uppercase', color: bleu.surAccent2 }}>Formule en cours</Text>
+            <Text style={{ fontFamily: sans(700), fontSize: 26, letterSpacing: -0.03 * 26, color: '#FFFFFF' }}>{client.offre_libelle}</Text>
+            <T taille={fs[5]} couleur={bleu.surAccent2}>
               {client.mrr > 0 ? `${client.mrr.toLocaleString('fr-FR')} € HT / mois` : 'Gratuit'}
               {client.essai_jusquau ? ` · offert jusqu'au ${client.essai_jusquau.split('-').reverse().join('/')}` : ''}
             </T>
           </View>
         ) : null}
 
-        <Mono style={{ marginBottom: 12 }}>{client ? 'Changer de formule' : 'Formules'}</Mono>
+        <TitreSection style={{ marginBottom: 12 }}>{client ? 'Changer de formule' : 'Formules'}</TitreSection>
         {formules.map((f: FormulePartenaireAbonnement) => {
           const active = selection === f.code;
           return (
-            <Pressable
+            <PressableAnime
               key={f.code}
               onPress={() => setSelection(f.code)}
               accessibilityRole="radio"
               accessibilityState={{ checked: active }}
               style={{
-                backgroundColor: c.blanc, borderWidth: active ? 1.5 : 1, borderColor: active ? c.rouge : c.grisClair,
-                borderRadius: rayon.base, padding: 18, marginBottom: 12,
+                backgroundColor: c.blanc, borderWidth: 2, borderColor: active ? bleu.accent : c.blanc,
+                borderRadius: rayon.carte, padding: 18, marginBottom: 12, gap: 6,
               }}
             >
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                <T taille={fs[4]} poids={700}>{f.libelle}</T>
-                {f.code === 'fondateur' && f.places_restantes !== null ? (
-                  <View style={{ backgroundColor: c.lime, borderRadius: rayon.pill, paddingHorizontal: 10, paddingVertical: 3 }}>
-                    <T taille={fs[1]} poids={700}>{f.places_restantes} place{f.places_restantes > 1 ? 's' : ''} restante{f.places_restantes > 1 ? 's' : ''}</T>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 }}>
+                  <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: active ? bleu.accent : c.line2, alignItems: 'center', justifyContent: 'center' }}>
+                    {active ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: bleu.accent }} /> : null}
                   </View>
+                  <T taille={fs[5]} poids={700} style={{ flexShrink: 1 }}>{f.libelle}</T>
+                </View>
+                {f.code === 'fondateur' && f.places_restantes !== null ? (
+                  <Pastille libelle={`${f.places_restantes} place${f.places_restantes > 1 ? 's' : ''} restante${f.places_restantes > 1 ? 's' : ''}`} fond={c.succesClair} encre={c.succes} />
                 ) : null}
               </View>
-              <Display taille={fs[7]} style={{ marginBottom: 4 }}>
+              <Text style={{ fontFamily: sans(700), fontSize: 26, letterSpacing: -0.03 * 26, color: c.noir }}>
                 {f.tarif > 0 ? `${f.tarif} € ` : '0 € '}
-                <T taille={fs[2]} couleur={c.gris}>HT / mois</T>
-              </Display>
-              <T taille={fs[3]} couleur={c.gris}>{f.note}</T>
-              <T taille={fs[2]} couleur={c.gris} style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: c.grisClair }}>
+                <Text style={{ fontFamily: sans(400), fontSize: fs[4], color: c.gris }}>HT / mois</Text>
+              </Text>
+              <T taille={fs[4]} couleur={c.gris}>{f.note}</T>
+              <T taille={fs[4]} couleur={c.gris} style={{ marginTop: 4, paddingTop: 10, borderTopWidth: 1, borderTopColor: c.grisClair }}>
                 {f.code === 'fondateur'
                   ? `Offert ${f.mois_essai} mois, puis tarif gelé tant que l'abonnement n'est pas interrompu.`
                   : f.code === 'club'
                     ? `Offert ${f.mois_essai} mois, puis facturé chaque mois.`
                     : "Offert jusqu'à ta première soirée test publiée et scannée."}
               </T>
-            </Pressable>
+            </PressableAnime>
           );
         })}
 
-        <View style={{ backgroundColor: c.grisClair, borderRadius: rayon.md, padding: 16, marginTop: 8, marginBottom: 20 }}>
-          <T taille={fs[3]} poids={700} style={{ marginBottom: 6 }}>Dans toutes les formules</T>
-          <T taille={fs[3]} couleur={c.gris}>
+        <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', backgroundColor: bleu.doux, borderRadius: rayon.carte, padding: 18, marginTop: 4, marginBottom: 20 }}>
+          <CarreIcone icone="check" fond={bleu.accent} encre="#FFFFFF" taille={36} />
+          <View style={{ flex: 1 }}>
+          <T taille={fs[5]} poids={700} couleur={bleu.texteDoux} style={{ marginBottom: 6 }}>Dans toutes les formules</T>
+          <T taille={fs[4]} couleur={bleu.texteDoux}>
             {donnees.est_club
               ? 'Événements sportifs et créneaux de terrain illimités, page établissement avec photos, tableau de bord des inscrits, scan des pass. Les joueurs règlent leurs terrains chez toi : Outsee ne prend aucune commission.'
               : 'Soirées illimitées, page établissement avec photos, tableau de bord des inscrits et des présents, scan des pass à l’entrée. Tu fixes ta remise étudiante, y compris à zéro.'}
           </T>
+          </View>
         </View>
 
         <Case coche={engagement} onChange={setEngagement} style={{ marginBottom: 16, alignItems: 'flex-start' }}>
@@ -148,7 +162,7 @@ export default function AbonnementPartenaire() {
           sans engagement de durée, résiliable par simple message.
         </Case>
 
-        <T taille={fs[2]} couleur={c.gris} style={{ marginBottom: 18 }}>
+        <T taille={fs[4]} couleur={c.gris} style={{ marginBottom: 18 }}>
           Aucune donnée bancaire n&apos;est demandée ici. L&apos;équipe Outsee te contacte pour la mise
           en place du prélèvement avant la première échéance.
         </T>

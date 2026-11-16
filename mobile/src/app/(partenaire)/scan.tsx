@@ -26,6 +26,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { api, ErreurApi, type PersonneCheckin } from '../../api';
 import { Bouton } from '../../composants/Bouton';
+import { teinteAvatar } from '../../composants/Design';
 import { Avatar } from '../../composants/Elements';
 import { Feuille } from '../../composants/Feuille';
 import { Icone } from '../../composants/Icone';
@@ -34,10 +35,14 @@ import { ajouterCheckin, delaiResultatScan, messageEchecScan, retirerInvite } fr
 import { useToast } from '../../composants/Toast';
 import { useJeton } from '../../session';
 import { fixe, fs, lh, rayon, sans } from '../../theme';
+import { useTheme } from '../../useTheme';
 
 type Personne = { id: number; prenom: string; nom: string; ecole: string | null; promo: string | null; photo_url: string | null };
 
 export default function ScanPass() {
+  // Les feuilles (liste, validation manuelle) suivent le thème ; l'écran
+  // caméra, lui, reste sombre.
+  const { c } = useTheme();
   const jeton = useJeton();
   const { top, bottom } = useSafeAreaInsets();
   const { evenementId } = useLocalSearchParams<{ evenementId: string }>();
@@ -129,7 +134,7 @@ export default function ScanPass() {
     );
   }
 
-  const cadre = personneValidee ? '#C8F547' : messageEchec ? '#FF4D6A' : fixe.craie;
+  const cadre = personneValidee ? fixe.enCours : messageEchec ? '#FF4D6A' : fixe.craie;
 
   return (
     <View style={{ flex: 1, backgroundColor: fixe.basalte }}>
@@ -144,7 +149,7 @@ export default function ScanPass() {
         onPress={() => router.back()}
         accessibilityRole="button"
         accessibilityLabel="Fermer le scanner"
-        style={{ position: 'absolute', top: top + 16, right: 20, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(17,16,19,0.6)', alignItems: 'center', justifyContent: 'center' }}
+        style={{ position: 'absolute', top: top + 16, right: 20, width: 46, height: 46, borderRadius: rayon.bouton, backgroundColor: 'rgba(17,17,22,0.6)', alignItems: 'center', justifyContent: 'center' }}
       >
         <Icone nom="croix" taille={20} couleur={fixe.craie} />
       </Pressable>
@@ -153,7 +158,7 @@ export default function ScanPass() {
         onPress={() => setListeOuverte(true)}
         accessibilityRole="button"
         accessibilityLabel={`${checkins.length} personnes déjà check-in, voir la liste`}
-        style={{ position: 'absolute', top: top + 16, left: 20, flexDirection: 'row', alignItems: 'center', gap: 7, height: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: 'rgba(17,16,19,0.6)' }}
+        style={{ position: 'absolute', top: top + 16, left: 20, flexDirection: 'row', alignItems: 'center', gap: 7, height: 46, paddingHorizontal: 16, borderRadius: rayon.bouton, backgroundColor: 'rgba(17,17,22,0.6)' }}
       >
         <Icone nom="personnes" taille={16} couleur={fixe.craie} />
         <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: fixe.craie }}>{checkins.length}</Text>
@@ -164,7 +169,7 @@ export default function ScanPass() {
         accessibilityRole="button"
         accessibilityLabel="Valider une présence manuellement"
         testID="scan-manuel"
-        style={{ position: 'absolute', bottom: bottom + 100, left: 24, right: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 44, borderRadius: 22, backgroundColor: 'rgba(17,16,19,0.6)' }}
+        style={{ position: 'absolute', bottom: bottom + 100, left: 24, right: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 48, paddingHorizontal: 12, borderRadius: rayon.bouton, backgroundColor: 'rgba(17,17,22,0.6)' }}
       >
         <Icone nom="outil" taille={16} couleur={fixe.craie} />
         <Text style={{ fontFamily: sans(700), fontSize: fs[3], color: fixe.craie }}>Le scan ne marche pas ? Valider manuellement</Text>
@@ -174,20 +179,20 @@ export default function ScanPass() {
         pointerEvents="none"
         style={{
           position: 'absolute', left: 40, right: 40, top: '50%', marginTop: -125,
-          height: 250, borderRadius: rayon.md, borderWidth: 3, borderColor: cadre,
+          height: 250, borderRadius: rayon.carte, borderWidth: 3, borderColor: cadre,
         }}
       />
 
       {personneValidee ? (
-        <View style={{ position: 'absolute', left: 24, right: 24, bottom: bottom + 40, backgroundColor: fixe.craie, borderRadius: rayon.base, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <Avatar photo={personneValidee.photo_url} prenom={personneValidee.prenom} taille={52} fond="#5B8CFF" />
+        <View style={{ position: 'absolute', left: 24, right: 24, bottom: bottom + 40, backgroundColor: '#FFFFFF', borderRadius: rayon.carte, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <Avatar photo={personneValidee.photo_url} prenom={personneValidee.prenom} taille={52} fond="#C7DCFF" />
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-              <Icone nom="valide" taille={16} couleur="#4D6B00" />
-              <Text style={{ fontFamily: sans(700), fontSize: fs[2], color: '#4D6B00' }}>CHECK-IN VALIDÉ</Text>
+              <Icone nom="valide" taille={16} couleur="#137A44" />
+              <Text style={{ fontFamily: sans(700), fontSize: fs[2], letterSpacing: 0.06 * fs[2], color: '#137A44' }}>CHECK-IN VALIDÉ</Text>
             </View>
             <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: fixe.basalte }}>{personneValidee.prenom} {personneValidee.nom}</Text>
-            <Text style={{ fontFamily: sans(500), fontSize: fs[3], color: '#67626D' }}>
+            <Text style={{ fontFamily: sans(500), fontSize: fs[4], color: '#5A5A66' }}>
               {personneValidee.ecole ?? '—'}{personneValidee.promo ? ' · ' + personneValidee.promo : ''}
             </Text>
           </View>
@@ -203,18 +208,18 @@ export default function ScanPass() {
       )}
 
       <Feuille visible={listeOuverte} onClose={() => setListeOuverte(false)}>
-        <Display taille={fs[7]} style={{ marginBottom: 16 }}>
+        <T taille={24} poids={700} style={{ marginBottom: 16, letterSpacing: -0.03 * 24 }}>
           {checkins.length} check-in{checkins.length > 1 ? 's' : ''}
-        </Display>
+        </T>
         {checkins.length === 0 ? (
-          <T taille={fs[4]} couleur="#67626D">Personne pour l&apos;instant.</T>
+          <T taille={fs[5]} couleur={c.gris}>Personne pour l&apos;instant.</T>
         ) : (
           checkins.map((p, i) => (
-            <View key={`${p.id}-${i}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: i < checkins.length - 1 ? 1 : 0, borderBottomColor: '#E8E2D6' }}>
-              <Avatar photo={p.photo_url} prenom={p.prenom} taille={38} fond="#5B8CFF" />
+            <View key={`${p.id}-${i}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: i < checkins.length - 1 ? 1 : 0, borderBottomColor: c.grisClair }}>
+              <Avatar photo={p.photo_url} prenom={p.prenom} taille={40} fond={teinteAvatar(p.prenom + p.id)} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: fixe.basalte }}>{p.prenom} {p.nom}</Text>
-                <Text style={{ fontFamily: sans(500), fontSize: fs[2], color: '#67626D' }}>{p.ecole ?? '—'}{p.promo ? ' · ' + p.promo : ''}</Text>
+                <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: c.noir }}>{p.prenom} {p.nom}</Text>
+                <Text style={{ fontFamily: sans(400), fontSize: fs[4], color: c.gris }}>{p.ecole ?? '—'}{p.promo ? ' · ' + p.promo : ''}</Text>
               </View>
             </View>
           ))
@@ -222,8 +227,8 @@ export default function ScanPass() {
       </Feuille>
 
       <Feuille visible={manuelOuvert} onClose={() => setManuelOuvert(false)}>
-        <Display taille={fs[7]} style={{ marginBottom: 6 }}>Valider manuellement</Display>
-        <T taille={fs[3]} couleur="#67626D" style={{ marginBottom: 16 }}>
+        <T taille={24} poids={700} style={{ marginBottom: 6, letterSpacing: -0.03 * 24 }}>Valider manuellement</T>
+        <T taille={fs[4]} couleur={c.gris} style={{ marginBottom: 16 }}>
           Cherche la personne parmi les inscrits pas encore validés, si le QR code ne fonctionne pas.
         </T>
         <TextInput
@@ -231,27 +236,28 @@ export default function ScanPass() {
           onChangeText={(v) => { setRechercheManuelle(v); void chercherInvites(v); }}
           placeholder="Prénom ou nom..."
           testID="scan-manuel-recherche"
-          placeholderTextColor="#8A858F"
+          placeholderTextColor={c.gris}
           autoFocus
-          style={{ paddingVertical: 12, paddingHorizontal: 16, borderWidth: 1, borderColor: '#E8E2D6', borderRadius: rayon.pill, fontFamily: sans(400), fontSize: fs[4], color: fixe.basalte, marginBottom: 16 }}
+          accessibilityLabel="Chercher un inscrit par son prénom ou son nom"
+          style={{ minHeight: 52, paddingVertical: 12, paddingHorizontal: 18, borderWidth: 1, borderColor: c.line2, borderRadius: rayon.bouton, backgroundColor: c.surface2, fontFamily: sans(400), fontSize: fs[5], color: c.noir, marginBottom: 16 }}
         />
         {invitesManuels === null ? (
-          <T taille={fs[4]} couleur="#67626D">Chargement...</T>
+          <T taille={fs[5]} couleur={c.gris}>Chargement...</T>
         ) : invitesManuels.length === 0 ? (
-          <T taille={fs[4]} couleur="#67626D">Personne à faire correspondre.</T>
+          <T taille={fs[5]} couleur={c.gris}>Personne à faire correspondre.</T>
         ) : (
           invitesManuels.map((invite, i) => (
-            <View key={invite.inscription_id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: i < invitesManuels.length - 1 ? 1 : 0, borderBottomColor: '#E8E2D6' }}>
-              <Avatar photo={invite.photo_url} prenom={invite.prenom} taille={38} fond="#5B8CFF" />
+            <View key={invite.inscription_id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: i < invitesManuels.length - 1 ? 1 : 0, borderBottomColor: c.grisClair }}>
+              <Avatar photo={invite.photo_url} prenom={invite.prenom} taille={40} fond={teinteAvatar(invite.prenom + invite.inscription_id)} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: fixe.basalte }}>{invite.prenom} {invite.nom}</Text>
-                <Text style={{ fontFamily: sans(500), fontSize: fs[2], color: '#67626D' }}>{invite.ecole ?? '—'}{invite.promo ? ' · ' + invite.promo : ''}</Text>
+                <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: c.noir }}>{invite.prenom} {invite.nom}</Text>
+                <Text style={{ fontFamily: sans(400), fontSize: fs[4], color: c.gris }}>{invite.ecole ?? '—'}{invite.promo ? ' · ' + invite.promo : ''}</Text>
               </View>
               <Bouton
                 libelle={validationEnCours === invite.inscription_id ? '...' : 'Valider'}
                 onPress={() => void validerManuellement(invite)}
                 chargement={validationEnCours === invite.inscription_id}
-                variante="bleu"
+                variante="primaire"
                 testID={`scan-manuel-valider-${invite.inscription_id}`}
               />
             </View>
