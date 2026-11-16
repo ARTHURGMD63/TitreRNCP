@@ -107,15 +107,18 @@ export function Selecteur({ etiquette, valeur, options, onChange, titre, style, 
   const choisi = options.find((o) => o.valeur === valeur) ?? options[0];
 
   const filtreActif = apparence === 'filtre' && valeur !== '';
+  // Refonte 2026-11 : menus surface sans bordure, rayon 16, 52 px de haut ;
+  // un filtre choisi passe à l'encre. Le champ de formulaire est en
+  // surface secondaire.
   const bouton = apparence === 'filtre'
     ? {
-        conteneur: { paddingVertical: 11, paddingLeft: 16, paddingRight: 34, borderWidth: 1, borderRadius: rayon.pill, borderColor: filtreActif ? c.noir : c.line2, backgroundColor: filtreActif ? c.noir : 'transparent' },
-        texte: { fontFamily: sans(600), fontSize: fs[3], color: filtreActif ? c.bg : c.noir },
-        chevron: filtreActif ? c.bg : c.noir,
+        conteneur: { minHeight: 52, paddingVertical: 12, paddingLeft: 16, paddingRight: 36, borderRadius: rayon.bouton, backgroundColor: filtreActif ? c.noir : c.blanc },
+        texte: { fontFamily: sans(500), fontSize: fs[5] - 1, color: filtreActif ? c.surEncre : c.noir },
+        chevron: filtreActif ? c.surEncre : c.noir,
       }
     : {
-        conteneur: { paddingVertical: 15, paddingLeft: 18, paddingRight: 40, borderWidth: 1, borderRadius: rayon.sm, borderColor: c.grisClair, backgroundColor: c.blanc },
-        texte: { fontFamily: sans(400), fontSize: fs[5], color: c.noir },
+        conteneur: { minHeight: 52, paddingVertical: 14, paddingLeft: 18, paddingRight: 40, borderRadius: rayon.bouton, backgroundColor: c.surface2 },
+        texte: { fontFamily: sans(500), fontSize: fs[5], color: c.noir },
         chevron: c.noir,
       };
 
@@ -131,7 +134,7 @@ export function Selecteur({ etiquette, valeur, options, onChange, titre, style, 
       >
         <Text numberOfLines={1} style={bouton.texte}>{choisi?.libelle ?? ''}</Text>
         <View pointerEvents="none" style={{ position: 'absolute', right: 14, top: 0, bottom: 0, justifyContent: 'center' }}>
-          <Icone nom="chevron-b" taille={12} couleur={bouton.chevron} trait={3} />
+          <Icone nom="chevron-b" taille={18} couleur={bouton.chevron} trait={2} />
         </View>
       </Pressable>
 
@@ -146,10 +149,10 @@ export function Selecteur({ etiquette, valeur, options, onChange, titre, style, 
                 onPress={() => { onChange(o.valeur); setOuvert(false); }}
                 accessibilityRole="button"
                 accessibilityState={{ selected: actif }}
-                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, paddingHorizontal: 16, borderRadius: rayon.md, borderWidth: 1, borderColor: actif ? c.noir : c.grisClair, backgroundColor: actif ? c.noir : c.blanc }}
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 52, paddingVertical: 14, paddingHorizontal: 16, borderRadius: rayon.bouton, backgroundColor: actif ? c.noir : c.surface2 }}
               >
-                <T taille={fs[4]} poids={actif ? 700 : 500} couleur={actif ? c.bg : c.noir}>{o.libelle}</T>
-                {actif ? <Icone nom="check" taille={16} couleur={c.bg} /> : null}
+                <T taille={fs[5]} poids={actif ? 600 : 500} couleur={actif ? c.surEncre : c.noir}>{o.libelle}</T>
+                {actif ? <Icone nom="check" taille={18} couleur={c.surEncre} /> : null}
               </Pressable>
             );
           })}

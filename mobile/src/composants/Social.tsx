@@ -13,14 +13,15 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 
 import { actions, api, ErreurApi, type CibleInvitation, type EtatSuivi, type Notification, type Personne } from '../api';
 import { court } from '../format';
 import { useJeton } from '../session';
-import { fixe, fs, lh, police, rayon, sans } from '../theme';
+import { fixe, fs, lh, police, rayon, sans, teintes } from '../theme';
 import { useTheme } from '../useTheme';
+import { PressableAnime, Pulsation } from './Animations';
+import { teinteAvatar } from './Design';
 import { Avatar } from './Elements';
 import { Feuille } from './Feuille';
 import { Icone } from './Icone';
@@ -58,37 +59,42 @@ export function useSuivi(cible: number, initial: EtatSuivi) {
   return { etat, attente, basculer };
 }
 
-export function couleursSuivi(etat: EtatSuivi, c: ReturnType<typeof useTheme>['c']) {
-  if (etat === 'accepted') return { fond: c.surface2, encre: c.noir };
-  if (etat === 'pending') return { fond: c.surface2, encre: c.grisFonce };
-  return { fond: c.rouge, encre: fixe.surAccent };
+/**
+ * Refonte 2026-11 : « ✓ Suivi » à l'encre, « En attente » en surface neutre
+ * avec l'horloge, « + Suivre » plein de l'accent (`accent`) ou en contour.
+ */
+export function couleursSuivi(etat: EtatSuivi, c: ReturnType<typeof useTheme>['c'], accent?: string) {
+  if (etat === 'accepted') return { fond: c.noir, encre: c.surEncre, filet: c.noir };
+  if (etat === 'pending') return { fond: c.surface2, encre: c.grisFonce, filet: c.surface2 };
+  return accent ? { fond: accent, encre: fixe.surAccent, filet: accent } : { fond: 'transparent', encre: c.noir, filet: c.line2 };
 }
 
-export function BoutonSuivre({ cible, etatInitial, largeur }: { cible: number; etatInitial: EtatSuivi; largeur?: 'pleine' }) {
+export function BoutonSuivre({ cible, etatInitial, largeur, accent }: { cible: number; etatInitial: EtatSuivi; largeur?: 'pleine'; accent?: string }) {
   const { c } = useTheme();
   const { etat, attente, basculer } = useSuivi(cible, etatInitial);
-  const { fond, encre } = couleursSuivi(etat, c);
+  const { fond, encre, filet } = couleursSuivi(etat, c, accent);
+  const libelle = etat === 'accepted' ? 'Suivi' : etat === 'pending' ? 'En attente' : '+ Suivre';
   return (
-    <Pressable
+    <PressableAnime
       onPress={basculer}
       accessibilityRole="button"
-      hitSlop={{ top: 4, bottom: 4 }}
+      accessibilityLabel={libelle}
+      accessibilityState={{ busy: attente }}
       style={[
-        { flexShrink: 0, minHeight: 36, paddingHorizontal: 16, borderRadius: rayon.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: fond },
+        { flexShrink: 0, minHeight: 44, paddingHorizontal: 16, borderRadius: rayon.bouton, borderWidth: 1.5, borderColor: filet, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: fond },
         largeur === 'pleine' ? { alignSelf: 'stretch' } : null,
       ]}
     >
       {attente ? (
-        <Text style={{ fontFamily: sans(700), fontSize: fs[3], color: encre }}>...</Text>
+        <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: encre }}>…</Text>
       ) : (
         <>
-          {etat === 'accepted' ? <Icone nom="check" taille={16} couleur={encre} /> : null}
-          <Text style={{ fontFamily: sans(700), fontSize: fs[3], color: encre }}>
-            {etat === 'accepted' ? 'Suivi' : etat === 'pending' ? 'En attente' : '+ Suivre'}
-          </Text>
+          {etat === 'accepted' ? <Icone nom="check" taille={16} couleur={encre} trait={2.5} /> : null}
+          {etat === 'pending' ? <Icone nom="horloge" taille={17} couleur={encre} /> : null}
+          <Text style={{ fontFamily: sans(etat === 'pending' ? 500 : 700), fontSize: fs[5], color: encre }}>{libelle}</Text>
         </>
       )}
-    </Pressable>
+    </PressableAnime>
   );
 }
 
@@ -102,54 +108,65 @@ export function LignePersonne({ p, etat, interetsCommuns = [], squadsCommuns = 0
   score?: number;
 }) {
   const { c } = useTheme();
-  const affinites = score > 0 || squadsCommuns > 0;
+  const affinites = (score > 0 || squadsCommuns > 0) && (squadsCommuns > 0 || interetsCommuns.length > 0);
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.md, paddingVertical: 10, paddingLeft: 14, paddingRight: 12 }}>
-      <Pressable
-        onPress={() => router.push({ pathname: '/etudiant/[id]', params: { id: String(p.id) } })}
-        accessibilityRole="link"
-        style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 }}
-      >
-        <Avatar photo={p.photo_url} prenom={p.prenom} taille={40} />
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text numberOfLines={1} style={{ fontFamily: police.display, fontSize: fs[4], letterSpacing: -0.02 * fs[4], color: c.noir }}>{court(p.prenom, p.nom)}</Text>
-          <T numberOfLines={1} taille={fs[2]} couleur={c.gris}>{p.ecole ?? ''}{p.promo ? ' · ' + p.promo : ''}</T>
-          {affinites ? (
-            <View style={{ marginTop: 2, overflow: 'hidden' }}>
-              <View style={{ flexDirection: 'row', gap: 6 }}>
-                {squadsCommuns > 0 ? (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: c.lime, paddingVertical: 1, paddingHorizontal: 8, borderRadius: rayon.pill }}>
-                    <Icone nom="eclair" taille={10} couleur={fixe.surLave} />
-                    <T taille={fs[1]} poids={700} couleur={fixe.surLave}>Squad commun</T>
-                  </View>
-                ) : null}
-                {interetsCommuns.slice(0, 3).map((i) => (
-                  <T key={i} taille={fs[1]} poids={700} couleur={c.grisFonce}>#{i}</T>
-                ))}
+    <View style={{ backgroundColor: c.blanc, borderRadius: rayon.personne, padding: 16, gap: 12 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <Pressable
+          onPress={() => router.push({ pathname: '/etudiant/[id]', params: { id: String(p.id) } })}
+          accessibilityRole="link"
+          accessibilityLabel={`Profil de ${court(p.prenom, p.nom)}`}
+          style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 }}
+        >
+          <Avatar photo={p.photo_url} prenom={p.prenom} taille={48} fond={teinteAvatar(p.prenom + p.id)} />
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: 17, letterSpacing: -0.02 * 17, color: c.noir }}>{court(p.prenom, p.nom)}</Text>
+            <T numberOfLines={1} taille={fs[4]} couleur={c.gris}>{p.ecole ?? ''}{p.promo ? ' · ' + p.promo : ''}</T>
+          </View>
+        </Pressable>
+        <BoutonSuivre cible={p.id} etatInitial={etat} />
+      </View>
+      {affinites ? (
+        // Les étiquettes passent à la ligne plutôt que d'être coupées.
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {squadsCommuns > 0 ? (
+            <Pulsation>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: fixe.squadCommun, paddingVertical: 6, paddingHorizontal: 12, borderRadius: rayon.bouton }}>
+                <Icone nom="eclair" taille={15} couleur="#111116" />
+                <T taille={fs[4]} poids={700} couleur="#111116">Squad commun</T>
               </View>
-              {/* Le dégradé dit qu'il y en a davantage, comme le masque du site. */}
-              <LinearGradient pointerEvents="none" colors={['transparent', c.blanc]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 24 }} />
-            </View>
+            </Pulsation>
           ) : null}
+          {interetsCommuns.map((i) => (
+            <View key={i} style={{ backgroundColor: c.surface2, paddingVertical: 6, paddingHorizontal: 12, borderRadius: rayon.bouton }}>
+              <T taille={fs[4]} poids={500} couleur={c.noir}>#{i}</T>
+            </View>
+          ))}
         </View>
-      </Pressable>
-      <BoutonSuivre cible={p.id} etatInitial={etat} />
+      ) : null}
     </View>
   );
 }
 
 // ─── .carte-suggestion ──────────────────────────────────────────────────────
 
+/** Carte du carrousel « À suivre » : avatar de 64 px, nom, hashtags en bleu, « + Suivre » bleu. */
 export function CarteSuggestion({ p, motif }: { p: Personne; motif: string }) {
-  const { c } = useTheme();
+  const { c, mode } = useTheme();
+  const bleu = teintes('bleu', mode);
   return (
-    <View style={{ width: 136, alignItems: 'center', gap: 8, backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.md, paddingVertical: 14, paddingHorizontal: 8 }}>
-      <Pressable onPress={() => router.push({ pathname: '/etudiant/[id]', params: { id: String(p.id) } })} style={{ alignItems: 'center', gap: 6, width: '100%' }}>
-        <Avatar photo={p.photo_url} prenom={p.prenom} taille={52} />
-        <Text numberOfLines={1} style={{ fontFamily: police.display, fontSize: fs[3], letterSpacing: -0.02 * fs[3], color: c.noir, maxWidth: '100%' }}>{court(p.prenom, p.nom)}</Text>
-        <T numberOfLines={1} taille={fs[1]} poids={700} couleur={c.surRougeClair} style={{ maxWidth: '100%' }}>{motif}</T>
+    <View style={{ width: 150, alignItems: 'center', gap: 10, backgroundColor: c.blanc, borderRadius: rayon.personne, paddingVertical: 16, paddingHorizontal: 12 }}>
+      <Pressable
+        onPress={() => router.push({ pathname: '/etudiant/[id]', params: { id: String(p.id) } })}
+        accessibilityRole="link"
+        accessibilityLabel={`Profil de ${court(p.prenom, p.nom)}`}
+        style={{ alignItems: 'center', gap: 6, width: '100%' }}
+      >
+        <Avatar photo={p.photo_url} prenom={p.prenom} taille={64} fond={teinteAvatar(p.prenom + p.id)} />
+        <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: 17, letterSpacing: -0.02 * 17, color: c.noir, maxWidth: '100%', marginTop: 4 }}>{court(p.prenom, p.nom)}</Text>
+        <T numberOfLines={1} taille={fs[4]} poids={500} couleur={bleu.texteDoux} style={{ maxWidth: '100%' }}>{motif}</T>
       </Pressable>
-      <BoutonSuivre cible={p.id} etatInitial="none" largeur="pleine" />
+      <BoutonSuivre cible={p.id} etatInitial="none" largeur="pleine" accent={bleu.accent} />
     </View>
   );
 }
