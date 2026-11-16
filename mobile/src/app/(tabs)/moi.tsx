@@ -327,7 +327,7 @@ export default function Moi() {
             <Pressable key={slug} onPress={() => router.push(`/legal/${slug}` as never)} accessibilityRole="link"
               style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 20, borderBottomWidth: i < 2 ? 1 : 0, borderBottomColor: c.grisClair }}>
               <T taille={fs[4]} poids={600}>{l}</T>
-              <T taille={fs[4]} poids={600} couleur={c.gris}>→</T>
+              <Icone nom="chevron-d" taille={18} couleur={c.gris} />
             </Pressable>
           ))}
         </CarteProfil>

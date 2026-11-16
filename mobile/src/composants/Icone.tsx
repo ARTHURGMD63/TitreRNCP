@@ -57,6 +57,7 @@ const TRACES = {
   activite: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
   'chevron-b': '<polyline points="6 9 12 15 18 9"/>',
   'chevron-g': '<polyline points="15 18 9 12 15 6"/>',
+  'chevron-d': '<polyline points="9 18 15 12 9 6"/>',
   partage: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>',
   info: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
   image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',

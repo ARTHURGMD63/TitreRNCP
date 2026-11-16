@@ -56,10 +56,10 @@ type Props = {
   taille?: number;
   suffixe?: string;
   /**
-   * Remplace le bleu du « ee » par une autre teinte — dérogation à la charte
-   * réservée aux en-têtes propres à l'application mobile : le dôme en tête de
-   * l'onglet Squads, par exemple. La Pantone 2728 C reste la couleur par
-   * défaut partout ailleurs.
+   * Remplace le bleu du « ee » par une autre teinte — dérogation à la charte.
+   * Plus aucun écran ne s'en sert : l'onglet Sport passait le « ee » au dôme,
+   * mais à côté de la tuile en Pantone 2728 C cela faisait deux bleus voisins
+   * dans un même logo. La Pantone reste la couleur du logo partout.
    */
   accent?: string;
 };

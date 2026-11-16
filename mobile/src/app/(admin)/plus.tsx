@@ -45,7 +45,7 @@ function LigneLien({ libelle, description, icone, onPress }: { libelle: string; 
         <T taille={fs[4]} poids={700}>{libelle}</T>
         <T taille={fs[2]} couleur={c.gris}>{description}</T>
       </View>
-      <T taille={fs[4]} couleur={c.gris}>→</T>
+      <Icone nom="chevron-d" taille={18} couleur={c.gris} />
     </Pressable>
   );
 }

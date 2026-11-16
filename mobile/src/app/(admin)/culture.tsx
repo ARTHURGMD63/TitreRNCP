@@ -18,7 +18,7 @@ import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecr
 import { Badge, BoutonRetour, Encart } from '../../composants/Elements';
 import { Feuille } from '../../composants/Feuille';
 import { Case, Champ, ChampDate, isoDateHeure, Selecteur } from '../../composants/Formulaire';
-import { Display, Mono, T } from '../../composants/Texte';
+import { Display, Mono, T, TitreEcran } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
 import { libellePlaces } from '../../culture';
@@ -196,10 +196,8 @@ export default function CultureAdmin() {
       }
     >
       <EnTete>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-          <BoutonRetour vers="/plus" libelle="Retour à Plus" />
-          <Display taille={fs[8]} interligne={lh.tight} accessibilityRole="header">Culture</Display>
-        </View>
+        <BoutonRetour vers="/plus" libelle="Retour à Plus" style={{ marginBottom: 18 }} />
+        <TitreEcran lignes={['Culture.']} style={{ marginBottom: 16 }} />
         <Bouton libelle="Nouvel événement" icone="plus" plein onPress={() => ouvrir(VIDE)} />
       </EnTete>
 

@@ -139,7 +139,7 @@ export default function EvenementsPartenaire() {
         <TitreEcran lignes={[`Mes ${evenements.length}`, `événement${evenements.length > 1 ? 's' : ''}.`]} />
       </EnTete>
       <Contenu style={{ paddingTop: 0 }}>
-        <Bouton libelle="+ Créer un événement" plein onPress={() => router.push({ pathname: '/evenement-form' })} style={{ marginBottom: 20 }} />
+        <Bouton libelle="Créer un événement" icone="plus" plein onPress={() => router.push({ pathname: '/evenement-form' })} style={{ marginBottom: 20 }} />
         {evenements.length === 0 ? (
           <T taille={fs[4]} couleur="#67626D" style={{ textAlign: 'center', marginTop: 24 }}>Aucun événement pour l&apos;instant.</T>
         ) : (

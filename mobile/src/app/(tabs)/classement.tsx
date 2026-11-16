@@ -61,10 +61,8 @@ export default function Classement() {
   return (
     <Ecran rafraichit={rafraichit} onRafraichir={() => { setRafraichit(true); void charger(); }}>
       <EnTete>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 22 }}>
-          <BoutonRetour vers="/moi" libelle="Retour à mon profil" />
-          <Display taille={fs[8]} interligne={lh.tight} accessibilityRole="header">Classement</Display>
-        </View>
+        <BoutonRetour vers="/moi" libelle="Retour à mon profil" style={{ marginBottom: 18 }} />
+        <Display taille={fs[8]} interligne={lh.tight} accessibilityRole="header" style={{ marginBottom: 22 }}>Classement</Display>
         <Segments
           options={[{ code: 'amis', libelle: 'Amis' }, { code: 'ecole', libelle: 'Mon école' }, { code: 'ville', libelle: 'Clermont' }]}
           valeur={portee}

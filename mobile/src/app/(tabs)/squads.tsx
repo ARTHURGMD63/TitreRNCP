@@ -195,7 +195,7 @@ export default function Sport() {
     >
       <EnTete>
         <View style={{ marginBottom: 14 }}>
-          <Marque taille={fs[6]} accent={c.bleu} />
+          <Marque taille={fs[6]} />
         </View>
         <TitreEcran lignes={['Ne fais pas', 'de sport tout seul.']} accent={c.surBleuClair} />
       </EnTete>
@@ -219,7 +219,7 @@ export default function Sport() {
       </ScrollView>
 
       <Contenu>
-        <Bouton libelle="+ Créer un événement" variante="contour" plein onPress={() => setCreation(true)} style={{ marginBottom: 16 }} />
+        <Bouton libelle="Créer un événement" icone="plus" variante="contour" plein onPress={() => setCreation(true)} style={{ marginBottom: 16 }} />
 
         {erreur ? <Erreur message={erreur} onReessayer={charger} /> : donnees === null ? <Chargement /> : (
           <>

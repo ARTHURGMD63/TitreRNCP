@@ -164,7 +164,7 @@ export default function TableauDeBordPartenaire() {
         )}
 
         <Bouton libelle="Gérer les événements" variante="contour" plein onPress={() => router.navigate('/evenements')} style={{ marginBottom: 10 }} />
-        <Bouton libelle="+ Créer un événement" plein onPress={() => router.push({ pathname: '/evenement-form' })} />
+        <Bouton libelle="Créer un événement" icone="plus" plein onPress={() => router.push({ pathname: '/evenement-form' })} />
       </Contenu>
     </Ecran>
   );

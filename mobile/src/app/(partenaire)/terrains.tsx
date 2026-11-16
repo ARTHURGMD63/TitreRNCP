@@ -160,7 +160,7 @@ export default function Terrains() {
             <T taille={fs[3]} couleur={c.grisFonce}>Ajoute un premier terrain pour pouvoir publier des créneaux.</T>
           </Encart>
         ) : (
-          <Bouton libelle="+ Publier des créneaux" variante="bleu" plein onPress={() => setPublication(true)} style={{ marginBottom: 20 }} />
+          <Bouton libelle="Publier des créneaux" icone="plus" variante="bleu" plein onPress={() => setPublication(true)} style={{ marginBottom: 20 }} />
         )}
 
         <Mono accessibilityRole="header" style={{ marginBottom: 8 }}>Les 7 prochains jours</Mono>

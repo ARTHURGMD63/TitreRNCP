@@ -50,7 +50,7 @@ export default function Notifications() {
     <Ecran rafraichit={rafraichit} onRafraichir={() => { setRafraichit(true); void charger(); }}>
       <EnTete>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 14, marginBottom: 18 }}>
-          <BoutonRetour vers="/" libelle="Retour au hub" />
+          <BoutonRetour vers="/" libelle="Retour à Explorer" />
         </View>
         <Display taille={fs[8]} interligne={lh.tight} accessibilityRole="header">Notifications</Display>
       </EnTete>

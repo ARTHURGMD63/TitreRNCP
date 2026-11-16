@@ -13,7 +13,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { api, ErreurApi, type ReponseAvis } from '../../api';
 import { Bouton } from '../../composants/Bouton';
 import { Chargement, Ecran, Erreur } from '../../composants/Ecran';
-import { Encart } from '../../composants/Elements';
+import { BoutonRetour, Encart } from '../../composants/Elements';
 import { Icone } from '../../composants/Icone';
 import { Display, Mono } from '../../composants/Texte';
 import { useJeton } from '../../session';
@@ -65,9 +65,7 @@ export default function Avis() {
 
   return (
     <Ecran avecBarre={false} style={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: 100 }}>
-      <Text onPress={() => router.navigate('/wallet')} accessibilityRole="link" suppressHighlighting style={{ fontFamily: sans(400), fontSize: fs[4], lineHeight: fs[4] * 1.5, color: c.gris, alignSelf: 'flex-start' }}>
-        ← Retour au pass
-      </Text>
+      <BoutonRetour vers="/wallet" libelle="Retour au pass" />
 
       {erreur ? <Erreur message={erreur} onReessayer={charger} /> : !donnees ? <Chargement /> : (
         <>

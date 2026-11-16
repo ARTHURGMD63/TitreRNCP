@@ -18,6 +18,7 @@ import { Bouton } from '../../composants/Bouton';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Separateur } from '../../composants/Elements';
 import { Icone } from '../../composants/Icone';
+import { Marque } from '../../composants/Marque';
 import { Display, Mono, T, TitreEcran } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
@@ -218,6 +219,9 @@ export default function Wallet() {
   return (
     <Ecran rafraichit={rafraichit} onRafraichir={() => { setRafraichit(true); void charger(); }}>
       <EnTete>
+        <View style={{ marginBottom: 14 }}>
+          <Marque taille={fs[6]} />
+        </View>
         <TitreEcran lignes={['Ton pass,', 'en poche.']} />
       </EnTete>
 
@@ -253,7 +257,7 @@ export default function Wallet() {
             ) : (
               <View style={{ backgroundColor: c.blanc, borderRadius: rayon.base, padding: 32, alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: c.grisClair }}>
                 <View style={{ marginBottom: 16 }}><Icone nom="ticket" taille={48} couleur={c.gris} trait={1.5} /></View>
-                <T taille={fs[5]} poids={600} style={{ marginBottom: 6 }}>Aucun pass actif</T>
+                <Display taille={fs[6]} interligne={lh.tight} style={{ marginBottom: 6, textAlign: 'center' }}>Aucun pass actif</Display>
                 <T taille={fs[3]} couleur={c.gris} style={{ marginBottom: 16, textAlign: 'center' }}>Inscris-toi à un événement pour obtenir ton pass.</T>
                 <Bouton libelle="Explorer les événements" onPress={() => router.navigate('/')} style={{ alignSelf: 'center' }} />
               </View>
@@ -269,7 +273,9 @@ export default function Wallet() {
               </>
             ) : null}
 
-            <EnTeteListe style={{ marginTop: 16 }} gauche={`${passes.length} passe${passes.length > 1 ? 's' : ''} actif${passes.length > 1 ? 's' : ''}`} droite="—— Agenda ↓" />
+            {passes.length ? (
+              <EnTeteListe style={{ marginTop: 16 }} gauche={`${passes.length} pass actif${passes.length > 1 ? 's' : ''}`} droite="—— Agenda ↓" />
+            ) : null}
             {passes.map((p) => (
               <View key={p.id} style={{ paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: c.grisClair, flexDirection: 'row', alignItems: 'center', gap: 13 }}>
                 <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: couleurType(p.etab_type) }} />
