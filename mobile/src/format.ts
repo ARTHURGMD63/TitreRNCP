@@ -83,3 +83,20 @@ export function court(prenom: string, nom?: string | null) {
 
 /** mb_strtoupper */
 export const majuscules = (s: string) => s.toLocaleUpperCase('fr-FR');
+
+/**
+ * Le compte à rebours du Pass (refonte 2026-11), calculé sur l'appareil à
+ * partir de la date de l'événement : « Dans 2 h », « Dans 25 min »,
+ * « Maintenant » une fois commencé, et au-delà de 24 h le jour plutôt
+ * qu'un nombre d'heures (« Mercredi »).
+ *
+ * @param debut Horodatage de l'événement, en secondes (ts()).
+ * @param maintenant Horodatage courant, en millisecondes (Date.now()).
+ */
+export function compteARebours(debut: number, maintenant: number): string {
+  const minutes = Math.floor((debut * 1000 - maintenant) / 60000);
+  if (minutes <= 0) return 'Maintenant';
+  if (minutes < 60) return `Dans ${minutes} min`;
+  if (minutes < 24 * 60) return `Dans ${Math.floor(minutes / 60)} h`;
+  return dateFr(new Date(debut * 1000), 'l');
+}
