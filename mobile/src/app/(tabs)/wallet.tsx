@@ -8,9 +8,11 @@
  *    une fois) ; en bas l'événement, la date, le compte à rebours et la
  *    réduction ;
  *  - « N pass actif », puis la liste des passes et leur économie ;
- *  - depuis le 2026-11-16, tout ce à quoi l'étudiant est inscrit : soirées et
- *    événements de club (avec QR), événements Culture et parties de sport
- *    (sans QR : rien à scanner, la carte ouvre la fiche) ;
+ *  - depuis le 2026-11-16, tout ce à quoi l'étudiant est inscrit : les
+ *    soirées gardent la carte pleine couleur et son grand QR ; Culture, clubs
+ *    de sport et parties ont un billet clair à part (CarteActivite) : date,
+ *    lieu, compte à rebours, « Voir la fiche », et un QR derrière un bouton
+ *    pour un club (rien à scanner pour Culture et les parties) ;
  *  - les squads prévus et l'historique, avec « Laisser un avis » après un
  *    passage validé ;
  *  - « Tes économies » en dernier : le mois et l'année, mêmes calculs.
@@ -103,22 +105,17 @@ function LigneScan({ hauteur, onFin }: { hauteur: number; onFin: () => void }) {
   );
 }
 
-function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
-  p: Pass; index: number; total: number; largeur: number; nomTitulaire: string; onAnnule: () => void;
-}) {
+/**
+ * La désinscription depuis le Pass. Culture se quitte côté Culture, le reste
+ * annule le pass. Une partie se quitte depuis sa fiche : l'organisateur qui
+ * part libère le créneau pour tous, ce n'est pas une croix qu'on touche par
+ * mégarde.
+ */
+function useAnnulation(p: Pass, onAnnule: () => void) {
   const genre = genreDe(p);
-  const infos = GENRES[genre];
-  const bleu = useRubrique(infos.rubrique);
   const jeton = useJeton();
   const toast = useToast();
-  const reduit = useMouvementReduit();
-  const maintenant = useMinute();
-  const [revele, setRevele] = useState(false);
   const [attente, setAttente] = useState(false);
-  const [echelle] = useState(() => new Animated.Value(1));
-
-  // Une partie se quitte depuis sa fiche : l'organisateur qui part libère le
-  // créneau pour tous, ce n'est pas une croix qu'on touche par mégarde.
   const annulable = genre !== 'partie';
 
   async function annuler() {
@@ -139,6 +136,122 @@ function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
       toast(e instanceof ErreurApi ? e.message : 'Erreur réseau', 'error');
     }
   }
+
+  return { annuler, attente, annulable };
+}
+
+/**
+ * Le pass d'une activité — Culture, club de sport, partie : un billet clair,
+ * pas la carte pleine couleur d'une soirée. Bandeau teinté de la rubrique,
+ * pastille de date, lieu et compte à rebours ; la carte ne présente pas de
+ * grand QR : un club garde son QR derrière « Afficher le QR », Culture et
+ * parties renvoient à la fiche.
+ */
+function CarteActivite({ p, index, total, largeur, onAnnule }: {
+  p: Pass; index: number; total: number; largeur: number; onAnnule: () => void;
+}) {
+  const { c } = useTheme();
+  const genre = genreDe(p);
+  const infos = GENRES[genre];
+  const teinte = useRubrique(infos.rubrique);
+  const maintenant = useMinute();
+  const [qr, setQr] = useState(false);
+  const { annuler, attente, annulable } = useAnnulation(p, onAnnule);
+
+  return (
+    <View style={{ width: largeur, backgroundColor: c.blanc, borderRadius: rayon.carte, overflow: 'hidden', marginBottom: 16 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, backgroundColor: teinte.doux }}>
+        <CarreIcone icone={infos.icone} fond={teinte.accent} encre="#FFFFFF" taille={40} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontFamily: sans(700), fontSize: 12, letterSpacing: 0.06 * 12, textTransform: 'uppercase', color: teinte.texteDoux }}>
+            {infos.surtitre} · {index + 1}/{total}
+          </Text>
+          <T taille={fs[4]} couleur={teinte.texteDoux} numberOfLines={1}>{pastillePrix(p, p.reduction ?? 0)}</T>
+        </View>
+        {annulable ? (
+          <PressableAnime
+            onPress={annuler}
+            disabled={attente}
+            accessibilityRole="button"
+            accessibilityLabel={genre === 'culture' ? 'Me désinscrire' : 'Annuler ce pass'}
+            style={{ width: 44, height: 44, borderRadius: rayon.bouton, backgroundColor: c.blanc, alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Icone nom="croix" taille={18} couleur={c.noir} />
+          </PressableAnime>
+        ) : null}
+      </View>
+
+      <View style={{ padding: 16, gap: 14 }}>
+        <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
+          <View style={{ width: 64, borderRadius: rayon.tuile, backgroundColor: teinte.accent, alignItems: 'center', paddingVertical: 10 }}>
+            <Text style={{ fontFamily: sans(700), fontSize: 26, lineHeight: 28, letterSpacing: -0.03 * 26, color: '#FFFFFF', fontVariant: ['tabular-nums'] }}>
+              {dateFr(p.date_heure, 'j')}
+            </Text>
+            <Text style={{ fontFamily: sans(600), fontSize: 12, letterSpacing: 0.06 * 12, textTransform: 'uppercase', color: teinte.surAccent2 }}>
+              {dateFr(p.date_heure, 'M')}
+            </Text>
+          </View>
+          <View style={{ flex: 1, gap: 4 }}>
+            <T taille={18} poids={700} interligne={lh.tight} style={{ letterSpacing: -0.03 * 18 }} numberOfLines={2}>{p.titre}</T>
+            <T taille={fs[4]} couleur={c.gris} numberOfLines={1}>{dateFr(p.date_heure, 'l')} · {dateFr(p.date_heure, 'H\\hi')}</T>
+          </View>
+        </View>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 140 }}>
+            <Icone nom="epingle" taille={16} couleur={c.gris} />
+            <T taille={fs[4]} couleur={c.gris} numberOfLines={1} style={{ flexShrink: 1 }}>{p.etablissement}{p.lieu ? ` · ${p.lieu}` : ''}</T>
+          </View>
+          <Pastille libelle={compteARebours(ts(p.date_heure), maintenant)} icone="horloge" fond={teinte.doux} encre={teinte.texteDoux} />
+        </View>
+
+        {genre === 'partie' ? (
+          <T taille={fs[4]} couleur={c.gris}>Terrain réservé. Réglé sur place au club.</T>
+        ) : null}
+
+        {qr && p.code_qr ? (
+          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 20, paddingVertical: 18, alignItems: 'center' }}>
+            <QRCode value={p.code_qr} size={176} color={fixe.qrSombre} backgroundColor={fixe.qrClair} ecl="H" />
+          </View>
+        ) : null}
+
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <PressableAnime
+            onPress={() => ouvrirFiche(p)}
+            accessibilityRole="button"
+            accessibilityLabel="Voir la fiche"
+            style={{ flex: 1, minHeight: 46, borderRadius: rayon.bouton, backgroundColor: teinte.accent, alignItems: 'center', justifyContent: 'center' }}
+          >
+            <T taille={fs[4]} poids={700} couleur="#FFFFFF">Voir la fiche</T>
+          </PressableAnime>
+          {p.code_qr ? (
+            <PressableAnime
+              onPress={() => setQr((v) => !v)}
+              accessibilityRole="button"
+              accessibilityLabel={qr ? 'Masquer le QR code' : 'Afficher le QR code'}
+              style={{ flex: 1, minHeight: 46, borderRadius: rayon.bouton, backgroundColor: teinte.doux, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Icone nom="qr" taille={18} couleur={teinte.texteDoux} />
+              <T taille={fs[4]} poids={700} couleur={teinte.texteDoux}>{qr ? 'Masquer' : 'QR'}</T>
+            </PressableAnime>
+          ) : null}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
+  p: Pass; index: number; total: number; largeur: number; nomTitulaire: string; onAnnule: () => void;
+}) {
+  const genre = genreDe(p);
+  const infos = GENRES[genre];
+  const bleu = useRubrique(infos.rubrique);
+  const reduit = useMouvementReduit();
+  const maintenant = useMinute();
+  const [revele, setRevele] = useState(false);
+  const [echelle] = useState(() => new Animated.Value(1));
+  const { annuler, attente, annulable } = useAnnulation(p, onAnnule);
 
   const pulser = useCallback(() => {
     if (reduit) return;
@@ -382,8 +495,10 @@ export default function Wallet() {
                   style={{ flexGrow: 0, marginHorizontal: -gutter, overflow: 'visible' }}
                   contentContainerStyle={{ gap: 12, paddingHorizontal: gutter, paddingBottom: 8 }}
                 >
-                  {passes.map((p, i) => (
+                  {passes.map((p, i) => genreDe(p) === 'soiree' || p.evenement_supprime ? (
                     <CartePass key={clePass(p)} p={p} index={i} total={passes.length} largeur={largeurCarte} nomTitulaire={nomTitulaire} onAnnule={() => charger()} />
+                  ) : (
+                    <CarteActivite key={clePass(p)} p={p} index={i} total={passes.length} largeur={largeurCarte} onAnnule={() => charger()} />
                   ))}
                 </ScrollView>
               ) : (
