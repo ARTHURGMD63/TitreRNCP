@@ -115,8 +115,8 @@ export function Selecteur({ etiquette, valeur, options, onChange, titre, style, 
   // surface secondaire.
   const bouton = apparence === 'filtre'
     ? {
-        conteneur: { minHeight: 52, paddingVertical: 12, paddingLeft: 16, paddingRight: 36, borderRadius: rayon.bouton, backgroundColor: filtreActif ? c.noir : c.blanc },
-        texte: { fontFamily: sans(500), fontSize: fs[5] - 1, color: filtreActif ? c.surEncre : c.noir },
+        conteneur: { minHeight: 42, paddingVertical: 9, paddingLeft: 14, paddingRight: 32, borderRadius: rayon.sm, backgroundColor: filtreActif ? c.noir : c.blanc },
+        texte: { fontFamily: sans(500), fontSize: fs[4], color: filtreActif ? c.surEncre : c.noir },
         chevron: filtreActif ? c.surEncre : c.noir,
       }
     : {

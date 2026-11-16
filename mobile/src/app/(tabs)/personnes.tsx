@@ -21,7 +21,7 @@ import { EnTeteApp, useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Selecteur } from '../../composants/Formulaire';
 import { Icone } from '../../composants/Icone';
-import { CarteSuggestion, LignePersonne } from '../../composants/Social';
+import { CarteSuggestion, LARGEUR_SUGGESTION, LignePersonne } from '../../composants/Social';
 import { T, TitreEcran, TitreSection } from '../../composants/Texte';
 import { useJeton } from '../../session';
 import { fs, gutter, lh, rayon, sans } from '../../theme';
@@ -107,7 +107,7 @@ export default function Personnes() {
 
       <Contenu style={{ paddingTop: 0 }}>
         <Apparition index={2}>
-        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
+        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
           <Selecteur
             apparence="filtre"
             style={{ flex: 1 }}
@@ -166,14 +166,14 @@ export default function Personnes() {
           <>
             {annuaire.suggestions.length ? (
               <Apparition index={3} style={{ marginBottom: 16 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
                   <TitreSection>À suivre</TitreSection>
-                  <T taille={fs[4]} couleur={c.gris}>D&apos;après tes goûts</T>
+                  <T taille={fs[3]} couleur={c.gris}>D&apos;après tes goûts</T>
                 </View>
                 {/* Le carrousel déborde jusqu'au bord de l'écran : la dernière
                     carte coupée dit qu'il y en a d'autres. */}
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} snapToInterval={160} decelerationRate="fast"
-                  style={{ marginHorizontal: -gutter }} contentContainerStyle={{ gap: 10, paddingHorizontal: gutter, paddingBottom: 4 }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} snapToInterval={LARGEUR_SUGGESTION + 8} decelerationRate="fast"
+                  style={{ marginHorizontal: -gutter }} contentContainerStyle={{ gap: 8, paddingHorizontal: gutter, paddingBottom: 4 }}>
                   {annuaire.suggestions.map((s) => (
                     <CarteSuggestion
                       key={s.id}
@@ -185,7 +185,7 @@ export default function Personnes() {
               </Apparition>
             ) : null}
 
-            <View style={{ gap: 12 }}>
+            <View style={{ gap: 8 }}>
               {annuaire.profils.map((p, i) => (
                 <Apparition key={p.id} index={4 + Math.min(i, 4)}>
                   <LignePersonne p={p} etat={p.etat_suivi} interetsCommuns={p.interets_communs} squadsCommuns={p.squads_communs} score={p.score} />

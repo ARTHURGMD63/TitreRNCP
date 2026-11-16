@@ -80,18 +80,19 @@ export function BoutonSuivre({ cible, etatInitial, largeur, accent }: { cible: n
       accessibilityRole="button"
       accessibilityLabel={libelle}
       accessibilityState={{ busy: attente }}
+      hitSlop={6}
       style={[
-        { flexShrink: 0, minHeight: 44, paddingHorizontal: 16, borderRadius: rayon.bouton, borderWidth: 1.5, borderColor: filet, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: fond },
+        { flexShrink: 0, minHeight: 32, paddingHorizontal: 12, borderRadius: rayon.xs + 2, borderWidth: 1, borderColor: filet, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: fond },
         largeur === 'pleine' ? { alignSelf: 'stretch' } : null,
       ]}
     >
       {attente ? (
-        <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: encre }}>…</Text>
+        <Text style={{ fontFamily: sans(600), fontSize: fs[3], color: encre }}>…</Text>
       ) : (
         <>
-          {etat === 'accepted' ? <Icone nom="check" taille={16} couleur={encre} trait={2.5} /> : null}
-          {etat === 'pending' ? <Icone nom="horloge" taille={17} couleur={encre} /> : null}
-          <Text style={{ fontFamily: sans(etat === 'pending' ? 500 : 700), fontSize: fs[5], color: encre }}>{libelle}</Text>
+          {etat === 'accepted' ? <Icone nom="check" taille={13} couleur={encre} trait={2.5} /> : null}
+          {etat === 'pending' ? <Icone nom="horloge" taille={13} couleur={encre} /> : null}
+          <Text style={{ fontFamily: sans(etat === 'pending' ? 500 : 600), fontSize: fs[3], color: encre }}>{libelle}</Text>
         </>
       )}
     </PressableAnime>
@@ -110,36 +111,36 @@ export function LignePersonne({ p, etat, interetsCommuns = [], squadsCommuns = 0
   const { c } = useTheme();
   const affinites = (score > 0 || squadsCommuns > 0) && (squadsCommuns > 0 || interetsCommuns.length > 0);
   return (
-    <View style={{ backgroundColor: c.blanc, borderRadius: rayon.personne, padding: 16, gap: 12 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+    <View style={{ backgroundColor: c.blanc, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 14, gap: 8 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <Pressable
           onPress={() => router.push({ pathname: '/etudiant/[id]', params: { id: String(p.id) } })}
           accessibilityRole="link"
           accessibilityLabel={`Profil de ${court(p.prenom, p.nom)}`}
-          style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 }}
+          style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 10 }}
         >
-          <Avatar photo={p.photo_url} prenom={p.prenom} taille={48} fond={teinteAvatar(p.prenom + p.id)} />
+          <Avatar photo={p.photo_url} prenom={p.prenom} taille={40} fond={teinteAvatar(p.prenom + p.id)} />
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: 17, letterSpacing: -0.02 * 17, color: c.noir }}>{court(p.prenom, p.nom)}</Text>
-            <T numberOfLines={1} taille={fs[4]} couleur={c.gris}>{p.ecole ?? ''}{p.promo ? ' · ' + p.promo : ''}</T>
+            <Text numberOfLines={1} style={{ fontFamily: sans(600), fontSize: 15, letterSpacing: -0.01 * 15, color: c.noir }}>{court(p.prenom, p.nom)}</Text>
+            <T numberOfLines={1} taille={fs[3]} couleur={c.gris}>{p.ecole ?? ''}{p.promo ? ' · ' + p.promo : ''}</T>
           </View>
         </Pressable>
         <BoutonSuivre cible={p.id} etatInitial={etat} />
       </View>
       {affinites ? (
         // Les étiquettes passent à la ligne plutôt que d'être coupées.
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingLeft: 50 }}>
           {squadsCommuns > 0 ? (
             <Pulsation>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: fixe.squadCommun, paddingVertical: 6, paddingHorizontal: 12, borderRadius: rayon.bouton }}>
-                <Icone nom="eclair" taille={15} couleur="#111116" />
-                <T taille={fs[4]} poids={700} couleur="#111116">Squad commun</T>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: fixe.squadCommun, paddingVertical: 3, paddingHorizontal: 8, borderRadius: 8 }}>
+                <Icone nom="eclair" taille={12} couleur="#111116" />
+                <T taille={fs[2]} poids={600} couleur="#111116">Squad commun</T>
               </View>
             </Pulsation>
           ) : null}
           {interetsCommuns.map((i) => (
-            <View key={i} style={{ backgroundColor: c.surface2, paddingVertical: 6, paddingHorizontal: 12, borderRadius: rayon.bouton }}>
-              <T taille={fs[4]} poids={500} couleur={c.noir}>#{i}</T>
+            <View key={i} style={{ backgroundColor: c.surface2, paddingVertical: 3, paddingHorizontal: 8, borderRadius: 8 }}>
+              <T taille={fs[2]} poids={500} couleur={c.grisFonce}>#{i}</T>
             </View>
           ))}
         </View>
@@ -150,21 +151,24 @@ export function LignePersonne({ p, etat, interetsCommuns = [], squadsCommuns = 0
 
 // ─── .carte-suggestion ──────────────────────────────────────────────────────
 
-/** Carte du carrousel « À suivre » : avatar de 64 px, nom, hashtags en bleu, « + Suivre » bleu. */
+/** Largeur d'une carte « À suivre » ; le carrousel s'accroche sur ce pas. */
+export const LARGEUR_SUGGESTION = 124;
+
+/** Carte du carrousel « À suivre » : avatar de 48 px, nom, hashtags en bleu, « + Suivre » bleu. */
 export function CarteSuggestion({ p, motif }: { p: Personne; motif: string }) {
   const { c, mode } = useTheme();
   const bleu = teintes('bleu', mode);
   return (
-    <View style={{ width: 150, alignItems: 'center', gap: 10, backgroundColor: c.blanc, borderRadius: rayon.personne, paddingVertical: 16, paddingHorizontal: 12 }}>
+    <View style={{ width: LARGEUR_SUGGESTION, alignItems: 'center', gap: 8, backgroundColor: c.blanc, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 10 }}>
       <Pressable
         onPress={() => router.push({ pathname: '/etudiant/[id]', params: { id: String(p.id) } })}
         accessibilityRole="link"
         accessibilityLabel={`Profil de ${court(p.prenom, p.nom)}`}
-        style={{ alignItems: 'center', gap: 6, width: '100%' }}
+        style={{ alignItems: 'center', gap: 2, width: '100%' }}
       >
-        <Avatar photo={p.photo_url} prenom={p.prenom} taille={64} fond={teinteAvatar(p.prenom + p.id)} />
-        <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: 17, letterSpacing: -0.02 * 17, color: c.noir, maxWidth: '100%', marginTop: 4 }}>{court(p.prenom, p.nom)}</Text>
-        <T numberOfLines={1} taille={fs[4]} poids={500} couleur={bleu.texteDoux} style={{ maxWidth: '100%' }}>{motif}</T>
+        <Avatar photo={p.photo_url} prenom={p.prenom} taille={48} fond={teinteAvatar(p.prenom + p.id)} />
+        <Text numberOfLines={1} style={{ fontFamily: sans(600), fontSize: 14, color: c.noir, maxWidth: '100%', marginTop: 4 }}>{court(p.prenom, p.nom)}</Text>
+        <T numberOfLines={1} taille={fs[2]} poids={500} couleur={bleu.texteDoux} style={{ maxWidth: '100%' }}>{motif}</T>
       </Pressable>
       <BoutonSuivre cible={p.id} etatInitial="none" largeur="pleine" accent={bleu.accent} />
     </View>
