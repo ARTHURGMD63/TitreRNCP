@@ -12,7 +12,8 @@
  *    soirées gardent la carte pleine couleur et son grand QR ; Culture, clubs
  *    de sport et parties ont un billet clair à part (CarteActivite) : date,
  *    lieu, compte à rebours, « Voir la fiche », et un QR derrière un bouton
- *    pour un club (rien à scanner pour Culture et les parties) ;
+ *    pour un club (rien à scanner pour Culture et les parties) ; trois lignes,
+ *    chacune son carrousel : Événements, Sport (clubs et parties), Culture ;
  *  - les squads prévus et l'historique, avec « Laisser un avis » après un
  *    passage validé ;
  *  - « Tes économies » en dernier : le mois et l'année, mêmes calculs.
@@ -463,6 +464,12 @@ export default function Wallet() {
 
   const passes = donnees?.pass_actifs ?? [];
   const squads = donnees?.squads ?? [];
+  const toutesSections: { cle: 'soiree' | 'sport' | 'culture'; titre: string; icone: NomIcone; couleur: string; passes: Pass[] }[] = [
+    { cle: 'soiree', titre: 'Événements', icone: 'ticket', couleur: GENRES.soiree.couleur, passes: passes.filter((p) => genreDe(p) === 'soiree') },
+    { cle: 'sport', titre: 'Sport', icone: 'trophee', couleur: GENRES.sport.couleur, passes: passes.filter((p) => genreDe(p) === 'sport' || genreDe(p) === 'partie') },
+    { cle: 'culture', titre: 'Culture', icone: 'musee', couleur: GENRES.culture.couleur, passes: passes.filter((p) => genreDe(p) === 'culture') },
+  ];
+  const sections = toutesSections.filter((s) => s.passes.length > 0);
   const nomTitulaire = profil ? court(profil.prenom, profil.nom) : '';
   const couleurType = (p: Pass) => {
     const g = genreDe(p);
@@ -487,20 +494,32 @@ export default function Wallet() {
           <>
             <Apparition index={2}>
               {passes.length ? (
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  snapToInterval={largeurCarte + 12}
-                  decelerationRate="fast"
-                  style={{ flexGrow: 0, marginHorizontal: -gutter, overflow: 'visible' }}
-                  contentContainerStyle={{ gap: 12, paddingHorizontal: gutter, paddingBottom: 8 }}
-                >
-                  {passes.map((p, i) => genreDe(p) === 'soiree' || p.evenement_supprime ? (
-                    <CartePass key={clePass(p)} p={p} index={i} total={passes.length} largeur={largeurCarte} nomTitulaire={nomTitulaire} onAnnule={() => charger()} />
-                  ) : (
-                    <CarteActivite key={clePass(p)} p={p} index={i} total={passes.length} largeur={largeurCarte} onAnnule={() => charger()} />
-                  ))}
-                </ScrollView>
+                // Trois lignes, chacune son carrousel : les événements, le
+                // sport (clubs et parties) et la culture. Une ligne sans pass
+                // n'est pas affichée.
+                sections.map((s) => (
+                  <View key={s.cle} style={{ marginBottom: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                      <CarreIcone icone={s.icone} fond={s.couleur} encre="#FFFFFF" taille={28} />
+                      <TitreSection>{s.titre}</TitreSection>
+                      <T taille={fs[4]} couleur={c.gris}>{s.passes.length}</T>
+                    </View>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      snapToInterval={largeurCarte + 12}
+                      decelerationRate="fast"
+                      style={{ flexGrow: 0, marginHorizontal: -gutter, overflow: 'visible' }}
+                      contentContainerStyle={{ gap: 12, paddingHorizontal: gutter, paddingBottom: 8 }}
+                    >
+                      {s.passes.map((p, i) => s.cle === 'soiree' ? (
+                        <CartePass key={clePass(p)} p={p} index={i} total={s.passes.length} largeur={largeurCarte} nomTitulaire={nomTitulaire} onAnnule={() => charger()} />
+                      ) : (
+                        <CarteActivite key={clePass(p)} p={p} index={i} total={s.passes.length} largeur={largeurCarte} onAnnule={() => charger()} />
+                      ))}
+                    </ScrollView>
+                  </View>
+                ))
               ) : (
                 <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 32, alignItems: 'center', marginBottom: 16 }}>
                   <View style={{ marginBottom: 16 }}><Icone nom="ticket" taille={48} couleur={c.gris} trait={1.5} /></View>
