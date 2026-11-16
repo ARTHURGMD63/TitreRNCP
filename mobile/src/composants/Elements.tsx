@@ -10,46 +10,64 @@ import { router } from 'expo-router';
 
 import { encreSur, fixe, fs, lsEm, mono, police, rayon, sans, toucheMin } from '../theme';
 import { useTheme } from '../useTheme';
+import { PressableAnime } from './Animations';
 import { Icone, type NomIcone } from './Icone';
 import { T } from './Texte';
 
-// ─── .pill ──────────────────────────────────────────────────────────────────
+// ─── Chip de filtre ─────────────────────────────────────────────────────────
 
-export function Pilule({ libelle, actif, onPress, icone, accent, musique, style, couleurTexte }: {
+/**
+ * La chip de filtre de la refonte : fond surface sans bordure au repos,
+ * encre (texte inversé) une fois choisie, rayon 16, 44 px de haut au moins.
+ *
+ *  - `carre` : le petit carré coloré (28 px, rayon 10) qui porte l'icône de
+ *    la catégorie en blanc ;
+ *  - `contour` : la chip « Filtres », bordée d'encre.
+ *
+ * `accent`, `musique` et `couleurTexte` sont acceptés pour les écrans pas
+ * encore redessinés (partenaire, admin), sans effet sur le dessin.
+ */
+export function Pilule({ libelle, actif, onPress, icone, carre, contour, style, accessibilityLabel }: {
   libelle: string;
   actif: boolean;
   onPress: () => void;
   icone?: NomIcone;
-  /** Couleur de la pilule active : lave, ou dôme dans l'univers sport. */
+  carre?: string;
+  contour?: boolean;
   accent?: string;
-  /** .pill-musique : semi-gras même au repos. */
   musique?: boolean;
   style?: StyleProp<ViewStyle>;
-  /** « Pour moi » au repos : contour et texte en lave lisible. */
   couleurTexte?: string;
+  accessibilityLabel?: string;
 }) {
   const { c } = useTheme();
-  const plein = accent ?? c.rouge;
-  const encre = actif ? encreSur(plein) : couleurTexte ?? c.noir;
+  const encre = actif ? c.surEncre : c.noir;
   return (
-    <Pressable
+    <PressableAnime
       onPress={onPress}
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? libelle}
       accessibilityState={{ selected: actif }}
-      hitSlop={{ top: 4, bottom: 4 }}
-      style={({ pressed }) => [
+      style={[
         {
-          flexDirection: 'row', alignItems: 'center', gap: 6,
-          paddingVertical: 10, paddingHorizontal: 17, borderRadius: rayon.pill, borderWidth: 1,
-          borderColor: actif ? plein : c.line2, backgroundColor: actif ? plein : 'transparent',
-          transform: pressed ? [{ scale: 0.98 }] : [],
+          flexDirection: 'row', alignItems: 'center', gap: 10,
+          minHeight: 48, paddingVertical: carre ? 8 : 12, paddingLeft: carre ? 8 : 18, paddingRight: 18,
+          borderRadius: rayon.bouton, borderWidth: 1.5,
+          borderColor: contour ? c.noir : actif ? c.noir : c.blanc,
+          backgroundColor: actif ? c.noir : contour ? 'transparent' : c.blanc,
         },
         style,
       ]}
     >
-      {icone ? <View style={musique ? { marginRight: 4 } : null}><Icone nom={icone} taille={16} couleur={encre} trait={2} /></View> : null}
-      <Text style={{ fontFamily: sans(actif || musique ? 600 : 500), fontSize: fs[4], color: encre }}>{libelle}</Text>
-    </Pressable>
+      {carre && icone ? (
+        <View style={{ width: 28, height: 28, borderRadius: rayon.mini, backgroundColor: carre, alignItems: 'center', justifyContent: 'center' }}>
+          <Icone nom={icone} taille={16} couleur="#FFFFFF" trait={2} />
+        </View>
+      ) : icone ? (
+        <Icone nom={icone} taille={18} couleur={encre} trait={2} />
+      ) : null}
+      <Text style={{ fontFamily: sans(500), fontSize: fs[5], color: encre }}>{libelle}</Text>
+    </PressableAnime>
   );
 }
 

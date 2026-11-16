@@ -10,21 +10,45 @@
  * permet de la garder ici.
  */
 
+import { Animated, Easing } from 'react-native';
 import { Tabs } from 'expo-router';
 
+import { useMouvementReduit } from '../../composants/Animations';
 import { BarreOnglets } from '../../composants/BarreOnglets';
 import { useTheme } from '../../useTheme';
 
+/**
+ * Refonte 2026-11 : le nouvel onglet apparaît en fondu avec un léger
+ * glissement de 40 px, en 450 ms. Seulement une transition : le système de
+ * navigation ne change pas.
+ */
+const glissement = ({ current }: { current: { progress: Animated.AnimatedInterpolation<number> } }) => ({
+  sceneStyle: {
+    opacity: current.progress.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 1, 0] }),
+    transform: [{ translateX: current.progress.interpolate({ inputRange: [-1, 0, 1], outputRange: [-40, 0, 40] }) }],
+  },
+});
+
 export default function Onglets() {
   const { c } = useTheme();
+  const reduit = useMouvementReduit();
 
   return (
     <Tabs
       tabBar={(props) => <BarreOnglets {...props} />}
-      // Changement d'onglet instantané : aucune animation, et les onglets sont
-      // tous montés (donc chargés) dès l'ouverture plutôt qu'à la première
-      // visite, qui affichait sinon un écran de chargement.
-      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: c.bg }, animation: 'none', lazy: false }}
+      // Les onglets sont tous montés (donc chargés) dès l'ouverture plutôt
+      // qu'à la première visite, qui affichait sinon un écran de chargement.
+      // Animation coupée si le téléphone demande moins de mouvement.
+      screenOptions={{
+        headerShown: false, sceneStyle: { backgroundColor: c.bg }, lazy: false,
+        ...(reduit
+          ? { animation: 'none' as const }
+          : {
+              animation: 'shift' as const,
+              sceneStyleInterpolator: glissement,
+              transitionSpec: { animation: 'timing' as const, config: { duration: 450, easing: Easing.out(Easing.cubic) } },
+            }),
+      }}
     >
       <Tabs.Screen name="index" options={{ title: 'Explorer' }} />
       <Tabs.Screen name="personnes" options={{ title: 'Personnes' }} />

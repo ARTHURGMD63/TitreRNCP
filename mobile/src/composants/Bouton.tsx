@@ -14,13 +14,14 @@
  */
 
 import React from 'react';
-import { ActivityIndicator, Pressable, Text, View, type StyleProp, type ViewStyle, type TextStyle } from 'react-native';
+import { ActivityIndicator, Text, View, type StyleProp, type ViewStyle, type TextStyle } from 'react-native';
 
 import { fixe, fs, rayon, sans, toucheMin } from '../theme';
 import { useTheme } from '../useTheme';
+import { PressableAnime } from './Animations';
 import { Icone, type NomIcone } from './Icone';
 
-export type Variante = 'primaire' | 'contour' | 'basalte' | 'texte' | 'bleu' | 'alerte';
+export type Variante = 'primaire' | 'contour' | 'basalte' | 'texte' | 'bleu' | 'alerte' | 'encre';
 
 type Props = {
   libelle: string;
@@ -36,13 +37,15 @@ type Props = {
   styleTexte?: StyleProp<TextStyle>;
   taillePolice?: number;
   accessibilityLabel?: string;
+  /** Couleur de l'aplat « primaire » : l'accent de la rubrique (bleu par défaut). */
+  accent?: string;
   /** Repère des tests de bout en bout (Maestro) ; sans effet à l'écran. */
   testID?: string;
 };
 
 export function Bouton({
   libelle, onPress, variante = 'primaire', plein, desactive, chargement, icone, iconeADroite,
-  style, styleTexte, taillePolice = fs[5], accessibilityLabel, testID,
+  style, styleTexte, taillePolice = fs[5], accessibilityLabel, accent, testID,
 }: Props) {
   const { c } = useTheme();
   const inactif = desactive || chargement;
@@ -52,16 +55,18 @@ export function Bouton({
   let filet = 'transparent';
 
   switch (variante) {
-    case 'primaire': fond = c.rouge; encre = fixe.surAccent; break;
-    case 'bleu': fond = c.bleu; encre = fixe.surLave; break;
+    case 'primaire': fond = accent ?? c.rouge; encre = fixe.surAccent; filet = fond; break;
+    // « bleu » : l'action principale de l'univers sport, rouge depuis la refonte.
+    case 'bleu': fond = '#E02D24'; encre = fixe.surAccent; filet = fond; break;
+    case 'encre': fond = c.noir; encre = c.surEncre; filet = c.noir; break;
     case 'alerte': fond = c.alerteVif; encre = fixe.surLave; break;
-    case 'contour': fond = 'transparent'; encre = c.noir; filet = c.noir; break;
+    case 'contour': fond = 'transparent'; encre = c.noir; filet = c.line2; break;
     case 'basalte': fond = fixe.basalte; encre = fixe.craie; filet = fixe.basalte; break;
     case 'texte': fond = 'transparent'; encre = c.surRougeClair; break;
   }
 
   if (desactive && !chargement) {
-    if (variante === 'primaire' || variante === 'bleu' || variante === 'alerte') {
+    if (variante === 'primaire' || variante === 'bleu' || variante === 'alerte' || variante === 'encre') {
       fond = c.surface2; encre = c.grisFonce; filet = c.grisClair;
     } else if (variante === 'basalte') {
       fond = 'rgba(17,16,19,0.14)'; encre = fixe.surAccent; filet = 'transparent';
@@ -71,22 +76,21 @@ export function Bouton({
   const opaciteDesactive = desactive && (variante === 'contour' || variante === 'texte') ? 0.5 : 1;
 
   return (
-    <Pressable
+    <PressableAnime
       onPress={onPress}
       disabled={inactif}
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? libelle}
       accessibilityState={{ disabled: !!inactif, busy: !!chargement }}
-      style={({ pressed }) => [
+      style={[
         {
           flexDirection: iconeADroite ? 'row-reverse' : 'row',
           alignItems: 'center', justifyContent: 'center', gap: 8,
-          paddingVertical: 13, paddingHorizontal: variante === 'texte' ? 4 : 24,
-          minHeight: plein ? 52 : toucheMin,
-          borderRadius: rayon.pill, borderWidth: 1.5, borderColor: filet, backgroundColor: fond,
+          paddingVertical: 13, paddingHorizontal: variante === 'texte' ? 4 : 22,
+          minHeight: plein ? 54 : toucheMin,
+          borderRadius: plein ? rayon.grandBouton : rayon.bouton, borderWidth: 1.5, borderColor: filet, backgroundColor: fond,
           opacity: opaciteDesactive,
-          transform: pressed && !inactif ? [{ translateY: 1 }, { scale: 0.99 }] : [],
         },
         plein ? { alignSelf: 'stretch' } : { alignSelf: 'flex-start' },
         style,
@@ -102,7 +106,7 @@ export function Bouton({
           </Text>
         </>
       )}
-    </Pressable>
+    </PressableAnime>
   );
 }
 
