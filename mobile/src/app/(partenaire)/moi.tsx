@@ -101,7 +101,7 @@ export default function MoiPartenaire() {
   return (
     <Ecran>
       <EnTete>
-        <TitreEcran lignes={[compte.prenom, compte.nom]} />
+        <TitreEcran lignes={[compte.prenom, compte.nom]} accent={c.noir} />
         <T taille={fs[3]} couleur={c.gris} style={{ marginTop: 6 }}>{compte.email}</T>
       </EnTete>
       <Contenu style={{ paddingTop: 0 }}>

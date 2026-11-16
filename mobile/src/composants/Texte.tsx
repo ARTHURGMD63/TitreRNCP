@@ -1,11 +1,10 @@
 /**
- * Les trois voix typographiques de la charte, et leurs rôles.
+ * Les trois voix typographiques, et leurs rôles. Depuis la refonte 2026-11,
+ * toutes en Onest :
  *
- *  - Display : Unbounded 800, resserré (--ls-display), pour les titres et
- *    les chiffres clés — .display, .t-card-title, .event-title…
- *  - Mono    : JetBrains Mono, toujours en capitales espacées (--ls-label),
- *    pour les étiquettes, horaires et XP — .label, .t-overline…
- *  - T       : Instrument Sans, pour tout le reste, plafonné à 700.
+ *  - Display : 700, resserré (-0.035em), pour les titres et les chiffres clés ;
+ *  - Mono    : le surtitre — 12 px, 600, capitales espacées de 0.06em ;
+ *  - T       : tout le reste, de 400 à 700.
  *
  * React Native n'a pas de cascade : chaque texte reçoit sa couleur. Par
  * défaut c'est l'encre du thème (--noir), comme `body { color }` sur le site.
@@ -14,7 +13,7 @@
 import React from 'react';
 import { Text, View, type StyleProp, type TextProps, type TextStyle } from 'react-native';
 
-import { fs, lh, lsEm, mono, police, sans } from '../theme';
+import { fixe, fs, lh, lsEm, mono, police, rayon, sans, teintes, type Rubrique } from '../theme';
 import { useTheme } from '../useTheme';
 
 type Base = TextProps & { style?: StyleProp<TextStyle>; couleur?: string };
@@ -32,7 +31,7 @@ export function Display({ taille = fs[8], interligne = lh.display, couleur, styl
   );
 }
 
-export function Mono({ taille = fs[1], poids = 500, couleur, majuscules = true, espacement = lsEm.label, style, ...reste }:
+export function Mono({ taille = fs[2], poids = 600, couleur, majuscules = true, espacement = lsEm.label, style, ...reste }:
   Base & { taille?: number; poids?: 400 | 500 | 600; majuscules?: boolean; espacement?: number }) {
   const { c } = useTheme();
   return (
@@ -62,24 +61,63 @@ export function T({ taille = fs[4], poids = 400, couleur, interligne, style, ...
 }
 
 /**
- * Le titre d'écran en deux lignes : la première à l'encre, la seconde en
- * lave (.display-italic — Unbounded n'a pas d'italique, c'est la couleur qui
- * porte l'accent). Les squads passent l'accent au dôme.
+ * Le grand titre d'écran : 32 px, 700, interligne 1.2, -0.035em. Le ou les
+ * mots clés sont surlignés dans une pastille de la couleur de la rubrique
+ * (texte blanc, padding 0 10 3, rayon 10) : « Les bons plans [du moment.] ».
+ *
+ * Deux écritures :
+ *  - `avant` + `surligne` : le texte coule et passe à la ligne mot par mot,
+ *    la pastille ne se coupe jamais ;
+ *  - `lignes` (historique) : la première ligne à l'encre, la seconde
+ *    surlignée — ou simplement colorée si `accent` est donné (nom et prénom
+ *    d'un profil, où rien n'est à surligner).
  */
-export function TitreEcran({ lignes, taille = fs[8], accent, interligne = lh.tight, style }: {
-  lignes: [string, string?];
+export function TitreEcran({ lignes, avant, surligne, rubrique = 'bleu', taille = fs[8], accent, interligne = lh.tight, style }: {
+  lignes?: [string, string?];
+  avant?: string;
+  surligne?: string;
+  rubrique?: Rubrique;
   taille?: number;
   accent?: string;
   interligne?: number;
   style?: object;
 }) {
-  const { c } = useTheme();
+  const { mode } = useTheme();
+  if (lignes && accent) {
+    return (
+      <View accessibilityRole="header" style={style}>
+        <Display taille={taille} interligne={interligne}>{lignes[0]}</Display>
+        {lignes[1] ? <Display taille={taille} interligne={interligne} couleur={accent}>{lignes[1]}</Display> : null}
+      </View>
+    );
+  }
+  const debut = avant ?? lignes?.[0] ?? '';
+  const pastille = surligne ?? lignes?.[1];
+  const fond = teintes(rubrique, mode).accent;
+  const mots = debut.split(/\s+/).filter(Boolean);
+  const hauteur = taille * interligne;
   return (
-    <View accessibilityRole="header" style={style}>
-      <Display taille={taille} interligne={interligne}>{lignes[0]}</Display>
-      {lignes[1] ? (
-        <Display taille={taille} interligne={interligne} couleur={accent ?? c.surRougeClair}>{lignes[1]}</Display>
+    <View
+      accessible
+      accessibilityRole="header"
+      accessibilityLabel={[debut, pastille].filter(Boolean).join(' ')}
+      style={[{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: taille * 0.26, rowGap: 2 }, style]}
+    >
+      {mots.map((m, i) => (
+        <Display key={i} taille={taille} interligne={interligne}>{m}</Display>
+      ))}
+      {pastille ? (
+        <View style={{ backgroundColor: fond, borderRadius: rayon.mini, paddingHorizontal: 10, paddingBottom: 3, height: hauteur + 3, justifyContent: 'center' }}>
+          <Display taille={taille} interligne={interligne} couleur={fixe.surAccent} numberOfLines={1}>{pastille}</Display>
+        </View>
       ) : null}
     </View>
+  );
+}
+
+/** Le titre de section (« À suivre », « 1 pass actif ») : 19 px, 700. */
+export function TitreSection({ children, style }: { children: React.ReactNode; style?: StyleProp<TextStyle> }) {
+  return (
+    <T taille={19} poids={700} accessibilityRole="header" style={[{ letterSpacing: -0.02 * 19 }, style]}>{children}</T>
   );
 }
