@@ -33,6 +33,7 @@ export default function OngletsAdmin() {
       <Tabs.Screen name="plus" options={{ title: 'Plus' }} />
       <Tabs.Screen name="finances" options={{ href: null }} />
       <Tabs.Screen name="culture" options={{ href: null }} />
+      <Tabs.Screen name="bde" options={{ href: null }} />
     </Tabs>
   );
 }
