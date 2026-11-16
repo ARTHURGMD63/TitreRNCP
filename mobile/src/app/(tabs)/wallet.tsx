@@ -8,6 +8,9 @@
  *    une fois) ; en bas l'événement, la date, le compte à rebours et la
  *    réduction ;
  *  - « N pass actif », puis la liste des passes et leur économie ;
+ *  - depuis le 2026-11-16, tout ce à quoi l'étudiant est inscrit : soirées et
+ *    événements de club (avec QR), événements Culture et parties de sport
+ *    (sans QR : rien à scanner, la carte ouvre la fiche) ;
  *  - les squads prévus et l'historique, avec « Laisser un avis » après un
  *    passage validé ;
  *  - « Tes économies » en dernier : le mois et l'année, mêmes calculs.
@@ -21,19 +24,41 @@ import { Animated, Easing, Pressable, ScrollView, Text, View, useWindowDimension
 import { router, useFocusEffect } from 'expo-router';
 import QRCode from 'react-native-qrcode-svg';
 
-import { actions, api, ErreurApi, type Pass, type ReponseWallet, type SquadAgenda } from '../../api';
+import { actions, api, ErreurApi, type GenrePass, type Pass, type ReponseWallet, type SquadAgenda } from '../../api';
+import { SPORTS } from '../../catalogue';
 import { Apparition, Compteur, PressableAnime, useMouvementReduit } from '../../composants/Animations';
 import { Bouton } from '../../composants/Bouton';
 import { CarreIcone, EnTeteApp, Pastille, useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
-import { Icone } from '../../composants/Icone';
+import { Icone, type NomIcone } from '../../composants/Icone';
 import { T, TitreEcran, TitreSection } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
 import { compteARebours, court, dateFr, nombre, ts } from '../../format';
 import { useJeton, useSession } from '../../session';
-import { fixe, fs, gutter, halo, lh, rayon, sans } from '../../theme';
+import { fixe, fs, gutter, halo, lh, rayon, sans, type Rubrique } from '../../theme';
 import { useTheme } from '../../useTheme';
+
+/** Le surtitre, l'icône et la rubrique de la carte, selon ce que le pass représente. */
+const GENRES: Record<GenrePass, { surtitre: string; icone: NomIcone; rubrique: Rubrique; couleur: string }> = {
+  soiree: { surtitre: 'Pass étudiant', icone: 'ticket', rubrique: 'bleu', couleur: '#1D55F0' },
+  sport: { surtitre: 'Pass sport', icone: 'trophee', rubrique: 'sport', couleur: '#E02D24' },
+  culture: { surtitre: 'Pass culture', icone: 'musee', rubrique: 'culture', couleur: '#7B4DF2' },
+  partie: { surtitre: 'Partie de sport', icone: 'raquette', rubrique: 'sport', couleur: '#E02D24' },
+};
+
+const genreDe = (p: Pass): GenrePass => p.genre ?? 'soiree';
+const clePass = (p: Pass) => `${genreDe(p)}-${p.id}`;
+
+/** La fiche d'un pass : la soirée, l'événement Culture ou le créneau. */
+function ouvrirFiche(p: Pass) {
+  if (p.evenement_id === null) return;
+  const id = String(p.evenement_id);
+  const g = genreDe(p);
+  if (g === 'culture') router.push({ pathname: '/culture/[id]', params: { id } });
+  else if (g === 'partie') router.push({ pathname: '/creneau/[id]', params: { id } });
+  else router.push({ pathname: '/evenement/[id]', params: { id } });
+}
 
 const MOIS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
@@ -81,7 +106,9 @@ function LigneScan({ hauteur, onFin }: { hauteur: number; onFin: () => void }) {
 function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
   p: Pass; index: number; total: number; largeur: number; nomTitulaire: string; onAnnule: () => void;
 }) {
-  const bleu = useRubrique('bleu');
+  const genre = genreDe(p);
+  const infos = GENRES[genre];
+  const bleu = useRubrique(infos.rubrique);
   const jeton = useJeton();
   const toast = useToast();
   const reduit = useMouvementReduit();
@@ -90,12 +117,22 @@ function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
   const [attente, setAttente] = useState(false);
   const [echelle] = useState(() => new Animated.Value(1));
 
+  // Une partie se quitte depuis sa fiche : l'organisateur qui part libère le
+  // créneau pour tous, ce n'est pas une croix qu'on touche par mégarde.
+  const annulable = genre !== 'partie';
+
   async function annuler() {
-    if (!(await confirmer('Veux-tu vraiment annuler ce pass ?'))) return;
+    const culture = genre === 'culture';
+    if (!(await confirmer(culture ? 'Te désinscrire de cet événement ?' : 'Veux-tu vraiment annuler ce pass ?'))) return;
     setAttente(true);
     try {
-      await actions.annulerPass(jeton, p.id);
-      toast('Pass annulé !', 'success');
+      if (culture) {
+        if (p.evenement_id !== null) await api.cultureInscription(jeton, p.evenement_id, true);
+        toast('Inscription annulée', 'success');
+      } else {
+        await actions.annulerPass(jeton, p.id);
+        toast('Pass annulé !', 'success');
+      }
       setTimeout(onAnnule, 1000);
     } catch (e) {
       setAttente(false);
@@ -128,22 +165,24 @@ function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
         <View style={{ flex: 1, gap: 4 }}>
           <Text style={{ fontFamily: sans(600), fontSize: 12, letterSpacing: 0.06 * 12, textTransform: 'uppercase', color: secondaire }}>
-            Pass étudiant · {index + 1}/{total}
+            {infos.surtitre} · {index + 1}/{total}
           </Text>
           <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: 18, letterSpacing: -0.03 * 18, color: encre }}>
             {supprime ? 'Pass invalide' : nomTitulaire}
           </Text>
         </View>
         {supprime ? null : <Pastille libelle="Actif" point={fixe.enCours} fond={voile} encre={encre} style={{ marginTop: 6 }} />}
-        <PressableAnime
-          onPress={annuler}
-          disabled={attente}
-          accessibilityRole="button"
-          accessibilityLabel={supprime ? 'Supprimer ce pass' : 'Annuler ce pass'}
-          style={{ width: 44, height: 44, borderRadius: rayon.bouton, backgroundColor: voile, alignItems: 'center', justifyContent: 'center' }}
-        >
-          <Icone nom="croix" taille={20} couleur={encre} />
-        </PressableAnime>
+        {annulable ? (
+          <PressableAnime
+            onPress={annuler}
+            disabled={attente}
+            accessibilityRole="button"
+            accessibilityLabel={supprime ? 'Supprimer ce pass' : genre === 'culture' ? 'Me désinscrire' : 'Annuler ce pass'}
+            style={{ width: 44, height: 44, borderRadius: rayon.bouton, backgroundColor: voile, alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Icone nom="croix" taille={20} couleur={encre} />
+          </PressableAnime>
+        ) : null}
       </View>
 
       {supprime ? (
@@ -151,6 +190,21 @@ function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
           <Icone nom="interdit" taille={40} couleur="#666666" />
           <T taille={fs[4]} poids={700} couleur="#555555" style={{ textAlign: 'center' }}>{'Événement\nsupprimé'}</T>
         </View>
+      ) : !p.code_qr ? (
+        // Culture et parties : rien à scanner. La carte garde la même
+        // silhouette et ouvre la fiche, d'où l'on gère son inscription.
+        <Pressable
+          onPress={() => ouvrirFiche(p)}
+          accessibilityRole="button"
+          accessibilityLabel="Voir la fiche"
+          style={{ backgroundColor: '#FFFFFF', borderRadius: 20, height: HAUTEUR_QR, alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 16 }}
+        >
+          <Icone nom={infos.icone} taille={44} couleur="#111116" trait={1.75} />
+          <T taille={fs[5]} poids={700} couleur="#111116" interligne={lh.tight} style={{ textAlign: 'center' }}>
+            {genre === 'partie' ? 'Terrain réservé.\nRéglé sur place au club.' : 'Tu es inscrit.\nPas de QR à présenter.'}
+          </T>
+          <T taille={fs[3]} couleur="#55555C">Voir la fiche</T>
+        </Pressable>
       ) : (
         // Le QR reste toujours sur fond blanc, dans les deux thèmes : c'est
         // une cible optique.
@@ -186,7 +240,7 @@ function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
             <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
               <T taille={fs[4]} couleur={secondaire} style={{ marginRight: 'auto' }}>{dateFr(p.date_heure, 'D j M · H\\hi')}</T>
               <Pastille libelle={compteARebours(ts(p.date_heure), maintenant)} icone="horloge" fond={voile} encre={encre} />
-              <Pastille libelle={reduction > 0 ? `-${reduction}%` : 'Entrée gratuite'} fond="#FFFFFF" encre="#111116" />
+              <Pastille libelle={pastillePrix(p, reduction)} fond="#FFFFFF" encre="#111116" />
             </View>
           </>
         )}
@@ -248,7 +302,17 @@ function EnTeteListe({ titre, droite, style }: { titre: string; droite: string; 
   );
 }
 
+/** La pastille blanche du bas de la carte. */
+function pastillePrix(p: Pass, reduction: number) {
+  const g = genreDe(p);
+  if (g === 'partie') return (p.sport && SPORTS[p.sport]) || 'Sport';
+  if (g === 'culture') return (p.prix_normal ?? 0) > 0 ? `${nombre(p.prix_normal!, 2)} €` : 'Entrée libre';
+  return reduction > 0 ? `-${reduction}%` : 'Entrée gratuite';
+}
+
 function economie(p: Pass) {
+  const g = genreDe(p);
+  if (g === 'culture' || g === 'partie') return '';
   if ((p.reduction ?? 0) > 0 && (p.prix_normal ?? 0) > 0) {
     return '-' + nombre(Math.round((p.prix_normal! * p.reduction!) / 100 * 100) / 100, 2) + '€';
   }
@@ -287,7 +351,12 @@ export default function Wallet() {
   const passes = donnees?.pass_actifs ?? [];
   const squads = donnees?.squads ?? [];
   const nomTitulaire = profil ? court(profil.prenom, profil.nom) : '';
-  const couleurType = (t: string | null) => (t === 'resto' ? '#F0508A' : t === 'bar' ? '#FF8A3D' : t === 'boite' ? '#8B5CF6' : t === 'afterwork' ? '#FFB020' : '#1D55F0');
+  const couleurType = (p: Pass) => {
+    const g = genreDe(p);
+    if (g !== 'soiree') return GENRES[g].couleur;
+    const t = p.etab_type;
+    return t === 'resto' ? '#F0508A' : t === 'bar' ? '#FF8A3D' : t === 'boite' ? '#8B5CF6' : t === 'afterwork' ? '#FFB020' : '#1D55F0';
+  };
 
   return (
     <Ecran rafraichit={rafraichit} onRafraichir={() => { setRafraichit(true); void charger(); }}>
@@ -314,7 +383,7 @@ export default function Wallet() {
                   contentContainerStyle={{ gap: 12, paddingHorizontal: gutter, paddingBottom: 8 }}
                 >
                   {passes.map((p, i) => (
-                    <CartePass key={p.id} p={p} index={i} total={passes.length} largeur={largeurCarte} nomTitulaire={nomTitulaire} onAnnule={() => charger()} />
+                    <CartePass key={clePass(p)} p={p} index={i} total={passes.length} largeur={largeurCarte} nomTitulaire={nomTitulaire} onAnnule={() => charger()} />
                   ))}
                 </ScrollView>
               ) : (
@@ -337,14 +406,15 @@ export default function Wallet() {
                 <EnTeteListe titre={`${passes.length} pass actif${passes.length > 1 ? 's' : ''}`} droite="Agenda" />
                 <View style={{ gap: 10, marginBottom: 16 }}>
                   {passes.map((p) => (
-                    <View key={p.id} style={{ padding: 14, borderRadius: rayon.tuile, backgroundColor: c.blanc, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                      <CarreIcone icone="ticket" fond={couleurType(p.etab_type)} encre="#FFFFFF" taille={40} />
+                    <PressableAnime key={clePass(p)} onPress={() => ouvrirFiche(p)} accessibilityRole="button" accessibilityLabel={`${p.titre}, voir la fiche`}
+                      style={{ padding: 14, borderRadius: rayon.tuile, backgroundColor: c.blanc, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                      <CarreIcone icone={GENRES[genreDe(p)].icone} fond={couleurType(p)} encre="#FFFFFF" taille={40} />
                       <View style={{ flex: 1 }}>
                         <T taille={fs[4]} poids={700} numberOfLines={1}>{p.etablissement}</T>
                         <T taille={fs[4]} couleur={c.gris} numberOfLines={1} style={{ marginTop: 2 }}>{p.titre} · {dateFr(p.date_heure, 'D j M · H\\hi')}</T>
                       </View>
                       <T taille={fs[4]} poids={700} couleur={c.succes}>{economie(p)}</T>
-                    </View>
+                    </PressableAnime>
                   ))}
                 </View>
               </Apparition>

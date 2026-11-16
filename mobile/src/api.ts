@@ -229,7 +229,16 @@ export type ReponseCultureAdmin = { a_venir: EvenementCultureAdmin[]; termines: 
 /** Ce que l'invitation sait viser : une soirée, une squad, un événement culturel. */
 export type CibleInvitation = 'event' | 'squad' | 'culture';
 
+/**
+ * Ce que représente un pass : une soirée ou un événement de club (avec QR),
+ * un événement Culture ou une partie de sport (sans QR). `id` n'est unique
+ * qu'à l'intérieur d'un genre ; pour une partie, `evenement_id` est le créneau.
+ */
+export type GenrePass = 'soiree' | 'sport' | 'culture' | 'partie';
+
 export type Pass = {
+  /** Absent d'un serveur antérieur au 2026-11-16 : c'était alors une soirée. */
+  genre?: GenrePass;
   id: number;
   evenement_id: number | null;
   titre: string;
@@ -243,6 +252,8 @@ export type Pass = {
   evenement_supprime: boolean;
   etab_type: string | null;
   code_qr: string | null;
+  /** Partie de sport : la discipline. */
+  sport?: string;
 };
 
 export type SquadAgenda = { id: number; titre: string; type: string; niveau: string; date_heure: string; lieu: string; createur_prenom: string };
