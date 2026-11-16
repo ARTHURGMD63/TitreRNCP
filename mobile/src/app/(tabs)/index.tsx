@@ -23,7 +23,7 @@ import { api, type CibleInvitation, type Evenement, type Notification } from '..
 import { Bouton } from '../../composants/Bouton';
 import { CarteEvenement, enregistrerStyles } from '../../composants/CarteEvenement';
 import { Apparition } from '../../composants/Animations';
-import { EnTeteApp, PanneauFiltres, rangeeChips, useRubrique } from '../../composants/Design';
+import { EnTeteApp, PanneauFiltres, rangeeChips, Tuile, useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Pilule } from '../../composants/Elements';
 import { Feuille } from '../../composants/Feuille';
@@ -32,7 +32,7 @@ import { ElementNotification, FeuilleInvitation, FermerFeuille, NotificationsVid
 import { Display, T, TitreEcran } from '../../composants/Texte';
 import { ts } from '../../format';
 import { useJeton } from '../../session';
-import { couleursCategorie, fs, lh, rayon, sans } from '../../theme';
+import { couleursCategorie, fs, gutter, lh, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 /** L'icône du petit carré coloré de chaque chip (« Tout » n'en a pas). */
@@ -210,27 +210,33 @@ export default function Hub() {
               onPress={() => setPanneau(true)}
               accessibilityLabel={musique ? `Filtres, musique : ${styles.find((s) => s.code === musique)?.libelle ?? musique}` : 'Filtres'}
             />
-            {TYPES.map((t) => {
-              const actif = type === t.code;
-              const pourMoi = t.code === 'pour-moi';
-              return (
-                <React.Fragment key={t.code}>
-                  <Pilule
-                    libelle={t.libelle}
-                    actif={actif}
-                    onPress={() => choisirType(t.code)}
-                    icone={ICONES_TYPE[t.code]}
-                    carre={couleursCategorie[t.code]}
-                  />
-                  {/* Juste après « Pour moi », avant les types de lieu : une
-                      action (ouvrir la carte), pas un filtre de plus. */}
-                  {pourMoi ? (
-                    <Pilule libelle="Carte" icone="epingle" carre={couleursCategorie.carte} actif={false} onPress={() => router.push('/carte')} />
-                  ) : null}
-                </React.Fragment>
-              );
-            })}
+            {TYPES.filter((t) => t.code !== 'pour-moi').map((t) => (
+              <Pilule
+                key={t.code}
+                libelle={t.libelle}
+                actif={type === t.code}
+                onPress={() => choisirType(t.code)}
+                icone={ICONES_TYPE[t.code]}
+                carre={couleursCategorie[t.code]}
+              />
+            ))}
           </ScrollView>
+        </Apparition>
+
+        {/* Comme les rubriques de Sport : deux tuiles. « Pour moi » est le
+            même filtre qu'avant (le retoucher revient à « Tout ») ; « Carte »
+            reste une action qui ouvre la carte. */}
+        <Apparition index={3}>
+          <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: gutter, marginBottom: 16 }}>
+            <Tuile
+              icone="etoile-fine"
+              libelle="Pour moi"
+              actif={type === 'pour-moi'}
+              onPress={() => choisirType(type === 'pour-moi' ? 'all' : 'pour-moi')}
+              style={{ flex: 1 }}
+            />
+            <Tuile icone="epingle" libelle="Carte" droite="chevron-d" onPress={() => router.push('/carte')} style={{ flex: 1 }} />
+          </View>
         </Apparition>
 
         <Contenu>
@@ -254,7 +260,7 @@ export default function Hub() {
               ) : null}
 
               {evenements.map((e, i) => (
-                <Apparition key={e.id} index={3 + Math.min(i, 3)}>
+                <Apparition key={e.id} index={4 + Math.min(i, 3)}>
                   <CarteEvenement
                     ev={e}
                     accent={i === 0}
