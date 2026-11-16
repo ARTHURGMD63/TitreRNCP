@@ -7,7 +7,18 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- **Grille tarifaire partenaires** (`docs/Grille_Tarifaire_Outsee.xlsx`, migration v30) : quota d'événements par mois et par formule, événements supplémentaires payants (9 € HT, confirmés avant publication), notifications comprises dans les posts sponsorisés, écran « Mon mois » et suivi par événement dans l'application.
+
+- **Registre des achats non contournable** (migration v31) : chaque événement publié, offre flash et mise en avant s'inscrit dans `achats_partenaires` et n'en sort jamais. Supprimer un événement ne rend ni quota, ni offre flash, ni mise en avant offerte, et ne supprime pas un supplément dû. Quotas relus sous verrou, dans une transaction.
+- **Comptes rangés par famille** (`includes/comptes.php`) : sortie (bar, restaurant, boîte, afterwork, BDE) et sport (club). Nouveau type de compte BDE / association. Les formules, le type des événements et l'accès aux espaces en découlent ; le type de compte se fige dès qu'une formule est choisie.
+- **Validation des BDE par l'administrateur** (migration v32) : un compte BDE reste en attente, sans formule ni publication, tant qu'un administrateur ne l'a pas validé. Écran « Valider les BDE » dans l'espace admin de l'application (valider, refuser avec une raison lisible par le BDE, remettre en attente).
+- **Coup de projecteur et Top du fil sans ambiguïté** : la fenêtre court de l'achat jusqu'à la fin de l'événement au plus (plus à son début), et l'application l'annonce avant l'achat. Une mise en avant en cours est payée jusqu'à sa fin et ne se change ni ne se retire ; terminée, elle ne se rachète jamais sans demande. Le Top du fil passe devant le Coup de projecteur dans le fil ; la mise en avant offerte du Premium ne couvre que le Coup de projecteur ; les notifications comprises partent avant le début de l'événement, celles déjà envoyées se comptent et restent, et arrivent chez les abonnés comme « À ne pas rater ». Un événement déjà terminé ne se publie plus.
+- Une formule se change une fois par mois, la période offerte ne s'accorde qu'à la première souscription, le fondateur est réservé à la première souscription (`includes/souscription.php`, partagé par l'application et le site).
+
 ### Changed
+- **Tarifs alignés sur la grille.** BDE 25 €, Fondateur 39 € (8 événements par mois pendant 3 mois, puis 6), Club 49 € (12), Essentiel 49,99 € (6), Premium 69,99 € (15, 1 flash, 1 mise en avant offerte) ; posts sponsorisés Coup de projecteur 70 € (48 h) et Top du fil 350 € (7 jours). La formule « Premium 129 € » n'est plus vendue.
+- Le tableau de bord partenaire n'affiche plus de chiffres inventés (tendance, conseil, âge moyen estimé, répartition par école de secours).
 - **Ultraviolet.** L'accent passe du orange lave `#FF5424` au violet `#8E6BFF` (texte lisible `#5B3BD6` sur craie, teintes claires `#ECE6FF` / `#231B3F`) : site, mobile, icônes, `Logo.png`, supports `docs/`. Les jetons gardent leurs noms (`--rouge`, `lave`).
 - **Outsee.** Linkee devient Outsee : nom, logotype, textes légaux, e-mails,
   `marqueOutsee()`, application mobile (`fr.outsee.app`, schéma `outsee`),
