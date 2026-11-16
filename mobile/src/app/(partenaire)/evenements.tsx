@@ -14,7 +14,7 @@ import React, { useCallback, useState } from 'react';
 import { Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 
-import { api, ErreurApi, type EvenementPartenaire } from '../../api';
+import { api, ErreurApi, type EvenementPartenaire, type UsageMoisPartenaire } from '../../api';
 import { FORMATS_SPORT, SPORTS } from '../../catalogue';
 import { Apparition, PressableAnime } from '../../composants/Animations';
 import { Bouton } from '../../composants/Bouton';
@@ -24,6 +24,7 @@ import { Jauge } from '../../composants/Elements';
 import { Icone, type NomIcone } from '../../composants/Icone';
 import { T, TitreEcran } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
+import { euros, UsageMois } from '../../composants/UsageMois';
 import { confirmer } from '../../confirmer';
 import { dateFr } from '../../format';
 import { useJeton } from '../../session';
@@ -61,7 +62,12 @@ function CarteEvenementPartenaire({ ev, onSupprime }: { ev: EvenementPartenaire;
   const pct = ev.quota > 0 ? Math.round((ev.inscrits / ev.quota) * 100) : 0;
 
   async function supprimer() {
-    if (!(await confirmer('Supprimer cet événement ?'))) return;
+    const aDesAchats = ev.supplement_tarif > 0 || ev.sponsor_tarif > 0 || ev.is_flash || ev.is_sponsorise;
+    if (!(await confirmer(
+      aDesAchats
+        ? 'Supprimer cet événement ? Le quota, l\'offre flash et ce que tu as acheté ne sont pas rendus.'
+        : 'Supprimer cet événement ? Il compte toujours dans ton quota du mois.'
+    ))) return;
     setSuppression(true);
     try {
       await api.partenaireSupprimerEvenement(jeton, ev.id);
@@ -89,6 +95,8 @@ function CarteEvenementPartenaire({ ev, onSupprime }: { ev: EvenementPartenaire;
           {ev.is_flash ? <Pastille libelle="Flash" icone="eclair" fond={bleu.doux} encre={bleu.texteDoux} /> : null}
           {ev.is_gratuit ? <Pastille libelle="Gratuit" fond={c.noir} encre={c.surEncre} /> : null}
           {ev.is_sponsorise ? <Pastille libelle={ev.sponsorise_actif ? 'Sponsorisé' : 'Sponso. terminé'} fond={c.surface2} encre={c.grisFonce} /> : null}
+          {ev.supplement_tarif > 0 ? <Pastille libelle={`Supplément ${euros(ev.supplement_tarif)}`} fond={c.alerteClair} encre={c.alerte} /> : null}
+          {ev.is_sponsorise && ev.sponsor_tarif > 0 ? <Pastille libelle={`Sponso. ${euros(ev.sponsor_tarif)}`} fond={c.alerteClair} encre={c.alerte} /> : null}
         </View>
         <Pastille libelle={LIBELLES_STATUT[ev.statut]} point={statut.point} fond={statut.fond} encre={statut.encre} />
       </View>
@@ -107,6 +115,8 @@ function CarteEvenementPartenaire({ ev, onSupprime }: { ev: EvenementPartenaire;
       </View>
 
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
+        <Action libelle="Suivi" icone="activite" fond={bleu.doux} encre={bleu.texteDoux}
+          onPress={() => router.push({ pathname: '/evenement-suivi', params: { id: String(ev.id) } })} />
         {ev.statut !== 'passe' ? (
           <Action libelle="Scanner" icone="qr" fond={bleu.accent} encre="#FFFFFF"
             onPress={() => router.push({ pathname: '/scan', params: { evenementId: String(ev.id) } })} />
@@ -125,13 +135,16 @@ export default function EvenementsPartenaire() {
   const bleu = useRubrique('bleu');
   const jeton = useJeton();
   const [evenements, setEvenements] = useState<EvenementPartenaire[] | null>(null);
+  const [usage, setUsage] = useState<UsageMoisPartenaire | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [rafraichit, setRafraichit] = useState(false);
 
   const charger = useCallback(async () => {
     try {
       setErreur(null);
-      setEvenements((await api.partenaireEvenements(jeton)).evenements);
+      const rep = await api.partenaireEvenements(jeton);
+      setEvenements(rep.evenements);
+      setUsage(rep.usage);
     } catch (e) {
       setErreur(e instanceof ErreurApi ? e.message : 'Chargement impossible.');
     } finally {
@@ -160,6 +173,7 @@ export default function EvenementsPartenaire() {
         </Apparition>
       </EnTete>
       <Contenu style={{ paddingTop: 0 }}>
+        {usage ? <Apparition index={2}><UsageMois usage={usage} /></Apparition> : null}
         <Apparition index={2}>
           <Bouton libelle="Créer un événement" icone="plus" plein onPress={() => router.push({ pathname: '/evenement-form' })} style={{ marginBottom: 16 }} />
         </Apparition>

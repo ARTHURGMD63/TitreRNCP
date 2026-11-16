@@ -299,8 +299,8 @@ export function ElementNotification({ n, onTraitee }: { n: Notification; onTrait
           <Icone nom="calendrier" taille={16} couleur={c.grisFonce} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
-          <Texte>Nouveau chez <Gras>{e.lieu}</Gras> : <Italique>{e.titre}</Italique></Texte>
-          <Date_>{e.date} · {n.depuis}</Date_>
+          <Texte>{e.promo ? 'À ne pas rater chez' : 'Nouveau chez'} <Gras>{e.lieu}</Gras> : <Italique>{e.titre}</Italique></Texte>
+          <Date_>{e.date} · {n.depuis}{e.promo ? ' · Sponsorisé' : ''}</Date_>
         </View>
       </Pressable>
     );

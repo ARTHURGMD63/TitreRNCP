@@ -19,11 +19,14 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 
 import { api, ErreurApi, type ReponseFormulaireEvenementPartenaire } from '../../api';
 import { Bouton } from '../../composants/Bouton';
+import { useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { BoutonRetour, Encart } from '../../composants/Elements';
 import { Case, Champ, ChampDate, isoDateHeure, Selecteur } from '../../composants/Formulaire';
 import { T, TitreEcran, TitreSection } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
+import { euros } from '../../composants/UsageMois';
+import { dateFr } from '../../format';
 import { useJeton } from '../../session';
 import { fs, rayon } from '../../theme';
 import { useTheme } from '../../useTheme';
@@ -37,6 +40,7 @@ const TYPES = [
 
 export default function FormulaireEvenementPartenaire() {
   const { c } = useTheme();
+  const bleu = useRubrique('bleu');
   const jeton = useJeton();
   const toast = useToast();
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -64,6 +68,13 @@ export default function FormulaireEvenementPartenaire() {
   const [flashExpiry, setFlashExpiry] = useState<Date | null>(null);
   const [isSponsorise, setIsSponsorise] = useState(false);
   const [sponsorFormule, setSponsorFormule] = useState('');
+  const [sponsorNotifs, setSponsorNotifs] = useState<(Date | null)[]>([]);
+  const [accepteSupplement, setAccepteSupplement] = useState(false);
+  // Mise en avant en cours : payée jusqu'à sa fin, elle ne se change ni ne se retire.
+  const [sponsorActif, setSponsorActif] = useState<{ formule: string; jusquau: string; envoyees: string[] } | null>(null);
+  // L'instant d'ouverture de l'écran : base de la fenêtre annoncée (pas d'horloge dans le rendu).
+  const [maintenant] = useState(() => Date.now());
+  const [sponsorTermine, setSponsorTermine] = useState<string | null>(null);
 
   const charger = useCallback(async () => {
     try {
@@ -89,6 +100,10 @@ export default function FormulaireEvenementPartenaire() {
         setFlashExpiry(e.flash_expiry ? new Date(e.flash_expiry.replace(' ', 'T')) : null);
         setIsSponsorise(e.is_sponsorise);
         setSponsorFormule(e.sponsor_formule ?? rep.formules_sponsoring[0]?.code ?? '');
+        setSponsorActif(e.sponsor_actif && e.sponsor_formule && e.sponsor_jusqu_au
+          ? { formule: e.sponsor_formule, jusquau: e.sponsor_jusqu_au, envoyees: e.sponsor_notifications_envoyees } : null);
+        setSponsorTermine(e.sponsor_termine ? e.sponsor_jusqu_au : null);
+        setSponsorNotifs(e.sponsor_notifications.map((h) => new Date(h.replace(' ', 'T'))));
       } else {
         setLieu(rep.lieu_defaut);
         setSponsorFormule(rep.formules_sponsoring[0]?.code ?? '');
@@ -117,6 +132,9 @@ export default function FormulaireEvenementPartenaire() {
         flash_expiry: !donnees?.est_club && isFlash && flashExpiry ? isoDateHeure(flashExpiry) : undefined,
         is_sponsorise: !donnees?.est_club && isSponsorise,
         sponsor_formule: !donnees?.est_club && isSponsorise ? sponsorFormule : undefined,
+        sponsor_notifications: !donnees?.est_club && isSponsorise
+          ? sponsorNotifs.filter((d): d is Date => d !== null).map(isoDateHeure) : undefined,
+        accepte_supplement: accepteSupplement,
       });
       toast(rep.message ?? 'Enregistré.', 'success');
       router.replace('/evenements');
@@ -138,6 +156,29 @@ export default function FormulaireEvenementPartenaire() {
   const optionsMusique = [{ valeur: '', libelle: 'Non précisé' }, ...donnees.styles_musique.map((s) => ({ valeur: s.code, libelle: s.libelle }))];
   const club = donnees.est_club;
 
+  // Ce que cet enregistrement va coûter, calculé comme le fait le serveur
+  // (qui recalcule tout et ne croit jamais le client).
+  const supplement = !evenementId && donnees.supplement.prochain ? donnees.supplement.tarif : 0;
+  const formuleChoisie = donnees.formules_sponsoring.find((f) => f.code === sponsorFormule);
+  const verrouille = sponsorActif !== null;
+  const sponsoNouveau = !club && isSponsorise && formuleChoisie !== undefined && !verrouille;
+  // La mise en avant offerte de l'abonnement ne couvre que le Coup de projecteur.
+  const offerte = sponsoNouveau && formuleChoisie?.offrable === true && donnees.usage.mises_en_avant.offertes_restantes > 0;
+
+  // La vraie fenêtre, annoncée avant l'achat : elle court à partir de maintenant
+  // et s'arrête au plus tard à la fin de l'événement (comme sur le serveur).
+  const finEvenement = date ? (dateFin ?? new Date(date.getTime() + donnees.duree_defaut_heures * 3600_000)) : null;
+  const finMiseEnAvant = sponsoNouveau && formuleChoisie && finEvenement
+    ? new Date(Math.min(maintenant + formuleChoisie.heures * 3600_000, finEvenement.getTime())) : null;
+  const heuresReelles = finMiseEnAvant ? Math.max(0, Math.round((finMiseEnAvant.getTime() - maintenant) / 3600_000)) : null;
+  const dejaTermine = finEvenement !== null && finEvenement.getTime() <= maintenant;
+  const prixSponso = sponsoNouveau && formuleChoisie && !offerte ? formuleChoisie.tarif : 0;
+  const total = supplement + prixSponso;
+  const nbEnvoyees = sponsorActif?.envoyees.length ?? 0;
+  const nbNotifs = Math.max(0, (formuleChoisie?.notifications ?? 0) - nbEnvoyees);
+  const publiable = supplement === 0 || accepteSupplement;
+  const flashImpossible = donnees.flash_par_mois === 0;
+
   return (
     <Ecran>
       <EnTete style={{ paddingBottom: 4 }}>
@@ -149,6 +190,25 @@ export default function FormulaireEvenementPartenaire() {
       <Contenu style={{ paddingTop: 0 }}>
         {erreurEnregistrement ? <Encart genre="erreur">{erreurEnregistrement}</Encart> : null}
 
+        {!evenementId ? (
+          supplement > 0 ? (
+            <View style={{ backgroundColor: c.alerteClair, borderRadius: rayon.carte, padding: 16, gap: 10, marginBottom: 16 }}>
+              <T taille={fs[4]} poids={700} couleur={c.alerte}>Quota du mois atteint</T>
+              <T taille={fs[4]} couleur={c.alerte}>
+                Tu as publié {donnees.usage.evenements.publies} événements sur les {donnees.usage.evenements.quota} compris dans ta formule.
+                Celui-ci est un supplément : {euros(supplement)} HT, ajouté à ton mois.
+              </T>
+              <Case coche={accepteSupplement} onChange={setAccepteSupplement} style={{ alignItems: 'flex-start' }}>
+                Je confirme ce supplément de {euros(supplement)} HT.
+              </Case>
+            </View>
+          ) : (
+            <T taille={fs[4]} couleur={c.gris} style={{ marginBottom: 12 }}>
+              Compris dans ta formule : il te reste {donnees.usage.evenements.restants} événement{donnees.usage.evenements.restants > 1 ? 's' : ''} ce mois-ci.
+            </T>
+          )
+        ) : null}
+
         <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 14, marginBottom: 16 }}>
         <TitreSection style={{ marginBottom: 14 }}>Informations générales</TitreSection>
         <Champ etiquette="Titre *" value={titre} onChangeText={setTitre} placeholder={club ? 'ex : Open étudiant de padel' : 'ex : Soirée Étudiants — DJ Groove'} />
@@ -159,7 +219,9 @@ export default function FormulaireEvenementPartenaire() {
           </View>
         ) : (
           <View style={{ flexDirection: 'row', gap: 12 }}>
-            <Selecteur style={{ flex: 1 }} etiquette="Type *" valeur={type} onChange={setType} options={TYPES} />
+            {donnees.type_libre ? (
+              <Selecteur style={{ flex: 1 }} etiquette="Type *" valeur={type} onChange={setType} options={TYPES} />
+            ) : null}
             <Selecteur style={{ flex: 1 }} etiquette="Style de musique" valeur={styleMusique} onChange={setStyleMusique} options={optionsMusique} />
           </View>
         )}
@@ -184,30 +246,108 @@ export default function FormulaireEvenementPartenaire() {
 
         {club ? null : (<View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 14, paddingBottom: 4, marginBottom: 16 }}>
         <TitreSection style={{ marginBottom: 14 }}>Options avancées</TitreSection>
-        <Case coche={isFlash} onChange={setIsFlash} style={{ marginBottom: isFlash ? 12 : 20 }}>
-          Event Flash — offre limitée dans le temps, en tête du fil
-        </Case>
+        {flashImpossible && !isFlash ? (
+          <T taille={fs[4]} couleur={c.gris} style={{ marginBottom: 16 }}>
+            Offre flash : non comprise dans ta formule (Fondateur et Premium en incluent une par mois).
+          </T>
+        ) : (
+          <Case coche={isFlash} onChange={setIsFlash} style={{ marginBottom: isFlash ? 12 : 20 }}>
+            Event Flash — offre limitée dans le temps, en tête du fil
+          </Case>
+        )}
         {isFlash ? (
           <ChampDate etiquette="Expiration de l'offre flash" mode="datetime" valeur={flashExpiry} onChange={setFlashExpiry} min={new Date()} />
         ) : null}
         {!donnees.flash_illimite ? (
-          <T taille={fs[4]} couleur={c.gris} style={{ marginTop: -8, marginBottom: 16 }}>{donnees.flash_par_mois} offres flash / mois incluses dans ta formule</T>
+          <T taille={fs[4]} couleur={c.gris} style={{ marginTop: -8, marginBottom: 16 }}>Offre flash : {donnees.usage.flash.utilises} utilisée{donnees.usage.flash.utilises > 1 ? 's' : ''} sur {donnees.flash_par_mois} ce mois-ci</T>
         ) : null}
 
-        <Case coche={isSponsorise} onChange={setIsSponsorise} style={{ marginBottom: isSponsorise ? 12 : 20 }}>
-          Post sponsorisé — remonte en tête du fil Explore
-        </Case>
-        {isSponsorise ? (
-          <Selecteur
-            etiquette="Formule de sponsoring"
-            valeur={sponsorFormule}
-            onChange={setSponsorFormule}
-            options={donnees.formules_sponsoring.map((f) => ({ valeur: f.code, libelle: `${f.nom} — ${f.tarif} €` }))}
-          />
+        {verrouille && sponsorActif ? (
+          <View style={{ backgroundColor: bleu.doux, borderRadius: rayon.carte, padding: 14, gap: 4, marginBottom: 16 }}>
+            <T taille={fs[4]} poids={700} couleur={bleu.texteDoux}>
+              Mise en avant en cours · {donnees.formules_sponsoring.find((f) => f.code === sponsorActif.formule)?.nom}
+            </T>
+            <T taille={fs[4]} couleur={bleu.texteDoux}>
+              En tête du fil jusqu&apos;au {dateFr(sponsorActif.jusquau, 'l j F · H\\hi')}. Elle est payée jusque-là : elle ne se change ni ne se retire.
+            </T>
+          </View>
+        ) : (
+          <>
+            {sponsorTermine ? (
+              <T taille={fs[4]} couleur={c.gris} style={{ marginBottom: 12 }}>
+                Mise en avant terminée le {dateFr(sponsorTermine, 'j M')}. Coche la case pour en acheter une nouvelle.
+              </T>
+            ) : null}
+            <Case coche={isSponsorise} onChange={setIsSponsorise} style={{ marginBottom: isSponsorise ? 12 : 20 }}>
+              Post sponsorisé — remonte en tête du fil Explore
+            </Case>
+            {isSponsorise ? (
+              <Selecteur
+                etiquette="Formule de sponsoring"
+                valeur={sponsorFormule}
+                onChange={setSponsorFormule}
+                options={donnees.formules_sponsoring.map((f) => ({ valeur: f.code, libelle: `${f.nom} — ${euros(f.tarif)} HT` }))}
+              />
+            ) : null}
+          </>
+        )}
+        {isSponsorise && formuleChoisie ? (
+          <View style={{ marginBottom: 16, gap: 4 }}>
+            {!verrouille ? <T taille={fs[4]} couleur={c.gris}>{formuleChoisie.resume}</T> : null}
+            {finMiseEnAvant && heuresReelles !== null ? (
+              dejaTermine ? (
+                <T taille={fs[4]} poids={700} couleur={c.danger}>Cet événement est déjà terminé : il ne peut pas être mis en avant.</T>
+              ) : (
+                <T taille={fs[4]} poids={700} couleur={heuresReelles < formuleChoisie.heures ? c.alerte : c.noir}>
+                  Visible en tête jusqu&apos;au {dateFr(finMiseEnAvant, 'l j F · H\\hi')} ({heuresReelles} h
+                  {heuresReelles < formuleChoisie.heures ? ` au lieu de ${formuleChoisie.heures} h : l'événement se termine avant` : ''}).
+                </T>
+              )
+            ) : null}
+            {formuleChoisie.notifications > 0 ? (
+              <>
+                <T taille={fs[4]} poids={700} style={{ marginTop: 8 }}>
+                  {formuleChoisie.notifications} notification{formuleChoisie.notifications > 1 ? 's' : ''} comprise{formuleChoisie.notifications > 1 ? 's' : ''}
+                  {nbEnvoyees > 0 ? ` · ${nbEnvoyees} déjà envoyée${nbEnvoyees > 1 ? 's' : ''}` : ''}
+                </T>
+                {sponsorActif?.envoyees.map((h) => (
+                  <T key={h} taille={fs[4]} couleur={c.gris}>Envoyée le {dateFr(h, 'l j F · H\\hi')}</T>
+                ))}
+                {Array.from({ length: nbNotifs }, (_, i) => (
+                  <ChampDate key={i} etiquette={`Notification ${nbEnvoyees + i + 1}`} mode="datetime" valeur={sponsorNotifs[i] ?? null}
+                    onChange={(d) => setSponsorNotifs((prev) => { const n = [...prev]; n[i] = d; return n; })} min={new Date()} />
+                ))}
+                {nbNotifs > 0 ? (
+                  <T taille={fs[4]} couleur={c.gris}>
+                    Elles partent vers les abonnés de ton établissement, pendant la mise en avant et avant le début de l&apos;événement. Laisse vide pour ne pas en envoyer.
+                  </T>
+                ) : null}
+              </>
+            ) : null}
+          </View>
         ) : null}
         </View>)}
 
-        <Bouton libelle={evenementId ? 'Enregistrer les modifications' : "Publier l'événement"} plein
+        <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 16, gap: 8, marginBottom: 16 }}>
+          <TitreSection style={{ marginBottom: 4 }}>Ce que ça te coûte</TitreSection>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
+            <T taille={fs[4]}>Événement</T>
+            <T taille={fs[4]} poids={600}>{evenementId ? 'Déjà publié' : supplement > 0 ? `${euros(supplement)} HT (supplément)` : 'Compris dans ta formule'}</T>
+          </View>
+          {sponsoNouveau ? (
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
+              <T taille={fs[4]}>{formuleChoisie?.nom}</T>
+              <T taille={fs[4]} poids={600}>{offerte ? 'Offerte (comprise dans ta formule)' : `${euros(prixSponso)} HT`}</T>
+            </View>
+          ) : null}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: c.grisClair, paddingTop: 8 }}>
+            <T taille={fs[4]} poids={700}>Total à payer en plus</T>
+            <T taille={fs[4]} poids={700} couleur={total > 0 ? c.danger : c.succes}>{total > 0 ? `${euros(total)} HT` : '0 €'}</T>
+          </View>
+        </View>
+
+        <Bouton libelle={evenementId ? 'Enregistrer les modifications' : total > 0 ? `Publier · ${euros(total)} HT en plus` : "Publier l'événement"} plein
+          desactive={!publiable || (sponsoNouveau && dejaTermine)}
           variante={club ? 'bleu' : 'primaire'} chargement={enregistrement} onPress={enregistrer} style={{ marginTop: 4 }} />
       </Contenu>
     </Ecran>

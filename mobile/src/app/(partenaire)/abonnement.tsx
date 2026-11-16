@@ -21,6 +21,7 @@ import { Encart } from '../../composants/Elements';
 import { Case } from '../../composants/Formulaire';
 import { T, TitreEcran, TitreSection } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
+import { euros, UsageMois } from '../../composants/UsageMois';
 import { useJeton } from '../../session';
 import { fs, halo, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
@@ -93,6 +94,14 @@ export default function AbonnementPartenaire() {
       <Contenu style={{ paddingTop: 0 }}>
         {erreurEnvoi ? <Encart genre="erreur">{erreurEnvoi}</Encart> : null}
 
+        {!donnees.validation.valide ? (
+          <Encart genre={donnees.validation.statut === 'refusee' ? 'erreur' : 'info'}>
+            {donnees.validation.statut === 'refusee'
+              ? `Ton compte BDE n'a pas été validé${donnees.validation.note ? ` : ${donnees.validation.note}` : '.'} Écris-nous si c'est une erreur.`
+              : "Ton compte BDE est en attente de validation par l'équipe Outsee. Tu pourras choisir ta formule et publier dès qu'il sera validé."}
+          </Encart>
+        ) : null}
+
         {client ? (
           <View style={[{ backgroundColor: bleu.accent, borderRadius: rayon.carte, padding: 14, gap: 4, marginBottom: 20 }, halo(bleu.accent)]}>
             <Text style={{ fontFamily: sans(600), fontSize: 12, letterSpacing: 0.06 * 12, textTransform: 'uppercase', color: bleu.surAccent2 }}>Formule en cours</Text>
@@ -104,7 +113,39 @@ export default function AbonnementPartenaire() {
           </View>
         ) : null}
 
+        {client ? (
+          <UsageMois usage={donnees.usage} offreLibelle={client.offre_libelle} essaiJusquau={client.essai_jusquau} club={donnees.est_club} />
+        ) : null}
+
+        <TitreSection style={{ marginBottom: 4 }}>Acheter en plus</TitreSection>
+        <T taille={fs[4]} couleur={c.gris} style={{ marginBottom: 12 }}>
+          Prix HT, à l&apos;unité. Rien n&apos;est facturé sans que tu aies vu le prix et confirmé au moment de publier.
+        </T>
+        <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 16, gap: 14, marginBottom: 20 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <T taille={fs[4]} poids={700}>Événement supplémentaire</T>
+              <T taille={fs[4]} couleur={c.gris}>Quand tu dépasses le quota mensuel de ta formule.</T>
+            </View>
+            <T taille={fs[4]} poids={700}>{euros(donnees.achats.evenement_supplementaire)}</T>
+          </View>
+          {donnees.est_club ? null : donnees.achats.sponsoring.map((f) => (
+            <View key={f.code} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12, borderTopWidth: 1, borderTopColor: c.grisClair, paddingTop: 14 }}>
+              <View style={{ flex: 1 }}>
+                <T taille={fs[4]} poids={700}>{f.nom}</T>
+                <T taille={fs[4]} couleur={c.gris}>{f.resume}</T>
+              </View>
+              <T taille={fs[4]} poids={700}>{euros(f.tarif)}</T>
+            </View>
+          ))}
+        </View>
+
         <TitreSection style={{ marginBottom: 12 }}>{client ? 'Changer de formule' : 'Formules'}</TitreSection>
+        {client && !donnees.changement.possible ? (
+          <Encart genre="info">
+            Tu as déjà changé de formule ce mois-ci. Prochain changement possible le {donnees.changement.prochain?.split('-').reverse().join('/')}.
+          </Encart>
+        ) : null}
         {formules.map((f: FormulePartenaireAbonnement) => {
           const active = selection === f.code;
           return (
@@ -130,10 +171,19 @@ export default function AbonnementPartenaire() {
                 ) : null}
               </View>
               <Text style={{ fontFamily: sans(700), fontSize: 19, letterSpacing: -0.03 * 19, color: c.noir }}>
-                {f.tarif > 0 ? `${f.tarif} € ` : '0 € '}
+                {euros(f.tarif)}{' '}
                 <Text style={{ fontFamily: sans(400), fontSize: fs[4], color: c.gris }}>HT / mois</Text>
               </Text>
               <T taille={fs[4]} couleur={c.gris}>{f.note}</T>
+              <View style={{ gap: 3, marginTop: 4 }}>
+                <T taille={fs[4]} poids={600}>
+                  {f.evenements_par_mois} événements / mois
+                  {f.evenements_debut ? ` (${f.evenements_debut} pendant ${f.mois_essai} mois)` : ''}
+                </T>
+                {f.flash_par_mois ? <T taille={fs[4]} couleur={c.gris}>{f.flash_par_mois} offre flash / mois</T> : null}
+                {f.mises_en_avant > 0 ? <T taille={fs[4]} couleur={c.gris}>{f.mises_en_avant} mise en avant offerte / mois</T> : null}
+                <T taille={fs[4]} couleur={c.gris}>Au-delà : {euros(donnees.achats.evenement_supplementaire)} par événement</T>
+              </View>
               <T taille={fs[4]} couleur={c.gris} style={{ marginTop: 4, paddingTop: 10, borderTopWidth: 1, borderTopColor: c.grisClair }}>
                 {f.code === 'fondateur'
                   ? `Offert ${f.mois_essai} mois, puis tarif gelé tant que l'abonnement n'est pas interrompu.`
@@ -151,8 +201,8 @@ export default function AbonnementPartenaire() {
           <T taille={fs[4]} poids={700} couleur={bleu.texteDoux} style={{ marginBottom: 6 }}>Dans toutes les formules</T>
           <T taille={fs[4]} couleur={bleu.texteDoux}>
             {donnees.est_club
-              ? 'Événements sportifs et créneaux de terrain illimités, page établissement avec photos, tableau de bord des inscrits, scan des pass. Les joueurs règlent leurs terrains chez toi : Outsee ne prend aucune commission.'
-              : 'Soirées illimitées, page établissement avec photos, tableau de bord des inscrits et des présents, scan des pass à l’entrée. Tu fixes ta remise étudiante, y compris à zéro.'}
+              ? 'Créneaux de terrain illimités, page établissement avec photos, tableau de bord des inscrits, scan des pass. Les joueurs règlent leurs terrains chez toi : Outsee ne prend aucune commission.'
+              : 'Page établissement avec photos, tableau de bord des inscrits et des présents, scan des pass à l’entrée. Tu fixes ta remise étudiante, y compris à zéro.'}
           </T>
           </View>
         </View>
@@ -170,7 +220,7 @@ export default function AbonnementPartenaire() {
         <Bouton
           libelle={client ? 'Changer de formule' : "Souscrire et accéder à mon espace"}
           plein
-          desactive={!selection || !engagement}
+          desactive={!selection || !engagement || (client !== null && !donnees.changement.possible) || selection === client?.offre}
           chargement={envoi}
           onPress={souscrire}
         />

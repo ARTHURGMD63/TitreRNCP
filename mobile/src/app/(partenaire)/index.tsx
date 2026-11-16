@@ -21,9 +21,10 @@ import { BoutonAction, CarreIcone, CarteRefonte, EnTeteApp, Pastille, teinteAvat
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Avatar, Jauge } from '../../composants/Elements';
 import { Mono, T, TitreEcran, TitreSection } from '../../composants/Texte';
+import { UsageMois } from '../../composants/UsageMois';
 import { dateFr } from '../../format';
 import { useJeton } from '../../session';
-import { fs, halo, lh, rayon, sans, taille } from '../../theme';
+import { fs, halo, rayon, sans, taille } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 /** Une couleur par école dans « Qui vient ce soir ? ». */
@@ -62,7 +63,7 @@ export default function TableauDeBordPartenaire() {
     } catch (e) {
       // Aucune formule choisie : le tableau de bord n'a rien à montrer tant
       // que ce n'est pas réglé, comme exigerAbonnement() côté site.
-      if (e instanceof ErreurApi && e.code === 'abonnement_requis') {
+      if (e instanceof ErreurApi && ['abonnement_requis', 'validation_requise', 'validation_refusee'].includes(e.code)) {
         router.replace('/abonnement');
         return;
       }
@@ -97,6 +98,9 @@ export default function TableauDeBordPartenaire() {
       </EnTete>
 
       <Contenu style={{ paddingTop: 0 }}>
+        <Apparition index={2}>
+          <UsageMois usage={donnees.usage} offreLibelle={donnees.offre.libelle} essaiJusquau={donnees.offre.essai_jusquau} />
+        </Apparition>
         {!evenement ? (
           <Apparition index={2}>
             <CarteRefonte style={{ alignItems: 'center', paddingVertical: 24 }}>
@@ -119,7 +123,7 @@ export default function TableauDeBordPartenaire() {
                   {[
                     { l: 'Inscrits', v: stats.inscrits, format: (n: number) => String(Math.round(n)) },
                     { l: 'Check-in', v: stats.checkin, format: (n: number) => String(Math.round(n)) },
-                    { l: 'Âge moy.', v: stats.age_moyen, format: (n: number) => (Math.round(n * 10) / 10).toString().replace('.', ',') },
+                    { l: 'Présence', v: stats.taux_presence ?? 0, format: (n: number) => `${Math.round(n)} %` },
                   ].map((s, i) => (
                     <View key={s.l} style={{ flex: 1, borderRadius: rayon.bouton, padding: 12, backgroundColor: 'rgba(255,255,255,0.16)', gap: 2 }}>
                       <Compteur valeur={s.v} format={s.format} delai={i * 120}
@@ -140,32 +144,29 @@ export default function TableauDeBordPartenaire() {
               </View>
             </Apparition>
 
-            <Apparition index={3}>
-              <CarteRefonte>
-                <View>
-                  <Mono>Profil de salle</Mono>
-                  <TitreSection style={{ marginTop: 4 }}>Qui vient ce soir ?</TitreSection>
-                </View>
-                {stats.ecoles.map((s, i) => (
-                  <View key={s.nom}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <T taille={fs[4]} poids={600}>{s.nom}</T>
-                      <T taille={fs[4]} couleur={c.gris}>{s.pourcentage}%</T>
-                    </View>
-                    <Jauge pourcentage={s.pourcentage} piste={c.surface2} remplissage={COULEURS_ECOLE[i % COULEURS_ECOLE.length]} hauteur={8} />
+            {stats.ecoles.length ? (
+              <Apparition index={3}>
+                <CarteRefonte>
+                  <View>
+                    <Mono>Profil de salle</Mono>
+                    <TitreSection style={{ marginTop: 4 }}>Qui vient ?</TitreSection>
                   </View>
-                ))}
-              </CarteRefonte>
-            </Apparition>
+                  {stats.ecoles.map((s, i) => (
+                    <View key={s.nom}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                        <T taille={fs[4]} poids={600}>{s.nom}</T>
+                        <T taille={fs[4]} couleur={c.gris}>{s.pourcentage}%</T>
+                      </View>
+                      <Jauge pourcentage={s.pourcentage} piste={c.surface2} remplissage={COULEURS_ECOLE[i % COULEURS_ECOLE.length]} hauteur={8} />
+                    </View>
+                  ))}
+                </CarteRefonte>
+              </Apparition>
+            ) : null}
 
             <Apparition index={4}>
-              <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', backgroundColor: c.alerteClair, borderRadius: rayon.carte, padding: 18, marginBottom: 16 }}>
-                <CarreIcone icone="eclair" fond="#FFB020" encre="#FFFFFF" taille={40} />
-                <View style={{ flex: 1, gap: 4 }}>
-                  <T taille={fs[4]} poids={700} couleur={c.alerte}>Conseil</T>
-                  <T taille={fs[4]} couleur={c.alerte} interligne={lh.snug}>{stats.conseil}</T>
-                </View>
-              </View>
+              <Bouton libelle="Suivi complet de cet événement" icone="activite" variante="contour" plein
+                onPress={() => router.push({ pathname: '/evenement-suivi', params: { id: String(evenement.id) } })} style={{ marginBottom: 16 }} />
             </Apparition>
 
             {stats.checkins.length ? (

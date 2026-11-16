@@ -21,6 +21,7 @@ import { Avatar, Encart } from '../../composants/Elements';
 import { Icone, type NomIcone } from '../../composants/Icone';
 import { Champ, Selecteur } from '../../composants/Formulaire';
 import { T, TitreSection } from '../../composants/Texte';
+import { TYPES_ETABLISSEMENT } from '../../catalogue';
 import { useToast } from '../../composants/Toast';
 import { useJeton, useSession } from '../../session';
 import { fs, halo, rayon, sans } from '../../theme';
@@ -29,13 +30,7 @@ import { useTheme } from '../../useTheme';
 // Clermont-Ferrand par défaut, tant qu'aucune position n'est connue.
 const REGION_DEFAUT = { latitude: 45.7772, longitude: 3.087, latitudeDelta: 0.08, longitudeDelta: 0.08 };
 
-const TYPES = [
-  { valeur: 'bar', libelle: 'Bar' },
-  { valeur: 'boite', libelle: 'Boîte de nuit' },
-  { valeur: 'resto', libelle: 'Restaurant' },
-  { valeur: 'afterwork', libelle: 'Afterwork' },
-  { valeur: 'club', libelle: 'Club sportif' },
-];
+const TYPES = TYPES_ETABLISSEMENT;
 
 /** Un raccourci : carré d'icône, libellé, chevron. */
 function Raccourci({ icone, libelle, detail, onPress }: { icone: NomIcone; libelle: string; detail: string; onPress: () => void }) {
@@ -69,6 +64,7 @@ export default function MoiPartenaire() {
 
   const [nom, setNom] = useState('');
   const [type, setType] = useState('bar');
+  const [typeModifiable, setTypeModifiable] = useState(true);
   const [ville, setVille] = useState('');
   const [adresse, setAdresse] = useState('');
   const [position, setPosition] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -80,6 +76,7 @@ export default function MoiPartenaire() {
       setCompte(rep.compte);
       setNom(rep.etablissement.nom);
       setType(rep.etablissement.type);
+      setTypeModifiable(rep.etablissement.type_modifiable);
       setVille(rep.etablissement.ville);
       setAdresse(rep.etablissement.adresse);
       if (rep.etablissement.latitude !== null && rep.etablissement.longitude !== null) {
@@ -154,7 +151,17 @@ export default function MoiPartenaire() {
         <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 14, marginBottom: 16 }}>
           <TitreSection style={{ marginBottom: 14 }}>Mon établissement</TitreSection>
           <Champ etiquette="Nom" value={nom} onChangeText={setNom} />
-          <Selecteur etiquette="Type" valeur={type} onChange={setType} options={TYPES} />
+          {typeModifiable ? (
+            <Selecteur etiquette="Type" valeur={type} onChange={setType} options={TYPES} />
+          ) : (
+            <View style={{ marginBottom: 16, gap: 4 }}>
+              <T taille={fs[4]} poids={700}>Type de compte</T>
+              <T taille={fs[4]}>{TYPES.find((t) => t.valeur === type)?.libelle ?? type}</T>
+              <T taille={fs[4]} couleur={c.gris}>
+                Lié à ta formule, il ne peut plus changer. Écris-nous si ton activité a changé.
+              </T>
+            </View>
+          )}
           <Champ etiquette="Ville" value={ville} onChangeText={setVille} />
           <Champ etiquette="Adresse" value={adresse} onChangeText={setAdresse} placeholder="Numéro et rue" />
 
