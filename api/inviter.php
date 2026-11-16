@@ -208,8 +208,14 @@ if ($action === 'accept') {
     try {
         if ($invite['type'] === 'event') {
             // Meme identifiant de pass que l'inscription directe : imprevisible.
-            $pdo->prepare("INSERT INTO inscriptions (user_id, evenement_id, qr_code, statut) VALUES (?,?,?,'inscrit')")
-                ->execute([$moi, $cibleId, bin2hex(random_bytes(32))]);
+            // Un pass annulé garde sa ligne (clé unique) : on la ranime au lieu
+            // de buter sur le doublon, sinon l'invité resterait sans pass.
+            $pdo->prepare(
+                "INSERT INTO inscriptions (user_id, evenement_id, qr_code, statut) VALUES (?,?,?,'inscrit')
+                 ON DUPLICATE KEY UPDATE
+                    qr_code = IF(statut = 'annule', VALUES(qr_code), qr_code),
+                    statut  = IF(statut = 'annule', 'inscrit', statut)"
+            )->execute([$moi, $cibleId, bin2hex(random_bytes(32))]);
         } elseif ($invite['type'] === 'culture') {
             $pdo->prepare("INSERT INTO culture_inscriptions (user_id, evenement_id) VALUES (?,?)")
                 ->execute([$moi, $cibleId]);
