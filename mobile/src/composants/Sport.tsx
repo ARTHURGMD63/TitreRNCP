@@ -4,8 +4,11 @@
  * TERRAIN 2 », les pastilles des joueurs (avec les places vides en
  * pointillé), et les cartes de créneau et d'événement de club.
  *
- * Même gabarit que les cartes de squad : dôme pour l'accent, niveau en haut à
- * droite, pied séparé par un filet.
+ * Refonte 2026-11 : l'accent du sport est rouge (#E02D24). Une carte porte en
+ * haut le niveau (pastille rouge douce) et la date (encre) ; puis le
+ * surtitre, le club, la ligne « joueurs · prix · organisateur » ; sous un
+ * filet, les avatars des inscrits et les places libres en pointillés, et le
+ * bouton d'action à flèche.
  */
 
 import React from 'react';
@@ -15,11 +18,13 @@ import type { Creneau, EvenementSport, JoueurCreneau } from '../api';
 import { FORMATS_SPORT, NIVEAUX_SQUAD, SPORTS } from '../catalogue';
 import { dateFr, majuscules } from '../format';
 import { formatEuros, libellePlaces, prixParJoueur } from '../regles';
-import { fixe, fs, lh, police, rayon, sans } from '../theme';
+import { fs, rayon, sans, teintes } from '../theme';
 import { useTheme } from '../useTheme';
+import { PressableAnime } from './Animations';
+import { BoutonAction, Pastille, teinteAvatar } from './Design';
 import { Avatar } from './Elements';
 import { Icone, type NomIcone } from './Icone';
-import { Display, Mono, T } from './Texte';
+import { T } from './Texte';
 
 export function libelleSport(code: string): string {
   return SPORTS[code] ?? code;
@@ -30,106 +35,142 @@ export function etiquetteCreneau(c: Pick<Creneau, 'sport' | 'debut' | 'terrain'>
   return `${majuscules(libelleSport(c.sport))} · ${dateFr(c.debut, 'D j M H\\hi')} · ${majuscules(c.terrain.nom)}`;
 }
 
-/** Les joueurs d'une partie, puis une pastille en pointillé par place vide. */
-export function PastillesJoueurs({ joueurs, total, taille = 30 }: { joueurs: Pick<JoueurCreneau, 'id' | 'prenom' | 'photo_url'>[]; total: number; taille?: number }) {
-  const { c } = useTheme();
+/**
+ * Les joueurs d'une partie (cercles de 28 px qui se chevauchent de 8 px,
+ * cerclés de la couleur du fond), puis une place en pointillé par place vide.
+ * `moi` : l'identifiant de l'utilisateur, dont l'avatar passe au rouge.
+ */
+export function PastillesJoueurs({ joueurs, total, taille = 28, moi, fond }: {
+  joueurs: Pick<JoueurCreneau, 'id' | 'prenom' | 'photo_url'>[];
+  total: number;
+  taille?: number;
+  moi?: number;
+  fond?: string;
+}) {
+  const { c, mode } = useTheme();
+  const sport = teintes('sport', mode);
+  const cerne = fond ?? c.blanc;
   const vides = Math.max(0, total - joueurs.length);
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
       {joueurs.map((j, i) => (
-        <View key={j.id} style={{ marginLeft: i === 0 ? 0 : -8, borderRadius: taille, borderWidth: 2, borderColor: c.blanc }}>
-          <Avatar photo={j.photo_url} prenom={j.prenom} taille={taille} fond={c.bleu} />
+        <View key={j.id} style={{ marginLeft: i === 0 ? 0 : -8, borderRadius: taille, borderWidth: 2, borderColor: cerne }}>
+          <Avatar photo={j.photo_url} prenom={j.prenom} taille={taille} fond={j.id === moi ? sport.accent : teinteAvatar(j.prenom + j.id)} />
         </View>
       ))}
       {Array.from({ length: Math.min(vides, 8) }, (_, i) => (
         <View
           key={`vide-${i}`}
           accessibilityLabel="Place libre"
-          style={{ marginLeft: joueurs.length === 0 && i === 0 ? 0 : -4, width: taille + 4, height: taille + 4, borderRadius: taille, borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.gris, backgroundColor: c.blanc, alignItems: 'center', justifyContent: 'center' }}
+          style={{ marginLeft: joueurs.length === 0 && i === 0 ? 0 : -8, width: taille + 4, height: taille + 4, borderRadius: taille, borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.gris, backgroundColor: cerne, alignItems: 'center', justifyContent: 'center' }}
         >
-          <Icone nom="plus" taille={12} couleur={c.gris} />
+          <Text style={{ fontFamily: sans(600), fontSize: 12, color: c.gris }}>+</Text>
         </View>
       ))}
     </View>
   );
 }
 
-/** L'action en pied de carte : pilule pleine (dôme) ou contour. */
+/** L'action en pied de carte : pleine (rouge) ou neutre. */
 export function ActionCarte({ libelle, onPress, plein = true, icone }: { libelle: string; onPress?: () => void; plein?: boolean; icone?: NomIcone }) {
-  const { c } = useTheme();
+  const { c, mode } = useTheme();
+  const sport = teintes('sport', mode);
   return (
-    <Pressable
+    <PressableAnime
       onPress={onPress}
       disabled={!onPress}
       accessibilityRole="button"
-      style={({ pressed }) => [
-        { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 11, paddingHorizontal: 18, borderRadius: rayon.pill, borderWidth: 1.5 },
-        plein ? { backgroundColor: c.bleu, borderColor: c.bleu } : { backgroundColor: c.surface2, borderColor: c.line2 },
-        pressed && onPress ? { transform: [{ scale: 0.98 }] } : null,
+      style={[
+        { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, paddingHorizontal: 18, borderRadius: rayon.bouton },
+        plein ? { backgroundColor: sport.accent } : { backgroundColor: c.surface2 },
       ]}
     >
-      {icone ? <Icone nom={icone} taille={14} couleur={plein ? fixe.surLave : c.grisFonce} /> : null}
-      <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: plein ? fixe.surLave : c.grisFonce }}>{libelle}</Text>
-    </Pressable>
-  );
-}
-
-function Pastille({ libelle, accent }: { libelle: string; accent?: string }) {
-  const { c } = useTheme();
-  return (
-    <View style={{ borderWidth: 1, borderColor: accent ?? c.line2, borderRadius: rayon.pill, paddingVertical: 4, paddingHorizontal: 10 }}>
-      <T taille={fs[2]} poids={500} couleur={accent ?? c.grisFonce}>{libelle}</T>
-    </View>
+      {icone ? <Icone nom={icone} taille={16} couleur={plein ? '#FFFFFF' : c.grisFonce} trait={2.5} /> : null}
+      <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: plein ? '#FFFFFF' : c.grisFonce }}>{libelle}</Text>
+    </PressableAnime>
   );
 }
 
 function CadreCarte({ children, onPress, libelleAcces }: { children: React.ReactNode; onPress?: () => void; libelleAcces?: string }) {
-  const { c, ombre } = useTheme();
+  const { c } = useTheme();
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole={onPress ? 'link' : undefined}
       accessibilityLabel={libelleAcces}
-      style={[{ borderRadius: rayon.base, padding: 20, marginBottom: 14, borderWidth: 1, borderColor: c.grisClair, backgroundColor: c.blanc, overflow: 'hidden' }, ombre('base')]}
+      style={{ borderRadius: rayon.carte, padding: 20, marginBottom: 16, backgroundColor: c.blanc, gap: 10 }}
     >
       {children}
     </Pressable>
   );
 }
 
+/** Ligne du haut d'une carte : pastille de niveau à gauche, date à droite. */
+function Haut({ gauche, date, alerte }: { gauche?: string; date: string; alerte?: boolean }) {
+  const { c, mode } = useTheme();
+  const sport = teintes('sport', mode);
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+      {gauche ? (
+        <Pastille libelle={gauche} fond={alerte ? c.dangerClair : sport.doux} encre={alerte ? c.danger : sport.texteDoux} />
+      ) : <View />}
+      <Pastille libelle={date} fond={c.noir} encre={c.surEncre} style={{ flexShrink: 1 }} />
+    </View>
+  );
+}
+
+function Surtitre({ children }: { children: React.ReactNode }) {
+  const { c } = useTheme();
+  return <Text style={{ fontFamily: sans(600), fontSize: 12, letterSpacing: 0.06 * 12, textTransform: 'uppercase', color: c.gris, marginTop: 4 }}>{children}</Text>;
+}
+
+function Titre({ children }: { children: React.ReactNode }) {
+  const { c } = useTheme();
+  return <Text style={{ fontFamily: sans(700), fontSize: 24, lineHeight: 24 * 1.15, letterSpacing: -0.03 * 24, color: c.noir }}>{children}</Text>;
+}
+
+/** « Mar 17 nov · 19h30 » */
+function dateCourte(iso: string) {
+  return dateFr(iso, 'D j M · H\\hi');
+}
+
 /**
  * Un créneau : partie à compléter, terrain libre, ou l'une de mes parties.
- * `action` est le libellé du bouton (« Compléter », « Réserver », « Voir »).
+ * `action` est le libellé du bouton (« Compléter », « Réserver », « Voir ») ;
+ * il ouvre la fiche du créneau, comme toute la carte.
  */
 export function CarteCreneau({ cr, action, onPress }: { cr: Creneau; action: string; onPress: () => void }) {
-  const { c } = useTheme();
+  const { c, mode } = useTheme();
+  const sport = teintes('sport', mode);
   const annule = cr.statut === 'annule';
   const libre = cr.statut === 'libre';
   return (
     <CadreCarte onPress={onPress} libelleAcces={`${libelleSport(cr.sport)} chez ${cr.club.nom}`}>
-      {!libre ? (
-        <View style={{ position: 'absolute', top: 16, right: 16 }}>
-          <Pastille libelle={annule ? 'Annulé' : (NIVEAUX_SQUAD[cr.niveau] ?? cr.niveau)} accent={annule ? c.danger : undefined} />
-        </View>
-      ) : null}
-      <Mono couleur={c.surBleuClair} style={{ marginBottom: 6, paddingRight: libre ? 0 : 96 }}>{etiquetteCreneau(cr)}</Mono>
-      <Display taille={fs[6]} interligne={lh.tight} style={{ marginBottom: 4, paddingRight: libre ? 0 : 70 }}>{cr.club.nom}</Display>
-      <T taille={fs[3]} couleur={c.grisFonce} style={{ marginBottom: 12 }}>
-        {cr.places.total} joueurs · {prixParJoueur(cr.prix, cr.places.total)}
-        {cr.organisateur && !libre ? ` · par ${cr.organisateur.prenom}` : ''}
-      </T>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingTop: 15, borderTopWidth: 1, borderTopColor: c.grisClair }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
+      <Haut gauche={libre ? undefined : annule ? 'Annulé' : (NIVEAUX_SQUAD[cr.niveau] ?? cr.niveau)} date={dateCourte(cr.debut)} alerte={annule} />
+      <View style={{ gap: 4 }}>
+        <Surtitre>{libelleSport(cr.sport)} · {cr.terrain.nom}</Surtitre>
+        <Titre>{cr.club.nom}</Titre>
+        <T taille={fs[5]} couleur={c.gris}>
+          {cr.places.total} joueurs · {prixParJoueur(cr.prix, cr.places.total)}
+          {cr.organisateur && !libre ? ` · par ${cr.organisateur.prenom}` : ''}
+        </T>
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingTop: 14, marginTop: 4, borderTopWidth: 1, borderTopColor: c.grisClair }}>
+        <View style={{ gap: 6, flexShrink: 1 }}>
           {libre ? (
-            <T taille={fs[3]} poids={500} couleur={c.grisFonce}>Terrain libre · {formatEuros(cr.prix)}</T>
+            <T taille={fs[4]} poids={500} couleur={c.grisFonce}>Terrain libre · {formatEuros(cr.prix)}</T>
           ) : (
             <>
               <PastillesJoueurs joueurs={cr.joueurs} total={cr.places.total} />
-              <T taille={fs[3]} poids={500} couleur={c.grisFonce}>{libellePlaces(cr.places.restantes)}</T>
+              <T taille={fs[4]} couleur={c.gris}>{libellePlaces(cr.places.restantes)}</T>
             </>
           )}
         </View>
-        <ActionCarte libelle={action} onPress={onPress} plein={!annule && !cr.je_joue} icone={cr.je_joue && !annule ? 'check' : undefined} />
+        {annule || cr.je_joue ? (
+          <ActionCarte libelle={action} onPress={onPress} plein={false} icone={cr.je_joue && !annule ? 'check' : undefined} />
+        ) : (
+          <BoutonAction libelle={action} icone="fleche-d" iconeADroite accent={sport.accent} onPress={onPress} style={{ flex: 0, minWidth: 172 }} />
+        )}
       </View>
     </CadreCarte>
   );
@@ -137,27 +178,26 @@ export function CarteCreneau({ cr, action, onPress }: { cr: Creneau; action: str
 
 /** Un événement de club : tournoi, stage… Il s'ouvre dans la fiche événement. */
 export function CarteEvenementSport({ ev, onPress }: { ev: EvenementSport; onPress: () => void }) {
-  const { c } = useTheme();
+  const { c, mode } = useTheme();
+  const sport = teintes('sport', mode);
   const prix = ev.is_gratuit || ev.prix_normal <= 0 ? 'Gratuit' : formatEuros(ev.prix_normal);
   return (
     <CadreCarte onPress={onPress} libelleAcces={ev.titre}>
-      <View style={{ position: 'absolute', top: 16, right: 16 }}>
-        <Pastille libelle="Club" />
+      <Haut gauche="Club" date={dateCourte(ev.date_heure)} />
+      <View style={{ gap: 4 }}>
+        <Surtitre>{libelleSport(ev.sport)} · {FORMATS_SPORT[ev.format] ?? ev.format}</Surtitre>
+        <Titre>{ev.titre}</Titre>
+        <T taille={fs[5]} couleur={c.gris}>{ev.club.nom} · {prix}</T>
       </View>
-      <Mono couleur={c.surBleuClair} style={{ marginBottom: 6, paddingRight: 70 }}>
-        {majuscules(libelleSport(ev.sport))} · {majuscules(FORMATS_SPORT[ev.format] ?? ev.format)} · {dateFr(ev.date_heure, 'D j M H\\hi')}
-      </Mono>
-      <Display taille={fs[6]} interligne={lh.tight} style={{ marginBottom: 4, paddingRight: 50 }}>{ev.titre}</Display>
-      <T taille={fs[3]} couleur={c.grisFonce} style={{ marginBottom: 12 }}>{ev.club.nom} · {prix}</T>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingTop: 15, borderTopWidth: 1, borderTopColor: c.grisClair }}>
-        <T taille={fs[3]} poids={500} couleur={c.grisFonce}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingTop: 14, marginTop: 4, borderTopWidth: 1, borderTopColor: c.grisClair }}>
+        <T taille={fs[4]} couleur={c.gris} style={{ flexShrink: 1 }}>
           {ev.places.quota > 0 ? `${ev.places.inscrits}/${ev.places.quota} inscrits` : `${ev.places.inscrits} inscrits`}
         </T>
         {ev.deja_inscrit
           ? <ActionCarte libelle="Inscrit" plein={false} icone="check" onPress={onPress} />
           : ev.places.complet
             ? <ActionCarte libelle="Complet" plein={false} onPress={onPress} />
-            : <ActionCarte libelle="S'inscrire" onPress={onPress} />}
+            : <BoutonAction libelle="S'inscrire" icone="fleche-d" iconeADroite accent={sport.accent} onPress={onPress} style={{ flex: 0, minWidth: 172 }} />}
       </View>
     </CadreCarte>
   );
@@ -167,10 +207,10 @@ export function CarteEvenementSport({ ev, onPress }: { ev: EvenementSport; onPre
 export function VideSport({ titre, texte }: { titre: string; texte?: string }) {
   const { c } = useTheme();
   return (
-    <View style={{ alignItems: 'center', paddingVertical: 36 }}>
-      <View style={{ marginBottom: 12 }}><Icone nom="trophee" taille={36} couleur={c.gris} /></View>
-      <Text style={{ fontFamily: police.display, fontSize: fs[5], color: c.gris, textAlign: 'center' }}>{titre}</Text>
-      {texte ? <T taille={fs[3]} couleur={c.gris} style={{ marginTop: 6, textAlign: 'center' }}>{texte}</T> : null}
+    <View style={{ alignItems: 'center', paddingVertical: 32, paddingHorizontal: 20, backgroundColor: c.blanc, borderRadius: rayon.carte, marginBottom: 16 }}>
+      <View style={{ marginBottom: 12 }}><Icone nom="trophee" taille={32} couleur={c.gris} /></View>
+      <T taille={fs[5] + 1} poids={700} style={{ textAlign: 'center' }}>{titre}</T>
+      {texte ? <T taille={fs[4]} couleur={c.gris} style={{ marginTop: 6, textAlign: 'center' }}>{texte}</T> : null}
     </View>
   );
 }
