@@ -5,15 +5,17 @@
  * Reprend partenaire/dashboard.php ligne pour ligne : prochain événement,
  * inscrits/check-in, âge moyen (approximé par promo, comme sur le site),
  * répartition par école, inscriptions des 6 dernières heures, dernières
- * inscriptions. Les valeurs « tendance » et « conseil » restent en partie
- * mockées côté serveur, exactement comme sur le site — ce n'est pas au
- * portage mobile d'inventer une vraie logique statistique qui n'existe pas
- * encore ailleurs.
+ * inscriptions. Plus aucune valeur inventée : l'âge moyen (estimé par promo),
+ * la « tendance » aléatoire, le conseil écrit en dur et la répartition par
+ * école de secours ont été retirés. Le mois de l'établissement (quota
+ * d'événements, flash, achats) est joint sous `usage`.
  */
 
 require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/crm.php';
+require_once __DIR__ . '/../../includes/comptes.php';
 require_once __DIR__ . '/../../includes/evenements_temps.php';
+require_once __DIR__ . '/../../includes/capacites.php';
 
 apiExigerMethode('GET');
 
@@ -24,9 +26,10 @@ $etab = apiEtablissementDe($pdo, $uid);
 if (!$etab) {
     apiErreur('Aucun établissement associé à ce compte.', 404, 'etablissement_absent');
 }
-if (!abonnementChoisi(abonnementEtablissement($pdo, (int) $etab['id']))) {
-    apiErreur('Choisis une formule d’abonnement pour continuer.', 403, 'abonnement_requis');
-}
+$clientEtab = abonnementEtablissement($pdo, (int) $etab['id']);
+exigerAbonnementValide($pdo, $etab);
+
+$capacitesEtab = capacitesEtablissement($pdo, (int) $etab['id']);
 
 // La soirée en cours d'abord, sinon la prochaine : c'est pendant la soirée
 // que le partenaire suit ses entrées. L'heure vient de PHP (Europe/Paris,
@@ -41,14 +44,11 @@ $event = $stmt->fetch();
 
 $nbInscrits  = 0;
 $nbCheckin   = 0;
-$ageMoy      = 0.0;
 $chartLabels = [];
 $chartValues = [];
 $schoolStats = [];
 $recents     = [];
 $nbTotal     = 0;
-$tendance    = '+0%';
-$conseil     = '—';
 
 if ($event) {
     $eid = (int) $event['id'];
@@ -63,19 +63,6 @@ if ($event) {
 
     $nbTotal = $nbInscrits + $nbCheckin;
 
-    // Âge moyen approximé par promo, comme sur le site : aucune colonne
-    // d'âge réelle n'existe sur les inscriptions.
-    $promoAges = ['L1' => 19, 'L2' => 20, 'L3' => 21, 'M1' => 22, 'M2' => 23, 'BUT1' => 19, 'BUT2' => 20, 'BUT3' => 21];
-    $stmt = $pdo->prepare('SELECT u.promo FROM inscriptions i JOIN users u ON u.id=i.user_id WHERE i.evenement_id=? AND u.promo IS NOT NULL');
-    $stmt->execute([$eid]);
-    $promos = $stmt->fetchAll(PDO::FETCH_COLUMN);
-    if ($promos) {
-        $ages   = array_filter(array_map(static fn ($p) => $promoAges[$p] ?? null, $promos));
-        $ageMoy = $ages ? round(array_sum($ages) / count($ages), 1) : 21.4;
-    } else {
-        $ageMoy = 21.4;
-    }
-
     $stmt = $pdo->prepare('SELECT u.ecole, COUNT(*) as cnt FROM inscriptions i JOIN users u ON u.id=i.user_id WHERE i.evenement_id=? AND u.ecole IS NOT NULL GROUP BY u.ecole ORDER BY cnt DESC');
     $stmt->execute([$eid]);
     $schools     = $stmt->fetchAll();
@@ -83,15 +70,6 @@ if ($event) {
     foreach ($schools as $s) {
         $schoolStats[] = ['nom' => (string) $s['ecole'], 'pourcentage' => (int) round(((int) $s['cnt']) / $totalSchool * 100)];
     }
-    if (!$schoolStats) {
-        $schoolStats = [
-            ['nom' => 'UCA — Droit & Éco', 'pourcentage' => 42],
-            ['nom' => 'SIGMA Clermont', 'pourcentage' => 28],
-            ['nom' => 'INP Ingénieurs', 'pourcentage' => 18],
-            ['nom' => 'Autres', 'pourcentage' => 12],
-        ];
-    }
-
     for ($h = 5; $h >= 0; $h--) {
         $chartLabels[] = date('H\hi', strtotime("-{$h} hour"));
         $from = date('Y-m-d H:i:s', strtotime('-' . ($h + 1) . ' hour'));
@@ -100,9 +78,6 @@ if ($event) {
         $stmt->execute([$eid, $from, $to]);
         $chartValues[] = (int) $stmt->fetchColumn();
     }
-
-    $tendance = $nbTotal > 20 ? '+340% vs jeudi moy.' : '+' . random_int(50, 200) . '% vs jeudi moy.';
-    $conseil  = '68% des inscrits ont déjà utilisé un deal similaire. Prépare 2 bartenders en plus entre 21h et 22h30.';
 
     $stmt = $pdo->prepare(
         'SELECT u.prenom, u.nom, u.ecole, u.promo, u.photo, i.created_at
@@ -160,13 +135,18 @@ apiReponse([
         'titre'      => (string) $event['titre'],
         'date_heure' => (string) $event['date_heure'],
     ] : null,
+    'usage' => usagePartenaireMois($pdo, (int) $etab['id'], $capacitesEtab),
+    'offre' => [
+        'code'          => $capacitesEtab['offre'],
+        'libelle'       => crmLibelleOffre($capacitesEtab['offre']),
+        'essai_jusquau' => $clientEtab['essai_jusqu_au'] ?? null,
+    ],
     'stats' => [
         'inscrits'      => $nbInscrits,
         'checkin'       => $nbCheckin,
         'total'         => $nbTotal,
-        'age_moyen'     => $ageMoy,
-        'tendance'      => $tendance,
-        'conseil'       => $conseil,
+        'places'        => $event ? (int) $event['quota'] : 0,
+        'taux_presence' => $nbTotal > 0 ? (int) round($nbCheckin / $nbTotal * 100) : null,
         'ecoles'        => $schoolStats,
         'graphe'        => ['labels' => $chartLabels, 'valeurs' => $chartValues],
         'recentes'      => $recents,

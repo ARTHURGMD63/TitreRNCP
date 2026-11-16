@@ -37,7 +37,7 @@ final class CrmTest extends TestCase
     public function testLeVocabulaireCouvreToutesLesOffresDeLaGrille(): void
     {
         $this->assertSame(
-            ['aucune', 'fondateur', 'essentiel', 'premium', 'bde', 'club'],
+            ['aucune', 'bde', 'fondateur', 'club', 'essentiel', 'premium'],
             array_keys(crmOffres())
         );
     }
@@ -51,10 +51,9 @@ final class CrmTest extends TestCase
     {
         $offres = crmOffres();
         $this->assertSame(39, $offres['fondateur']['tarif']);
-        $this->assertSame(79, $offres['essentiel']['tarif']);
-        $this->assertSame(149, $offres['premium']['tarif']);
-        // BDE et associations : gratuit, définitivement.
-        $this->assertSame(0, $offres['bde']['tarif']);
+        $this->assertSame(49.99, $offres['essentiel']['tarif']);
+        $this->assertSame(69.99, $offres['premium']['tarif']);
+        $this->assertSame(25, $offres['bde']['tarif']);
     }
 
     public function testUnCodeInconnuSeRabatSurLuiMeme(): void
@@ -128,10 +127,11 @@ final class CrmTest extends TestCase
 
     public function testPointMortSansAucunClientUtiliseLeTarifEssentiel(): void
     {
-        // SL-13 : « 3 clients à 79 € couvrent la totalité des charges. »
+        // Grille tarifaire : l'Essentiel est à 49,99 €, il faut donc 4 clients
+        // pour couvrir 180 € de charges.
         $pm = financeCalculPointMort(0.0, 0, 180.0);
-        $this->assertSame(79.0, $pm['panier_moyen']);
-        $this->assertSame(3, $pm['clients_requis']);
+        $this->assertSame(49.99, $pm['panier_moyen']);
+        $this->assertSame(4, $pm['clients_requis']);
         $this->assertFalse($pm['atteint']);
     }
 

@@ -16,6 +16,8 @@
 
 require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/crm.php';
+require_once __DIR__ . '/../../includes/capacites.php';
+require_once __DIR__ . '/../../includes/sponsoring.php';
 
 $u   = apiPartenaire($pdo);
 $uid = (int) $u['id'];
@@ -28,12 +30,18 @@ if (!$etab) {
 /**
  * @return list<array<string, mixed>>
  */
-function partenaireAbonnementFormules(PDO $pdo, string $typeEtablissement): array
+function partenaireAbonnementFormules(PDO $pdo, string $typeEtablissement, ?array $clientActuel): array
 {
     $restantes = placesFondateurRestantes($pdo);
     $formules  = [];
-    foreach (formulesSouscriptibles($pdo, $typeEtablissement) as $code => $f) {
+    $grille    = grilleCapacites();
+    foreach (formulesSouscriptibles($pdo, $typeEtablissement, $clientActuel) as $code => $f) {
+        $cap = $grille[$code] ?? $grille['aucune'];
         $formules[] = [
+            'evenements_par_mois' => (int) $cap['evenements_par_mois'],
+            'evenements_debut'    => $cap['evenements_debut'],
+            'flash_par_mois'      => $cap['flash_par_mois'],
+            'mises_en_avant'      => (int) $cap['mises_en_avant_offertes'],
             'code'                => $code,
             'libelle'             => $f['libelle'],
             'tarif'               => (float) $f['tarif'],
@@ -69,93 +77,26 @@ if ($methode === 'POST') {
     $corps = apiCorps();
     $offre = (string) ($corps['offre'] ?? '');
 
-    // Un club ne souscrit que la formule Club, un bar jamais : la liste est
-    // revérifiée contre le type de l'établissement, pas contre l'écran.
-    $formulesDispo = formulesSouscriptibles($pdo, (string) $etab['type']);
-    if (!array_key_exists($offre, $formulesDispo)) {
-        apiErreur("Cette formule n'est pas disponible.", 422, 'offre_invalide');
-    }
-
-    $client   = abonnementEtablissement($pdo, (int) $etab['id']);
-    $tarif    = (float) $formulesDispo[$offre]['tarif'];
-    $finEssai = finEssaiPourFormule($offre);
-
     $stmtEmail = $pdo->prepare('SELECT email FROM users WHERE id = ?');
     $stmtEmail->execute([$uid]);
-    $emailContact = $stmtEmail->fetchColumn() ?: null;
 
-    try {
-        $pdo->beginTransaction();
-
-        // La place fondateur se revérifie à l'intérieur de la transaction, comme
-        // sur le site : deux établissements qui valident en même temps la
-        // seizième place ne doivent pas passer tous les deux.
-        if ($offre === 'fondateur' && !offreFondateurOuverte($pdo)) {
-            $pdo->rollBack();
-            apiErreur("La dernière place fondateur vient d'être prise. Choisis une autre formule.", 409, 'fondateur_complet');
-        }
-
-        if ($client) {
-            $pdo->prepare(
-                "UPDATE crm_clients SET
-                    offre = ?, mrr = ?, statut = 'essai', essai_jusqu_au = ?,
-                    signe_le = COALESCE(signe_le, CURDATE()), perdu_le = NULL
-                  WHERE id = ?"
-            )->execute([$offre, $tarif, $finEssai, $client['id']]);
-            $clientId = (int) $client['id'];
-        } else {
-            $pdo->prepare(
-                "INSERT INTO crm_clients
-                    (etablissement_id, nom, categorie, ville, adresse,
-                     contact_nom, contact_email, statut, offre, mrr, essai_jusqu_au, signe_le)
-                 VALUES (?,?,?,?,?,?,?,'essai',?,?,?,CURDATE())"
-            )->execute([
-                $etab['id'], $etab['nom'], $etab['type'], $etab['ville'], $etab['adresse'] ?? null,
-                trim(((string) ($u['prenom'] ?? '')) . ' ' . ((string) ($u['nom'] ?? ''))) ?: null,
-                $emailContact,
-                $offre, $tarif, $finEssai,
-            ]);
-            $clientId = (int) $pdo->lastInsertId();
-        }
-
-        if ($tarif > 0) {
-            $dejaPrevu = $pdo->prepare(
-                "SELECT COUNT(*) FROM finance_mouvements
-                  WHERE client_id = ? AND sens = 'recette'
-                    AND statut = 'prevu' AND date_mouvement = ?"
-            );
-            $dejaPrevu->execute([$clientId, $finEssai]);
-
-            if (!$dejaPrevu->fetchColumn()) {
-                $pdo->prepare(
-                    "INSERT INTO finance_mouvements
-                        (sens, categorie, client_id, libelle, montant_ht, date_mouvement, statut, note, cree_par)
-                     VALUES ('recette','abonnement',?,?,?,?,'prevu',?,?)"
-                )->execute([
-                    $clientId,
-                    'Abonnement ' . crmLibelleOffre($offre) . ' — ' . $etab['nom'],
-                    $tarif,
-                    $finEssai,
-                    "Souscrit depuis l'application le " . date('d/m/Y') . '.',
-                    $uid,
-                ]);
-            }
-        }
-
-        $pdo->commit();
-    } catch (PDOException $e) {
-        if ($pdo->inTransaction()) {
-            $pdo->rollBack();
-        }
-        logErreur('Souscription impossible', $e, ['etablissement' => $etab['id'], 'offre' => $offre]);
-        apiErreur('Enregistrement impossible. Réessaie dans un instant.', 500, 'erreur_serveur');
+    // Toutes les règles (type du compte, une formule par mois, période offerte
+    // une seule fois, fondateur réservé au lancement) vivent dans
+    // souscrireFormule(), partagée avec le site.
+    $res = souscrireFormule($pdo, $etab, $u, $offre, $stmtEmail->fetchColumn() ?: null);
+    if (!$res['ok']) {
+        $statut = match ($res['code']) {
+            'offre_invalide' => 422,
+            'fondateur_complet', 'changement_limite' => 409,
+            default => 500,
+        };
+        apiErreur($res['message'], $statut, $res['code']);
     }
 
-    $client = abonnementEtablissement($pdo, (int) $etab['id']);
     apiReponse([
         'success' => true,
-        'message' => 'Formule ' . crmLibelleOffre($offre) . ' enregistrée.',
-        'client'  => partenaireAbonnementClient($client),
+        'message' => $res['message'],
+        'client'  => partenaireAbonnementClient(abonnementEtablissement($pdo, (int) $etab['id'])),
     ]);
 }
 
@@ -163,9 +104,48 @@ apiExigerMethode('GET');
 
 $client = abonnementEtablissement($pdo, (int) $etab['id']);
 
+$capacites = capacitesEtablissement($pdo, (int) $etab['id']);
+
 apiReponse([
     'success'  => true,
     'client'   => partenaireAbonnementClient($client),
-    'formules' => partenaireAbonnementFormules($pdo, (string) $etab['type']),
+    'formules' => compteValide($etab) ? partenaireAbonnementFormules($pdo, (string) $etab['type'], $client) : [],
     'est_club' => ($etab['type'] ?? '') === 'club',
+    'type_compte' => (string) ($etab['type'] ?? ''),
+    // Un BDE n'a ni formule ni publication tant que l'administrateur ne l'a pas validé.
+    'validation'  => [
+        'requise' => verificationRequise((string) ($etab['type'] ?? '')),
+        'statut'  => (string) ($etab['verification'] ?? 'non_requise'),
+        'valide'  => compteValide($etab),
+        'note'    => $etab['verification_note'] !== null ? (string) $etab['verification_note'] : null,
+    ],
+    // Une formule se change au plus une fois par mois.
+    'changement' => (function () use ($client): array {
+        $dejaChange = abonnementChoisi($client) && substr((string) ($client['offre_changee_le'] ?? ''), 0, 7) === date('Y-m');
+        return [
+            'possible' => !$dejaChange,
+            'prochain' => $dejaChange ? date('Y-m-d', (int) strtotime('first day of next month')) : null,
+        ];
+    })(),
+    // Ce que la formule en cours comprend, et ce qui en a été consommé ce mois.
+    'inclus'   => [
+        'evenements_par_mois'     => (int) $capacites['evenements_quota_actuel'],
+        'en_periode_offerte'      => (bool) $capacites['en_periode_offerte'],
+        'evenements_apres_offre'  => (int) $capacites['evenements_par_mois'],
+        'flash_par_mois'          => $capacites['flash_par_mois'],
+        'mises_en_avant_offertes' => (int) $capacites['mises_en_avant_offertes'],
+    ],
+    'usage'    => usagePartenaireMois($pdo, (int) $etab['id'], $capacites),
+    // Les achats possibles en plus de l'abonnement, tarifs HT.
+    'achats'   => [
+        'evenement_supplementaire' => (float) PRIX_EVENEMENT_SUPPLEMENTAIRE,
+        'sponsoring' => array_map(
+            static fn (string $code, array $f): array => [
+                'code' => $code, 'nom' => $f['nom'], 'tarif' => (float) $f['tarif'],
+                'heures' => (int) $f['heures'], 'notifications' => (int) $f['notifications'], 'resume' => $f['resume'],
+            ],
+            array_keys(formulesSponsoring()),
+            array_values(formulesSponsoring())
+        ),
+    ],
 ]);

@@ -5,6 +5,7 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/crm.php';
 require_once __DIR__ . '/../includes/sponsoring.php';
 require_once __DIR__ . '/../includes/capacites.php';
+require_once __DIR__ . '/../includes/evenements_temps.php';
 require_once __DIR__ . '/../includes/musique.php';
 require_once __DIR__ . '/../includes/temps_reel.php';
 requirePartner();
@@ -53,7 +54,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sponsorFormule = $is_sponsorise ? ($_POST['sponsor_formule'] ?? '') : null;
 
     if (!$titre)      $errors[] = 'Le titre est obligatoire.';
-    if (!in_array($type, ['bar','boite','resto','afterwork'])) $errors[] = 'Type invalide.';
+    // Le type de l'événement découle du compte (un bar publie un événement de
+    // bar) ; un club, dont les événements sont du sport, publie depuis
+    // l'application.
+    $type = typeEvenementPour((string) ($etab['type'] ?? ''), (string) $type) ?? '';
+    if ($type === '' || $type === 'sport') $errors[] = "Type invalide. Les événements d'un club se publient depuis l'application.";
     // Le style est facultatif — un resto n'en annonce pas toujours — mais
     // s'il est renseigné, il vient du catalogue et de nulle part ailleurs.
     if ($musique !== '' && !styleMusiqueValide($musique)) $errors[] = 'Style de musique invalide.';
@@ -70,7 +75,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // dans le formulaire, elle se recoche à la console.
     if ($is_flash && !flashDisponible($pdo, (int) $etab['id'], $capacites, null)) {
         $errors[] = 'Ton quota d\'offres flash du mois est atteint ('
-                  . (int) $capacites['flash_par_mois'] . ' par mois). Le Premium les rend illimitées.';
+                  . (int) $capacites['flash_par_mois'] . ' par mois). Fondateur et Premium en incluent une par mois.';
+    }
+
+    // Quota mensuel d'événements : le site ne propose pas l'achat d'un
+    // supplément, il se fait depuis l'application.
+    if (evenementSeraSupplementaire($pdo, (int) $etab['id'], $capacites)) {
+        $errors[] = 'Ton quota de ' . (int) $capacites['evenements_quota_actuel']
+                  . ' événements du mois est atteint. Un événement supplémentaire (' . number_format(PRIX_EVENEMENT_SUPPLEMENTAIRE, 2, ',', ' ')
+                  . " € HT) se publie depuis l'application.";
+    }
+
+    // La mise en avant se résout par la règle commune à l'application et au
+    // site (resoudreSponsoring) ; un événement déjà fini ne se publie pas.
+    $sponso = resoudreSponsoring($pdo, (int) $etab['id'], $capacites, null, (bool) $is_sponsorise, $sponsorFormule ?: null, (string) $date_heure, $date_fin ?: null);
+    if ($sponso['erreur'] !== null) {
+        $errors[] = $sponso['erreur'];
+    }
+    if ($date_heure && evenementFinEffective((string) $date_heure, $date_fin ?: null) <= time()) {
+        $errors[] = 'Cet événement est déjà terminé : choisis une date à venir.';
     }
 
     if (empty($errors)) {
@@ -80,13 +103,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
          * absence de sponsoring : sans trace, impossible de savoir combien
          * de mises en avant offertes ont été consommées.
          */
-        $sponsorTarif   = $is_sponsorise ? tarifSponsoring($sponsorFormule) : 0;
-        $offerteUtilisee = false;
-        if ($is_sponsorise && misesEnAvantOffertesRestantes($pdo, (int) $etab['id'], $capacites) > 0) {
-            $sponsorTarif    = 0;
-            $offerteUtilisee = true;
-        }
-        $sponsorFin   = $is_sponsorise ? finSponsoring($sponsorFormule, $date_heure) : null;
+        $is_sponsorise  = $sponso['is_sponsorise'];
+        $sponsorFormule = $sponso['formule'];
+        $sponsorTarif   = $sponso['tarif'];
+        $sponsorFin     = $sponso['fin'];
 
         $stmt = $pdo->prepare("
             INSERT INTO evenements
@@ -99,6 +119,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $quota, $reduction, $prix_normal, $is_flash,
             $flash_expiry ?: null, $is_gratuit, $lieu,
             $is_sponsorise, $sponsorFormule, $sponsorTarif, $sponsorFin
+        ]);
+        // Ce que l'événement consomme s'inscrit au registre des achats, comme
+        // depuis l'application : un événement qui n'y passerait pas échapperait
+        // aux quotas.
+        enregistrerAchatsEvenement($pdo, (int) $etab['id'], (int) $pdo->lastInsertId(), null, [
+            'titre' => $titre, 'supplement_tarif' => 0.0, 'is_flash' => $is_flash,
+            'is_sponsorise' => $is_sponsorise, 'sponsor_formule' => $sponsorFormule, 'sponsor_tarif' => $sponsorTarif,
+            'sponsor_nouvelle' => $sponso['nouvelle'],
         ]);
         // Le canal global ne bouge que pour ca : une nouvelle soiree publiee.
         // Assez rare pour qu'un onglet reste des heures sur son 304, assez

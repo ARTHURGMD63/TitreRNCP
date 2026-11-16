@@ -64,7 +64,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sponsorFormule = $is_sponsorise ? ($_POST['sponsor_formule'] ?? '') : null;
 
     if (!$titre)      $errors[] = 'Le titre est obligatoire.';
-    if (!in_array($type, ['bar','boite','resto','afterwork'])) $errors[] = 'Type invalide.';
+    // Le type de l'événement découle du compte (un bar publie un événement de
+    // bar) ; un club, dont les événements sont du sport, publie depuis
+    // l'application.
+    $type = typeEvenementPour((string) ($etab['type'] ?? ''), (string) $type) ?? '';
+    if ($type === '' || $type === 'sport') $errors[] = "Type invalide. Les événements d'un club se publient depuis l'application.";
     // Facultatif, mais jamais libre : le code vient du catalogue.
     if ($musique !== '' && !styleMusiqueValide($musique)) $errors[] = 'Style de musique invalide.';
     if (!$date_heure) $errors[] = 'La date est obligatoire.';
@@ -81,7 +85,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // d'édition ne se compte pas lui-même.
     if ($is_flash && !flashDisponible($pdo, (int) $etab['id'], $capacites, $eid)) {
         $errors[] = "Ton quota d'offres flash du mois est atteint ("
-                  . (int) $capacites['flash_par_mois'] . ' par mois). Le Premium les rend illimitées.';
+                  . (int) $capacites['flash_par_mois'] . ' par mois). Fondateur et Premium en incluent une par mois.';
+    }
+
+    // Ce que devient la mise en avant (resoudreSponsoring) : en cours, elle ne
+    // bouge pas ; terminée, elle ne se rachète pas sans demande.
+    $sponso = resoudreSponsoring($pdo, (int) $etab['id'], $capacites, $event, (bool) $is_sponsorise, $sponsorFormule ?: null, (string) $date_heure, $date_fin ?: null);
+    if ($sponso['erreur'] !== null) {
+        $errors[] = $sponso['erreur'];
     }
 
     if (empty($errors)) {
@@ -89,25 +100,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // réellement. Sans cette garde, corriger une faute de frappe dans le titre
         // redémarrait le compteur : sept jours de mise en avant offerts à chaque
         // enregistrement.
-        $formuleAvant = $event['sponsor_formule'] ?? null;
-        $etaitSponso  = !empty($event['is_sponsorise']);
-
-        if (!$is_sponsorise) {
-            $sponsorTarif = 0;
-            $sponsorFin   = null;
-        } elseif ($etaitSponso && $formuleAvant === $sponsorFormule) {
-            $sponsorTarif = (float) ($event['sponsor_tarif'] ?? 0);
-            $sponsorFin   = $event['sponsor_jusqu_au'] ?? null;
-        } else {
-            // Nouvelle mise en avant, ou changement de formule : c'est ici que
-            // la mise en avant offerte du Premium (SL-03, une par mois) peut
-            // s'appliquer. Elle s'écrit à 0 € plutôt que de ne rien écrire,
-            // sinon rien ne dit combien ont été consommées.
-            $sponsorTarif = misesEnAvantOffertesRestantes($pdo, (int) $etab['id'], $capacites) > 0
-                ? 0.0
-                : tarifSponsoring($sponsorFormule);
-            $sponsorFin   = finSponsoring($sponsorFormule, $date_heure);
-        }
+        $is_sponsorise  = $sponso['is_sponsorise'];
+        $sponsorFormule = $sponso['formule'];
+        $sponsorTarif   = $sponso['tarif'];
+        $sponsorFin     = $sponso['fin'];
 
         $stmt = $pdo->prepare("
             UPDATE evenements SET
@@ -123,6 +119,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $is_flash, $flash_expiry ?: null, $is_gratuit, $lieu,
             $is_sponsorise, $sponsorFormule, $sponsorTarif, $sponsorFin,
             $eid, $etab['id']
+        ]);
+        enregistrerAchatsEvenement($pdo, (int) $etab['id'], (int) $eid, $event, [
+            'titre' => $titre, 'is_flash' => $is_flash, 'is_sponsorise' => $is_sponsorise,
+            'sponsor_formule' => $sponsorFormule, 'sponsor_tarif' => $sponsorTarif,
+            'sponsor_nouvelle' => $sponso['nouvelle'],
         ]);
         header('Location: ' . baseUrl('/partenaire/evenements.php?updated=1'));
         exit;
@@ -458,7 +459,7 @@ $flashLocal = $event['flash_expiry'] ? date('Y-m-d\TH:i', strtotime($event['flas
           $sponsoEncours  = sponsoringActif($event);
         ?>
         <label class="toggle-row" id="sponsor-toggle-row">
-          <input type="checkbox" name="is_sponsorise" id="cb-sponsor" <?= !empty($event['is_sponsorise']) ? 'checked' : '' ?>>
+          <input type="checkbox" name="is_sponsorise" id="cb-sponsor" <?= sponsoringActif($event) ? 'checked' : '' ?>>
           <div>
             <div class="toggle-label">Post sponsorisé</div>
             <div class="toggle-desc">Remonte l'événement en tête du fil Explore. Le badge &laquo;&nbsp;Sponsorisé&nbsp;&raquo; reste visible pour les étudiants.</div>

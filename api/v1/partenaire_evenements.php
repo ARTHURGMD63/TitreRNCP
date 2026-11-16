@@ -14,8 +14,10 @@
 require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/places.php';
 require_once __DIR__ . '/../../includes/crm.php';
+require_once __DIR__ . '/../../includes/comptes.php';
 require_once __DIR__ . '/../../includes/sponsoring.php';
 require_once __DIR__ . '/../../includes/evenements_temps.php';
+require_once __DIR__ . '/../../includes/capacites.php';
 
 $u   = apiPartenaire($pdo);
 $uid = (int) $u['id'];
@@ -24,9 +26,7 @@ $etab = apiEtablissementDe($pdo, $uid);
 if (!$etab) {
     apiErreur('Aucun établissement associé à ce compte.', 404, 'etablissement_absent');
 }
-if (!abonnementChoisi(abonnementEtablissement($pdo, (int) $etab['id']))) {
-    apiErreur('Choisis une formule d’abonnement pour continuer.', 403, 'abonnement_requis');
-}
+exigerAbonnementValide($pdo, $etab);
 
 $methode = (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET');
 
@@ -64,6 +64,7 @@ $evenements = $stmt->fetchAll();
 
 apiReponse([
     'success'     => true,
+    'usage'       => usagePartenaireMois($pdo, (int) $etab['id'], capacitesEtablissement($pdo, (int) $etab['id'])),
     'evenements'  => array_map(
         static function (array $e): array {
             $quota    = (int) ($e['quota'] ?? 0);
@@ -88,6 +89,8 @@ apiReponse([
                 'is_flash'       => (bool) $e['is_flash'],
                 'is_sponsorise'  => (bool) $e['is_sponsorise'],
                 'sponsorise_actif' => (bool) $e['is_sponsorise'] && sponsoringActif($e),
+                'supplement_tarif' => (float) ($e['supplement_tarif'] ?? 0),
+                'sponsor_tarif'  => (float) ($e['sponsor_tarif'] ?? 0),
                 'statut'         => $passe ? 'passe' : ($complet ? 'complet' : 'actif'),
             ];
         },

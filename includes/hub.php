@@ -465,8 +465,12 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
      * de l'utilisateur — ont quitté le SQL : le premier vient d'un cache
      * partagé, le second d'une requête unique recoupée en PHP.
      */
+    // L'heure vient de PHP (Europe/Paris), comme sponsor_jusqu_au qui est écrit
+    // par PHP : NOW() est à l'heure de la base, UTC en ligne, et rallongerait
+    // chaque mise en avant d'une ou deux heures.
+    $maintenantParis = date('Y-m-d H:i:s');
     $sponsoActif = "(e.is_sponsorise = 1
-                     AND (e.sponsor_jusqu_au IS NULL OR e.sponsor_jusqu_au > NOW()))";
+                     AND (e.sponsor_jusqu_au IS NULL OR e.sponsor_jusqu_au > '$maintenantParis'))";
 
     // Une soirée reste dans le fil tant qu'elle n'est pas terminée — donc à
     // venir, ou en cours (voir evenements_temps.php pour ce que « terminée »
@@ -513,7 +517,10 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
     // e.id départage : sans dernier critère stable, deux soirées à la même
     // heure peuvent changer de place d'un chargement à l'autre, et la
     // pagination sauter ou répéter une carte.
-    $classementE = " ORDER BY $enCoursSql $sponsoActif DESC, e.is_flash DESC, e.date_heure ASC, e.id ASC";
+    // Le Top du fil (7 jours, 350 €) passe devant le Coup de projecteur (48 h,
+    // 70 €) : à prix différent, rang différent.
+    $topSql = "($sponsoActif AND e.sponsor_formule IN ('top7','premium30')) DESC, ";
+    $classementE = " ORDER BY $enCoursSql $sponsoActif DESC, $topSql e.is_flash DESC, e.date_heure ASC, e.id ASC";
 
     // Même mécanique que l'annuaire : « voir plus » rallonge la page.
     $limiteE = HUB_EVENEMENTS_PAR_PAGE * (int) $criteres['page_evenements'];

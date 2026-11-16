@@ -14,6 +14,7 @@
  * (booléen) ; appareil (facultatif).
  */
 
+require_once __DIR__ . '/../../includes/comptes.php';
 require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/auth_check.php';
 require_once __DIR__ . '/../../includes/agregats.php';
@@ -40,7 +41,7 @@ $ecole      = $texte('ecole');
 $promo      = $texte('promo');
 $etudiantVille = $texte('ville_etudiant') !== '' ? $texte('ville_etudiant') : null;
 $etablNom   = $texte('etablissement_nom');
-$etablType  = in_array($corps['etablissement_type'] ?? '', ['bar', 'boite', 'resto', 'afterwork', 'club'], true)
+$etablType  = typeEtablissementValide(is_string($corps['etablissement_type'] ?? null) ? $corps['etablissement_type'] : null)
     ? (string) $corps['etablissement_type'] : 'bar';
 $etablVille = $texte('ville') !== '' ? $texte('ville') : 'Clermont-Ferrand';
 $naissance  = $texte('date_naissance');
@@ -86,8 +87,8 @@ try {
     oublierEcolesRepresentees();
 
     if ($type === 'partenaire' && $etablNom) {
-        $pdo->prepare('INSERT INTO etablissements (user_id, nom, type, ville) VALUES (?,?,?,?)')
-            ->execute([$userId, $etablNom, $etablType, $etablVille]);
+        $pdo->prepare('INSERT INTO etablissements (user_id, nom, type, ville, verification) VALUES (?,?,?,?,?)')
+            ->execute([$userId, $etablNom, $etablType, $etablVille, verificationInitiale($etablType)]);
     }
 } catch (PDOException $e) {
     // Code MySQL 1062 (clé dupliquée), et non le texte du message : sur un

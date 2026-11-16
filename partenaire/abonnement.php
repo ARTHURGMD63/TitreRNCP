@@ -38,115 +38,40 @@ if (!$etab) {
 }
 
 $client     = abonnementEtablissement($pdo, (int) $etab['id']);
-$formules   = formulesSouscriptibles($pdo);
+$formules   = formulesSouscriptibles($pdo, (string) $etab['type'], $client);
 $restantes  = placesFondateurRestantes($pdo);
 $erreurs    = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['souscrire'])) {
     csrfVerify();
 
-    $offre = $_POST['offre'] ?? '';
-
-    // La formule est revalidée contre la liste ouverte, pas contre la grille
-    // entière : sans cela, une requête forgée réservait une place fondateur
-    // après la fermeture de l'offre, ou souscrivait au tarif BDE gratuit.
-    if (!array_key_exists($offre, $formules)) {
-        $erreurs[] = "Cette formule n'est pas disponible.";
-    } elseif (empty($_POST['engagement'])) {
+    if (empty($_POST['engagement'])) {
         $erreurs[] = 'Merci de confirmer que tu as pris connaissance du tarif.';
-    }
-
-    if (!$erreurs) {
-        $tarif    = (float) $formules[$offre]['tarif'];
-        $finEssai = finEssaiPourFormule($offre);
-
-        try {
-            $pdo->beginTransaction();
-
-            /*
-             * La place fondateur se revérifie à l'intérieur de la transaction.
-             * Deux établissements qui valident en même temps la seizième place
-             * liraient autrement le même compteur et passeraient tous les deux :
-             * le nombre est annoncé publiquement, il doit être exact.
-             */
-            if ($offre === 'fondateur' && !offreFondateurOuverte($pdo)) {
-                $pdo->rollBack();
-                header('Location: ' . baseUrl('/partenaire/abonnement.php?complet=1'));
-                exit;
-            }
-
-            if ($client) {
-                $pdo->prepare(
-                    "UPDATE crm_clients SET
-                        offre = ?, mrr = ?, statut = 'essai', essai_jusqu_au = ?,
-                        signe_le = COALESCE(signe_le, CURDATE()), perdu_le = NULL
-                      WHERE id = ?"
-                )->execute([$offre, $tarif, $finEssai, $client['id']]);
-                $clientId = (int) $client['id'];
-            } else {
-                // Établissement inscrit avant le CRM, ou prospect jamais fiché.
-                $pdo->prepare(
-                    "INSERT INTO crm_clients
-                        (etablissement_id, nom, categorie, ville, adresse,
-                         contact_nom, contact_email, statut, offre, mrr, essai_jusqu_au, signe_le)
-                     VALUES (?,?,?,?,?,?,?,'essai',?,?,?,CURDATE())"
-                )->execute([
-                    $etab['id'], $etab['nom'], $etab['type'], $etab['ville'], $etab['adresse'] ?? null,
-                    trim(($user['prenom'] ?? '') . ' ' . ($user['nom'] ?? '')) ?: null,
-                    $emailContact,
-                    $offre, $tarif, $finEssai,
-                ]);
-                $clientId = (int) $pdo->lastInsertId();
-            }
-
-            /*
-             * La première échéance entre au registre en « prévu » : elle n'est
-             * pas encaissée, et la confondre avec de la trésorerie est
-             * exactement ce que la page finances existe pour éviter. Un tarif
-             * à zéro (fondateur pendant ses trois mois) n'écrit aucune ligne.
-             */
-            if ($tarif > 0) {
-                $dejaPrevu = $pdo->prepare(
-                    "SELECT COUNT(*) FROM finance_mouvements
-                      WHERE client_id = ? AND sens = 'recette'
-                        AND statut = 'prevu' AND date_mouvement = ?"
-                );
-                $dejaPrevu->execute([$clientId, $finEssai]);
-
-                if (!$dejaPrevu->fetchColumn()) {
-                    $pdo->prepare(
-                        "INSERT INTO finance_mouvements
-                            (sens, categorie, client_id, libelle, montant_ht, date_mouvement, statut, note, cree_par)
-                         VALUES ('recette','abonnement',?,?,?,?,'prevu',?,?)"
-                    )->execute([
-                        $clientId,
-                        'Abonnement ' . crmLibelleOffre($offre) . ' — ' . $etab['nom'],
-                        $tarif,
-                        $finEssai,
-                        "Souscrit depuis l'espace partenaire le " . date('d/m/Y') . '.',
-                        $uid,
-                    ]);
-                }
-            }
-
-            $pdo->commit();
-        } catch (PDOException $e) {
-            if ($pdo->inTransaction()) $pdo->rollBack();
-            logErreur('Souscription impossible', $e, ['etablissement' => $etab['id'], 'offre' => $offre]);
-            $erreurs[] = 'Enregistrement impossible. Réessaie dans un instant.';
-        }
-
-        if (!$erreurs) {
+    } else {
+        // Les règles (formule permise pour le type du compte, une formule par
+        // mois, période offerte une seule fois, place fondateur) sont celles
+        // de l'application : elles vivent dans souscrireFormule().
+        $res = souscrireFormule(
+            $pdo, $etab,
+            ['id' => $uid, 'prenom' => $user['prenom'] ?? '', 'nom' => $user['nom'] ?? ''],
+            (string) ($_POST['offre'] ?? ''), $emailContact
+        );
+        if ($res['ok']) {
             header('Location: ' . baseUrl('/partenaire/abonnement.php?ok=1'));
             exit;
         }
+        if ($res['code'] === 'fondateur_complet') {
+            header('Location: ' . baseUrl('/partenaire/abonnement.php?complet=1'));
+            exit;
+        }
+        $erreurs[] = $res['message'];
     }
 }
 
 // Relecture après écriture : la page doit montrer l'état réel, pas celui
 // qu'on croit avoir posé.
 $client    = abonnementEtablissement($pdo, (int) $etab['id']);
-$formules  = formulesSouscriptibles($pdo);
+$formules  = formulesSouscriptibles($pdo, (string) $etab['type'], $client);
 $restantes = placesFondateurRestantes($pdo);
 $actuelle  = abonnementChoisi($client) ? $client['offre'] : null;
 ?>

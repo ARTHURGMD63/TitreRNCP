@@ -82,6 +82,8 @@ foreach ($notifs['items'] as $n) {
             'titre' => (string) $e['titre'],
             'lieu'  => (string) $e['lieu'],
             'date'  => dateFr((string) $e['date_heure'], 'j M'),
+            // Notification d'une mise en avant : elle ne dit pas « nouveau ».
+            'promo' => !empty($e['promo']),
         ];
     }
 
