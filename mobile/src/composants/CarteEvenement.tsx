@@ -18,7 +18,7 @@ import { actions, ErreurApi, type Evenement } from '../api';
 import { LIBELLES_TYPE } from '../catalogue';
 import { dateFr, ts } from '../format';
 import { useJeton } from '../session';
-import { fixe, fs, lh, rayon, sans, taille } from '../theme';
+import { fixe, fs, rayon, sans } from '../theme';
 import { useTheme } from '../useTheme';
 import { PressableAnime } from './Animations';
 import { BoutonAction, BoutonContour, CarteRefonte, Pastille, QuiYVa, useRubrique } from './Design';
@@ -58,29 +58,29 @@ function usePouls() {
  * « En cours » : le point vert respire pour dire « ça se passe
  * maintenant ». Sur une carte accent, la pastille est un voile blanc.
  */
-export function PastilleEnCours({ quoi = 'Soirée', surAccent }: { quoi?: string; surAccent?: boolean }) {
+export function PastilleEnCours({ quoi = 'Soirée', surAccent, petite }: { quoi?: string; surAccent?: boolean; petite?: boolean }) {
   const { c } = useTheme();
   const opacite = usePouls();
   return (
     <View
       accessible accessibilityLabel={`${quoi} en cours`}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 5, paddingHorizontal: 10, borderRadius: rayon.sm, backgroundColor: surAccent ? 'rgba(255,255,255,0.18)' : c.surface2 }}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: petite ? 3 : 5, paddingHorizontal: petite ? 8 : 10, borderRadius: petite ? 8 : rayon.sm, backgroundColor: surAccent ? 'rgba(255,255,255,0.18)' : c.surface2 }}
     >
-      <Animated.View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: fixe.enCours, opacity: opacite }} />
-      <Text style={{ fontFamily: sans(500), fontSize: fs[3], color: surAccent ? '#FFFFFF' : c.noir }}>En cours</Text>
+      <Animated.View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: fixe.enCours, opacity: opacite }} />
+      <Text style={{ fontFamily: sans(500), fontSize: petite ? fs[2] : fs[3], color: surAccent ? '#FFFFFF' : c.noir }}>En cours</Text>
     </View>
   );
 }
 
 /** Pendant statique de PastilleEnCours pour ce qui n'a pas encore commencé. */
-export function PastilleAVenir({ quoi = 'Soirée', surAccent }: { quoi?: string; surAccent?: boolean }) {
+export function PastilleAVenir({ quoi = 'Soirée', surAccent, petite }: { quoi?: string; surAccent?: boolean; petite?: boolean }) {
   const { c } = useTheme();
   return (
     <View
       accessible accessibilityLabel={`${quoi} à venir`}
-      style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 5, paddingHorizontal: 10, borderRadius: rayon.sm, backgroundColor: surAccent ? 'rgba(255,255,255,0.18)' : c.surface2 }}
+      style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: petite ? 3 : 5, paddingHorizontal: petite ? 8 : 10, borderRadius: petite ? 8 : rayon.sm, backgroundColor: surAccent ? 'rgba(255,255,255,0.18)' : c.surface2 }}
     >
-      <Text style={{ fontFamily: sans(500), fontSize: fs[3], color: surAccent ? '#FFFFFF' : c.noir }}>À venir</Text>
+      <Text style={{ fontFamily: sans(500), fontSize: petite ? fs[2] : fs[3], color: surAccent ? '#FFFFFF' : c.noir }}>À venir</Text>
     </View>
   );
 }
@@ -147,15 +147,15 @@ function BoutonSuivreLieu({ etabId, suivi, media }: { etabId: number; suivi: boo
       onPress={basculer}
       accessibilityRole="button"
       accessibilityLabel={abonne ? 'Ne plus suivre ce lieu' : 'Suivre ce lieu'}
-      hitSlop={4}
-      style={{ flexShrink: 0, flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1.5, borderColor: filet, borderRadius: rayon.sm, minHeight: 36, paddingHorizontal: 12, backgroundColor: fond }}
+      hitSlop={8}
+      style={{ flexShrink: 0, flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: filet, borderRadius: 8, minHeight: 28, paddingHorizontal: 10, backgroundColor: fond }}
     >
       {attente ? (
-        <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: encre }}>…</Text>
+        <Text style={{ fontFamily: sans(600), fontSize: fs[2], color: encre }}>…</Text>
       ) : (
         <>
-          {abonne ? <Icone nom="check" taille={14} couleur={encre} trait={2.5} /> : null}
-          <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: encre }}>{abonne ? 'Suivi' : '+ Suivre'}</Text>
+          {abonne ? <Icone nom="check" taille={12} couleur={encre} trait={2.5} /> : null}
+          <Text style={{ fontFamily: sans(600), fontSize: fs[2], color: encre }}>{abonne ? 'Suivi' : '+ Suivre'}</Text>
         </>
       )}
     </PressableAnime>
@@ -193,6 +193,14 @@ function useInscription(ev: Evenement) {
 // ─── Carte d'événement ──────────────────────────────────────────────────────
 
 /**
+ * Gabarit fin des cartes d'événement (2026-11-16) : sur téléphone, la
+ * première version prenait la moitié de l'écran pour une seule soirée.
+ * Partagé avec CarteCulture.
+ */
+export const TITRE = 18;
+export const STYLE_CARTE = { padding: 14, gap: 8, borderRadius: 20 } as const;
+
+/**
  *  - en haut : pastille de statut (« En cours », « À venir », ou le
  *    décompte d'une offre flash) et pastille de date ;
  *  - réduction, gratuité, sponsorisé, s'il y a lieu ;
@@ -221,39 +229,35 @@ function Carte({ ev, accent, premiere, flash, onInviter }: { ev: Evenement; acce
   const surtitre = ev.style_musique ? libelleStyle(ev.style_musique) : LIBELLES_TYPE[ev.type] ?? ev.type;
 
   return (
-    <CarteRefonte accent={accent ? bleu.accent : undefined}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+    <CarteRefonte accent={accent ? bleu.accent : undefined} style={STYLE_CARTE}>
+      {/* Une seule ligne de pastilles : statut, date, puis remise et mentions. */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
         {flash && ev.flash_expiry ? (
-          <Pastille libelle={libelleFlash(ts(ev.flash_expiry), maintenant)} icone="eclair" fond={accent ? voile : c.surface2} encre={encre} />
-        ) : ev.en_cours ? <PastilleEnCours surAccent={accent} /> : <PastilleAVenir surAccent={accent} />}
-        <Pastille libelle={dateType} fond={accent ? '#FFFFFF' : c.noir} encre={accent ? '#111116' : c.surEncre} style={{ flexShrink: 1 }} />
+          <Pastille petite libelle={libelleFlash(ts(ev.flash_expiry), maintenant)} icone="eclair" fond={accent ? voile : c.surface2} encre={encre} />
+        ) : ev.en_cours ? <PastilleEnCours petite surAccent={accent} /> : <PastilleAVenir petite surAccent={accent} />}
+        <Pastille petite libelle={dateType} fond={accent ? '#FFFFFF' : c.noir} encre={accent ? '#111116' : c.surEncre} style={{ flexShrink: 1 }} />
+        {reduction > 0 ? (
+          <Pastille petite libelle={`-${reduction}% ${ev.is_gratuit ? '· entrée gratuite' : 'sur conso'}`} fond={accent ? voile : c.succesClair} encre={accent ? '#FFFFFF' : c.succes} />
+        ) : null}
+        {ev.is_gratuit && reduction <= 0 ? <Pastille petite libelle="Gratuit" fond={accent ? voile : c.surface2} encre={encre} /> : null}
+        {ev.sponsorise ? <Pastille petite libelle="Sponsorisé" fond={accent ? voile : c.surface2} encre={accent ? '#FFFFFF' : c.grisFonce} /> : null}
       </View>
 
-      {reduction > 0 || ev.is_gratuit || ev.sponsorise ? (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-          {reduction > 0 ? (
-            <Pastille libelle={`-${reduction}% ${ev.is_gratuit ? '· entrée gratuite' : 'sur conso'}`} fond={accent ? voile : c.succesClair} encre={accent ? '#FFFFFF' : c.succes} />
-          ) : null}
-          {ev.is_gratuit && reduction <= 0 ? <Pastille libelle="Gratuit" fond={accent ? voile : c.surface2} encre={encre} /> : null}
-          {ev.sponsorise ? <Pastille libelle="Sponsorisé" fond={accent ? voile : c.surface2} encre={accent ? '#FFFFFF' : c.grisFonce} /> : null}
-        </View>
-      ) : null}
-
-      <Pressable onPress={ouvrir} accessibilityRole="link" accessibilityHint="Ouvre la fiche de l'événement" style={{ gap: 2, marginTop: 2 }}>
-        <Text style={{ fontFamily: sans(600), fontSize: taille.surtitre, letterSpacing: 0.06 * taille.surtitre, textTransform: 'uppercase', color: secondaire }}>{surtitre}</Text>
-        <Text style={{ fontFamily: sans(700), fontSize: taille.titreCarte, lineHeight: taille.titreCarte * 1.15, letterSpacing: -0.03 * taille.titreCarte, color: encre }}>{ev.titre}</Text>
+      <Pressable onPress={ouvrir} accessibilityRole="link" accessibilityHint="Ouvre la fiche de l'événement" style={{ gap: 1, marginTop: 2 }}>
+        <Text style={{ fontFamily: sans(600), fontSize: 10, letterSpacing: 0.06 * 10, textTransform: 'uppercase', color: secondaire }}>{surtitre}</Text>
+        <Text numberOfLines={2} style={{ fontFamily: sans(700), fontSize: TITRE, lineHeight: TITRE * 1.2, letterSpacing: -0.02 * TITRE, color: encre }}>{ev.titre}</Text>
       </Pressable>
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
         <Pressable onPress={ouvrir} style={{ flex: 1, minWidth: 0 }}>
-          <T taille={fs[4]} couleur={secondaire} interligne={lh.snug}>
+          <T taille={fs[3]} couleur={secondaire} numberOfLines={1}>
             {ev.etablissement.nom} · {ev.places.inscrits}/{ev.places.quota} places
           </T>
           {ev.etablissement.nb_avis > 0 ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
-              <Icone nom="etoile" taille={14} couleur={accent ? '#FFFFFF' : c.surOrangeClair} />
-              <T taille={fs[3]} poids={700} couleur={accent ? '#FFFFFF' : c.surOrangeClair}>{formaterNote(ev.etablissement.note)}</T>
-              <T taille={fs[3]} couleur={secondaire}>({ev.etablissement.nb_avis} avis)</T>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 2 }}>
+              <Icone nom="etoile" taille={12} couleur={accent ? '#FFFFFF' : c.surOrangeClair} />
+              <T taille={fs[2]} poids={700} couleur={accent ? '#FFFFFF' : c.surOrangeClair}>{formaterNote(ev.etablissement.note)}</T>
+              <T taille={fs[2]} couleur={secondaire}>({ev.etablissement.nb_avis} avis)</T>
             </View>
           ) : null}
         </Pressable>
@@ -261,18 +265,19 @@ function Carte({ ev, accent, premiere, flash, onInviter }: { ev: Evenement; acce
       </View>
 
       {flash && premiere ? (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Icone nom="horloge" taille={16} couleur={secondaire} />
-          <T taille={fs[4]} couleur={secondaire}>Commence</T>
-          <T taille={fs[4]} poids={700} couleur={encre} style={{ fontVariant: ['tabular-nums'] }}>{libelleDebut(ts(ev.date_heure), maintenant)}</T>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Icone nom="horloge" taille={14} couleur={secondaire} />
+          <T taille={fs[3]} couleur={secondaire}>Commence</T>
+          <T taille={fs[3]} poids={700} couleur={encre} style={{ fontVariant: ['tabular-nums'] }}>{libelleDebut(ts(ev.date_heure), maintenant)}</T>
         </View>
       ) : null}
 
       <QuiYVa prenoms={ev.amis.prenoms} nb={ev.amis.nb} surAccent={accent} fond={accent ? bleu.accent : c.blanc} />
 
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 2 }}>
-        <BoutonContour libelle="Inviter" icone="ajout-personne" onPress={onInviter} surAccent={accent} />
+        <BoutonContour iconeSeule libelle="Inviter" icone="ajout-personne" onPress={onInviter} surAccent={accent} />
         <BoutonAction
+          fin
           libelle={inscrit ? 'Inscrit' : ev.places.complet ? 'Complet' : libelleErreur ?? "S'inscrire"}
           accent={bleu.accent}
           surAccent={accent}

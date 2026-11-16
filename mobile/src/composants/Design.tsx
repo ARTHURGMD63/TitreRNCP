@@ -98,7 +98,9 @@ export function EnTeteApp({ rubrique = 'bleu', onRecherche, rechercheOuverte, on
  * Pastille de statut, de date, de niveau, de prix : rayon 12, 13 px.
  * `point` dessine le rond « En cours » à gauche.
  */
-export function Pastille({ libelle, fond, encre, point, icone, filet, grande, style }: {
+export function Pastille({ libelle, fond, encre, point, icone, filet, grande, petite, style }: {
+  /** Version fine des cartes d'événement : 12 px, 3 px de marge haute. */
+  petite?: boolean;
   libelle: string;
   fond: string;
   encre: string;
@@ -113,15 +115,15 @@ export function Pastille({ libelle, fond, encre, point, icone, filet, grande, st
       style={[
         {
           flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
-          paddingVertical: grande ? 7 : 5, paddingHorizontal: 10, borderRadius: rayon.sm, backgroundColor: fond,
+          paddingVertical: petite ? 3 : grande ? 7 : 5, paddingHorizontal: petite ? 8 : 10, borderRadius: petite ? 8 : rayon.sm, backgroundColor: fond,
         },
         filet ? { borderWidth: 1, borderColor: filet } : null,
         style,
       ]}
     >
-      {point ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: point }} /> : null}
-      {icone ? <Icone nom={icone} taille={14} couleur={encre} /> : null}
-      <Text numberOfLines={1} style={{ fontFamily: sans(500), fontSize: fs[3], color: encre }}>{libelle}</Text>
+      {point ? <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: point }} /> : null}
+      {icone ? <Icone nom={icone} taille={petite ? 12 : 14} couleur={encre} /> : null}
+      <Text numberOfLines={1} style={{ fontFamily: sans(500), fontSize: petite ? fs[2] : fs[3], color: encre }}>{libelle}</Text>
     </View>
   );
 }
@@ -139,7 +141,9 @@ export function Pastille({ libelle, fond, encre, point, icone, filet, grande, st
  * `confettis` : chaque nouvelle valeur (> 0) lance l'explosion depuis le
  * bouton — à n'incrémenter qu'après la réussite de l'action réelle.
  */
-export function BoutonAction({ libelle, onPress, icone = 'chevron-d', surAccent, accent, fait, desactive, chargement, iconeADroite, confettis = 0, style, accessibilityLabel, testID }: {
+export function BoutonAction({ libelle, onPress, icone = 'chevron-d', surAccent, accent, fait, desactive, chargement, iconeADroite, confettis = 0, fin, style, accessibilityLabel, testID }: {
+  /** Version fine des cartes d'événement : 40 px de haut, carré de 30. */
+  fin?: boolean;
   /** Repère des tests de bout en bout (Maestro). */
   testID?: string;
   libelle: string;
@@ -177,16 +181,16 @@ export function BoutonAction({ libelle, onPress, icone = 'chevron-d', surAccent,
         accessibilityLabel={accessibilityLabel ?? libelle}
         accessibilityState={{ disabled: !!inactif, busy: !!chargement, checked: fait }}
         style={{
-          flexDirection: iconeADroite ? 'row-reverse' : 'row', alignItems: 'center', gap: 10,
-          minHeight: 48, padding: 6, paddingRight: iconeADroite ? 6 : 14, paddingLeft: iconeADroite ? 16 : 6,
-          borderRadius: rayon.md, backgroundColor: attenue ? c.surface2 : fond,
+          flexDirection: iconeADroite ? 'row-reverse' : 'row', alignItems: 'center', gap: fin ? 8 : 10,
+          minHeight: fin ? 40 : 48, padding: 5, paddingRight: iconeADroite ? 5 : 14, paddingLeft: iconeADroite ? 16 : 5,
+          borderRadius: fin ? rayon.sm : rayon.md, backgroundColor: attenue ? c.surface2 : fond,
           borderWidth: fait && surAccent ? 0 : 0,
         }}
       >
-        <View style={{ width: 36, height: 36, borderRadius: 11, backgroundColor: attenue ? c.grisClair : carre, alignItems: 'center', justifyContent: 'center' }}>
-          <Icone nom={fait ? 'check' : icone} taille={18} couleur={attenue ? c.gris : encreCarre} trait={2.5} />
+        <View style={{ width: fin ? 30 : 36, height: fin ? 30 : 36, borderRadius: fin ? 9 : 11, backgroundColor: attenue ? c.grisClair : carre, alignItems: 'center', justifyContent: 'center' }}>
+          <Icone nom={fait ? 'check' : icone} taille={fin ? 16 : 18} couleur={attenue ? c.gris : encreCarre} trait={2.5} />
         </View>
-        <Text numberOfLines={1} style={{ flex: 1, fontFamily: sans(700), fontSize: fs[5], color: attenue ? c.grisFonce : encre }}>
+        <Text numberOfLines={1} style={{ flex: 1, fontFamily: sans(700), fontSize: fin ? fs[4] : fs[5], color: attenue ? c.grisFonce : encre }}>
           {chargement ? '…' : libelle}
         </Text>
       </PressableAnime>
@@ -195,8 +199,13 @@ export function BoutonAction({ libelle, onPress, icone = 'chevron-d', surAccent,
   );
 }
 
-/** Le bouton secondaire d'une carte (« Inviter ») : contour, icône à gauche. */
-export function BoutonContour({ libelle, icone, onPress, surAccent, style }: {
+/**
+ * Le bouton secondaire d'une carte (« Inviter ») : contour, icône à gauche.
+ * `iconeSeule` : un carré de 40 px, le libellé ne servant qu'aux lecteurs
+ * d'écran (cartes d'événement).
+ */
+export function BoutonContour({ libelle, icone, onPress, surAccent, iconeSeule, style }: {
+  iconeSeule?: boolean;
   libelle: string;
   icone?: NomIcone;
   onPress: () => void;
@@ -211,12 +220,13 @@ export function BoutonContour({ libelle, icone, onPress, surAccent, style }: {
       accessibilityRole="button"
       accessibilityLabel={libelle}
       style={[{
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 48, paddingHorizontal: 14,
-        borderRadius: rayon.md, borderWidth: 1.5, borderColor: surAccent ? 'rgba(255,255,255,0.45)' : c.line2,
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+        minHeight: iconeSeule ? 40 : 48, width: iconeSeule ? 40 : undefined, paddingHorizontal: iconeSeule ? 0 : 14,
+        borderRadius: iconeSeule ? rayon.sm : rayon.md, borderWidth: 1.5, borderColor: surAccent ? 'rgba(255,255,255,0.45)' : c.line2,
       }, style]}
     >
       {icone ? <Icone nom={icone} taille={18} couleur={encre} /> : null}
-      <Text style={{ fontFamily: sans(600), fontSize: fs[5], color: encre }}>{libelle}</Text>
+      {iconeSeule ? null : <Text style={{ fontFamily: sans(600), fontSize: fs[5], color: encre }}>{libelle}</Text>}
     </PressableAnime>
   );
 }
@@ -276,10 +286,10 @@ export function QuiYVa({ prenoms, nb, surAccent, fond }: { prenoms: string[]; nb
   const autres = nb - 1;
   const encre = surAccent ? '#FFFFFF' : c.noir;
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-      <AvatarsEmpiles personnes={prenoms.slice(0, 3).map((p, i) => ({ cle: `${p}${i}`, prenom: p }))} fond={fond} taille={24} />
-      <T taille={fs[4]} couleur={encre} style={{ flex: 1 }} numberOfLines={1}>
-        <T taille={fs[4]} poids={700} couleur={encre}>{prenoms[0]}</T>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+      <AvatarsEmpiles personnes={prenoms.slice(0, 3).map((p, i) => ({ cle: `${p}${i}`, prenom: p }))} fond={fond} taille={20} />
+      <T taille={fs[3]} couleur={encre} style={{ flex: 1 }} numberOfLines={1}>
+        <T taille={fs[3]} poids={700} couleur={encre}>{prenoms[0]}</T>
         {autres > 0 ? ` et ${autres} pote${autres > 1 ? 's' : ''} y vont` : ' y va'}
       </T>
     </View>

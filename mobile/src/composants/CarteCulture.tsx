@@ -23,9 +23,9 @@ import { LIBELLES_CULTURE } from '../catalogue';
 import { libelleBoutonCulture, libellePlaces, libellePrix, surPlusieursJours, type EtatInscriptionCulture } from '../culture';
 import { dateFr, majuscules, ts } from '../format';
 import { useJeton } from '../session';
-import { fs, lh, sans, taille } from '../theme';
+import { fs, lh, sans } from '../theme';
 import { useTheme } from '../useTheme';
-import { PastilleAVenir, PastilleEnCours } from './CarteEvenement';
+import { PastilleAVenir, PastilleEnCours, STYLE_CARTE, TITRE } from './CarteEvenement';
 import { BoutonAction, BoutonContour, CarteRefonte, Pastille, QuiYVa, useRubrique } from './Design';
 import { Icone } from './Icone';
 import { T } from './Texte';
@@ -99,42 +99,43 @@ export function CarteCulture({ ev, onInviter, accent = false }: { ev: EvenementC
   const voile = 'rgba(255,255,255,0.18)';
 
   return (
-    <CarteRefonte accent={accent ? violet.accent : undefined}>
+    <CarteRefonte accent={accent ? violet.accent : undefined} style={STYLE_CARTE}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1, flexWrap: 'wrap' }}>
-          {ev.en_cours ? <PastilleEnCours quoi="Événement" surAccent={accent} /> : <PastilleAVenir quoi="Événement" surAccent={accent} />}
-          {ev.mis_en_avant ? <Pastille libelle="À la une" icone="etoile-fine" fond={accent ? voile : violet.doux} encre={accent ? '#FFFFFF' : violet.texteDoux} /> : null}
+          {ev.en_cours ? <PastilleEnCours petite quoi="Événement" surAccent={accent} /> : <PastilleAVenir petite quoi="Événement" surAccent={accent} />}
+          {ev.mis_en_avant ? <Pastille petite libelle="À la une" icone="etoile-fine" fond={accent ? voile : violet.doux} encre={accent ? '#FFFFFF' : violet.texteDoux} /> : null}
         </View>
-        <Pastille libelle={libellePrix(ev.prix)} fond={accent ? '#FFFFFF' : c.noir} encre={accent ? '#111116' : c.surEncre} />
+        <Pastille petite libelle={libellePrix(ev.prix)} fond={accent ? '#FFFFFF' : c.noir} encre={accent ? '#111116' : c.surEncre} />
       </View>
 
-      <Pressable onPress={ouvrir} accessibilityRole="link" accessibilityHint="Ouvre la fiche de l'événement" style={{ gap: 4, marginTop: 4 }}>
-        <Text style={{ fontFamily: sans(600), fontSize: 12, letterSpacing: 0.06 * 12, textTransform: 'uppercase', color: secondaire }}>{etiquetteCulture(ev)}</Text>
-        <Text style={{ fontFamily: sans(700), fontSize: taille.titreCarte, lineHeight: taille.titreCarte * 1.15, letterSpacing: -0.03 * taille.titreCarte, color: encre }}>{ev.titre}</Text>
+      <Pressable onPress={ouvrir} accessibilityRole="link" accessibilityHint="Ouvre la fiche de l'événement" style={{ gap: 1, marginTop: 2 }}>
+        <Text style={{ fontFamily: sans(600), fontSize: 10, letterSpacing: 0.06 * 10, textTransform: 'uppercase', color: secondaire }}>{etiquetteCulture(ev)}</Text>
+        <Text numberOfLines={2} style={{ fontFamily: sans(700), fontSize: TITRE, lineHeight: TITRE * 1.2, letterSpacing: -0.02 * TITRE, color: encre }}>{ev.titre}</Text>
       </Pressable>
 
-      <Pressable onPress={ouvrir} style={{ gap: 6 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Icone nom="musee" taille={18} couleur={encre} />
-          <T numberOfLines={1} taille={fs[5]} poids={700} couleur={encre} style={{ flexShrink: 1 }}>{ev.organisateur}</T>
+      <Pressable onPress={ouvrir} style={{ gap: 3 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Icone nom="musee" taille={14} couleur={encre} />
+          <T numberOfLines={1} taille={fs[3]} poids={600} couleur={encre} style={{ flexShrink: 1 }}>{ev.organisateur}</T>
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Icone nom="epingle" taille={18} couleur={secondaire} />
-          <T numberOfLines={1} taille={fs[5]} couleur={secondaire} style={{ flexShrink: 1 }}>{ev.lieu} · {libellePlaces(places)}</T>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Icone nom="epingle" taille={14} couleur={secondaire} />
+          <T numberOfLines={1} taille={fs[3]} couleur={secondaire} style={{ flexShrink: 1 }}>{ev.lieu} · {libellePlaces(places)}</T>
         </View>
       </Pressable>
 
       {ev.description ? (
-        <T taille={fs[5]} couleur={secondaire} interligne={lh.snug}>
+        <T taille={fs[3]} couleur={secondaire} interligne={lh.snug} numberOfLines={2}>
           {Array.from(ev.description).length > 100 ? Array.from(ev.description).slice(0, 100).join('') + '…' : ev.description}
         </T>
       ) : null}
 
       <QuiYVa prenoms={ev.amis.prenoms} nb={ev.amis.nb} surAccent={accent} fond={accent ? violet.accent : c.blanc} />
 
-      <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
-        <BoutonContour libelle="Inviter" icone="ajout-personne" onPress={onInviter} surAccent={accent} />
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: 2 }}>
+        <BoutonContour iconeSeule libelle="Inviter" icone="ajout-personne" onPress={onInviter} surAccent={accent} />
         <BoutonAction
+          fin
           libelle={libelleBoutonCulture(etat === 'attente' ? 'libre' : etat, places.complet)}
           accent={violet.accent}
           surAccent={accent}
