@@ -135,7 +135,7 @@ export default function MoiPartenaire() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
               <Avatar prenom={nom || compte.prenom} taille={64} fond="#FFFFFF" />
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text accessibilityRole="header" numberOfLines={2} style={{ fontFamily: sans(700), fontSize: 26, lineHeight: 26 * 1.15, letterSpacing: -0.035 * 26, color: '#FFFFFF' }}>{nom || 'Mon établissement'}</Text>
+                <Text accessibilityRole="header" numberOfLines={2} style={{ fontFamily: sans(700), fontSize: 22, lineHeight: 22 * 1.15, letterSpacing: -0.035 * 22, color: '#FFFFFF' }}>{nom || 'Mon établissement'}</Text>
                 <T taille={fs[5]} couleur={bleu.surAccent2} style={{ marginTop: 2 }}>{compte.prenom} {compte.nom}</T>
               </View>
             </View>

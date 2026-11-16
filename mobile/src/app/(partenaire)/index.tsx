@@ -23,7 +23,7 @@ import { Avatar, Jauge } from '../../composants/Elements';
 import { Mono, T, TitreEcran, TitreSection } from '../../composants/Texte';
 import { dateFr } from '../../format';
 import { useJeton } from '../../session';
-import { fs, halo, lh, rayon, sans } from '../../theme';
+import { fs, halo, lh, rayon, sans, taille } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 /** Une couleur par école dans « Qui vient ce soir ? ». */
@@ -114,7 +114,7 @@ export default function TableauDeBordPartenaire() {
                   <Text style={{ fontFamily: sans(600), fontSize: 12, letterSpacing: 0.06 * 12, textTransform: 'uppercase', color: bleu.surAccent2 }}>Prochaine soirée</Text>
                   <Pastille libelle={dateFr(evenement.date_heure, 'D j M · H\\hi')} fond="#FFFFFF" encre="#111116" />
                 </View>
-                <Text style={{ fontFamily: sans(700), fontSize: 26, lineHeight: 26 * 1.15, letterSpacing: -0.03 * 26, color: '#FFFFFF' }}>{evenement.titre}</Text>
+                <Text style={{ fontFamily: sans(700), fontSize: taille.titreCarte, lineHeight: taille.titreCarte * 1.15, letterSpacing: -0.03 * taille.titreCarte, color: '#FFFFFF' }}>{evenement.titre}</Text>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {[
                     { l: 'Inscrits', v: stats.inscrits, format: (n: number) => String(Math.round(n)) },

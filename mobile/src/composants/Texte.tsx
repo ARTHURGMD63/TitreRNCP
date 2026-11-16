@@ -13,7 +13,7 @@
 import React from 'react';
 import { Text, View, type StyleProp, type TextProps, type TextStyle } from 'react-native';
 
-import { fixe, fs, lh, lsEm, mono, police, rayon, sans, teintes, type Rubrique } from '../theme';
+import { fixe, fs, lh, lsEm, mono, police, rayon, sans, taille as tailles, teintes, type Rubrique } from '../theme';
 import { useTheme } from '../useTheme';
 
 type Base = TextProps & { style?: StyleProp<TextStyle>; couleur?: string };
@@ -61,7 +61,7 @@ export function T({ taille = fs[4], poids = 400, couleur, interligne, style, ...
 }
 
 /**
- * Le grand titre d'écran : 32 px, 700, interligne 1.2, -0.035em. Le ou les
+ * Le grand titre d'écran : 27 px, 700, interligne 1.2, -0.035em. Le ou les
  * mots clés sont surlignés dans une pastille de la couleur de la rubrique
  * (texte blanc, padding 0 10 3, rayon 10) : « Les bons plans [du moment.] ».
  *
@@ -72,7 +72,7 @@ export function T({ taille = fs[4], poids = 400, couleur, interligne, style, ...
  *    surlignée — ou simplement colorée si `accent` est donné (nom et prénom
  *    d'un profil, où rien n'est à surligner).
  */
-export function TitreEcran({ lignes, avant, surligne, rubrique = 'bleu', taille = fs[8], accent, interligne = lh.tight, style }: {
+export function TitreEcran({ lignes, avant, surligne, rubrique = 'bleu', taille = tailles.titreEcran, accent, interligne = lh.tight, style }: {
   lignes?: [string, string?];
   avant?: string;
   surligne?: string;
@@ -115,9 +115,9 @@ export function TitreEcran({ lignes, avant, surligne, rubrique = 'bleu', taille 
   );
 }
 
-/** Le titre de section (« À suivre », « 1 pass actif ») : 19 px, 700. */
+/** Le titre de section (« À suivre », « 1 pass actif ») : 17 px, 700. */
 export function TitreSection({ children, style }: { children: React.ReactNode; style?: StyleProp<TextStyle> }) {
   return (
-    <T taille={19} poids={700} accessibilityRole="header" style={[{ letterSpacing: -0.02 * 19 }, style]}>{children}</T>
+    <T taille={tailles.section} poids={700} accessibilityRole="header" style={[{ letterSpacing: -0.02 * tailles.section }, style]}>{children}</T>
   );
 }

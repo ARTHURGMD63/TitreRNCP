@@ -130,7 +130,7 @@ function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
           <Text style={{ fontFamily: sans(600), fontSize: 12, letterSpacing: 0.06 * 12, textTransform: 'uppercase', color: secondaire }}>
             Pass étudiant · {index + 1}/{total}
           </Text>
-          <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: 24, letterSpacing: -0.03 * 24, color: encre }}>
+          <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: 21, letterSpacing: -0.03 * 21, color: encre }}>
             {supprime ? 'Pass invalide' : nomTitulaire}
           </Text>
         </View>
@@ -403,13 +403,13 @@ export default function Wallet() {
                 <View style={{ flex: 1, borderRadius: rayon.tuile, padding: 16, backgroundColor: c.blanc, gap: 6 }}>
                   <T taille={fs[4]} couleur={c.gris}>{MOIS[new Date().getMonth()]}</T>
                   <Compteur valeur={donnees.economies.mois} format={(n) => `${euros(n)} €`}
-                    style={{ fontFamily: sans(700), fontSize: 28, letterSpacing: -0.03 * 28, color: c.succes, fontVariant: ['tabular-nums'] }} />
+                    style={{ fontFamily: sans(700), fontSize: 23, letterSpacing: -0.03 * 23, color: c.succes, fontVariant: ['tabular-nums'] }} />
                   <T taille={fs[3]} couleur={c.gris}>économisé ce mois</T>
                 </View>
                 <View style={{ flex: 1, borderRadius: rayon.tuile, padding: 16, backgroundColor: c.blanc, gap: 6 }}>
                   <T taille={fs[4]} couleur={c.gris}>Total année</T>
                   <Compteur valeur={donnees.economies.annee} delai={120} format={(n) => `${euros(n)} €`}
-                    style={{ fontFamily: sans(700), fontSize: 28, letterSpacing: -0.03 * 28, color: c.noir, fontVariant: ['tabular-nums'] }} />
+                    style={{ fontFamily: sans(700), fontSize: 23, letterSpacing: -0.03 * 23, color: c.noir, fontVariant: ['tabular-nums'] }} />
                   <T taille={fs[3]} couleur={c.gris}>depuis janvier</T>
                 </View>
               </View>

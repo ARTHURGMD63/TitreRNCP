@@ -50,9 +50,9 @@ export function Pilule({ libelle, actif, onPress, icone, carre, contour, style, 
       accessibilityState={{ selected: actif }}
       style={[
         {
-          flexDirection: 'row', alignItems: 'center', gap: 10,
-          minHeight: 48, paddingVertical: carre ? 8 : 12, paddingLeft: carre ? 8 : 18, paddingRight: 18,
-          borderRadius: rayon.bouton, borderWidth: 1.5,
+          flexDirection: 'row', alignItems: 'center', gap: 8,
+          minHeight: 40, paddingVertical: carre ? 6 : 9, paddingLeft: carre ? 6 : 14, paddingRight: 14,
+          borderRadius: rayon.sm, borderWidth: 1.5,
           borderColor: contour ? c.noir : actif ? c.noir : c.blanc,
           backgroundColor: actif ? c.noir : contour ? 'transparent' : c.blanc,
         },
@@ -60,13 +60,13 @@ export function Pilule({ libelle, actif, onPress, icone, carre, contour, style, 
       ]}
     >
       {carre && icone ? (
-        <View style={{ width: 28, height: 28, borderRadius: rayon.mini, backgroundColor: carre, alignItems: 'center', justifyContent: 'center' }}>
-          <Icone nom={icone} taille={16} couleur="#FFFFFF" trait={2} />
+        <View style={{ width: 26, height: 26, borderRadius: 8, backgroundColor: carre, alignItems: 'center', justifyContent: 'center' }}>
+          <Icone nom={icone} taille={15} couleur="#FFFFFF" trait={2} />
         </View>
       ) : icone ? (
-        <Icone nom={icone} taille={18} couleur={encre} trait={2} />
+        <Icone nom={icone} taille={17} couleur={encre} trait={2} />
       ) : null}
-      <Text style={{ fontFamily: sans(500), fontSize: fs[5], color: encre }}>{libelle}</Text>
+      <Text style={{ fontFamily: sans(500), fontSize: fs[4], color: encre }}>{libelle}</Text>
     </PressableAnime>
   );
 }
@@ -209,13 +209,13 @@ export function BoutonRetour({ media, vers, style, libelle = 'Retour' }: {
       accessibilityRole="button"
       accessibilityLabel={libelle}
       style={[
-        // Refonte 2026-11 : carré arrondi de 46 px, comme les boutons d'en-tête.
-        { width: 46, height: 46, borderRadius: rayon.bouton, alignItems: 'center', justifyContent: 'center' },
+        // Refonte 2026-11 : carré arrondi de 42 px, comme les boutons d'en-tête.
+        { width: 42, height: 42, borderRadius: rayon.sm, alignItems: 'center', justifyContent: 'center' },
         media ? { backgroundColor: fixe.basalte } : { backgroundColor: c.blanc },
         style,
       ]}
     >
-      <Icone nom="chevron-g" taille={22} couleur={media ? fixe.craie : c.noir} />
+      <Icone nom="chevron-g" taille={20} couleur={media ? fixe.craie : c.noir} />
     </Pressable>
   );
 }

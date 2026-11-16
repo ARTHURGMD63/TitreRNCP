@@ -23,7 +23,7 @@ import { LIBELLES_CULTURE } from '../catalogue';
 import { libelleBoutonCulture, libellePlaces, libellePrix, surPlusieursJours, type EtatInscriptionCulture } from '../culture';
 import { dateFr, majuscules, ts } from '../format';
 import { useJeton } from '../session';
-import { fs, lh, sans } from '../theme';
+import { fs, lh, sans, taille } from '../theme';
 import { useTheme } from '../useTheme';
 import { PastilleAVenir, PastilleEnCours } from './CarteEvenement';
 import { BoutonAction, BoutonContour, CarteRefonte, Pastille, QuiYVa, useRubrique } from './Design';
@@ -110,7 +110,7 @@ export function CarteCulture({ ev, onInviter, accent = false }: { ev: EvenementC
 
       <Pressable onPress={ouvrir} accessibilityRole="link" accessibilityHint="Ouvre la fiche de l'événement" style={{ gap: 4, marginTop: 4 }}>
         <Text style={{ fontFamily: sans(600), fontSize: 12, letterSpacing: 0.06 * 12, textTransform: 'uppercase', color: secondaire }}>{etiquetteCulture(ev)}</Text>
-        <Text style={{ fontFamily: sans(700), fontSize: 26, lineHeight: 26 * 1.15, letterSpacing: -0.03 * 26, color: encre }}>{ev.titre}</Text>
+        <Text style={{ fontFamily: sans(700), fontSize: taille.titreCarte, lineHeight: taille.titreCarte * 1.15, letterSpacing: -0.03 * taille.titreCarte, color: encre }}>{ev.titre}</Text>
       </Pressable>
 
       <Pressable onPress={ouvrir} style={{ gap: 6 }}>

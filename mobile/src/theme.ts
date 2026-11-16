@@ -179,8 +179,14 @@ export function couleurCss(valeur: string | null | undefined, c: Couleurs, repli
 /** --fs-1 … --fs-10, en points. 32 : grand titre d'écran ; 26 : titre de carte ; 19 : titre de section. */
 export const fs = { 1: 11, 2: 12, 3: 13, 4: 14, 5: 16, 6: 20, 7: 24, 8: 32, 9: 36, 10: 48 } as const;
 
-/** Tailles de la refonte qui ne tombent pas sur l'échelle historique. */
-export const taille = { titreEcran: 32, titreCarte: 26, titreCarteSport: 24, section: 19, surtitre: 12, secondaire: 14 } as const;
+/**
+ * Tailles de la refonte qui ne tombent pas sur l'échelle historique.
+ *
+ * Resserrées le 2026-11-16 : sur un téléphone de 390 pt, la première
+ * version (titre d'écran 32, titre de carte 26) ne laissait voir qu'une
+ * carte d'événement par écran.
+ */
+export const taille = { titreEcran: 27, titreCarte: 21, titreCarteSport: 20, section: 17, surtitre: 11, secondaire: 14, chiffre: 22 } as const;
 
 /** Interlignes, en multiples du corps (--lh-*). */
 export const lh = { display: 1.2, tight: 1.2, snug: 1.3, normal: 1.5, relaxed: 1.6 } as const;

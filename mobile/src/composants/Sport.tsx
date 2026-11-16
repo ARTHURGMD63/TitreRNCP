@@ -18,7 +18,7 @@ import type { Creneau, EvenementSport, JoueurCreneau } from '../api';
 import { FORMATS_SPORT, NIVEAUX_SQUAD, SPORTS } from '../catalogue';
 import { dateFr, majuscules } from '../format';
 import { formatEuros, libellePlaces, prixParJoueur } from '../regles';
-import { fs, rayon, sans, teintes } from '../theme';
+import { fs, rayon, sans, teintes, taille } from '../theme';
 import { useTheme } from '../useTheme';
 import { PressableAnime } from './Animations';
 import { BoutonAction, Pastille, teinteAvatar } from './Design';
@@ -141,7 +141,7 @@ function Surtitre({ children }: { children: React.ReactNode }) {
 
 function Titre({ children }: { children: React.ReactNode }) {
   const { c } = useTheme();
-  return <Text style={{ fontFamily: sans(700), fontSize: 24, lineHeight: 24 * 1.15, letterSpacing: -0.03 * 24, color: c.noir }}>{children}</Text>;
+  return <Text style={{ fontFamily: sans(700), fontSize: taille.titreCarteSport, lineHeight: taille.titreCarteSport * 1.15, letterSpacing: -0.03 * taille.titreCarteSport, color: c.noir }}>{children}</Text>;
 }
 
 /** « Mar 17 nov · 19h30 » */

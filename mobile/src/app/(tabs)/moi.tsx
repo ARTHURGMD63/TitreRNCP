@@ -118,7 +118,7 @@ export default function Moi() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
               <Avatar photo={moi.photo_url} prenom={moi.prenom} taille={72} fond="#FFFFFF" />
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text accessibilityRole="header" numberOfLines={2} style={{ fontFamily: sans(700), fontSize: 28, lineHeight: 28 * 1.15, letterSpacing: -0.035 * 28, color: '#FFFFFF' }}>
+                <Text accessibilityRole="header" numberOfLines={2} style={{ fontFamily: sans(700), fontSize: 24, lineHeight: 24 * 1.15, letterSpacing: -0.035 * 24, color: '#FFFFFF' }}>
                   {moi.prenom} {moi.nom}
                 </Text>
                 <T taille={fs[5]} couleur={bleu.surAccent2} style={{ marginTop: 4 }}>{moi.ecole ?? '—'} · {moi.promo ?? '—'}</T>
@@ -173,7 +173,7 @@ export default function Moi() {
               <View key={t.l} style={{ flex: 1, backgroundColor: c.blanc, borderRadius: rayon.tuile, padding: 14, gap: 10 }}>
                 <CarreIcone icone={t.icone} fond={t.fond} encre={t.encre} />
                 <Compteur valeur={t.v} format={t.format} delai={240 + i * 120}
-                  style={{ fontFamily: sans(700), fontSize: 26, letterSpacing: -0.03 * 26, color: c.noir, fontVariant: ['tabular-nums'] }} />
+                  style={{ fontFamily: sans(700), fontSize: 22, letterSpacing: -0.03 * 22, color: c.noir, fontVariant: ['tabular-nums'] }} />
                 <T taille={fs[4]} couleur={c.gris}>{t.l}</T>
               </View>
             ))}

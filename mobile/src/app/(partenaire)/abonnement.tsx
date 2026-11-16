@@ -96,7 +96,7 @@ export default function AbonnementPartenaire() {
         {client ? (
           <View style={[{ backgroundColor: bleu.accent, borderRadius: rayon.carte, padding: 20, gap: 4, marginBottom: 20 }, halo(bleu.accent)]}>
             <Text style={{ fontFamily: sans(600), fontSize: 12, letterSpacing: 0.06 * 12, textTransform: 'uppercase', color: bleu.surAccent2 }}>Formule en cours</Text>
-            <Text style={{ fontFamily: sans(700), fontSize: 26, letterSpacing: -0.03 * 26, color: '#FFFFFF' }}>{client.offre_libelle}</Text>
+            <Text style={{ fontFamily: sans(700), fontSize: 22, letterSpacing: -0.03 * 22, color: '#FFFFFF' }}>{client.offre_libelle}</Text>
             <T taille={fs[5]} couleur={bleu.surAccent2}>
               {client.mrr > 0 ? `${client.mrr.toLocaleString('fr-FR')} € HT / mois` : 'Gratuit'}
               {client.essai_jusquau ? ` · offert jusqu'au ${client.essai_jusquau.split('-').reverse().join('/')}` : ''}
@@ -129,7 +129,7 @@ export default function AbonnementPartenaire() {
                   <Pastille libelle={`${f.places_restantes} place${f.places_restantes > 1 ? 's' : ''} restante${f.places_restantes > 1 ? 's' : ''}`} fond={c.succesClair} encre={c.succes} />
                 ) : null}
               </View>
-              <Text style={{ fontFamily: sans(700), fontSize: 26, letterSpacing: -0.03 * 26, color: c.noir }}>
+              <Text style={{ fontFamily: sans(700), fontSize: 22, letterSpacing: -0.03 * 22, color: c.noir }}>
                 {f.tarif > 0 ? `${f.tarif} € ` : '0 € '}
                 <Text style={{ fontFamily: sans(400), fontSize: fs[4], color: c.gris }}>HT / mois</Text>
               </Text>

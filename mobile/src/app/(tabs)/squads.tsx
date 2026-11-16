@@ -37,7 +37,7 @@ import { confirmer } from '../../confirmer';
 import { court, dateFr } from '../../format';
 import { libelleVisibilite, niveauCompatible } from '../../regles';
 import { useJeton } from '../../session';
-import { couleursCategorie, fs, gutter, rayon, sans } from '../../theme';
+import { couleursCategorie, fs, gutter, rayon, sans, taille } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 type Rubrique = 'parties' | 'terrains' | 'clubs' | 'abonnements';
@@ -133,7 +133,7 @@ function CarteSquad({ s, onGerer }: { s: Squad; onGerer: () => void }) {
             {s.cree_par_association ? 'Association' : libelleVisibilite(s.visibilite)}
           </Text>
         </Text>
-        <Text style={{ fontFamily: sans(700), fontSize: 24, lineHeight: 24 * 1.15, letterSpacing: -0.03 * 24, color: c.noir }}>{s.titre}</Text>
+        <Text style={{ fontFamily: sans(700), fontSize: taille.titreCarteSport, lineHeight: taille.titreCarteSport * 1.15, letterSpacing: -0.03 * taille.titreCarteSport, color: c.noir }}>{s.titre}</Text>
         <T taille={fs[5]} couleur={c.gris}>
           {s.est_createur ? 'Ton événement' : `Par ${court(s.createur.prenom, s.createur.nom)}`}{s.lieu ? ` · ${s.lieu}` : ''}
         </T>

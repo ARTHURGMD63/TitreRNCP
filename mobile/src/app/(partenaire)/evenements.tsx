@@ -27,7 +27,7 @@ import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
 import { dateFr } from '../../format';
 import { useJeton } from '../../session';
-import { fs, rayon, sans } from '../../theme';
+import { fs, rayon, sans, taille } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 const LIBELLES_TYPE: Record<string, string> = { bar: 'Bar', boite: 'Boîte', resto: 'Resto', afterwork: 'Afterwork', sport: 'Sport' };
@@ -94,7 +94,7 @@ function CarteEvenementPartenaire({ ev, onSupprime }: { ev: EvenementPartenaire;
       </View>
 
       <View style={{ gap: 6 }}>
-        <Text style={{ fontFamily: sans(700), fontSize: 22, lineHeight: 22 * 1.15, letterSpacing: -0.03 * 22, color: c.noir }}>{ev.titre}</Text>
+        <Text style={{ fontFamily: sans(700), fontSize: taille.titreCarteSport, lineHeight: taille.titreCarteSport * 1.15, letterSpacing: -0.03 * taille.titreCarteSport, color: c.noir }}>{ev.titre}</Text>
         <T taille={fs[5]} couleur={c.gris}>{dateFr(ev.date_heure, 'l j F · H\\hi')}</T>
       </View>
 

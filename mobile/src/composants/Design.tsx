@@ -44,11 +44,11 @@ export function BoutonIcone({ icone, libelle, onPress, pastille, etendu, style }
       accessibilityRole="button"
       accessibilityLabel={pastille ? `${libelle}, non lues` : libelle}
       accessibilityState={etendu === undefined ? undefined : { expanded: etendu }}
-      style={[{ width: 46, height: 46, borderRadius: rayon.bouton, backgroundColor: c.blanc, alignItems: 'center', justifyContent: 'center' }, style]}
+      style={[{ width: 42, height: 42, borderRadius: rayon.sm, backgroundColor: c.blanc, alignItems: 'center', justifyContent: 'center' }, style]}
     >
-      <Icone nom={icone} taille={21} couleur={c.noir} />
+      <Icone nom={icone} taille={19} couleur={c.noir} />
       {pastille ? (
-        <View style={{ position: 'absolute', top: 10, right: 11, width: 9, height: 9, borderRadius: 5, backgroundColor: fixe.notif, borderWidth: 1.5, borderColor: c.blanc }} />
+        <View style={{ position: 'absolute', top: 9, right: 10, width: 9, height: 9, borderRadius: 5, backgroundColor: fixe.notif, borderWidth: 1.5, borderColor: c.blanc }} />
       ) : null}
     </PressableAnime>
   );
@@ -71,18 +71,18 @@ export function EnTeteApp({ rubrique = 'bleu', onRecherche, rechercheOuverte, on
 }) {
   const teinte = useRubrique(rubrique);
   return (
-    <View style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 18 }, style]}>
-      <Marque taille={fs[6]} rubrique={rubrique} />
+    <View style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14 }, style]}>
+      <Marque taille={fs[5] + 2} rubrique={rubrique} />
       <View style={{ flexDirection: 'row', gap: 10 }}>
         {action ? (
           <PressableAnime
             onPress={action.onPress}
             accessibilityRole="button"
             accessibilityLabel={action.accessibilityLabel ?? action.libelle}
-            style={{ height: 46, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, borderRadius: rayon.bouton, backgroundColor: teinte.accent }}
+            style={{ height: 42, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, borderRadius: rayon.sm, backgroundColor: teinte.accent }}
           >
-            <Icone nom={action.icone} taille={20} couleur="#FFFFFF" trait={2.5} />
-            <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: '#FFFFFF' }}>{action.libelle}</Text>
+            <Icone nom={action.icone} taille={18} couleur="#FFFFFF" trait={2.5} />
+            <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: '#FFFFFF' }}>{action.libelle}</Text>
           </PressableAnime>
         ) : null}
         {onRecherche ? <BoutonIcone icone="loupe" libelle="Rechercher" onPress={onRecherche} etendu={!!rechercheOuverte} /> : null}
@@ -95,7 +95,7 @@ export function EnTeteApp({ rubrique = 'bleu', onRecherche, rechercheOuverte, on
 // ─── Pastilles ──────────────────────────────────────────────────────────────
 
 /**
- * Pastille de statut, de date, de niveau, de prix : rayon 16, 14 px.
+ * Pastille de statut, de date, de niveau, de prix : rayon 12, 13 px.
  * `point` dessine le rond « En cours » à gauche.
  */
 export function Pastille({ libelle, fond, encre, point, icone, filet, grande, style }: {
@@ -112,16 +112,16 @@ export function Pastille({ libelle, fond, encre, point, icone, filet, grande, st
     <View
       style={[
         {
-          flexDirection: 'row', alignItems: 'center', gap: 7, alignSelf: 'flex-start',
-          paddingVertical: grande ? 8 : 6, paddingHorizontal: 12, borderRadius: rayon.bouton, backgroundColor: fond,
+          flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
+          paddingVertical: grande ? 7 : 5, paddingHorizontal: 10, borderRadius: rayon.sm, backgroundColor: fond,
         },
         filet ? { borderWidth: 1, borderColor: filet } : null,
         style,
       ]}
     >
       {point ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: point }} /> : null}
-      {icone ? <Icone nom={icone} taille={15} couleur={encre} /> : null}
-      <Text numberOfLines={1} style={{ fontFamily: sans(500), fontSize: fs[4], color: encre }}>{libelle}</Text>
+      {icone ? <Icone nom={icone} taille={14} couleur={encre} /> : null}
+      <Text numberOfLines={1} style={{ fontFamily: sans(500), fontSize: fs[3], color: encre }}>{libelle}</Text>
     </View>
   );
 }
@@ -130,7 +130,7 @@ export function Pastille({ libelle, fond, encre, point, icone, filet, grande, st
 
 /**
  * L'action principale d'une carte (« S'inscrire », « Compléter ») : un
- * bouton plein avec un carré de 44 px qui porte l'icône.
+ * bouton plein avec un carré de 36 px qui porte l'icône.
  *
  *  - sur une carte blanche : bouton encre, carré blanc ;
  *  - sur une carte accent : bouton blanc, texte et carré de l'accent ;
@@ -177,16 +177,16 @@ export function BoutonAction({ libelle, onPress, icone = 'chevron-d', surAccent,
         accessibilityLabel={accessibilityLabel ?? libelle}
         accessibilityState={{ disabled: !!inactif, busy: !!chargement, checked: fait }}
         style={{
-          flexDirection: iconeADroite ? 'row-reverse' : 'row', alignItems: 'center', gap: 14,
-          minHeight: 56, padding: 6, paddingRight: iconeADroite ? 6 : 18, paddingLeft: iconeADroite ? 20 : 6,
-          borderRadius: rayon.grandBouton, backgroundColor: attenue ? c.surface2 : fond,
+          flexDirection: iconeADroite ? 'row-reverse' : 'row', alignItems: 'center', gap: 10,
+          minHeight: 48, padding: 6, paddingRight: iconeADroite ? 6 : 14, paddingLeft: iconeADroite ? 16 : 6,
+          borderRadius: rayon.md, backgroundColor: attenue ? c.surface2 : fond,
           borderWidth: fait && surAccent ? 0 : 0,
         }}
       >
-        <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: attenue ? c.grisClair : carre, alignItems: 'center', justifyContent: 'center' }}>
-          <Icone nom={fait ? 'check' : icone} taille={20} couleur={attenue ? c.gris : encreCarre} trait={2.5} />
+        <View style={{ width: 36, height: 36, borderRadius: 11, backgroundColor: attenue ? c.grisClair : carre, alignItems: 'center', justifyContent: 'center' }}>
+          <Icone nom={fait ? 'check' : icone} taille={18} couleur={attenue ? c.gris : encreCarre} trait={2.5} />
         </View>
-        <Text numberOfLines={1} style={{ flex: 1, fontFamily: sans(700), fontSize: fs[5] + 1, color: attenue ? c.grisFonce : encre }}>
+        <Text numberOfLines={1} style={{ flex: 1, fontFamily: sans(700), fontSize: fs[5], color: attenue ? c.grisFonce : encre }}>
           {chargement ? '…' : libelle}
         </Text>
       </PressableAnime>
@@ -211,12 +211,12 @@ export function BoutonContour({ libelle, icone, onPress, surAccent, style }: {
       accessibilityRole="button"
       accessibilityLabel={libelle}
       style={[{
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 56, paddingHorizontal: 20,
-        borderRadius: rayon.grandBouton, borderWidth: 1.5, borderColor: surAccent ? 'rgba(255,255,255,0.45)' : c.line2,
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 48, paddingHorizontal: 14,
+        borderRadius: rayon.md, borderWidth: 1.5, borderColor: surAccent ? 'rgba(255,255,255,0.45)' : c.line2,
       }, style]}
     >
-      {icone ? <Icone nom={icone} taille={20} couleur={encre} /> : null}
-      <Text style={{ fontFamily: sans(600), fontSize: fs[5] + 1, color: encre }}>{libelle}</Text>
+      {icone ? <Icone nom={icone} taille={18} couleur={encre} /> : null}
+      <Text style={{ fontFamily: sans(600), fontSize: fs[5], color: encre }}>{libelle}</Text>
     </PressableAnime>
   );
 }
@@ -277,9 +277,9 @@ export function QuiYVa({ prenoms, nb, surAccent, fond }: { prenoms: string[]; nb
   const encre = surAccent ? '#FFFFFF' : c.noir;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-      <AvatarsEmpiles personnes={prenoms.slice(0, 3).map((p, i) => ({ cle: `${p}${i}`, prenom: p }))} fond={fond} />
-      <T taille={fs[5]} couleur={encre} style={{ flex: 1 }} numberOfLines={1}>
-        <T taille={fs[5]} poids={700} couleur={encre}>{prenoms[0]}</T>
+      <AvatarsEmpiles personnes={prenoms.slice(0, 3).map((p, i) => ({ cle: `${p}${i}`, prenom: p }))} fond={fond} taille={24} />
+      <T taille={fs[4]} couleur={encre} style={{ flex: 1 }} numberOfLines={1}>
+        <T taille={fs[4]} poids={700} couleur={encre}>{prenoms[0]}</T>
         {autres > 0 ? ` et ${autres} pote${autres > 1 ? 's' : ''} y vont` : ' y va'}
       </T>
     </View>
@@ -289,10 +289,10 @@ export function QuiYVa({ prenoms, nb, surAccent, fond }: { prenoms: string[]; nb
 // ─── Cartes et tuiles ───────────────────────────────────────────────────────
 
 /**
- * La carte d'écran : surface blanche (rayon 24, padding 20), ou aplat de
+ * La carte d'écran : surface blanche (rayon 22, padding 16), ou aplat de
  * l'accent avec son halo pour la 1ʳᵉ carte de la liste.
  */
-export function CarteRefonte({ accent, children, style, rayonCarte = rayon.carte }: {
+export function CarteRefonte({ accent, children, style, rayonCarte = rayon.personne }: {
   accent?: string;
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
@@ -302,7 +302,7 @@ export function CarteRefonte({ accent, children, style, rayonCarte = rayon.carte
   return (
     <View
       style={[
-        { backgroundColor: accent ?? c.blanc, borderRadius: rayonCarte, padding: 20, gap: 12, marginBottom: 16 },
+        { backgroundColor: accent ?? c.blanc, borderRadius: rayonCarte, padding: 16, gap: 10, marginBottom: 12 },
         accent ? halo(accent) : null,
         style,
       ]}
@@ -336,17 +336,17 @@ export function Tuile({ icone, libelle, compteur, actif, onPress, accentCompteur
       accessibilityRole="button"
       accessibilityLabel={compteur !== undefined ? `${libelle}, ${compteur}` : libelle}
       accessibilityState={{ selected: !!actif }}
-      style={[{ minHeight: 96, padding: 14, borderRadius: rayon.tuile, backgroundColor: actif ? c.noir : c.blanc, justifyContent: 'space-between', gap: 10 }, style]}
+      style={[{ minHeight: 78, padding: 12, borderRadius: rayon.md, backgroundColor: actif ? c.noir : c.blanc, justifyContent: 'space-between', gap: 10 }, style]}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Icone nom={icone} taille={22} couleur={encre} />
+        <Icone nom={icone} taille={20} couleur={encre} />
         {compteur !== undefined ? (
-          <View style={{ minWidth: 30, height: 26, paddingHorizontal: 8, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: actif ? accentCompteur ?? c.rouge : accentCompteur ? `${accentCompteur}22` : c.surface2 }}>
-            <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: actif ? '#FFFFFF' : accentCompteur ?? c.noir }}>{compteur}</Text>
+          <View style={{ minWidth: 28, height: 24, paddingHorizontal: 7, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: actif ? accentCompteur ?? c.rouge : accentCompteur ? `${accentCompteur}22` : c.surface2 }}>
+            <Text style={{ fontFamily: sans(700), fontSize: fs[3], color: actif ? '#FFFFFF' : accentCompteur ?? c.noir }}>{compteur}</Text>
           </View>
         ) : droite ? <Icone nom={droite} taille={20} couleur={encre} /> : null}
       </View>
-      <Text numberOfLines={2} style={{ fontFamily: sans(600), fontSize: fs[5], lineHeight: fs[5] * 1.25, color: encre }}>{libelle}</Text>
+      <Text numberOfLines={2} style={{ fontFamily: sans(600), fontSize: fs[4], lineHeight: fs[4] * 1.25, color: encre }}>{libelle}</Text>
     </PressableAnime>
   );
 }
@@ -415,7 +415,7 @@ export function PanneauFiltres<K extends string>({ visible, onClose, section, op
       <PressableAnime
         onPress={() => { onAppliquer(brouillon); onClose(); }}
         accessibilityRole="button"
-        style={{ minHeight: 56, borderRadius: rayon.grandBouton, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}
+        style={{ minHeight: 50, borderRadius: rayon.md, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}
       >
         <Text style={{ fontFamily: sans(700), fontSize: fs[5] + 1, color: '#FFFFFF' }}>Appliquer</Text>
       </PressableAnime>
