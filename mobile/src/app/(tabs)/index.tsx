@@ -199,7 +199,7 @@ export default function Hub() {
 
       <View>
         <Apparition index={2}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 16 }} contentContainerStyle={rangeeChips}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 20 }} contentContainerStyle={rangeeChips}>
             {/* La musique est passée dans le panneau Filtres ; la chip le
                 signale quand un style est choisi. */}
             <Pilule
@@ -227,7 +227,7 @@ export default function Hub() {
             même filtre qu'avant (le retoucher revient à « Tout ») ; « Carte »
             reste une action qui ouvre la carte. */}
         <Apparition index={3}>
-          <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: gutter, marginBottom: 16 }}>
+          <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: gutter, marginBottom: 20 }}>
             <Tuile
               icone="etoile-fine"
               libelle="Pour moi"

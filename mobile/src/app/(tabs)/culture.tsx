@@ -92,7 +92,7 @@ export default function EspaceCulture() {
       </EnTete>
 
       <Apparition index={2}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 16 }} contentContainerStyle={rangeeChips}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 20 }} contentContainerStyle={rangeeChips}>
           <Pilule libelle="Tout" actif={categorie === ''} onPress={() => choisir('')} />
           {categories.map((k) => (
             <Pilule key={k.code} libelle={k.libelle} actif={categorie === k.code} onPress={() => choisir(k.code)}

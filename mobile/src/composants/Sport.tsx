@@ -113,7 +113,7 @@ function CadreCarte({ children, onPress, libelleAcces }: { children: React.React
       onPress={onPress}
       accessibilityRole={onPress ? 'link' : undefined}
       accessibilityLabel={libelleAcces}
-      style={{ borderRadius: rayon.carte, padding: 14, marginBottom: 12, backgroundColor: c.blanc, gap: 8 }}
+      style={{ borderRadius: rayon.carte, padding: 14, marginBottom: 16, backgroundColor: c.blanc, gap: 8 }}
     >
       {children}
     </Pressable>

@@ -143,7 +143,10 @@ export function Pastille({ libelle, fond, encre, point, icone, filet, grande, pe
  * bouton — à n'incrémenter qu'après la réussite de l'action réelle.
  */
 export function BoutonAction({ libelle, onPress, icone = 'chevron-d', surAccent, accent, fait, desactive, chargement, iconeADroite, confettis = 0, fin, style, accessibilityLabel, testID }: {
-  /** Version fine des cartes d'événement : 40 px de haut, carré de 30. */
+  /**
+   * Version fine des cartes (événements, Sport) : 40 px de haut, carré de
+   * 30, et largeur ajustée au libellé au lieu de remplir la rangée.
+   */
   fin?: boolean;
   /** Repère des tests de bout en bout (Maestro). */
   testID?: string;
@@ -173,7 +176,7 @@ export function BoutonAction({ libelle, onPress, icone = 'chevron-d', surAccent,
   const inactif = desactive || chargement;
   const attenue = desactive && !fait;
   return (
-    <View style={[{ flex: 1 }, style]}>
+    <View style={[fin ? { flexShrink: 1 } : { flex: 1 }, style]}>
       <PressableAnime
         onPress={onPress}
         disabled={inactif}
@@ -183,7 +186,7 @@ export function BoutonAction({ libelle, onPress, icone = 'chevron-d', surAccent,
         accessibilityState={{ disabled: !!inactif, busy: !!chargement, checked: fait }}
         style={{
           flexDirection: iconeADroite ? 'row-reverse' : 'row', alignItems: 'center', gap: fin ? 8 : 10,
-          minHeight: fin ? 40 : 44, padding: 5, paddingRight: iconeADroite ? 5 : 14, paddingLeft: iconeADroite ? 16 : 5,
+          minHeight: fin ? 40 : 44, padding: 5, paddingRight: iconeADroite ? 5 : fin ? 16 : 14, paddingLeft: iconeADroite ? 16 : 5,
           borderRadius: fin ? rayon.sm : rayon.md, backgroundColor: attenue ? c.surface2 : fond,
           borderWidth: fait && surAccent ? 0 : 0,
         }}
@@ -191,7 +194,7 @@ export function BoutonAction({ libelle, onPress, icone = 'chevron-d', surAccent,
         <View style={{ width: fin ? 30 : 34, height: fin ? 30 : 34, borderRadius: fin ? 9 : 10, backgroundColor: attenue ? c.grisClair : carre, alignItems: 'center', justifyContent: 'center' }}>
           <Icone nom={fait ? 'check' : icone} taille={fin ? 16 : 18} couleur={attenue ? c.gris : encreCarre} trait={2.5} />
         </View>
-        <Text numberOfLines={1} style={{ flex: 1, fontFamily: sans(700), fontSize: fin ? fs[4] : fs[4] + 1, color: attenue ? c.grisFonce : encre }}>
+        <Text numberOfLines={1} style={{ ...(fin ? { flexShrink: 1 } : { flex: 1 }), fontFamily: sans(700), fontSize: fin ? fs[4] : fs[4] + 1, color: attenue ? c.grisFonce : encre }}>
           {chargement ? '…' : libelle}
         </Text>
       </PressableAnime>
@@ -313,7 +316,7 @@ export function CarteRefonte({ accent, children, style, rayonCarte = rayon.carte
   return (
     <View
       style={[
-        { backgroundColor: accent ?? c.blanc, borderRadius: rayonCarte, padding: 14, gap: 8, marginBottom: 12 },
+        { backgroundColor: accent ?? c.blanc, borderRadius: rayonCarte, padding: 14, gap: 8, marginBottom: 16 },
         accent ? halo(accent) : null,
         style,
       ]}

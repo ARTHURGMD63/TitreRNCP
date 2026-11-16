@@ -120,7 +120,7 @@ function CarteSquad({ s, onGerer }: { s: Squad; onGerer: () => void }) {
   );
 
   return (
-    <View style={{ borderRadius: rayon.carte, padding: 14, marginBottom: 12, backgroundColor: c.blanc, gap: 8 }}>
+    <View style={{ borderRadius: rayon.carte, padding: 14, marginBottom: 16, backgroundColor: c.blanc, gap: 8 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <Pastille libelle={NIVEAUX_SQUAD[s.niveau] ?? s.niveau} fond={sport.doux} encre={sport.texteDoux} />
         <Pastille libelle={dateFr(s.date_heure, 'D j M · H\\hi')} fond={c.noir} encre={c.surEncre} style={{ flexShrink: 1 }} />
@@ -235,7 +235,7 @@ export default function Sport() {
       </EnTete>
 
       <Apparition index={2}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 16 }} contentContainerStyle={rangeeChips}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 20 }} contentContainerStyle={rangeeChips}>
           {/* Le niveau est passé dans le panneau Filtres ; il ne s'applique,
               comme avant, qu'aux parties à compléter. */}
           <Pilule
@@ -261,7 +261,7 @@ export default function Sport() {
 
       <Apparition index={3}>
         {/* Les rubriques en tuiles ; la quatrième déborde et invite à défiler. */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 16 }} contentContainerStyle={{ gap: 10, paddingHorizontal: gutter }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 20 }} contentContainerStyle={{ gap: 10, paddingHorizontal: gutter }}>
           {RUBRIQUES.map((r) => (
             <Tuile
               key={r.code}

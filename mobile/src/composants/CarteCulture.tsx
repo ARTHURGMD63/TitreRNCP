@@ -132,10 +132,12 @@ export function CarteCulture({ ev, onInviter, accent = false }: { ev: EvenementC
 
       <QuiYVa prenoms={ev.amis.prenoms} nb={ev.amis.nb} surAccent={accent} fond={accent ? violet.accent : c.blanc} />
 
-      <View style={{ flexDirection: 'row', gap: 8, marginTop: 2 }}>
+      {/* Les actions se rangent à droite, à la taille de leur libellé. */}
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 2 }}>
         <BoutonContour iconeSeule libelle="Inviter" icone="ajout-personne" onPress={onInviter} surAccent={accent} />
         <BoutonAction
           fin
+          style={{ minWidth: 124 }}
           libelle={libelleBoutonCulture(etat === 'attente' ? 'libre' : etat, places.complet)}
           accent={violet.accent}
           surAccent={accent}
