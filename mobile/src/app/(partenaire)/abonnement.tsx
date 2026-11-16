@@ -85,7 +85,7 @@ export default function AbonnementPartenaire() {
         </Apparition>
         <Apparition index={1}>
           <TitreEcran avant="Choisis ta" surligne="formule." style={{ marginBottom: 12 }} />
-          <T taille={fs[5]} couleur={c.gris} style={{ marginBottom: 16 }}>
+          <T taille={fs[4]} couleur={c.gris} style={{ marginBottom: 16 }}>
             Sans engagement de durée, résiliable au mois par simple message.
           </T>
         </Apparition>
@@ -94,10 +94,10 @@ export default function AbonnementPartenaire() {
         {erreurEnvoi ? <Encart genre="erreur">{erreurEnvoi}</Encart> : null}
 
         {client ? (
-          <View style={[{ backgroundColor: bleu.accent, borderRadius: rayon.carte, padding: 20, gap: 4, marginBottom: 20 }, halo(bleu.accent)]}>
+          <View style={[{ backgroundColor: bleu.accent, borderRadius: rayon.carte, padding: 14, gap: 4, marginBottom: 20 }, halo(bleu.accent)]}>
             <Text style={{ fontFamily: sans(600), fontSize: 12, letterSpacing: 0.06 * 12, textTransform: 'uppercase', color: bleu.surAccent2 }}>Formule en cours</Text>
-            <Text style={{ fontFamily: sans(700), fontSize: 22, letterSpacing: -0.03 * 22, color: '#FFFFFF' }}>{client.offre_libelle}</Text>
-            <T taille={fs[5]} couleur={bleu.surAccent2}>
+            <Text style={{ fontFamily: sans(700), fontSize: 19, letterSpacing: -0.03 * 19, color: '#FFFFFF' }}>{client.offre_libelle}</Text>
+            <T taille={fs[4]} couleur={bleu.surAccent2}>
               {client.mrr > 0 ? `${client.mrr.toLocaleString('fr-FR')} € HT / mois` : 'Gratuit'}
               {client.essai_jusquau ? ` · offert jusqu'au ${client.essai_jusquau.split('-').reverse().join('/')}` : ''}
             </T>
@@ -123,13 +123,13 @@ export default function AbonnementPartenaire() {
                   <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: active ? bleu.accent : c.line2, alignItems: 'center', justifyContent: 'center' }}>
                     {active ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: bleu.accent }} /> : null}
                   </View>
-                  <T taille={fs[5]} poids={700} style={{ flexShrink: 1 }}>{f.libelle}</T>
+                  <T taille={fs[4]} poids={700} style={{ flexShrink: 1 }}>{f.libelle}</T>
                 </View>
                 {f.code === 'fondateur' && f.places_restantes !== null ? (
                   <Pastille libelle={`${f.places_restantes} place${f.places_restantes > 1 ? 's' : ''} restante${f.places_restantes > 1 ? 's' : ''}`} fond={c.succesClair} encre={c.succes} />
                 ) : null}
               </View>
-              <Text style={{ fontFamily: sans(700), fontSize: 22, letterSpacing: -0.03 * 22, color: c.noir }}>
+              <Text style={{ fontFamily: sans(700), fontSize: 19, letterSpacing: -0.03 * 19, color: c.noir }}>
                 {f.tarif > 0 ? `${f.tarif} € ` : '0 € '}
                 <Text style={{ fontFamily: sans(400), fontSize: fs[4], color: c.gris }}>HT / mois</Text>
               </Text>
@@ -148,7 +148,7 @@ export default function AbonnementPartenaire() {
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', backgroundColor: bleu.doux, borderRadius: rayon.carte, padding: 18, marginTop: 4, marginBottom: 20 }}>
           <CarreIcone icone="check" fond={bleu.accent} encre="#FFFFFF" taille={36} />
           <View style={{ flex: 1 }}>
-          <T taille={fs[5]} poids={700} couleur={bleu.texteDoux} style={{ marginBottom: 6 }}>Dans toutes les formules</T>
+          <T taille={fs[4]} poids={700} couleur={bleu.texteDoux} style={{ marginBottom: 6 }}>Dans toutes les formules</T>
           <T taille={fs[4]} couleur={bleu.texteDoux}>
             {donnees.est_club
               ? 'Événements sportifs et créneaux de terrain illimités, page établissement avec photos, tableau de bord des inscrits, scan des pass. Les joueurs règlent leurs terrains chez toi : Outsee ne prend aucune commission.'

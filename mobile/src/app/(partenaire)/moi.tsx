@@ -46,7 +46,7 @@ function Raccourci({ icone, libelle, detail, onPress }: { icone: NomIcone; libel
       style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, borderRadius: rayon.tuile, backgroundColor: c.blanc, marginBottom: 10 }}>
       <CarreIcone icone={icone} fond={bleu.doux} encre={bleu.texteDoux} taille={40} />
       <View style={{ flex: 1 }}>
-        <T taille={fs[5]} poids={700}>{libelle}</T>
+        <T taille={fs[4]} poids={700}>{libelle}</T>
         <T taille={fs[4]} couleur={c.gris}>{detail}</T>
       </View>
       <Icone nom="chevron-d" taille={20} couleur={c.gris} />
@@ -131,12 +131,12 @@ export default function MoiPartenaire() {
       </EnTete>
       <Contenu style={{ paddingTop: 0 }}>
         <Apparition index={1}>
-          <View style={[{ backgroundColor: bleu.accent, borderRadius: rayon.carte, padding: 20, gap: 16, marginBottom: 16 }, halo(bleu.accent)]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-              <Avatar prenom={nom || compte.prenom} taille={64} fond="#FFFFFF" />
+          <View style={[{ backgroundColor: bleu.accent, borderRadius: rayon.carte, padding: 14, gap: 10, marginBottom: 16 }, halo(bleu.accent)]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Avatar prenom={nom || compte.prenom} taille={52} fond="#FFFFFF" />
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text accessibilityRole="header" numberOfLines={2} style={{ fontFamily: sans(700), fontSize: 22, lineHeight: 22 * 1.15, letterSpacing: -0.035 * 22, color: '#FFFFFF' }}>{nom || 'Mon établissement'}</Text>
-                <T taille={fs[5]} couleur={bleu.surAccent2} style={{ marginTop: 2 }}>{compte.prenom} {compte.nom}</T>
+                <Text accessibilityRole="header" numberOfLines={2} style={{ fontFamily: sans(700), fontSize: 19, lineHeight: 19 * 1.15, letterSpacing: -0.035 * 19, color: '#FFFFFF' }}>{nom || 'Mon établissement'}</Text>
+                <T taille={fs[4]} couleur={bleu.surAccent2} style={{ marginTop: 2 }}>{compte.prenom} {compte.nom}</T>
               </View>
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -151,7 +151,7 @@ export default function MoiPartenaire() {
         {erreurEnregistrement ? <Encart genre="erreur">{erreurEnregistrement}</Encart> : null}
 
         <Apparition index={2}>
-        <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 20, marginBottom: 16 }}>
+        <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 14, marginBottom: 16 }}>
           <TitreSection style={{ marginBottom: 14 }}>Mon établissement</TitreSection>
           <Champ etiquette="Nom" value={nom} onChangeText={setNom} />
           <Selecteur etiquette="Type" valeur={type} onChange={setType} options={TYPES} />

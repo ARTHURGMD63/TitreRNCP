@@ -110,7 +110,7 @@ export default function ModifierProfil() {
     <EnTete style={{ paddingBottom: 16 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 46 }}>
         <BoutonRetour vers="/moi" libelle="Retour à mon profil" />
-        <T taille={20} poids={700} accessibilityRole="header" style={{ flex: 1, textAlign: 'center', marginRight: 46, letterSpacing: -0.02 * 20 }}>
+        <T taille={17} poids={700} accessibilityRole="header" style={{ flex: 1, textAlign: 'center', marginRight: 46, letterSpacing: -0.02 * 17 }}>
           Modifier le profil
         </T>
       </View>
@@ -149,9 +149,9 @@ export default function ModifierProfil() {
         {succes ? <Encart genre="ok">{succes}</Encart> : null}
         {erreurPhoto ? <Encart genre="erreur">{erreurPhoto}</Encart> : null}
 
-        <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 20, marginBottom: 20 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 20 }}>
-            <Avatar photo={apercu} prenom={moi.prenom} taille={72} fond={bleu.accent} />
+        <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 14, marginBottom: 20 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+            <Avatar photo={apercu} prenom={moi.prenom} taille={60} fond={bleu.accent} />
             <View style={{ flex: 1, minWidth: 0 }}>
               <Bouton variante="contour" icone="televerser" libelle={moi.photo_url ? 'Changer la photo' : 'Choisir une photo'} onPress={choisirPhoto} />
               <T numberOfLines={1} taille={fs[4]} couleur={photo ? c.grisFonce : c.gris} style={{ marginTop: 8 }}>
@@ -190,7 +190,7 @@ export default function ModifierProfil() {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }} accessibilityLabel={`Tes hashtags : ${interets.map((i) => '#' + i).join(', ')}`}>
               {interets.map((i) => (
                 <View key={i} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 16, borderRadius: rayon.bouton, backgroundColor: c.noir }}>
-                  <T taille={fs[5]} poids={500} couleur={c.surEncre}>#{i}</T>
+                  <T taille={fs[4]} poids={500} couleur={c.surEncre}>#{i}</T>
                 </View>
               ))}
             </View>

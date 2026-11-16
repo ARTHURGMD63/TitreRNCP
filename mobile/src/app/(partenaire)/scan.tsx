@@ -121,7 +121,7 @@ export default function ScanPass() {
     return (
       <View style={{ flex: 1, backgroundColor: fixe.basalte, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, paddingTop: top, paddingBottom: bottom }}>
         <Icone nom="appareil" taille={40} couleur={fixe.craie} />
-        <Display taille={fs[6]} couleur={fixe.craie} style={{ textAlign: 'center', marginTop: 16, marginBottom: 10 }}>
+        <Display taille={fs[5]} couleur={fixe.craie} style={{ textAlign: 'center', marginTop: 16, marginBottom: 10 }}>
           Accès à la caméra nécessaire
         </Display>
         <T taille={fs[4]} couleur={fixe.craie} interligne={lh.normal} style={{ textAlign: 'center', marginBottom: 24, opacity: 0.8 }}>
@@ -169,7 +169,7 @@ export default function ScanPass() {
         accessibilityRole="button"
         accessibilityLabel="Valider une présence manuellement"
         testID="scan-manuel"
-        style={{ position: 'absolute', bottom: bottom + 100, left: 24, right: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 48, paddingHorizontal: 12, borderRadius: rayon.bouton, backgroundColor: 'rgba(17,17,22,0.6)' }}
+        style={{ position: 'absolute', bottom: bottom + 100, left: 24, right: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 42, paddingHorizontal: 12, borderRadius: rayon.bouton, backgroundColor: 'rgba(17,17,22,0.6)' }}
       >
         <Icone nom="outil" taille={16} couleur={fixe.craie} />
         <Text style={{ fontFamily: sans(700), fontSize: fs[3], color: fixe.craie }}>Le scan ne marche pas ? Valider manuellement</Text>
@@ -191,7 +191,7 @@ export default function ScanPass() {
               <Icone nom="valide" taille={16} couleur="#137A44" />
               <Text style={{ fontFamily: sans(700), fontSize: fs[2], letterSpacing: 0.06 * fs[2], color: '#137A44' }}>CHECK-IN VALIDÉ</Text>
             </View>
-            <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: fixe.basalte }}>{personneValidee.prenom} {personneValidee.nom}</Text>
+            <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: fixe.basalte }}>{personneValidee.prenom} {personneValidee.nom}</Text>
             <Text style={{ fontFamily: sans(500), fontSize: fs[4], color: '#5A5A66' }}>
               {personneValidee.ecole ?? '—'}{personneValidee.promo ? ' · ' + personneValidee.promo : ''}
             </Text>
@@ -199,26 +199,26 @@ export default function ScanPass() {
         </View>
       ) : messageEchec ? (
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: bottom + 40, alignItems: 'center', paddingHorizontal: 24 }}>
-          <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: '#FF4D6A', textAlign: 'center' }}>{messageEchec}</Text>
+          <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: '#FF4D6A', textAlign: 'center' }}>{messageEchec}</Text>
         </View>
       ) : (
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: bottom + 40, alignItems: 'center', paddingHorizontal: 24 }}>
-          <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: fixe.craie, textAlign: 'center' }}>En attente de scan...</Text>
+          <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: fixe.craie, textAlign: 'center' }}>En attente de scan...</Text>
         </View>
       )}
 
       <Feuille visible={listeOuverte} onClose={() => setListeOuverte(false)}>
-        <T taille={24} poids={700} style={{ marginBottom: 16, letterSpacing: -0.03 * 24 }}>
+        <T taille={20} poids={700} style={{ marginBottom: 16, letterSpacing: -0.03 * 20 }}>
           {checkins.length} check-in{checkins.length > 1 ? 's' : ''}
         </T>
         {checkins.length === 0 ? (
-          <T taille={fs[5]} couleur={c.gris}>Personne pour l&apos;instant.</T>
+          <T taille={fs[4]} couleur={c.gris}>Personne pour l&apos;instant.</T>
         ) : (
           checkins.map((p, i) => (
             <View key={`${p.id}-${i}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: i < checkins.length - 1 ? 1 : 0, borderBottomColor: c.grisClair }}>
               <Avatar photo={p.photo_url} prenom={p.prenom} taille={40} fond={teinteAvatar(p.prenom + p.id)} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: c.noir }}>{p.prenom} {p.nom}</Text>
+                <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: c.noir }}>{p.prenom} {p.nom}</Text>
                 <Text style={{ fontFamily: sans(400), fontSize: fs[4], color: c.gris }}>{p.ecole ?? '—'}{p.promo ? ' · ' + p.promo : ''}</Text>
               </View>
             </View>
@@ -227,7 +227,7 @@ export default function ScanPass() {
       </Feuille>
 
       <Feuille visible={manuelOuvert} onClose={() => setManuelOuvert(false)}>
-        <T taille={24} poids={700} style={{ marginBottom: 6, letterSpacing: -0.03 * 24 }}>Valider manuellement</T>
+        <T taille={20} poids={700} style={{ marginBottom: 6, letterSpacing: -0.03 * 20 }}>Valider manuellement</T>
         <T taille={fs[4]} couleur={c.gris} style={{ marginBottom: 16 }}>
           Cherche la personne parmi les inscrits pas encore validés, si le QR code ne fonctionne pas.
         </T>
@@ -239,18 +239,18 @@ export default function ScanPass() {
           placeholderTextColor={c.gris}
           autoFocus
           accessibilityLabel="Chercher un inscrit par son prénom ou son nom"
-          style={{ minHeight: 52, paddingVertical: 12, paddingHorizontal: 18, borderWidth: 1, borderColor: c.line2, borderRadius: rayon.bouton, backgroundColor: c.surface2, fontFamily: sans(400), fontSize: fs[5], color: c.noir, marginBottom: 16 }}
+          style={{ minHeight: 46, paddingVertical: 12, paddingHorizontal: 18, borderWidth: 1, borderColor: c.line2, borderRadius: rayon.bouton, backgroundColor: c.surface2, fontFamily: sans(400), fontSize: fs[4], color: c.noir, marginBottom: 16 }}
         />
         {invitesManuels === null ? (
-          <T taille={fs[5]} couleur={c.gris}>Chargement...</T>
+          <T taille={fs[4]} couleur={c.gris}>Chargement...</T>
         ) : invitesManuels.length === 0 ? (
-          <T taille={fs[5]} couleur={c.gris}>Personne à faire correspondre.</T>
+          <T taille={fs[4]} couleur={c.gris}>Personne à faire correspondre.</T>
         ) : (
           invitesManuels.map((invite, i) => (
             <View key={invite.inscription_id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: i < invitesManuels.length - 1 ? 1 : 0, borderBottomColor: c.grisClair }}>
               <Avatar photo={invite.photo_url} prenom={invite.prenom} taille={40} fond={teinteAvatar(invite.prenom + invite.inscription_id)} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: c.noir }}>{invite.prenom} {invite.nom}</Text>
+                <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: c.noir }}>{invite.prenom} {invite.nom}</Text>
                 <Text style={{ fontFamily: sans(400), fontSize: fs[4], color: c.gris }}>{invite.ecole ?? '—'}{invite.promo ? ' · ' + invite.promo : ''}</Text>
               </View>
               <Bouton

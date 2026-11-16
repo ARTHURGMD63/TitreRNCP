@@ -130,7 +130,7 @@ function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
           <Text style={{ fontFamily: sans(600), fontSize: 12, letterSpacing: 0.06 * 12, textTransform: 'uppercase', color: secondaire }}>
             Pass étudiant · {index + 1}/{total}
           </Text>
-          <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: 21, letterSpacing: -0.03 * 21, color: encre }}>
+          <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: 18, letterSpacing: -0.03 * 18, color: encre }}>
             {supprime ? 'Pass invalide' : nomTitulaire}
           </Text>
         </View>
@@ -147,9 +147,9 @@ function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
       </View>
 
       {supprime ? (
-        <View style={{ backgroundColor: 'rgba(17,16,19,0.12)', borderRadius: 20, paddingVertical: 34, paddingHorizontal: 20, minHeight: 188, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+        <View style={{ backgroundColor: 'rgba(17,16,19,0.12)', borderRadius: 20, paddingVertical: 34, paddingHorizontal: 16, minHeight: 188, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           <Icone nom="interdit" taille={40} couleur="#666666" />
-          <T taille={fs[5]} poids={700} couleur="#555555" style={{ textAlign: 'center' }}>{'Événement\nsupprimé'}</T>
+          <T taille={fs[4]} poids={700} couleur="#555555" style={{ textAlign: 'center' }}>{'Événement\nsupprimé'}</T>
         </View>
       ) : (
         // Le QR reste toujours sur fond blanc, dans les deux thèmes : c'est
@@ -168,7 +168,7 @@ function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
           ) : (
             <View style={{ alignItems: 'center', gap: 12 }}>
               <Icone nom="qr" taille={44} couleur="#111116" trait={1.75} />
-              <T taille={fs[6]} poids={700} couleur="#111116" interligne={lh.tight} style={{ textAlign: 'center' }}>{'Appuyer\npour afficher.'}</T>
+              <T taille={fs[5]} poids={700} couleur="#111116" interligne={lh.tight} style={{ textAlign: 'center' }}>{'Appuyer\npour afficher.'}</T>
             </View>
           )}
         </Pressable>
@@ -177,14 +177,14 @@ function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
       <View style={{ gap: 8 }}>
         {supprime ? (
           <>
-            <T taille={fs[5]} poids={700} couleur={encre}>Cet événement n&apos;existe plus</T>
+            <T taille={fs[4]} poids={700} couleur={encre}>Cet événement n&apos;existe plus</T>
             <T taille={fs[4]} couleur={secondaire}>Tu peux supprimer ce pass</T>
           </>
         ) : (
           <>
-            <T taille={20} poids={700} couleur={encre} style={{ letterSpacing: -0.02 * 20 }}>{p.etablissement} — {p.titre}</T>
+            <T taille={17} poids={700} couleur={encre} style={{ letterSpacing: -0.02 * 17 }}>{p.etablissement} — {p.titre}</T>
             <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-              <T taille={fs[5]} couleur={secondaire} style={{ marginRight: 'auto' }}>{dateFr(p.date_heure, 'D j M · H\\hi')}</T>
+              <T taille={fs[4]} couleur={secondaire} style={{ marginRight: 'auto' }}>{dateFr(p.date_heure, 'D j M · H\\hi')}</T>
               <Pastille libelle={compteARebours(ts(p.date_heure), maintenant)} icone="horloge" fond={voile} encre={encre} />
               <Pastille libelle={reduction > 0 ? `-${reduction}%` : 'Entrée gratuite'} fond="#FFFFFF" encre="#111116" />
             </View>
@@ -217,14 +217,14 @@ function CarteSquadAgenda({ sq, largeur, onQuitte }: { sq: SquadAgenda; largeur:
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
         <View style={{ flex: 1, gap: 4 }}>
           <Text style={{ fontFamily: sans(600), fontSize: 12, letterSpacing: 0.06 * 12, textTransform: 'uppercase', color: sport.texteDoux }}>Session {sq.type}</Text>
-          <T taille={20} poids={700} style={{ letterSpacing: -0.02 * 20 }}>{sq.titre}</T>
+          <T taille={17} poids={700} style={{ letterSpacing: -0.02 * 17 }}>{sq.titre}</T>
         </View>
         <PressableAnime onPress={quitter} accessibilityRole="button" accessibilityLabel="Quitter ce groupe"
           style={{ width: 44, height: 44, borderRadius: rayon.bouton, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center' }}>
           <Icone nom="croix" taille={18} couleur={c.noir} />
         </PressableAnime>
       </View>
-      <T taille={fs[5]} poids={600}>{dateFr(sq.date_heure, 'D j M · H\\hi')}</T>
+      <T taille={fs[4]} poids={600}>{dateFr(sq.date_heure, 'D j M · H\\hi')}</T>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Icone nom="epingle" taille={16} couleur={c.gris} />
         <T taille={fs[4]} couleur={c.gris}>{sq.lieu}</T>
@@ -320,8 +320,8 @@ export default function Wallet() {
               ) : (
                 <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 32, alignItems: 'center', marginBottom: 16 }}>
                   <View style={{ marginBottom: 16 }}><Icone nom="ticket" taille={48} couleur={c.gris} trait={1.5} /></View>
-                  <T taille={22} poids={700} interligne={lh.tight} style={{ marginBottom: 6, textAlign: 'center', letterSpacing: -0.03 * 22 }}>Aucun pass actif</T>
-                  <T taille={fs[5]} couleur={c.gris} style={{ marginBottom: 18, textAlign: 'center' }}>Inscris-toi à un événement pour obtenir ton pass.</T>
+                  <T taille={19} poids={700} interligne={lh.tight} style={{ marginBottom: 6, textAlign: 'center', letterSpacing: -0.03 * 19 }}>Aucun pass actif</T>
+                  <T taille={fs[4]} couleur={c.gris} style={{ marginBottom: 18, textAlign: 'center' }}>Inscris-toi à un événement pour obtenir ton pass.</T>
                   <Bouton libelle="Explorer les événements" onPress={() => router.navigate('/')} style={{ alignSelf: 'center' }} />
                 </View>
               )}
@@ -340,10 +340,10 @@ export default function Wallet() {
                     <View key={p.id} style={{ padding: 14, borderRadius: rayon.tuile, backgroundColor: c.blanc, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                       <CarreIcone icone="ticket" fond={couleurType(p.etab_type)} encre="#FFFFFF" taille={40} />
                       <View style={{ flex: 1 }}>
-                        <T taille={fs[5]} poids={700} numberOfLines={1}>{p.etablissement}</T>
+                        <T taille={fs[4]} poids={700} numberOfLines={1}>{p.etablissement}</T>
                         <T taille={fs[4]} couleur={c.gris} numberOfLines={1} style={{ marginTop: 2 }}>{p.titre} · {dateFr(p.date_heure, 'D j M · H\\hi')}</T>
                       </View>
-                      <T taille={fs[5]} poids={700} couleur={c.succes}>{economie(p)}</T>
+                      <T taille={fs[4]} poids={700} couleur={c.succes}>{economie(p)}</T>
                     </View>
                   ))}
                 </View>
@@ -371,7 +371,7 @@ export default function Wallet() {
                         <CarreIcone icone={avis ? 'check' : 'ticket'} fond={avis ? c.succesClair : c.surface2} encre={avis ? c.succes : c.gris} taille={40} />
                         <View style={{ flex: 1 }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                            <T taille={fs[5]} poids={700}>{p.etablissement}</T>
+                            <T taille={fs[4]} poids={700}>{p.etablissement}</T>
                             {avis ? <T taille={fs[2]} poids={700} couleur={c.succes}>Check-in</T> : null}
                           </View>
                           <T taille={fs[4]} couleur={c.gris} style={{ marginTop: 2 }}>{p.titre} · {dateFr(p.date_heure, 'D j M')}</T>
@@ -385,7 +385,7 @@ export default function Wallet() {
                             </Text>
                           ) : null}
                         </View>
-                        <T taille={fs[5]} poids={600} couleur={c.gris}>{economie(p)}</T>
+                        <T taille={fs[4]} poids={600} couleur={c.gris}>{economie(p)}</T>
                       </View>
                     );
                   })}
@@ -403,13 +403,13 @@ export default function Wallet() {
                 <View style={{ flex: 1, borderRadius: rayon.tuile, padding: 16, backgroundColor: c.blanc, gap: 6 }}>
                   <T taille={fs[4]} couleur={c.gris}>{MOIS[new Date().getMonth()]}</T>
                   <Compteur valeur={donnees.economies.mois} format={(n) => `${euros(n)} €`}
-                    style={{ fontFamily: sans(700), fontSize: 23, letterSpacing: -0.03 * 23, color: c.succes, fontVariant: ['tabular-nums'] }} />
+                    style={{ fontFamily: sans(700), fontSize: 20, letterSpacing: -0.03 * 20, color: c.succes, fontVariant: ['tabular-nums'] }} />
                   <T taille={fs[3]} couleur={c.gris}>économisé ce mois</T>
                 </View>
                 <View style={{ flex: 1, borderRadius: rayon.tuile, padding: 16, backgroundColor: c.blanc, gap: 6 }}>
                   <T taille={fs[4]} couleur={c.gris}>Total année</T>
                   <Compteur valeur={donnees.economies.annee} delai={120} format={(n) => `${euros(n)} €`}
-                    style={{ fontFamily: sans(700), fontSize: 23, letterSpacing: -0.03 * 23, color: c.noir, fontVariant: ['tabular-nums'] }} />
+                    style={{ fontFamily: sans(700), fontSize: 20, letterSpacing: -0.03 * 20, color: c.noir, fontVariant: ['tabular-nums'] }} />
                   <T taille={fs[3]} couleur={c.gris}>depuis janvier</T>
                 </View>
               </View>

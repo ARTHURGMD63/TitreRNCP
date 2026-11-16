@@ -128,7 +128,7 @@ function Fiche({ e, onRafraichir }: { e: EvenementCultureDetail; onRafraichir: (
     >
       <View style={{ borderBottomLeftRadius: rayon.xl, borderBottomRightRadius: rayon.xl, overflow: 'hidden', backgroundColor: c.blanc }}>
         <Rayures a={c.blanc} b={c.surface2} />
-        <View style={{ paddingTop: 100 + top, paddingHorizontal: 20, paddingBottom: 32 }}>
+        <View style={{ paddingTop: 100 + top, paddingHorizontal: 16, paddingBottom: 32 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
             {e.en_cours ? <PastilleEnCours quoi="Événement" /> : null}
             <Text style={{ fontFamily: mono(500), fontSize: fs[2], letterSpacing: 0.1 * fs[2], textTransform: 'uppercase', color: c.surRougeClair, flexShrink: 1 }}>
@@ -136,14 +136,14 @@ function Fiche({ e, onRafraichir }: { e: EvenementCultureDetail; onRafraichir: (
             </Text>
           </View>
           <View accessibilityRole="header">
-            <Display taille={fs[9]} interligne={lh.display}>{e.titre}</Display>
+            <Display taille={fs[7]} interligne={lh.display}>{e.titre}</Display>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
               <Icone nom="musee" taille={18} couleur={c.grisFonce} />
-              <T taille={fs[5]} poids={600} couleur={c.grisFonce} style={{ flexShrink: 1 }}>{e.organisateur}</T>
+              <T taille={fs[4]} poids={600} couleur={c.grisFonce} style={{ flexShrink: 1 }}>{e.organisateur}</T>
             </View>
           </View>
-          <View style={{ alignSelf: 'flex-start', marginTop: 18, backgroundColor: c.rouge, borderRadius: rayon.pill, paddingVertical: 8, paddingHorizontal: 20 }}>
-            <Display taille={fs[7]} interligne={1.2} couleur={fixe.surAccent}>{libellePrix(e.prix)}</Display>
+          <View style={{ alignSelf: 'flex-start', marginTop: 18, backgroundColor: c.rouge, borderRadius: rayon.pill, paddingVertical: 8, paddingHorizontal: 16 }}>
+            <Display taille={fs[5] + 1} interligne={1.2} couleur={fixe.surAccent}>{libellePrix(e.prix)}</Display>
           </View>
         </View>
       </View>
@@ -173,7 +173,7 @@ function Fiche({ e, onRafraichir }: { e: EvenementCultureDetail; onRafraichir: (
         {e.description ? (
           <View style={{ marginTop: 32 }}>
             <Section icone="info">À propos</Section>
-            <T taille={fs[5]} interligne={lh.relaxed} couleur={c.grisFonce}>{e.description}</T>
+            <T taille={fs[4]} interligne={lh.relaxed} couleur={c.grisFonce}>{e.description}</T>
           </View>
         ) : null}
 
@@ -243,7 +243,7 @@ function Fiche({ e, onRafraichir }: { e: EvenementCultureDetail; onRafraichir: (
             desactive={inscrit || places.complet || e.termine}
             chargement={etat === 'attente'}
             onPress={inscrire}
-            style={{ paddingVertical: 18 }}
+            style={{ paddingVertical: 14 }}
           />
           {!e.termine ? (
             <Bouton plein variante="contour" icone="ajout-personne" libelle="Inviter des potes" onPress={() => setInvitation(true)} />

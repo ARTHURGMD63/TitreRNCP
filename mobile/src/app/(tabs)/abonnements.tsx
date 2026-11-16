@@ -111,7 +111,7 @@ export default function Abonnements() {
             </View>
 
             {donnees.personnes.length === 0 ? (
-              <View style={{ paddingVertical: 24, alignItems: 'center' }}>
+              <View style={{ paddingVertical: 20, alignItems: 'center' }}>
                 {q ? (
                   <T taille={fs[3]} couleur={c.gris} style={{ textAlign: 'center' }}>Personne à ce nom dans tes {titre.toLowerCase()}.</T>
                 ) : (

@@ -62,13 +62,13 @@ function LigneCreneau({ cr, onToucher }: { cr: Creneau; onToucher: () => void })
       onPress={annule ? undefined : onToucher}
       accessibilityRole="button"
       accessibilityLabel={`${cr.terrain.nom} ${dateFr(cr.debut, 'H\\hi')}, ${etat}`}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52, paddingVertical: 10, borderTopWidth: 1, borderTopColor: c.grisClair }}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 46, paddingVertical: 10, borderTopWidth: 1, borderTopColor: c.grisClair }}
     >
       <View style={{ width: 58, paddingVertical: 6, borderRadius: rayon.mini, backgroundColor: libre ? c.surface2 : annule ? c.dangerClair : sport.doux, alignItems: 'center' }}>
         <T taille={fs[4]} poids={700} couleur={libre ? c.noir : annule ? c.danger : sport.texteDoux}>{dateFr(cr.debut, 'H\\hi')}</T>
       </View>
       <View style={{ flex: 1 }}>
-        <T taille={fs[5]} poids={700}>{cr.terrain.nom}</T>
+        <T taille={fs[4]} poids={700}>{cr.terrain.nom}</T>
         <T taille={fs[4]} couleur={couleur}>{etat}</T>
       </View>
       {!annule ? <Icone nom="croix" taille={16} couleur={c.gris} /> : null}
@@ -159,7 +159,7 @@ export default function Terrains() {
         </Apparition>
         <Apparition index={1}>
           <TitreEcran avant="Mes" surligne="terrains." rubrique="sport" style={{ marginBottom: 12 }} />
-          <T taille={fs[5]} couleur={c.gris} style={{ marginBottom: 16 }}>
+          <T taille={fs[4]} couleur={c.gris} style={{ marginBottom: 16 }}>
             Mets tes créneaux en ligne : les étudiants réservent entre amis ou complètent une partie. Le prix se règle chez toi.
           </T>
         </Apparition>
@@ -176,8 +176,8 @@ export default function Terrains() {
 
         <TitreSection style={{ marginBottom: 12 }}>Les 7 prochains jours</TitreSection>
         {planning.length === 0 ? (
-          <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 20, marginBottom: 16 }}>
-            <T taille={fs[5]} couleur={c.gris}>Aucun créneau en ligne cette semaine.</T>
+          <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 14, marginBottom: 16 }}>
+            <T taille={fs[4]} couleur={c.gris}>Aucun créneau en ligne cette semaine.</T>
           </View>
         ) : (
           Object.entries(parJour).map(([jour, liste]) => (
@@ -207,7 +207,7 @@ export default function Terrains() {
             <CarreIcone icone="terrain" fond={sport.doux} encre={sport.texteDoux} taille={40} />
             <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
-              <T taille={fs[5]} poids={700} style={{ flex: 1 }}>{t.nom}</T>
+              <T taille={fs[4]} poids={700} style={{ flex: 1 }}>{t.nom}</T>
               <Icone nom="crayon" taille={16} couleur={c.gris} />
             </View>
             <T taille={fs[4]} couleur={c.gris}>
@@ -286,7 +286,7 @@ function FeuilleTerrain({ terrain, onClose, onEnregistre }: {
 
   return (
     <Feuille visible={terrain !== null} onClose={onClose}>
-      <T taille={24} poids={700} style={{ marginBottom: 20, letterSpacing: -0.03 * 24 }}>{existant ? 'Modifier le terrain' : 'Nouveau terrain'}</T>
+      <T taille={20} poids={700} style={{ marginBottom: 20, letterSpacing: -0.03 * 20 }}>{existant ? 'Modifier le terrain' : 'Nouveau terrain'}</T>
       <Champ etiquette="Nom" value={nom} onChangeText={setNom} placeholder="Terrain 1, couvert" />
       <Selecteur etiquette="Sport" valeur={sport} onChange={setSport} options={Object.entries(SPORTS).map(([valeur, libelle]) => ({ valeur, libelle }))} />
       <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -340,7 +340,7 @@ function FeuillePublication({ visible, terrains, onClose, onPublie }: {
 
   return (
     <Feuille visible={visible} onClose={onClose}>
-      <T taille={24} poids={700} style={{ marginBottom: 20, letterSpacing: -0.03 * 24 }}>Publier des créneaux</T>
+      <T taille={20} poids={700} style={{ marginBottom: 20, letterSpacing: -0.03 * 20 }}>Publier des créneaux</T>
       <T taille={fs[4]} poids={500} couleur={c.gris} style={{ marginBottom: 8 }}>Terrain</T>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 16 }} contentContainerStyle={{ gap: 8 }}>
         {terrains.map((t) => (

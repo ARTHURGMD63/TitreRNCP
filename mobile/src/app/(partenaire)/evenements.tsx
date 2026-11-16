@@ -95,7 +95,7 @@ function CarteEvenementPartenaire({ ev, onSupprime }: { ev: EvenementPartenaire;
 
       <View style={{ gap: 6 }}>
         <Text style={{ fontFamily: sans(700), fontSize: taille.titreCarteSport, lineHeight: taille.titreCarteSport * 1.15, letterSpacing: -0.03 * taille.titreCarteSport, color: c.noir }}>{ev.titre}</Text>
-        <T taille={fs[5]} couleur={c.gris}>{dateFr(ev.date_heure, 'l j F · H\\hi')}</T>
+        <T taille={fs[4]} couleur={c.gris}>{dateFr(ev.date_heure, 'l j F · H\\hi')}</T>
       </View>
 
       <View style={{ gap: 8 }}>
@@ -164,10 +164,10 @@ export default function EvenementsPartenaire() {
           <Bouton libelle="Créer un événement" icone="plus" plein onPress={() => router.push({ pathname: '/evenement-form' })} style={{ marginBottom: 16 }} />
         </Apparition>
         {evenements.length === 0 ? (
-          <CarteRefonte style={{ alignItems: 'center', paddingVertical: 28 }}>
+          <CarteRefonte style={{ alignItems: 'center', paddingVertical: 24 }}>
             <CarreIcone icone="calendrier" fond={bleu.doux} encre={bleu.texteDoux} />
-            <T taille={20} poids={700} style={{ textAlign: 'center' }}>Aucun événement pour l&apos;instant</T>
-            <T taille={fs[5]} couleur={c.gris} style={{ textAlign: 'center' }}>Publie ta première soirée : elle apparaîtra dans le fil des étudiants.</T>
+            <T taille={17} poids={700} style={{ textAlign: 'center' }}>Aucun événement pour l&apos;instant</T>
+            <T taille={fs[4]} couleur={c.gris} style={{ textAlign: 'center' }}>Publie ta première soirée : elle apparaîtra dans le fil des étudiants.</T>
           </CarteRefonte>
         ) : (
           evenements.map((ev, i) => (

@@ -134,7 +134,7 @@ export default function PhotosPartenaire() {
         {photos.length === 0 ? (
           <View style={{ alignItems: 'center', paddingVertical: 36, backgroundColor: c.blanc, borderRadius: rayon.carte }}>
             <Icone nom="image" taille={32} couleur={c.gris} />
-            <T taille={fs[5]} couleur={c.gris} style={{ marginTop: 12 }}>Aucune photo pour le moment.</T>
+            <T taille={fs[4]} couleur={c.gris} style={{ marginTop: 12 }}>Aucune photo pour le moment.</T>
           </View>
         ) : (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>

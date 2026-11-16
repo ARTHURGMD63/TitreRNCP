@@ -85,7 +85,7 @@ export default function EspaceCulture() {
         </Apparition>
         <Apparition index={1}>
           <TitreEcran avant="La culture" surligne="en ville." rubrique="culture" style={{ marginBottom: 12 }} />
-          <T taille={fs[5]} couleur={c.gris} interligne={lh.normal} style={{ marginBottom: 16 }}>
+          <T taille={fs[4]} couleur={c.gris} interligne={lh.normal} style={{ marginBottom: 16 }}>
             Expos, concerts, patrimoine : ce que la ville met en avant. Inscris-toi et embarque tes potes.
           </T>
         </Apparition>
@@ -107,7 +107,7 @@ export default function EspaceCulture() {
             {evenements.length === 0 ? (
               <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, paddingVertical: 36, paddingHorizontal: 26, alignItems: 'center', marginBottom: 16 }}>
                 <View style={{ marginBottom: 14 }}><Icone nom="musee" taille={24} couleur={c.gris} /></View>
-                <Display taille={fs[6]} interligne={lh.tight} style={{ marginBottom: 6, textAlign: 'center' }}>
+                <Display taille={fs[5]} interligne={lh.tight} style={{ marginBottom: 6, textAlign: 'center' }}>
                   {categorie ? 'Rien dans cette catégorie' : 'Rien de prévu pour le moment'}
                 </Display>
                 <T taille={fs[3]} poids={500} couleur={c.grisFonce} interligne={lh.snug} style={{ textAlign: 'center', maxWidth: 290 }}>

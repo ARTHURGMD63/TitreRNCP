@@ -38,7 +38,7 @@ function LignePersonneSalle({ prenom, nom, ecole, promo, photo, heure, dernier }
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: dernier ? 0 : 1, borderBottomColor: c.grisClair }}>
       <Avatar photo={photo} prenom={prenom} taille={40} fond={teinteAvatar(prenom + nom)} />
       <View style={{ flex: 1 }}>
-        <T taille={fs[5]} poids={600}>{prenom} {nom}</T>
+        <T taille={fs[4]} poids={600}>{prenom} {nom}</T>
         <T taille={fs[4]} couleur={c.gris}>{ecole ?? '—'} · {promo ?? '—'}</T>
       </View>
       {heure ? <T taille={fs[4]} poids={600} couleur={c.gris}>{heure}</T> : null}
@@ -99,17 +99,17 @@ export default function TableauDeBordPartenaire() {
       <Contenu style={{ paddingTop: 0 }}>
         {!evenement ? (
           <Apparition index={2}>
-            <CarteRefonte style={{ alignItems: 'center', paddingVertical: 28 }}>
+            <CarteRefonte style={{ alignItems: 'center', paddingVertical: 24 }}>
               <CarreIcone icone="calendrier" fond={bleu.doux} encre={bleu.texteDoux} />
-              <T taille={20} poids={700} style={{ textAlign: 'center' }}>Aucune soirée à venir</T>
-              <T taille={fs[5]} couleur={c.gris} style={{ textAlign: 'center' }}>Crée un événement pour voir ses statistiques ici.</T>
+              <T taille={17} poids={700} style={{ textAlign: 'center' }}>Aucune soirée à venir</T>
+              <T taille={fs[4]} couleur={c.gris} style={{ textAlign: 'center' }}>Crée un événement pour voir ses statistiques ici.</T>
             </CarteRefonte>
           </Apparition>
         ) : (
           <>
             {/* La prochaine soirée : la carte bleue de l'écran. */}
             <Apparition index={2}>
-              <View style={[{ backgroundColor: bleu.accent, borderRadius: rayon.carte, padding: 20, gap: 14, marginBottom: 16 }, halo(bleu.accent)]}>
+              <View style={[{ backgroundColor: bleu.accent, borderRadius: rayon.carte, padding: 14, gap: 14, marginBottom: 16 }, halo(bleu.accent)]}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                   <Text style={{ fontFamily: sans(600), fontSize: 12, letterSpacing: 0.06 * 12, textTransform: 'uppercase', color: bleu.surAccent2 }}>Prochaine soirée</Text>
                   <Pastille libelle={dateFr(evenement.date_heure, 'D j M · H\\hi')} fond="#FFFFFF" encre="#111116" />
@@ -123,7 +123,7 @@ export default function TableauDeBordPartenaire() {
                   ].map((s, i) => (
                     <View key={s.l} style={{ flex: 1, borderRadius: rayon.bouton, padding: 12, backgroundColor: 'rgba(255,255,255,0.16)', gap: 2 }}>
                       <Compteur valeur={s.v} format={s.format} delai={i * 120}
-                        style={{ fontFamily: sans(700), fontSize: 24, color: '#FFFFFF', fontVariant: ['tabular-nums'] }} />
+                        style={{ fontFamily: sans(700), fontSize: 20, color: '#FFFFFF', fontVariant: ['tabular-nums'] }} />
                       <T taille={fs[4]} couleur={bleu.surAccent2}>{s.l}</T>
                     </View>
                   ))}
@@ -149,8 +149,8 @@ export default function TableauDeBordPartenaire() {
                 {stats.ecoles.map((s, i) => (
                   <View key={s.nom}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <T taille={fs[5]} poids={600}>{s.nom}</T>
-                      <T taille={fs[5]} couleur={c.gris}>{s.pourcentage}%</T>
+                      <T taille={fs[4]} poids={600}>{s.nom}</T>
+                      <T taille={fs[4]} couleur={c.gris}>{s.pourcentage}%</T>
                     </View>
                     <Jauge pourcentage={s.pourcentage} piste={c.surface2} remplissage={COULEURS_ECOLE[i % COULEURS_ECOLE.length]} hauteur={8} />
                   </View>
@@ -162,8 +162,8 @@ export default function TableauDeBordPartenaire() {
               <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', backgroundColor: c.alerteClair, borderRadius: rayon.carte, padding: 18, marginBottom: 16 }}>
                 <CarreIcone icone="eclair" fond="#FFB020" encre="#FFFFFF" taille={40} />
                 <View style={{ flex: 1, gap: 4 }}>
-                  <T taille={fs[5]} poids={700} couleur={c.alerte}>Conseil</T>
-                  <T taille={fs[5]} couleur={c.alerte} interligne={lh.snug}>{stats.conseil}</T>
+                  <T taille={fs[4]} poids={700} couleur={c.alerte}>Conseil</T>
+                  <T taille={fs[4]} couleur={c.alerte} interligne={lh.snug}>{stats.conseil}</T>
                 </View>
               </View>
             </Apparition>

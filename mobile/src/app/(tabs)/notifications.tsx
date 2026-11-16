@@ -52,7 +52,7 @@ export default function Notifications() {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 14, marginBottom: 18 }}>
           <BoutonRetour vers="/" libelle="Retour à Explorer" />
         </View>
-        <Display taille={fs[8]} interligne={lh.tight} accessibilityRole="header">Notifications</Display>
+        <Display taille={fs[7]} interligne={lh.tight} accessibilityRole="header">Notifications</Display>
       </EnTete>
 
       <Contenu style={{ paddingTop: 0 }}>

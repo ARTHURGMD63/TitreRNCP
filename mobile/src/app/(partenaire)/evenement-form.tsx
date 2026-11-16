@@ -149,7 +149,7 @@ export default function FormulaireEvenementPartenaire() {
       <Contenu style={{ paddingTop: 0 }}>
         {erreurEnregistrement ? <Encart genre="erreur">{erreurEnregistrement}</Encart> : null}
 
-        <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 20, marginBottom: 16 }}>
+        <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 14, marginBottom: 16 }}>
         <TitreSection style={{ marginBottom: 14 }}>Informations générales</TitreSection>
         <Champ etiquette="Titre *" value={titre} onChangeText={setTitre} placeholder={club ? 'ex : Open étudiant de padel' : 'ex : Soirée Étudiants — DJ Groove'} />
         {club ? (
@@ -170,7 +170,7 @@ export default function FormulaireEvenementPartenaire() {
         <Champ etiquette={club ? 'Lieu / Terrains' : 'Lieu / Salle'} value={lieu} onChangeText={setLieu} marge={0} />
         </View>
 
-        <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 20, marginBottom: 16 }}>
+        <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 14, marginBottom: 16 }}>
         <TitreSection style={{ marginBottom: 14 }}>Capacité &amp; tarifs</TitreSection>
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <Champ style={{ flex: 1 }} etiquette="Quota (places max) *" value={quota} onChangeText={setQuota} keyboardType="number-pad" />
@@ -182,7 +182,7 @@ export default function FormulaireEvenementPartenaire() {
         </Case>
         </View>
 
-        {club ? null : (<View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 20, paddingBottom: 4, marginBottom: 16 }}>
+        {club ? null : (<View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 14, paddingBottom: 4, marginBottom: 16 }}>
         <TitreSection style={{ marginBottom: 14 }}>Options avancées</TitreSection>
         <Case coche={isFlash} onChange={setIsFlash} style={{ marginBottom: isFlash ? 12 : 20 }}>
           Event Flash — offre limitée dans le temps, en tête du fil

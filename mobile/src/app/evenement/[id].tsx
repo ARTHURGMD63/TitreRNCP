@@ -219,7 +219,7 @@ export default function FicheEvenement() {
 
   // padding-top: 120px, et margin-top: -20px sur le site.
   const contenuHero = (
-    <View style={{ paddingTop: 100 + top, paddingHorizontal: 20, paddingBottom: 32 }}>
+    <View style={{ paddingTop: 100 + top, paddingHorizontal: 16, paddingBottom: 32 }}>
       <Text style={{ fontFamily: mono(500), fontSize: fs[2], letterSpacing: lsEm.label * fs[2], textTransform: 'uppercase', color: accent, marginBottom: 10 }}>
         {majuscules(e.sport ? `${SPORTS[e.sport] ?? e.sport}${e.format ? ` · ${FORMATS_SPORT[e.format] ?? e.format}` : ''}` : (LIBELLES_TYPE[e.etablissement.type] ?? e.etablissement.type))} · {dateFr(e.date_heure, 'D j M')}{style}
       </Text>
@@ -227,12 +227,12 @@ export default function FicheEvenement() {
         <Badge libelle="Sponsorisé" fond="rgba(17,16,19,0.1)" encre={encre} filet="rgba(17,16,19,0.3)" style={{ alignSelf: 'flex-start', marginBottom: 10 }} />
       ) : null}
       <View accessibilityRole="header">
-        <Display taille={fs[9]} interligne={lh.display} couleur={encre}>{e.titre}</Display>
-        <Display taille={fs[7]} interligne={lh.display} couleur={encre} style={{ opacity: 0.85, marginTop: 6 }}>{e.etablissement.nom}</Display>
+        <Display taille={fs[7]} interligne={lh.display} couleur={encre}>{e.titre}</Display>
+        <Display taille={fs[5]} interligne={lh.display} couleur={encre} style={{ opacity: 0.85, marginTop: 4 }}>{e.etablissement.nom}</Display>
       </View>
       {(e.reduction ?? 0) > 0 || e.is_gratuit ? (
-        <View style={{ alignSelf: 'flex-start', marginTop: 18, backgroundColor: flash && !photo ? fixe.basalte : c.rouge, borderRadius: rayon.pill, paddingVertical: 8, paddingHorizontal: 20 }}>
-          <Display taille={fs[7]} interligne={1.2} couleur={flash && !photo ? fixe.craie : fixe.surAccent}>
+        <View style={{ alignSelf: 'flex-start', marginTop: 18, backgroundColor: flash && !photo ? fixe.basalte : c.rouge, borderRadius: rayon.pill, paddingVertical: 8, paddingHorizontal: 16 }}>
+          <Display taille={fs[5] + 1} interligne={1.2} couleur={flash && !photo ? fixe.craie : fixe.surAccent}>
             {(e.reduction ?? 0) > 0 ? `-${e.reduction}%` : 'Gratuit'}
           </Display>
         </View>
@@ -268,7 +268,7 @@ export default function FicheEvenement() {
           </Feuille>
 
           <Feuille visible={signalementPhoto} onClose={() => setSignalementPhoto(false)}>
-            <Display taille={fs[7]} interligne={lh.tight} style={{ marginBottom: 6, letterSpacing: lsEm.tight * fs[7] }}>Signaler cette photo</Display>
+            <Display taille={fs[6]} interligne={lh.tight} style={{ marginBottom: 6, letterSpacing: lsEm.tight * fs[7] }}>Signaler cette photo</Display>
             <T taille={fs[3]} poids={500} couleur={c.grisFonce} interligne={lh.snug} style={{ marginBottom: 20 }}>
               Ton signalement est envoyé à l&apos;équipe de modération.
             </T>
@@ -359,7 +359,7 @@ export default function FicheEvenement() {
 
         <View style={{ marginTop: 32 }}>
           <Section icone="info">À propos de l&apos;événement</Section>
-          <T taille={fs[5]} interligne={lh.relaxed} couleur={c.grisFonce}>{e.description}</T>
+          <T taille={fs[4]} interligne={lh.relaxed} couleur={c.grisFonce}>{e.description}</T>
         </View>
 
         {e.photos.length ? (
@@ -421,7 +421,7 @@ export default function FicheEvenement() {
             desactive={inscrit || e.places.complet}
             chargement={inscription === 'attente'}
             onPress={rejoindre}
-            style={{ paddingVertical: 18 }}
+            style={{ paddingVertical: 14 }}
           />
         </View>
       </View>
