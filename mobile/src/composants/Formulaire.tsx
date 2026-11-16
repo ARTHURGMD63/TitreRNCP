@@ -78,9 +78,9 @@ export function Champ({ etiquette, aide, multiligne, style, marge = 16, ...input
             // Refonte 2026-11 : même champ que les menus déroulants — fond
             // gris clair, fin contour (visible sur une carte comme sur le
             // fond de page), rayon 16, 52 px de haut.
-            paddingVertical: 14, paddingHorizontal: 18, borderWidth: 1, borderRadius: rayon.bouton,
+            paddingVertical: 11, paddingHorizontal: 14, borderWidth: 1, borderRadius: rayon.sm,
             borderColor: focus ? c.rouge : c.line2, backgroundColor: c.surface2, color: c.noir,
-            fontFamily: sans(400), fontSize: fs[5], minHeight: multiligne ? 96 : 52,
+            fontFamily: sans(400), fontSize: fs[4] + 1, minHeight: multiligne ? 88 : 46,
           }}
         />
       </Cadre>
@@ -120,8 +120,8 @@ export function Selecteur({ etiquette, valeur, options, onChange, titre, style, 
         chevron: filtreActif ? c.surEncre : c.noir,
       }
     : {
-        conteneur: { minHeight: 52, paddingVertical: 14, paddingLeft: 18, paddingRight: 40, borderRadius: rayon.bouton, borderWidth: 1, borderColor: c.line2, backgroundColor: c.surface2 },
-        texte: { fontFamily: sans(500), fontSize: fs[5], color: c.noir },
+        conteneur: { minHeight: 46, paddingVertical: 11, paddingLeft: 14, paddingRight: 36, borderRadius: rayon.sm, borderWidth: 1, borderColor: c.line2, backgroundColor: c.surface2 },
+        texte: { fontFamily: sans(500), fontSize: fs[4] + 1, color: c.noir },
         chevron: c.noir,
       };
 
@@ -137,12 +137,12 @@ export function Selecteur({ etiquette, valeur, options, onChange, titre, style, 
       >
         <Text numberOfLines={1} style={bouton.texte}>{choisi?.libelle ?? ''}</Text>
         <View pointerEvents="none" style={{ position: 'absolute', right: 14, top: 0, bottom: 0, justifyContent: 'center' }}>
-          <Icone nom="chevron-b" taille={18} couleur={bouton.chevron} trait={2} />
+          <Icone nom="chevron-b" taille={16} couleur={bouton.chevron} trait={2} />
         </View>
       </Pressable>
 
       <Feuille visible={ouvert} onClose={() => setOuvert(false)}>
-        <Display taille={fs[6]} style={{ marginBottom: 16 }}>{titre ?? etiquette ?? ''}</Display>
+        <Display taille={fs[5] + 2} style={{ marginBottom: 14 }}>{titre ?? etiquette ?? ''}</Display>
         <View style={{ gap: 8 }}>
           {options.map((o) => {
             const actif = o.valeur === valeur;
@@ -152,10 +152,10 @@ export function Selecteur({ etiquette, valeur, options, onChange, titre, style, 
                 onPress={() => { onChange(o.valeur); setOuvert(false); }}
                 accessibilityRole="button"
                 accessibilityState={{ selected: actif }}
-                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 52, paddingVertical: 14, paddingHorizontal: 16, borderRadius: rayon.bouton, backgroundColor: actif ? c.noir : c.surface2 }}
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44, paddingVertical: 10, paddingHorizontal: 14, borderRadius: rayon.sm, backgroundColor: actif ? c.noir : c.surface2 }}
               >
-                <T taille={fs[5]} poids={actif ? 600 : 500} couleur={actif ? c.surEncre : c.noir}>{o.libelle}</T>
-                {actif ? <Icone nom="check" taille={18} couleur={c.surEncre} /> : null}
+                <T taille={fs[4] + 1} poids={actif ? 600 : 500} couleur={actif ? c.surEncre : c.noir}>{o.libelle}</T>
+                {actif ? <Icone nom="check" taille={16} couleur={c.surEncre} /> : null}
               </Pressable>
             );
           })}
@@ -230,7 +230,7 @@ export function SelecteurInterets({ catalogue, choisis, onChange, max = 4 }: {
       accessibilityState={{ checked: coche }}
       style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 16, borderRadius: rayon.bouton, backgroundColor: coche ? c.noir : c.surface2 }}
     >
-      <Text style={{ fontFamily: sans(500), fontSize: fs[5] - 1, color: coche ? c.surEncre : c.noir }}>{i}</Text>
+      <Text style={{ fontFamily: sans(500), fontSize: fs[3], color: coche ? c.surEncre : c.noir }}>{i}</Text>
     </Pressable>
   );
 
@@ -244,7 +244,7 @@ export function SelecteurInterets({ catalogue, choisis, onChange, max = 4 }: {
           accessibilityLabel={deplie ? "Replier les centres d'intérêt" : `Afficher ${surplus} centre${surplus > 1 ? 's' : ''} d'intérêt de plus`}
           style={{ minWidth: 46, minHeight: 44, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 15, borderRadius: rayon.bouton, borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.line2 }}
         >
-          <Text style={{ fontFamily: sans(600), fontSize: fs[5] - 1, color: c.grisFonce }}>{deplie ? '−' : '+' + surplus}</Text>
+          <Text style={{ fontFamily: sans(600), fontSize: fs[3], color: c.grisFonce }}>{deplie ? '−' : '+' + surplus}</Text>
         </Pressable>
       ) : null}
       {nonCoches.map((i) => etiquette(i, false))}
@@ -314,14 +314,14 @@ export function ChampDate({ etiquette, valeur, onChange, mode = 'date', min, max
         onPress={ouvrir}
         accessibilityRole="button"
         accessibilityLabel={etiquette}
-        style={{ minHeight: 52, justifyContent: 'center', paddingVertical: 14, paddingHorizontal: 18, borderWidth: 1, borderRadius: rayon.bouton, borderColor: c.line2, backgroundColor: c.surface2 }}
+        style={{ minHeight: 46, justifyContent: 'center', paddingVertical: 11, paddingHorizontal: 14, borderWidth: 1, borderRadius: rayon.sm, borderColor: c.line2, backgroundColor: c.surface2 }}
       >
-        <Text style={{ fontFamily: sans(400), fontSize: fs[5], color: valeur ? c.noir : c.gris }}>{texte}</Text>
+        <Text style={{ fontFamily: sans(400), fontSize: fs[4] + 1, color: valeur ? c.noir : c.gris }}>{texte}</Text>
       </Pressable>
       {aide ? <Aide>{aide}</Aide> : null}
 
       <Feuille visible={ouvert} onClose={() => setOuvert(false)}>
-        {etiquette ? <Display taille={fs[6]} style={{ marginBottom: 8 }}>{etiquette}</Display> : null}
+        {etiquette ? <Display taille={fs[5] + 2} style={{ marginBottom: 8 }}>{etiquette}</Display> : null}
         <DateTimePicker
           value={brouillon}
           mode={mode === 'date' ? 'date' : 'datetime'}
@@ -336,9 +336,9 @@ export function ChampDate({ etiquette, valeur, onChange, mode = 'date', min, max
         <Pressable
           onPress={() => { onChange(brouillon); setOuvert(false); }}
           accessibilityRole="button"
-          style={{ marginTop: 12, minHeight: 52, borderRadius: rayon.pill, backgroundColor: c.rouge, alignItems: 'center', justifyContent: 'center' }}
+          style={{ marginTop: 12, minHeight: 46, borderRadius: rayon.md, backgroundColor: c.rouge, alignItems: 'center', justifyContent: 'center' }}
         >
-          <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: fixe.surAccent }}>Valider</Text>
+          <Text style={{ fontFamily: sans(700), fontSize: fs[4] + 1, color: fixe.surAccent }}>Valider</Text>
         </Pressable>
       </Feuille>
     </View>

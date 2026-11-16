@@ -186,7 +186,7 @@ export const fs = { 1: 11, 2: 12, 3: 13, 4: 14, 5: 16, 6: 20, 7: 24, 8: 32, 9: 3
  * version (titre d'écran 32, titre de carte 26) ne laissait voir qu'une
  * carte d'événement par écran.
  */
-export const taille = { titreEcran: 27, titreCarte: 21, titreCarteSport: 20, section: 17, surtitre: 11, secondaire: 14, chiffre: 22 } as const;
+export const taille = { titreEcran: 27, titreCarte: 18, titreCarteSport: 18, section: 17, surtitre: 11, secondaire: 14, chiffre: 22 } as const;
 
 /** Interlignes, en multiples du corps (--lh-*). */
 export const lh = { display: 1.2, tight: 1.2, snug: 1.3, normal: 1.5, relaxed: 1.6 } as const;
@@ -196,12 +196,13 @@ export const lsEm = { display: -0.035, carte: -0.03, tight: -0.02, normal: 0, wi
 export const ls = (em: number, taille: number) => em * taille;
 
 /**
- * Rayons. Refonte 2026-11 : cartes 24, personnes 22, tuiles 18, boutons et
- * chips 16, grands boutons 18, petit carré d'icône 10, barre 28.
+ * Rayons. Refonte 2026-11 : cartes 20, personnes 18, tuiles 18, boutons et
+ * chips 16, grands boutons 18, petit carré d'icône 10, barre 28. Cartes et
+ * personnes resserrées le 2026-11-16 avec le reste du gabarit.
  */
 export const rayon = {
   xs: 8, sm: 12, md: 16, base: 24, lg: 24, xl: 32, pill: 999,
-  carte: 24, personne: 22, tuile: 18, bouton: 16, grandBouton: 18, mini: 10, barre: 28, panneau: 28,
+  carte: 20, personne: 18, tuile: 18, bouton: 16, grandBouton: 18, mini: 10, barre: 28, panneau: 28,
 } as const;
 
 /** Gouttière horizontale (18 px depuis la refonte) et cible tactile. */

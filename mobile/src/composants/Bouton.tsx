@@ -45,7 +45,7 @@ type Props = {
 
 export function Bouton({
   libelle, onPress, variante = 'primaire', plein, desactive, chargement, icone, iconeADroite,
-  style, styleTexte, taillePolice = fs[5], accessibilityLabel, accent, testID,
+  style, styleTexte, taillePolice = fs[4] + 1, accessibilityLabel, accent, testID,
 }: Props) {
   const { c } = useTheme();
   const inactif = desactive || chargement;
@@ -87,9 +87,9 @@ export function Bouton({
         {
           flexDirection: iconeADroite ? 'row-reverse' : 'row',
           alignItems: 'center', justifyContent: 'center', gap: 8,
-          paddingVertical: 13, paddingHorizontal: variante === 'texte' ? 4 : 22,
-          minHeight: plein ? 54 : toucheMin,
-          borderRadius: plein ? rayon.grandBouton : rayon.bouton, borderWidth: 1.5, borderColor: filet, backgroundColor: fond,
+          paddingVertical: 10, paddingHorizontal: variante === 'texte' ? 4 : 18,
+          minHeight: plein ? 46 : toucheMin,
+          borderRadius: rayon.md, borderWidth: 1.5, borderColor: filet, backgroundColor: fond,
           opacity: opaciteDesactive,
         },
         plein ? { alignSelf: 'stretch' } : { alignSelf: 'flex-start' },
@@ -100,7 +100,7 @@ export function Bouton({
         <ActivityIndicator size="small" color={encre} />
       ) : (
         <>
-          {icone ? <Icone nom={icone} taille={17} couleur={encre} /> : null}
+          {icone ? <Icone nom={icone} taille={16} couleur={encre} /> : null}
           <Text numberOfLines={1} style={[{ fontFamily: sans(700), fontSize: taillePolice, color: encre }, styleTexte]}>
             {libelle}
           </Text>
