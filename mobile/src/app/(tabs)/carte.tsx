@@ -15,6 +15,11 @@
  * leur pastille plutôt que de se recouvrir. « En cours » n'est plus une
  * couleur mais un halo qui pulse sous la pointe.
  *
+ * Refonte 2026-11 (reprise le 2026-11-16) : boutons flottants, pastilles et
+ * cartes du carrousel reprennent les composants des autres écrans ; les
+ * repères gardent une ombre douce à eux, puisque ombre('base') ne dessine
+ * plus rien et qu'une bulle plate se perd sur le fond de carte.
+ *
  * Toucher un repère fait monter un carrousel de cartes en bas de l'écran.
  * Le faire glisser de gauche à droite passe à la soirée voisine (d'ouest en
  * est) et recentre la carte dessus ; toucher la carte ouvre la fiche,
@@ -39,14 +44,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { api, type Evenement } from '../../api';
 import { reserveBarre } from '../../composants/BarreOnglets';
-import { Badge, BoutonRetour } from '../../composants/Elements';
+import { PastilleEnCours } from '../../composants/CarteEvenement';
+import { AvatarsEmpiles, BoutonIcone, Pastille } from '../../composants/Design';
+import { BoutonRetour } from '../../composants/Elements';
 import { Icone } from '../../composants/Icone';
-import { Display, Mono, T } from '../../composants/Texte';
+import { T } from '../../composants/Texte';
 import { LIBELLES_TYPE } from '../../catalogue';
 import { dateFr } from '../../format';
 import { libelleInscrits, libellesAffluence, palierAffluence } from '../../regles';
 import { useJeton } from '../../session';
-import { encreSur, fs, lh, rayon, sans, type Couleurs } from '../../theme';
+import { encreSur, fs, rayon, sans, taille, type Couleurs, type Mode } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 // Clermont-Ferrand, cœur de la charte : la carte s'ouvre là par défaut, avant
@@ -66,7 +73,7 @@ const DECALAGE_REPERE = { x: 0, y: -(HAUTEUR_BULLE + POINTE - HAUTEUR_REPERE / 2
 const ANCRE_CENTRE = { x: 0.5, y: 0.5 };
 
 // Géométrie du carrousel.
-const HAUTEUR_CARTE = 132;
+const HAUTEUR_CARTE = 124;
 const ECART_CARTES = 10;
 
 // Emprise d'un repère, en part de la région affichée (largeur × hauteur
@@ -77,25 +84,36 @@ const EMPRISE_NOM = { lat: 0.06, lon: 0.38 };
 
 /**
  * Le fond de carte de Google (Android) : sans commerces ni arrêts, pour que
- * les soirées soient seules à parler. La nuit, il reprend le basalte de la
- * charte. Apple Plans suit le thème par userInterfaceStyle.
+ * les soirées soient seules à parler. La nuit, il reprend le fond sombre de
+ * la refonte (#0E0E12, surfaces #1C1C22). Apple Plans suit le thème par userInterfaceStyle.
  */
 const STYLE_JOUR: MapStyleElement[] = [
   { featureType: 'poi', stylers: [{ visibility: 'off' }] },
   { featureType: 'transit', stylers: [{ visibility: 'off' }] },
 ];
 const STYLE_NUIT: MapStyleElement[] = [
-  { elementType: 'geometry', stylers: [{ color: '#17151A' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#8A858F' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#111013' }] },
+  { elementType: 'geometry', stylers: [{ color: '#15151A' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#8C8C99' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#0E0E12' }] },
   { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
   { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ visibility: 'on' }, { color: '#19201A' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ visibility: 'on' }, { color: '#16201B' }] },
   { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#26232B' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#36323B' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0F1D3A' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#24242C' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#33333D' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#101B38' }] },
 ];
+
+/**
+ * L'ombre de ce qui flotte sur la carte (repères, boutons, carrousel) :
+ * légère, mais présente, pour détacher l'élément du fond de carte. Les
+ * ombres du thème sont réservées à la barre d'onglets.
+ */
+function ombreCarte(mode: Mode) {
+  return mode === 'sombre'
+    ? { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.45, shadowRadius: 8, elevation: 5 }
+    : { shadowColor: '#111116', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.16, shadowRadius: 8, elevation: 5 };
+}
 
 /** La couleur d'un palier d'affluence : dôme, volt, moutarde, puis rose vif. */
 function teinteAffluence(c: Couleurs, inscrits: number): string {
@@ -180,7 +198,7 @@ function useRedessin(signature: string): boolean {
 const Bulle = memo(function Bulle({ inscrits, titre, enCours, actif, nomVisible }: {
   inscrits: number; titre: string; enCours: boolean; actif: boolean; nomVisible: boolean;
 }) {
-  const { c, ombre } = useTheme();
+  const { c, mode } = useTheme();
   const [pouls] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
@@ -217,16 +235,16 @@ const Bulle = memo(function Bulle({ inscrits, titre, enCours, actif, nomVisible 
         style={[
           {
             height: HAUTEUR_BULLE, borderRadius: HAUTEUR_BULLE / 2, flexDirection: 'row', alignItems: 'center', gap: 6,
-            paddingLeft: 2, paddingRight: nomVisible ? 10 : 2, backgroundColor: fond, borderWidth: 1, borderColor: bordure,
+            paddingLeft: 3, paddingRight: nomVisible ? 10 : 3, backgroundColor: fond, borderWidth: 1, borderColor: bordure,
           },
-          ombre('base'),
+          ombreCarte(mode),
         ]}
       >
         <View style={{ minWidth: 26, height: 26, borderRadius: 13, paddingHorizontal: 5, alignItems: 'center', justifyContent: 'center', backgroundColor: actif ? encre : teinte }}>
           <Text style={{ fontFamily: sans(700), fontSize: fs[2], color: actif ? teinte : encreSur(teinte), fontVariant: ['tabular-nums'] }}>{inscrits}</Text>
         </View>
         {nomVisible ? (
-          <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: fs[2], color: encre, maxWidth: 132 }}>{titre}</Text>
+          <Text numberOfLines={1} style={{ fontFamily: sans(600), fontSize: fs[2], color: encre, maxWidth: 132 }}>{titre}</Text>
         ) : null}
       </View>
       {/* La pointe recouvre d'un point le filet du bas de la bulle : les deux
@@ -269,7 +287,7 @@ function RepereSoiree({ evenement, actif, nomVisible, onPress }: {
  * la plus fréquentée du lot.
  */
 function RepereGrappe({ grappe, onPress }: { grappe: Grappe; onPress: (g: Grappe) => void }) {
-  const { c, mode, ombre } = useTheme();
+  const { c, mode } = useTheme();
   const n = grappe.evenements.length;
   const teinte = teinteAffluence(c, Math.max(...grappe.evenements.map((e) => e.places.inscrits)));
   const redessin = useRedessin(`${mode}|${n}|${teinte}`);
@@ -289,7 +307,7 @@ function RepereGrappe({ grappe, onPress }: { grappe: Grappe; onPress: (g: Grappe
             height: HAUTEUR_BULLE, borderRadius: HAUTEUR_BULLE / 2, flexDirection: 'row', alignItems: 'center', gap: 6,
             paddingLeft: 9, paddingRight: 11, backgroundColor: c.blanc, borderWidth: 1, borderColor: c.line2,
           },
-          ombre('base'),
+          ombreCarte(mode),
         ]}
       >
         <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: teinte }} />
@@ -299,11 +317,14 @@ function RepereGrappe({ grappe, onPress }: { grappe: Grappe; onPress: (g: Grappe
   );
 }
 
-/** Une carte du carrousel : le résumé d'une soirée, d'un coup d'œil. */
+/**
+ * Une carte du carrousel : le résumé d'une soirée, d'un coup d'œil. Mêmes
+ * pastilles et même titre que les cartes d'Explorer, en plus court.
+ */
 const CarteSoiree = memo(function CarteSoiree({ evenement, actif, largeur, onPress }: {
   evenement: Evenement; actif: boolean; largeur: number; onPress: (e: Evenement) => void;
 }) {
-  const { c, ombre } = useTheme();
+  const { c, mode } = useTheme();
   const teinte = teinteAffluence(c, evenement.places.inscrits);
   const reduction = evenement.reduction ?? 0;
   const remise = reduction > 0 ? `-${reduction}%` : evenement.is_gratuit ? 'Gratuit' : null;
@@ -318,43 +339,47 @@ const CarteSoiree = memo(function CarteSoiree({ evenement, actif, largeur, onPre
       accessibilityHint={actif ? 'Ouvre la fiche de la soirée' : 'Affiche cette soirée sur la carte'}
       style={[
         {
-          width: largeur, height: HAUTEUR_CARTE, backgroundColor: c.blanc, borderRadius: rayon.base, padding: 16,
-          justifyContent: 'space-between', borderWidth: 1.5, borderColor: actif ? teinte : c.grisClair,
+          width: largeur, height: HAUTEUR_CARTE, backgroundColor: c.blanc, borderRadius: rayon.personne, padding: 14,
+          justifyContent: 'space-between', borderWidth: 1.5, borderColor: actif ? teinte : 'transparent',
         },
-        ombre('lg'),
+        ombreCarte(mode),
       ]}
     >
       <View>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
           {evenement.en_cours
-            ? <Badge libelle="En cours" fond={c.lime} encre={encreSur(c.lime)} />
-            : <Mono couleur={c.gris}>{dateFr(evenement.date_heure, 'D j M · H\\hi')}</Mono>}
-          {remise ? <Badge libelle={remise} fond={c.rougeClair} encre={c.surRougeClair} /> : null}
+            ? <PastilleEnCours />
+            : <Pastille libelle={dateFr(evenement.date_heure, 'D j M · H\\hi')} fond={c.surface2} encre={c.noir} />}
+          {remise ? <Pastille libelle={remise} fond={c.succesClair} encre={c.succes} /> : null}
         </View>
-        <Display taille={fs[5]} interligne={lh.tight} numberOfLines={1}>{evenement.titre}</Display>
-        <T taille={fs[3]} couleur={c.grisFonce} numberOfLines={1} style={{ marginTop: 2 }}>
+        <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: taille.titreCarteSport - 2, letterSpacing: -0.03 * (taille.titreCarteSport - 2), color: c.noir }}>
+          {evenement.titre}
+        </Text>
+        <T taille={fs[3]} couleur={c.gris} numberOfLines={1} style={{ marginTop: 1 }}>
           {evenement.etablissement.nom}{type ? ` · ${type}` : ''}
         </T>
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: teinte }} />
-        <T taille={fs[3]} poids={700}>{libelleInscrits(evenement.places.inscrits)}</T>
-        {evenement.places.complet ? <T taille={fs[3]} poids={700} couleur={c.danger}>· Complet</T> : null}
-        <View style={{ flex: 1, minWidth: 0 }}>
+        <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: teinte }} />
+        <T taille={fs[3]} poids={600}>{libelleInscrits(evenement.places.inscrits)}</T>
+        {evenement.places.complet ? <T taille={fs[3]} poids={600} couleur={c.danger}>· Complet</T> : null}
+        <View style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
           {amis ? (
-            <T taille={fs[3]} poids={600} couleur={c.surRougeClair} numberOfLines={1}>
-              · {amis.prenoms.slice(0, 2).join(', ')}{amis.nb > 2 ? ` +${amis.nb - 2}` : ''} {amis.nb > 1 ? 'y vont' : 'y va'}
-            </T>
+            <AvatarsEmpiles
+              personnes={amis.prenoms.slice(0, 3).map((p, i) => ({ cle: `${p}${i}`, prenom: p }))}
+              fond={c.blanc}
+              taille={20}
+            />
           ) : null}
+          <Icone nom="fleche-d" taille={16} couleur={c.gris} />
         </View>
-        <Icone nom="fleche-d" taille={16} couleur={c.gris} />
       </View>
     </Pressable>
   );
 });
 
 export default function CarteEvenements() {
-  const { c, sombre } = useTheme();
+  const { c, sombre, mode } = useTheme();
   const jeton = useJeton();
   const { top, bottom } = useSafeAreaInsets();
   const { width: largeurEcran, height: hauteurEcran } = useWindowDimensions();
@@ -562,39 +587,37 @@ export default function CarteEvenements() {
         )))}
       </MapView>
 
-      <View pointerEvents="box-none" style={{ position: 'absolute', top: top + 16, left: 20, right: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <BoutonRetour media />
-        <View style={{ backgroundColor: c.blanc, borderWidth: 1, borderColor: c.line2, borderRadius: rayon.pill, paddingVertical: 8, paddingHorizontal: 16 }}>
-          <T taille={fs[3]} poids={700}>
+      <View pointerEvents="box-none" style={{ position: 'absolute', top: top + 12, left: 16, right: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        <BoutonRetour style={ombreCarte(mode)} />
+        <View style={[{ flexShrink: 1, height: 42, justifyContent: 'center', backgroundColor: c.blanc, borderRadius: rayon.sm, paddingHorizontal: 14 }, ombreCarte(mode)]}>
+          <T taille={fs[3]} poids={600} numberOfLines={1}>
             {evenements === null ? 'Chargement…' : `${localisables.length} soirée${localisables.length > 1 ? 's' : ''} sur la carte`}
           </T>
         </View>
+        <BoutonIcone
+          icone={autorisationPosition === 'refusee' ? 'interdit' : 'epingle'}
+          libelle="Me localiser"
+          onPress={meLocaliser}
+          style={ombreCarte(mode)}
+        />
       </View>
 
-      {/* Seconde rangée, fixe : la légende des couleurs à gauche, « me
-          localiser » à droite. Plus rien ne saute quand le carrousel monte. */}
-      <View pointerEvents="box-none" style={{ position: 'absolute', top: top + 72, left: 20, right: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+      {/* Seconde rangée, fixe : la légende des couleurs. Plus rien ne saute
+          quand le carrousel monte. */}
+      <View pointerEvents="box-none" style={{ position: 'absolute', top: top + 64, left: 16, right: 16, flexDirection: 'row', alignItems: 'center' }}>
         <View
           accessible
           accessibilityLabel={`Couleur des repères selon le nombre d'inscrits : ${libellesAffluence().join(', ')}`}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: c.blanc, borderWidth: 1, borderColor: c.line2, borderRadius: rayon.pill, paddingVertical: 7, paddingHorizontal: 12 }}
+          style={[{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: c.blanc, borderRadius: rayon.sm, paddingVertical: 7, paddingHorizontal: 12 }, ombreCarte(mode)]}
         >
           <Icone nom="personnes" taille={14} couleur={c.grisFonce} />
           {libellesAffluence().map((libelle, i) => (
             <View key={libelle} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: teintes[i] }} />
-              <T taille={fs[1]} poids={600} couleur={c.grisFonce}>{libelle}</T>
+              <T taille={fs[1]} poids={500} couleur={c.grisFonce}>{libelle}</T>
             </View>
           ))}
         </View>
-        <Pressable
-          onPress={meLocaliser}
-          accessibilityRole="button"
-          accessibilityLabel="Me localiser"
-          style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.blanc, borderWidth: 1, borderColor: c.line2, alignItems: 'center', justifyContent: 'center' }}
-        >
-          <Icone nom={autorisationPosition === 'refusee' ? 'interdit' : 'epingle'} taille={20} couleur={autorisationPosition === 'refusee' ? c.gris : c.noir} />
-        </Pressable>
       </View>
 
       <Animated.View
