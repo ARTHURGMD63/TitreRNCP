@@ -1,10 +1,10 @@
 /**
  * La barre d'onglets flottante.
  *
- * Refonte 2026-11 : une barre sombre (#16161C) dans les deux thèmes, à 18 px
- * des bords et ~20 px du bas, 68 px de haut, rayon 28. L'onglet actif est une
- * pastille blanche qui porte son icône et son nom ; les autres n'ont que
- * l'icône, en #A7A7B3, avec leur nom en libellé accessible. Mêmes libellés, même ordre, mêmes icônes que le
+ * Refonte 2026-11 : une barre sombre (#16161C) dans les deux thèmes, à 16 px
+ * des bords et ~20 px du bas, 62 px de haut, rayon 28. Chaque onglet a une
+ * case de même largeur, icône et nom dessous ; l'actif est une case blanche,
+ * les autres sont en #A7A7B3. Les cases ne bougent jamais. Mêmes libellés, même ordre, mêmes icônes que le
  * site : Explorer, Squads, Pass, Moi — Personnes et Culture en plus, propres à
  * l'application (explore.php le proposait en sélecteur en haut d'Explorer,
  * pas en onglet).
@@ -27,7 +27,7 @@ import { useTheme } from '../useTheme';
 import { PressableAnime } from './Animations';
 import { Icone, type NomIcone } from './Icone';
 
-/** `court` : libellé affiché quand la barre est compacte (petit écran, six onglets). */
+/** `court` : libellé affiché quand la case est étroite (six onglets sur un téléphone). */
 export type OngletBarre = { route: string; libelle: string; icone: NomIcone; court?: string };
 
 /** Le bouton central surélevé (espace partenaire : « + Créer une soirée »). */
@@ -62,29 +62,35 @@ export function ecartBasBarre(zoneBasse: number): number {
 }
 
 /** Marges latérales de la barre. */
-const MARGE_BARRE = 18;
+const MARGE_BARRE = 16;
+
+/** Marge intérieure de la barre, de part et d'autre des cases. */
+const MARGE_INTERIEURE = 6;
 
 /**
- * Taille de la barre selon l'écran : toute la largeur moins 18 px de chaque
- * côté, 440 px au plus (tablette). `compacte` réduit le libellé de l'onglet
- * actif sur un très petit écran, pour que les icônes gardent 44 px.
+ * Taille de la barre selon l'écran : toute la largeur moins 16 px de chaque
+ * côté, 440 px au plus (tablette).
+ *
+ * Chaque onglet a une case de même largeur, actif ou non : depuis le
+ * 2026-11-16, les icônes ne bougent plus quand on change d'onglet (l'onglet
+ * actif s'élargissait à la longueur de son libellé et poussait les autres).
+ * `compacte` : la case est trop étroite pour le libellé complet, on prend
+ * le libellé court quand l'onglet en a un.
  */
 export function gabaritBarre(
   largeurEcran: number,
-  nbOnglets: number,
-  plusLongLibelle = 9,
-): { largeur: number; marge: number; compacte: boolean; corps: number } {
+  nbCases: number,
+): { largeur: number; marge: number; compacte: boolean; corps: number; largeurCase: number } {
   const largeur = Math.max(0, Math.min(440, largeurEcran - 2 * MARGE_BARRE));
-  const n = Math.max(1, nbOnglets);
-  // Les onglets inactifs gardent 40 px au moins ; l'actif prend le reste.
-  const resteActif = largeur - 16 - (n - 1) * 40;
-  const compacte = resteActif < 40 + plusLongLibelle * 9;
-  const corps = compacte ? fs[4] : fs[5] - 1;
-  return { largeur, marge: 8, compacte, corps };
+  const n = Math.max(1, nbCases);
+  const largeurCase = (largeur - 2 * MARGE_INTERIEURE) / n;
+  const compacte = largeurCase < 64;
+  const corps = compacte ? 10 : fs[1];
+  return { largeur, marge: MARGE_INTERIEURE, compacte, corps, largeurCase };
 }
 
 /** Hauteur de la barre. */
-export const HAUTEUR_PILULE = 68;
+export const HAUTEUR_PILULE = 62;
 
 /** Ce que le contenu doit laisser libre en bas : la barre et 16 px d'air. */
 export function reserveBarre(zoneBasse: number): number {
@@ -106,8 +112,7 @@ export function BarreOnglets({ state, navigation, onglets = ONGLETS, parent = PA
   const largeurEcran = useWindowDimensions().width;
   const courant = state.routes[state.index]?.name ?? onglets[0]?.route;
   const actif = parent[courant] ?? courant;
-  const libelleActif = onglets.find((o) => o.route === actif)?.libelle ?? '';
-  const { largeur, marge, corps } = gabaritBarre(largeurEcran, onglets.length + (actionCentrale ? 1 : 0), libelleActif.length);
+  const { largeur, marge, compacte, corps } = gabaritBarre(largeurEcran, onglets.length + (actionCentrale ? 1 : 0));
   const milieu = Math.ceil(onglets.length / 2);
 
   return (
@@ -117,7 +122,7 @@ export function BarreOnglets({ state, navigation, onglets = ONGLETS, parent = PA
         style={[
           {
             width: largeur, paddingHorizontal: marge, height: HAUTEUR_PILULE,
-            flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+            flexDirection: 'row', alignItems: 'center',
             backgroundColor: fixe.barre, borderRadius: rayon.barre,
           },
           ombre('lg'),
@@ -125,17 +130,20 @@ export function BarreOnglets({ state, navigation, onglets = ONGLETS, parent = PA
       >
         {onglets.map((o, i) => {
           const estActif = o.route === actif;
+          const encre = estActif ? '#111116' : fixe.barreIcone;
           return (
             <React.Fragment key={o.route}>
             {actionCentrale && i === milieu ? (
-              <PressableAnime
-                onPress={actionCentrale.onPress}
-                accessibilityRole="button"
-                accessibilityLabel={actionCentrale.libelle}
-                style={{ width: 48, height: 48, marginHorizontal: 2, borderRadius: rayon.bouton, backgroundColor: actionCentrale.couleur, alignItems: 'center', justifyContent: 'center' }}
-              >
-                <Icone nom={actionCentrale.icone} taille={24} couleur={encreSur(actionCentrale.couleur)} trait={2.5} />
-              </PressableAnime>
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <PressableAnime
+                  onPress={actionCentrale.onPress}
+                  accessibilityRole="button"
+                  accessibilityLabel={actionCentrale.libelle}
+                  style={{ width: 46, height: 46, borderRadius: rayon.md, backgroundColor: actionCentrale.couleur, alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <Icone nom={actionCentrale.icone} taille={22} couleur={encreSur(actionCentrale.couleur)} trait={2.5} />
+                </PressableAnime>
+              </View>
             ) : null}
             <PressableAnime
               accessibilityRole="tab"
@@ -148,18 +156,18 @@ export function BarreOnglets({ state, navigation, onglets = ONGLETS, parent = PA
                   if (!evenement?.defaultPrevented) navigation.navigate(o.route);
                 }
               }}
-              style={
-                estActif
-                  ? { flexDirection: 'row', alignItems: 'center', gap: 8, height: 52, paddingHorizontal: 14, borderRadius: 20, backgroundColor: '#FFFFFF', flexShrink: 1 }
-                  : { flex: 1, minWidth: 40, height: 52, alignItems: 'center', justifyContent: 'center' }
-              }
+              style={{ flex: 1, height: 50, marginHorizontal: 2, borderRadius: 18, alignItems: 'center', justifyContent: 'center', gap: 3, backgroundColor: estActif ? '#FFFFFF' : 'transparent' }}
             >
-              <Icone nom={o.icone} taille={22} couleur={estActif ? '#111116' : fixe.barreIcone} />
-              {estActif ? (
-                <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ fontFamily: sans(600), fontSize: corps, color: '#111116', flexShrink: 1 }}>
-                  {o.libelle}
-                </Text>
-              ) : null}
+              <Icone nom={o.icone} taille={20} couleur={encre} />
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+                maxFontSizeMultiplier={1.2}
+                style={{ fontFamily: sans(estActif ? 700 : 500), fontSize: corps, color: encre, paddingHorizontal: 2 }}
+              >
+                {compacte && o.court ? o.court : o.libelle}
+              </Text>
             </PressableAnime>
             </React.Fragment>
           );

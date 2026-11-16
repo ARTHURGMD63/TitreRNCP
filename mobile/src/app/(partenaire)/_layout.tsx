@@ -22,8 +22,8 @@ import { useJeton } from '../../session';
 import { useTheme } from '../../useTheme';
 
 const ONGLETS: OngletBarre[] = [
-  { route: 'index', libelle: 'Tableau de bord', icone: 'appareil' },
-  { route: 'evenements', libelle: 'Événements', icone: 'calendrier' },
+  { route: 'index', libelle: 'Tableau de bord', icone: 'appareil', court: 'Accueil' },
+  { route: 'evenements', libelle: 'Événements', icone: 'calendrier', court: 'Soirées' },
   { route: 'moi', libelle: 'Moi', icone: 'personne' },
 ];
 
