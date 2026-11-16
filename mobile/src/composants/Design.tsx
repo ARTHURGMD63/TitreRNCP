@@ -59,18 +59,32 @@ export function BoutonIcone({ icone, libelle, onPress, pastille, etendu, style }
  * Recherche et Notifications à droite. Chaque bouton n'apparaît que si
  * l'écran sait déjà faire l'action correspondante.
  */
-export function EnTeteApp({ rubrique = 'bleu', onRecherche, rechercheOuverte, onNotifications, nonLues, style }: {
+export function EnTeteApp({ rubrique = 'bleu', onRecherche, rechercheOuverte, onNotifications, nonLues, action, style }: {
   rubrique?: Rubrique;
   onRecherche?: () => void;
   rechercheOuverte?: boolean;
   onNotifications?: () => void;
   nonLues?: boolean;
+  /** Action principale de l'écran, posée avant la cloche (« + Créer » sur Sport). */
+  action?: { libelle: string; accessibilityLabel?: string; icone: NomIcone; onPress: () => void };
   style?: StyleProp<ViewStyle>;
 }) {
+  const teinte = useRubrique(rubrique);
   return (
     <View style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 18 }, style]}>
       <Marque taille={fs[6]} rubrique={rubrique} />
       <View style={{ flexDirection: 'row', gap: 10 }}>
+        {action ? (
+          <PressableAnime
+            onPress={action.onPress}
+            accessibilityRole="button"
+            accessibilityLabel={action.accessibilityLabel ?? action.libelle}
+            style={{ height: 46, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, borderRadius: rayon.bouton, backgroundColor: teinte.accent }}
+          >
+            <Icone nom={action.icone} taille={20} couleur="#FFFFFF" trait={2.5} />
+            <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: '#FFFFFF' }}>{action.libelle}</Text>
+          </PressableAnime>
+        ) : null}
         {onRecherche ? <BoutonIcone icone="loupe" libelle="Rechercher" onPress={onRecherche} etendu={!!rechercheOuverte} /> : null}
         {onNotifications ? <BoutonIcone icone="cloche" libelle="Notifications" onPress={onNotifications} pastille={nonLues} /> : null}
       </View>

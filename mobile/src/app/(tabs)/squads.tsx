@@ -18,13 +18,11 @@
 
 import React, { useCallback, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 
 import { actions, api, ErreurApi, type ReponseSport, type Squad } from '../../api';
 import { NIVEAUX_SQUAD, SPORTS, TYPES_SQUAD } from '../../catalogue';
 import { Apparition, PressableAnime } from '../../composants/Animations';
-import { reserveBarre } from '../../composants/BarreOnglets';
 import { Bouton } from '../../composants/Bouton';
 import { AvatarsEmpiles, EnTeteApp, PanneauFiltres, Pastille, rangeeChips, Tuile, useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
@@ -208,7 +206,6 @@ export default function Sport() {
       onRafraichir={() => { setRafraichit(true); void charger(); }}
       horsDefilement={
         <>
-          <BoutonCreer onPress={() => setCreation(true)} />
           <FeuilleCreation visible={creation} onClose={() => setCreation(false)} onCree={(m) => { toast(m, 'success'); setCreation(false); setRubrique('abonnements'); void charger(); }} />
           <FeuilleGestion squadId={gestion} onClose={() => setGestion(null)} onSupprime={() => { setGestion(null); void charger(); }} />
           <PanneauFiltres
@@ -225,7 +222,12 @@ export default function Sport() {
     >
       <EnTete style={{ paddingBottom: 4 }}>
         <Apparition index={0}>
-          <EnTeteApp rubrique="sport" onNotifications={() => router.navigate('/notifications')} />
+          <EnTeteApp
+            rubrique="sport"
+            // « Créer un événement » : la même feuille qu'avant, depuis l'en-tête.
+            action={{ libelle: 'Créer', accessibilityLabel: 'Créer un événement', icone: 'plus', onPress: () => setCreation(true) }}
+            onNotifications={() => router.navigate('/notifications')}
+          />
         </Apparition>
         <Apparition index={1}>
           <TitreEcran avant="Ne fais pas de sport" surligne="tout seul." rubrique="sport" style={{ marginBottom: 16 }} />
@@ -325,36 +327,6 @@ export default function Sport() {
         )}
       </Contenu>
     </Ecran>
-  );
-}
-
-// ─── Bouton « + Créer » ─────────────────────────────────────────────────────
-
-/**
- * Le bouton flottant rouge « + Créer », en bas à droite au-dessus de la
- * barre d'onglets : il ouvre la même feuille de création qu'avant.
- */
-function BoutonCreer({ onPress }: { onPress: () => void }) {
-  const { ombre } = useTheme();
-  const sport = useRubrique('sport');
-  const bas = useSafeAreaInsets().bottom;
-  return (
-    <PressableAnime
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel="Créer un événement"
-      style={[
-        {
-          position: 'absolute', right: gutter, bottom: reserveBarre(bas) - 4,
-          flexDirection: 'row', alignItems: 'center', gap: 8, height: 56, paddingHorizontal: 22,
-          borderRadius: rayon.grandBouton, backgroundColor: sport.accent,
-        },
-        ombre('lg'),
-      ]}
-    >
-      <Icone nom="plus" taille={22} couleur="#FFFFFF" trait={2.5} />
-      <Text style={{ fontFamily: sans(700), fontSize: fs[5] + 1, color: '#FFFFFF' }}>Créer</Text>
-    </PressableAnime>
   );
 }
 

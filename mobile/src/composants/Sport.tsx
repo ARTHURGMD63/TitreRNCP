@@ -39,26 +39,41 @@ export function etiquetteCreneau(c: Pick<Creneau, 'sport' | 'debut' | 'terrain'>
  * Les joueurs d'une partie (cercles de 28 px qui se chevauchent de 8 px,
  * cerclés de la couleur du fond), puis une place en pointillé par place vide.
  * `moi` : l'identifiant de l'utilisateur, dont l'avatar passe au rouge.
+ * `maxJoueurs` / `maxVides` : au-delà, les joueurs se résument en « +N »
+ * et les places libres ne sont plus dessinées (le texte « N places » le
+ * dit) — sur une carte, la pile ne doit jamais passer sous le bouton.
  */
-export function PastillesJoueurs({ joueurs, total, taille = 28, moi, fond }: {
+export function PastillesJoueurs({ joueurs, total, taille = 28, moi, fond, maxJoueurs = 99, maxVides = 8 }: {
   joueurs: Pick<JoueurCreneau, 'id' | 'prenom' | 'photo_url'>[];
   total: number;
   taille?: number;
   moi?: number;
   fond?: string;
+  maxJoueurs?: number;
+  maxVides?: number;
 }) {
   const { c, mode } = useTheme();
   const sport = teintes('sport', mode);
   const cerne = fond ?? c.blanc;
   const vides = Math.max(0, total - joueurs.length);
+  const visibles = joueurs.length > maxJoueurs ? joueurs.slice(0, maxJoueurs - 1) : joueurs;
+  const caches = joueurs.length - visibles.length;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      {joueurs.map((j, i) => (
+      {visibles.map((j, i) => (
         <View key={j.id} style={{ marginLeft: i === 0 ? 0 : -8, borderRadius: taille, borderWidth: 2, borderColor: cerne }}>
           <Avatar photo={j.photo_url} prenom={j.prenom} taille={taille} fond={j.id === moi ? sport.accent : teinteAvatar(j.prenom + j.id)} />
         </View>
       ))}
-      {Array.from({ length: Math.min(vides, 8) }, (_, i) => (
+      {caches > 0 ? (
+        <View
+          accessibilityLabel={`et ${caches} autres joueurs`}
+          style={{ marginLeft: -8, minWidth: taille + 4, height: taille + 4, paddingHorizontal: 4, borderRadius: taille, borderWidth: 2, borderColor: cerne, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Text style={{ fontFamily: sans(700), fontSize: 11, color: c.grisFonce }}>+{caches}</Text>
+        </View>
+      ) : null}
+      {Array.from({ length: Math.min(vides, maxVides) }, (_, i) => (
         <View
           key={`vide-${i}`}
           accessibilityLabel="Place libre"
@@ -156,12 +171,12 @@ export function CarteCreneau({ cr, action, onPress }: { cr: Creneau; action: str
         </T>
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingTop: 14, marginTop: 4, borderTopWidth: 1, borderTopColor: c.grisClair }}>
-        <View style={{ gap: 6, flexShrink: 1 }}>
+        <View style={{ gap: 6, flex: 1, minWidth: 0, overflow: 'hidden' }}>
           {libre ? (
             <T taille={fs[4]} poids={500} couleur={c.grisFonce}>Terrain libre · {formatEuros(cr.prix)}</T>
           ) : (
             <>
-              <PastillesJoueurs joueurs={cr.joueurs} total={cr.places.total} />
+              <PastillesJoueurs joueurs={cr.joueurs} total={cr.places.total} maxJoueurs={4} maxVides={2} />
               <T taille={fs[4]} couleur={c.gris}>{libellePlaces(cr.places.restantes)}</T>
             </>
           )}
