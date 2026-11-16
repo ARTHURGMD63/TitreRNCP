@@ -2,7 +2,8 @@
  * Sport — l'onglet de l'univers sport, dôme pour l'accent.
  *
  * « Ne fais pas / de sport tout seul. », puis :
- *   - les filtres par sport (Tout, Padel, Tennis…) ;
+ *   - les filtres par sport (Tout, Padel, Tennis…), et le panneau Filtres :
+ *     niveau, et distance (5 à 20 km) autour d'un point posé sur la carte ;
  *   - « Mes parties » quand j'en ai, en tête : c'est ce qui me concerne ;
  *   - quatre rubriques :
  *       Parties à compléter : des étudiants ont réservé un terrain et ouvert
@@ -24,10 +25,11 @@ import { actions, api, ErreurApi, type ReponseSport, type Squad } from '../../ap
 import { NIVEAUX_SQUAD, SPORTS, TYPES_SQUAD } from '../../catalogue';
 import { Apparition, PressableAnime } from '../../composants/Animations';
 import { Bouton } from '../../composants/Bouton';
-import { AvatarsEmpiles, EnTeteApp, PanneauFiltres, Pastille, rangeeChips, Tuile, useRubrique } from '../../composants/Design';
+import { AvatarsEmpiles, EnTeteApp, Pastille, rangeeChips, Tuile, useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Pilule, Separateur } from '../../composants/Elements';
 import { Feuille } from '../../composants/Feuille';
+import { FiltresSport, type FiltreDistance } from '../../composants/FiltresSport';
 import { Case, Champ, ChampDate, isoDateHeure, Selecteur } from '../../composants/Formulaire';
 import { Icone, type NomIcone } from '../../composants/Icone';
 import { CarteCreneau, CarteEvenementSport, VideSport } from '../../composants/Sport';
@@ -171,6 +173,7 @@ export default function Sport() {
   const [sport, setSport] = useState('');
   const [rubrique, setRubrique] = useState<Rubrique>('parties');
   const [niveau, setNiveau] = useState('tous');
+  const [distance, setDistance] = useState<FiltreDistance | null>(null);
 
   const [creation, setCreation] = useState(false);
   const [gestion, setGestion] = useState<number | null>(null);
@@ -180,18 +183,25 @@ export default function Sport() {
   const charger = useCallback(async () => {
     try {
       setErreur(null);
-      setDonnees(await api.sport(jeton, sport || undefined));
+      setDonnees(await api.sport(jeton, sport || undefined, distance ?? undefined));
     } catch (e) {
       setErreur(e instanceof Error ? e.message : 'Chargement impossible.');
     } finally {
       setRafraichit(false);
     }
-  }, [jeton, sport]);
+  }, [jeton, sport, distance]);
 
   useFocusEffect(useCallback(() => { void charger(); }, [charger]));
 
   const sports = [{ code: '', libelle: 'Tout' }, ...(donnees?.sports ?? Object.entries(SPORTS).map(([code, libelle]) => ({ code, libelle })))];
   const parties = (donnees?.parties ?? []).filter((p) => niveauCompatible(p.niveau, niveau));
+  const nbFiltres = (niveau !== 'tous' ? 1 : 0) + (distance ? 1 : 0);
+  const resumeFiltres = [
+    niveau !== 'tous' ? `niveau : ${NIVEAUX.find((n) => n.code === niveau)?.libelle}` : null,
+    distance ? `à moins de ${distance.rayon} km` : null,
+  ].filter(Boolean).join(', ');
+  /** Le complément des listes vides quand la distance filtre. */
+  const horsZone = distance ? ` à moins de ${distance.rayon} km` : '';
 
   const nombre: Record<Rubrique, number> = {
     parties: donnees?.parties.length ?? 0,
@@ -208,13 +218,13 @@ export default function Sport() {
         <>
           <FeuilleCreation visible={creation} onClose={() => setCreation(false)} onCree={(m) => { toast(m, 'success'); setCreation(false); setRubrique('abonnements'); void charger(); }} />
           <FeuilleGestion squadId={gestion} onClose={() => setGestion(null)} onSupprime={() => { setGestion(null); void charger(); }} />
-          <PanneauFiltres
+          <FiltresSport
             visible={panneau}
             onClose={() => setPanneau(false)}
-            section="Niveau"
-            options={NIVEAUX}
-            valeur={niveau}
-            onAppliquer={setNiveau}
+            niveaux={NIVEAUX}
+            niveau={niveau}
+            distance={distance}
+            onAppliquer={(n, d) => { setNiveau(n); setDistance(d); }}
             accent={accent.accent}
           />
         </>
@@ -236,16 +246,25 @@ export default function Sport() {
 
       <Apparition index={2}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 20 }} contentContainerStyle={rangeeChips}>
-          {/* Le niveau est passé dans le panneau Filtres ; il ne s'applique,
-              comme avant, qu'aux parties à compléter. */}
+          {/* Le niveau (parties à compléter seulement) et la distance sont
+              dans le panneau Filtres. */}
           <Pilule
-            libelle={niveau !== 'tous' ? 'Filtres · 1' : 'Filtres'}
+            libelle={nbFiltres ? `Filtres · ${nbFiltres}` : 'Filtres'}
             icone="reglages"
             contour
             actif={false}
             onPress={() => setPanneau(true)}
-            accessibilityLabel={niveau !== 'tous' ? `Filtres, niveau : ${NIVEAUX.find((n) => n.code === niveau)?.libelle}` : 'Filtres'}
+            accessibilityLabel={nbFiltres ? `Filtres, ${resumeFiltres}` : 'Filtres'}
           />
+          {distance ? (
+            <Pilule
+              libelle={`${distance.rayon} km`}
+              icone="epingle"
+              actif
+              onPress={() => setDistance(null)}
+              accessibilityLabel={`Rayon de ${distance.rayon} km, retirer`}
+            />
+          ) : null}
           {sports.map((s) => (
             <Pilule
               key={s.code || 'tout'}
@@ -294,7 +313,7 @@ export default function Sport() {
               <>
                 {parties.map((p) => <CarteCreneau key={p.id} cr={p} action="Compléter" onPress={() => ouvrirCreneau(p.id)} />)}
                 {parties.length === 0 ? (
-                  <VideSport titre="Aucune partie à compléter." texte="Réserve un terrain libre et ouvre les places restantes : d'autres viendront compléter." />
+                  <VideSport titre={`Aucune partie à compléter${horsZone}.`} texte="Réserve un terrain libre et ouvre les places restantes : d'autres viendront compléter." />
                 ) : null}
               </>
             ) : null}
@@ -302,7 +321,7 @@ export default function Sport() {
             {rubrique === 'terrains' ? (
               <>
                 {donnees.libres.map((p) => <CarteCreneau key={p.id} cr={p} action="Réserver" onPress={() => ouvrirCreneau(p.id)} />)}
-                {donnees.libres.length === 0 ? <VideSport titre="Aucun terrain libre." texte="Les clubs n'ont pas encore mis de créneaux en ligne." /> : null}
+                {donnees.libres.length === 0 ? <VideSport titre={`Aucun terrain libre${horsZone}.`} texte="Les clubs n'ont pas encore mis de créneaux en ligne." /> : null}
               </>
             ) : null}
 
@@ -311,7 +330,7 @@ export default function Sport() {
                 {donnees.evenements.map((ev) => (
                   <CarteEvenementSport key={ev.id} ev={ev} onPress={() => router.push({ pathname: '/evenement/[id]', params: { id: String(ev.id) } })} />
                 ))}
-                {donnees.evenements.length === 0 ? <VideSport titre="Aucun événement de club." texte="Tournois, stages et initiations apparaîtront ici." /> : null}
+                {donnees.evenements.length === 0 ? <VideSport titre={`Aucun événement de club${horsZone}.`} texte="Tournois, stages et initiations apparaîtront ici." /> : null}
               </>
             ) : null}
 

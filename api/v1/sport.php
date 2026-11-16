@@ -17,6 +17,11 @@
  *
  * Le filtre par sport s'applique à tout. Le filtre par niveau, lui, reste à
  * l'application : il ne retire que quelques cartes d'une liste déjà courte.
+ *
+ * Le filtre de distance (?lat=…&lng=…&rayon=5|10|15|20) garde les parties,
+ * les terrains et les événements dont le club est dans le rayon. Il ne touche
+ * ni à « mes parties » (elles me concernent où qu'elles soient), ni aux
+ * événements d'étudiants, qui n'ont qu'un lieu en texte libre.
  */
 
 require_once __DIR__ . '/_socle.php';
@@ -36,6 +41,9 @@ if ($sport !== '' && !sportValide($sport)) {
 
 $abonne = sqlClubAbonne();
 
+$distance = sportFiltreDistance($_GET);
+[$dansRayon, $paramsRayon] = $distance !== null ? sqlDansRayon($distance) : ['1 = 1', []];
+
 // ─── Parties à compléter ────────────────────────────────────────────────────
 
 [$visible, $paramsVisible] = sqlPartieVisible('c', $uid);
@@ -44,8 +52,9 @@ $sql = sqlCreneauBase() . "
        AND $abonne
        AND (SELECT COUNT(*) FROM creneau_joueurs cj2 WHERE cj2.creneau_id = c.id) < c.joueurs
        AND NOT EXISTS (SELECT 1 FROM creneau_joueurs moi WHERE moi.creneau_id = c.id AND moi.user_id = ?)
-       AND $visible";
-$params = array_merge([$uid], $paramsVisible);
+       AND $visible
+       AND $dansRayon";
+$params = array_merge([$uid], $paramsVisible, $paramsRayon);
 if ($sport !== '') {
     $sql .= ' AND t.sport = ?';
     $params[] = $sport;
@@ -56,8 +65,8 @@ $parties = apiCreneaux($pdo, $stmt->fetchAll(), $uid);
 
 // ─── Terrains libres ────────────────────────────────────────────────────────
 
-$sql    = sqlCreneauBase() . " WHERE c.statut = 'libre' AND c.debut > NOW() AND t.actif = 1 AND $abonne";
-$params = [];
+$sql    = sqlCreneauBase() . " WHERE c.statut = 'libre' AND c.debut > NOW() AND t.actif = 1 AND $abonne AND $dansRayon";
+$params = $paramsRayon;
 if ($sport !== '') {
     $sql .= ' AND t.sport = ?';
     $params[] = $sport;
@@ -83,8 +92,8 @@ $sql = "SELECT e.*, et.nom AS etab_nom, et.ville AS etab_ville,
                EXISTS (SELECT 1 FROM inscriptions i WHERE i.evenement_id = e.id AND i.user_id = ? AND i.statut <> 'annule') AS deja_inscrit
           FROM evenements e
           JOIN etablissements et ON et.id = e.etablissement_id
-         WHERE e.type = 'sport' AND $finEff >= NOW()";
-$params = [$uid];
+         WHERE e.type = 'sport' AND $finEff >= NOW() AND $dansRayon";
+$params = array_merge([$uid], $paramsRayon);
 if ($sport !== '') {
     $sql .= ' AND e.sport = ?';
     $params[] = $sport;

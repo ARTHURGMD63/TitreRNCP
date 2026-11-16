@@ -752,7 +752,9 @@ export const api = {
     appelApi<Ok>('evenement_photo_signaler.php', { methode: 'POST', jeton, corps }),
 
   // ─── Sport ────────────────────────────────────────────────────────────────
-  sport: (jeton: string, sport?: string) => appelApi<{ success: true } & ReponseSport>('sport.php', { jeton, params: { sport } }),
+  /** `autour` : ne garder que les clubs à moins de `rayon` km du point (parties, terrains, événements de club). */
+  sport: (jeton: string, sport?: string, autour?: { lat: number; lng: number; rayon: number }) =>
+    appelApi<{ success: true } & ReponseSport>('sport.php', { jeton, params: { sport, ...(autour ?? {}) } }),
   creneau: (jeton: string, id: number) => appelApi<{ creneau: CreneauDetail }>('sport_creneau.php', { jeton, params: { id } }),
   reserverCreneau: (jeton: string, id: number, choix: { amis: number[]; ouvert: boolean; niveau: NiveauSport }) =>
     appelApi<Ok & { creneau: CreneauDetail }>('sport_creneau.php', { methode: 'POST', jeton, corps: { action: 'reserver', id, ...choix } }),

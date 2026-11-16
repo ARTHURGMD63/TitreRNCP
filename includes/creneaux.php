@@ -25,6 +25,52 @@ function sqlCreneauBase(): string
               LEFT JOIN users u      ON u.id = c.organisateur_id";
 }
 
+/** Les rayons proposés par le filtre « autour d'un point » de l'onglet Sport. */
+const SPORT_RAYONS_KM = [5, 10, 15, 20];
+
+/**
+ * Lit le filtre de distance : un point (lat, lng) et un rayon parmi
+ * SPORT_RAYONS_KM. Un point hors des bornes ou un rayon inconnu ne filtre
+ * rien, plutôt que de rendre une liste vide qu'on prendrait pour « rien ici ».
+ *
+ * @param array<string,mixed> $get
+ * @return array{lat:float, lng:float, rayon:int}|null
+ */
+function sportFiltreDistance(array $get): ?array
+{
+    if (!is_numeric($get['lat'] ?? null) || !is_numeric($get['lng'] ?? null) || !is_numeric($get['rayon'] ?? null)) {
+        return null;
+    }
+    $lat   = (float) $get['lat'];
+    $lng   = (float) $get['lng'];
+    $rayon = (int) $get['rayon'];
+    if ($lat < -90 || $lat > 90 || $lng < -180 || $lng > 180 || !in_array($rayon, SPORT_RAYONS_KM, true)) {
+        return null;
+    }
+
+    return ['lat' => $lat, 'lng' => $lng, 'rayon' => $rayon];
+}
+
+/**
+ * Condition SQL : l'établissement est à moins de `rayon` km du point
+ * (distance à vol d'oiseau, formule de haversine). Un établissement sans
+ * position n'est jamais dedans.
+ *
+ * @param array{lat:float, lng:float, rayon:int} $filtre
+ * @return array{0:string, 1:list<float|int>}
+ */
+function sqlDansRayon(array $filtre, string $aliasEtab = 'et'): array
+{
+    $sql = "($aliasEtab.latitude IS NOT NULL AND $aliasEtab.longitude IS NOT NULL
+             AND 6371 * 2 * ASIN(SQRT(
+                   POWER(SIN(RADIANS($aliasEtab.latitude - ?) / 2), 2)
+                 + COS(RADIANS(?)) * COS(RADIANS($aliasEtab.latitude))
+                 * POWER(SIN(RADIANS($aliasEtab.longitude - ?) / 2), 2)
+             )) <= ?)";
+
+    return [$sql, [$filtre['lat'], $filtre['lat'], $filtre['lng'], $filtre['rayon']]];
+}
+
 /**
  * Condition SQL : le club du créneau a une formule en cours.
  *
