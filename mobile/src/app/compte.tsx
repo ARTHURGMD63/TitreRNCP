@@ -150,7 +150,7 @@ export default function MonCompte() {
           {adresseEnAttente ? (
             <>
               <Encart genre="info">
-                Un code à six chiffres vient d&apos;être envoyé à {adresseEnAttente}. Saisis-le pour confirmer : l&apos;adresse de ton compte ne change qu&apos;à ce moment-là.
+                {`Un code à six chiffres vient d'être envoyé à ${adresseEnAttente}. Saisis-le pour confirmer : l'adresse de ton compte ne change qu'à ce moment-là.`}
               </Encart>
               <Champ
                 etiquette="Code reçu par e-mail"

@@ -251,7 +251,8 @@ export function Encart({ genre, children, style }: {
   if (genre === 'info') {
     return (
       <View style={[{ backgroundColor: c.surface2, borderWidth: 1, borderStyle: 'dashed', borderColor: c.line2, borderRadius: rayon.md, padding: 16, marginBottom: 24 }, style]}>
-        {children}
+        {/* Un texte brut dans une View plante sur téléphone (« Text strings must be rendered within a <Text> ») : il est enveloppé, comme dans les autres genres. */}
+        {typeof children === 'string' ? <T taille={fs[4]} couleur={c.grisFonce} interligne={1.5}>{children}</T> : children}
       </View>
     );
   }
