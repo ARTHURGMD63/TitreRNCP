@@ -7,6 +7,9 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Removed
+- **Code mort des anciennes pages étudiantes du site** (explore, wallet, profil, squads, classement, carte, notifications, abonnements, avis, onboarding, view_event, view_profile) : environ 3 700 lignes qui ne s'exécutaient plus, puisque ces pages renvoient vers l'application. Les fichiers restent, réduits à la redirection, pour que les anciens liens ne tombent pas en 404.
+
 ### Added
 - **Injecteur de charge pour l'API mobile** : `outils/charge.php` accepte `--bearer=` et `--bearers=` (fichier de jetons, un par ligne, en rotation), pour mesurer `/api/v1/` avec de vrais comptes distincts.
 - **Annuaire « Personnes » en cache.** Le classement par affinité, la requête la plus chère de l'application, est gardé 45 secondes pour chaque personne (jamais partagé entre deux comptes). Il est oublié aussitôt qu'elle suit ou cesse de suivre quelqu'un, bloque, débloque ou change ses goûts ; une recherche libre n'est pas mise en cache.
