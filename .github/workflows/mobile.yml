@@ -17,7 +17,7 @@
 #  À régler UNE fois : Settings → Secrets and variables → Actions →
 #  onglet « Variables » → New repository variable :
 #
-#    EXPO_PUBLIC_API_URL   https://outsee-xxxx.onrender.com
+#    EXPO_PUBLIC_API_URL   https://outsee.fr   (le domaine du VPS OVH)
 #
 #  L'adresse publique du serveur, en https, sans barre finale. Elle est
 #  inscrite dans l'application au moment de la construction : la changer
@@ -69,6 +69,15 @@ jobs:
 
       - run: npm ci
 
+      # Numéro de build lu dans l'étiquette (mobile-v42 → 42) : voir
+      # mobile/app.config.js. Sans étiquette (lancement manuel), rien n'est imposé.
+      - name: Numéro de build
+        shell: bash
+        run: |
+          case "$GITHUB_REF_NAME" in
+            mobile-v[0-9]*) echo "OUTSEE_BUILD=${GITHUB_REF_NAME#mobile-v}" >> "$GITHUB_ENV" ;;
+          esac
+
       # Génère le projet Android natif à partir d'app.json (dossier jetable,
       # jamais versionné).
       - run: npx expo prebuild --platform android --no-install
@@ -108,6 +117,15 @@ jobs:
           cache-dependency-path: mobile/package-lock.json
 
       - run: npm ci
+
+      # Numéro de build lu dans l'étiquette (mobile-v42 → 42) : voir
+      # mobile/app.config.js. Sans étiquette (lancement manuel), rien n'est imposé.
+      - name: Numéro de build
+        shell: bash
+        run: |
+          case "$GITHUB_REF_NAME" in
+            mobile-v[0-9]*) echo "OUTSEE_BUILD=${GITHUB_REF_NAME#mobile-v}" >> "$GITHUB_ENV" ;;
+          esac
 
       # Génère le projet Xcode et installe les CocoaPods.
       - run: npx expo prebuild --platform ios
