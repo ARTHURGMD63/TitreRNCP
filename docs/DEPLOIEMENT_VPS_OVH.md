@@ -180,7 +180,21 @@ Correctifs déjà faits :
 - verrou sur l'inscription aux squads ;
 - limiteur de connexion compté par compte (un campus derrière une seule adresse IP n'est plus bloqué).
 
-Reste à surveiller : l'annuaire « Personnes » (`includes/hub.php`) classe tous les étudiants à chaque appel. Son coût grandit avec le nombre d'inscrits, et c'est le premier poste à mettre en cache si le CPU monte. **Avant l'ouverture, faire un vrai test de charge sur l'API** avec `outils/charge.php`, qui envoie aujourd'hui un cookie : il faut lui ajouter l'en-tête `Authorization: Bearer`.
+**Annuaire « Personnes »** (`includes/hub.php`). Il classe tous les étudiants par affinité à chaque appel. Mesuré le 2026-11-17 sur une base de test de 20 013 étudiants (MariaDB locale, un cœur) : **134 ms** par appel sans cache, **0,25 ms** avec. Il est donc mis en cache 45 secondes par personne (`hubAnnuaireEnCache()`), et oublié dès que la personne suit, bloque ou change ses goûts. À 100 000 étudiants, le coût sans cache serait de l'ordre de 0,5 s : le cache devient indispensable, il est en place.
+
+**Test de charge sur le VPS** (à faire avant l'ouverture, sur une base de test, jamais sur les vrais comptes) :
+
+```bash
+# 1. base de test avec un volume réaliste
+MYSQLDATABASE=outsee_perf php outils/semer_charge.php --etudiants=20000
+# 2. un jeton par compte, valable 2 h
+MYSQLDATABASE=outsee_perf php outils/jetons_charge.php /tmp/jetons.txt --nombre=300
+# 3. la charge, avec des comptes distincts
+php outils/charge.php --url=https://<domaine>/api/v1/personnes.php     --bearers=/tmp/jetons.txt --concurrence=200 --total=10000
+rm /tmp/jetons.txt
+```
+
+À lire : le p95 (pas la moyenne) et la ligne des codes HTTP. Tout ce qui n'est pas 200 signale que le serveur lâche. Mesure local de référence (serveur PHP intégré, une requête à la fois, donc très inférieure au VPS) : 32 requêtes/s sur 50 comptes distincts. Les chiffres du VPS (80 processus PHP-FPM) restent à relever : ils ne sont pas encore mesurés.
 
 Un seul VPS est un point de défaillance unique. Les snapshots et les sauvegardes externes réduisent la durée d'une panne, pas son risque.
 
@@ -194,4 +208,24 @@ Un seul VPS est un point de défaillance unique. Les snapshots et les sauvegarde
 - [ ] Aucun compte de démonstration en base (étape 5).
 - [ ] L'application, construite avec la nouvelle `EXPO_PUBLIC_API_URL`, se connecte et affiche la formule.
 - [ ] Sauvegarde nocturne présente, copie distante faite, essai de restauration réussi.
-- [ ] Test de charge sur l'API.
+- [ ] Test de charge sur l'API (étape 10), chiffres notés.
+- [ ] Sonde de disponibilité : `https://<domaine>/sante.php` répond 200 ; la tâche `cron/sante.php` tourne ; une alerte de test arrive bien à l'adresse `ALERTE_EMAIL`.
+- [ ] Double authentification activée pour chaque compte administrateur (étape 12).
+
+## 12. Surveillance et double authentification
+
+**Surveillance.** Deux niveaux, complémentaires :
+- `cron/sante.php` (toutes les 5 minutes, voir `deploy/cron/outsee`) appelle `https://<domaine>/sante.php` comme un visiteur, vérifie la fraîcheur de la dernière sauvegarde, et envoie **un e-mail par panne** (et un au rétablissement) à `ALERTE_EMAIL` (`contact@outsee.fr` par défaut). Elle tourne sur le serveur : si le serveur entier tombe, elle tombe avec lui.
+- Un service **extérieur** est donc nécessaire pour ce cas : créer un contrôle gratuit (UptimeRobot, Better Stack ou Uptime Kuma) sur `https://<domaine>/sante.php`, avec alerte par e-mail ou SMS. C'est à faire à la main, avec ton compte.
+
+**Plantages de l'application.** L'app signale ses erreurs JavaScript non rattrapées à `api/v1/erreur_app.php` (anonyme : message, pile, plateforme, version). Elles arrivent dans le journal PHP, préfixées `[app mobile]` : `grep "app mobile" /var/log/php8.3-fpm.log`. Seuls les plantages JavaScript sont couverts, pas les plantages natifs (iOS/Android) : pour ceux-là, les rapports de plantage d'App Store Connect et de Google Play Console sont déjà fournis par les stores. À mentionner dans la politique de confidentialité.
+
+**Double authentification des administrateurs** (TOTP, compatible Google Authenticator, Authy, 1Password…). Activation depuis le terminal du serveur, jamais depuis une page :
+
+```bash
+php outils/activer_2fa.php admin@outsee.fr            # affiche le secret et 10 codes de secours, une seule fois
+php outils/activer_2fa.php admin@outsee.fr --etat
+php outils/activer_2fa.php admin@outsee.fr --desactiver   # si le téléphone et les codes de secours sont perdus
+```
+
+Dès qu'un administrateur a un secret, le code à six chiffres est demandé à la connexion (site et application). Sans secret, la connexion reste celle d'avant : **activer le compte de chaque administrateur avant l'ouverture**.
