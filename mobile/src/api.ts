@@ -745,8 +745,8 @@ export type ReponseFinancesAdmin = {
 // ─── Lectures ────────────────────────────────────────────────────────────────
 
 export const api = {
-  connexion: (email: string, motDePasse: string, appareil?: string) =>
-    appelApi<ReponseConnexion>('login.php', { methode: 'POST', corps: { email, password: motDePasse, appareil } }),
+  connexion: (email: string, motDePasse: string, appareil?: string, codeTotp?: string) =>
+    appelApi<ReponseConnexion>('login.php', { methode: 'POST', corps: { email, password: motDePasse, appareil, code_totp: codeTotp } }),
   inscription: (corps: Record<string, unknown>) =>
     appelApi<ReponseConnexion>('inscription.php', { methode: 'POST', corps }),
   /** Demande un code par e-mail. `code_dev` n'est rempli qu'en local, où rien ne part. */
