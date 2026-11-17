@@ -88,6 +88,7 @@ $sponsorTarif = (float) ($e['sponsor_tarif'] ?? 0);
 $supplement   = (float) ($e['supplement_tarif'] ?? 0);
 $formuleCode  = $e['sponsor_formule'] ?? null;
 $termine      = evenementTermine((string) $e['date_heure'], $e['date_fin'] ?? null);
+$chrono       = sponsoringChrono($e);
 
 apiReponse([
     'success'   => true,
@@ -122,6 +123,11 @@ apiReponse([
         'libelle'                => $e['is_sponsorise'] ? libelleSponsoring($formuleCode) : null,
         'offerte'                => (bool) $e['is_sponsorise'] && $sponsorTarif == 0.0,
         'jusqu_au'               => $e['sponsor_jusqu_au'] !== null ? (string) $e['sponsor_jusqu_au'] : null,
+        // Le déroulé, calculé ici (heures de Paris) : l'application décompte à partir de `restant_s`.
+        'debut'                  => $chrono['debut'] ?? null,
+        'restant_s'              => $chrono['restant_s'] ?? null,
+        'duree_s'                => $chrono['duree_s'] ?? null,
+        'ecoule_pct'             => $chrono['ecoule_pct'] ?? null,
         'notifications'          => $notifs,
         'notifications_incluses' => notificationsSponsoring($formuleCode),
     ],

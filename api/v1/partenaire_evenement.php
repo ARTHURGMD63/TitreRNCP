@@ -138,6 +138,9 @@ function apiEvenementPourEdition(PDO $pdo, array $e): array
         'sponsor_actif' => sponsoringActif($e),
         'sponsor_termine' => !empty($e['is_sponsorise']) && !sponsoringActif($e),
         'sponsor_jusqu_au' => $e['sponsor_jusqu_au'] !== null ? (string) $e['sponsor_jusqu_au'] : null,
+        // Le déroulé, calculé côté serveur (heures de Paris) : l'application décompte à partir de `sponsor_restant_s`.
+        'sponsor_debut' => sponsoringChrono($e)['debut'] ?? null,
+        'sponsor_restant_s' => sponsoringChrono($e)['restant_s'] ?? null,
         'sponsor_notifications' => $notifs,
         'sponsor_notifications_envoyees' => $envoyees,
         'supplement_tarif' => (float) ($e['supplement_tarif'] ?? 0),
@@ -359,13 +362,13 @@ try {
                 titre=?, description=?, type=?, style_musique=?, sport=?, format=?, date_heure=?, date_fin=?,
                 quota=?, reduction=?, prix_normal=?,
                 is_flash=?, flash_expiry=?, is_gratuit=?, lieu=?,
-                is_sponsorise=?, sponsor_formule=?, sponsor_tarif=?, sponsor_jusqu_au=?
+                is_sponsorise=?, sponsor_formule=?, sponsor_tarif=?, sponsor_jusqu_au=?, sponsor_debut=COALESCE(?, sponsor_debut)
               WHERE id=? AND etablissement_id=?'
         )->execute([
             $titre, $description, $type, $musique ?: null, $sport ?: null, $format ?: null, $dateHeure, $dateFin,
             $quota, $reduction, $prixNormal,
             $isFlash, $flashExpiry ?: null, $isGratuit, $lieu,
-            $isSponsorise, $sponsorFormule, $sponsorTarif, $sponsorFin,
+            $isSponsorise, $sponsorFormule, $sponsorTarif, $sponsorFin, !empty($sponso['nouvelle']) ? date('Y-m-d H:i:s') : null,
             $eid, (int) $etab['id'],
         ]);
 
@@ -415,13 +418,13 @@ try {
     $pdo->prepare(
         'INSERT INTO evenements
             (etablissement_id, titre, description, type, style_musique, sport, format, date_heure, date_fin, quota, reduction, prix_normal, is_flash, flash_expiry, is_gratuit, lieu,
-             is_sponsorise, sponsor_formule, sponsor_tarif, sponsor_jusqu_au, supplement_tarif)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+             is_sponsorise, sponsor_formule, sponsor_tarif, sponsor_jusqu_au, sponsor_debut, supplement_tarif)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
     )->execute([
         (int) $etab['id'], $titre, $description, $type, $musique ?: null, $sport ?: null, $format ?: null, $dateHeure, $dateFin,
         $quota, $reduction, $prixNormal, $isFlash,
         $flashExpiry ?: null, $isGratuit, $lieu,
-        $isSponsorise, $sponsorFormule, $sponsorTarif, $sponsorFin, $supplementTarif,
+        $isSponsorise, $sponsorFormule, $sponsorTarif, $sponsorFin, !empty($sponso['nouvelle']) ? date('Y-m-d H:i:s') : null, $supplementTarif,
     ]);
     $nouvelId = (int) $pdo->lastInsertId();
 
