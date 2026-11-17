@@ -3,13 +3,13 @@
 
    Une feuille à part de style.css : l'ancien site étudiant et le
    back-office y restent tels quels, celui-ci repart des jetons de la
-   refonte mobile (2026-11) et du kit de marque.
+   refonte mobile (mobile/src/theme.ts, 2026-11). La charte complète est
+   docs/CHARTE_GRAPHIQUE_OUTSEE.md.
 
-   Deux typographies, deux rôles :
-     - Unbounded : les grands titres de la vitrine, comme sur les
-       captures des stores et les plaquettes ;
-     - Onest : tout le reste, et tout l'espace pro, comme dans l'app.
-   Aucun emoji : les pictogrammes sont des SVG (includes/icons.php).
+   Une police, Onest, partout : vitrine, espace pro, comme dans l'app.
+   Seule exception, Unbounded pour les titres des pages de connexion,
+   d'inscription et de mot de passe (.auth__titre, .auth__visuel h2).
+   Aucun emoji : les pictogrammes sont des SVG (ICONES_SITE, includes/site.php).
    ============================================================ */
 
 @font-face {
@@ -33,7 +33,7 @@
   --culture-doux: #EDE5FF;
 
   /* Neutres */
-  --basalte: #111013;
+  --basalte: #111116;
   --basalte-2: #1B1A1F;
   --basalte-3: #26252B;
   --craie: #F2F2F5;
@@ -141,7 +141,7 @@ h1, h2, h3, h4, p { margin: 0; }
 .pastille--sport { background: var(--sport-doux); color: #A3160F; }
 .pastille--culture { background: var(--culture-doux); color: #5B3BB5; }
 .pastille--direct::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #2BD67B; }
-.surtitre { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
+.surtitre { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--gris); }
 
 /* ============================================================
    CONNEXION / INSCRIPTION / « VA SUR L'APPLI »
@@ -209,7 +209,7 @@ h1, h2, h3, h4, p { margin: 0; }
 .pro-etab__nom { font-weight: 700; font-size: 15px; line-height: 1.25; }
 .pro-etab__ville { font-size: 13px; color: var(--gris); }
 .pro-nav { display: grid; gap: 4px; }
-.pro-nav__titre { padding: 0 12px 6px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--gris-pale); }
+.pro-nav__titre { padding: 0 12px 6px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--gris-pale); }
 .pro-nav a {
   display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 10px 12px;
   border-radius: 14px; text-decoration: none; font-weight: 500; font-size: 15px; color: var(--gris-fonce);
@@ -343,7 +343,7 @@ h1, h2, h3, h4, p { margin: 0; }
 .photo .pastille { position: absolute; top: 8px; left: 8px; }
 
 /* Modale (scanner) */
-.modale { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(17, 16, 19, .6); }
+.modale { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(17, 17, 22, .6); }
 .modale.ouverte { display: flex; }
 .modale__boite { width: min(460px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; background: var(--basalte); color: var(--blanc); border-radius: 24px; padding: 24px; }
 .modale__tete { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
@@ -374,7 +374,7 @@ h1, h2, h3, h4, p { margin: 0; }
   }
   .pro.menu-ouvert .pro-cote { transform: none; }
   .pro-voile { display: none; }
-  .pro.menu-ouvert .pro-voile { display: block; position: fixed; inset: 0; z-index: 55; background: rgba(17, 16, 19, .4); }
+  .pro.menu-ouvert .pro-voile { display: block; position: fixed; inset: 0; z-index: 55; background: rgba(17, 17, 22, .4); }
   .pro-main { padding: 24px 16px 56px; }
 }
 @media (max-width: 640px) {

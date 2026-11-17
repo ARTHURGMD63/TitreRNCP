@@ -85,8 +85,8 @@ Source : `mobile/app.json`.
 |---|---|
 | Icône iOS / générale | `./assets/icon.png` |
 | Icône adaptative Android | fond `#1D55F0`, avant-plan `android-icon-foreground.png`, image de fond `android-icon-background.png`, version monochrome `android-icon-monochrome.png` |
-| Splash | fond `#111013` en clair comme en sombre, image `splash-icon.png`, 250 px de large, `contain` ; `backgroundColor` de l'app `#111013` ; `userInterfaceStyle: automatic` |
-| Favicons | app web `./assets/favicon.png` ; site `/Logo.png` (`siteDebut()`), avec `theme-color` `#111013` |
+| Splash | fond `#111116` en clair comme en sombre, image `splash-icon.png`, 250 px de large, `contain` ; `backgroundColor` de l'app `#111116` ; `userInterfaceStyle: automatic` |
+| Favicons | app web `./assets/favicon.png` ; site `/Logo.png` (`siteDebut()`), avec `theme-color` `#111116` |
 
 ## 3. Couleurs
 
@@ -237,7 +237,7 @@ Source : `assets/css/site.css`. Le site n'a pas de mode sombre : il n'y a aucune
 | `--sport-doux` | `#FDE3E1` | Fond de `.pastille--sport` |
 | `--culture` | `#7B4DF2` | Violet Culture |
 | `--culture-doux` | `#EDE5FF` | Fond de `.pastille--culture` |
-| `--basalte` | `#111013` | Panneau visuel des pages de connexion, `.carte--sombre`, modale de scan |
+| `--basalte` | `#111116` | Panneau visuel des pages de connexion, `.carte--sombre`, modale de scan |
 | `--basalte-2` | `#1B1A1F` | Ligne d'invité dans la modale de scan |
 | `--basalte-3` | `#26252B` | Résultat de scan neutre, champ de recherche de la modale |
 | `--craie` | `#F2F2F5` | Fond de page, survol de menu, piste de jauge |
@@ -321,9 +321,9 @@ Interlettrages (`lsEm`, en em, à multiplier par le corps avec `ls()`) : `displa
 | `.bouton` | Onest 600 | 15 px (16 grand, 14 petit) | 1,2 | — |
 | `.champ label` | Onest 600 | 14 px | — | — |
 | `.pastille` | Onest 600 | 12 px | 1,4 | +0,02 em |
-| `.surtitre` | Onest 600, capitales | 12 px | — | +0,08 em |
+| `.surtitre` | Onest 600, capitales | 12 px | — | +0,06 em |
 | `.tableau th` | Onest 600, capitales | 12 px | — | +0,06 em |
-| `.pro-nav__titre` | Onest 600, capitales | 11 px | — | +0,08 em |
+| `.pro-nav__titre` | Onest 600, capitales | 11 px | — | +0,06 em |
 
 Dans un titre, le mot mis en valeur s'écrit en `<em>` : il est droit et coloré en `--bleu`, ou en `--bleu-clair` sur fond basalte (`.auth__titre em`, `.titre-pro em`). C'est l'équivalent web du surlignage de `TitreEcran`.
 
@@ -394,7 +394,7 @@ Barre d'onglets de l'app : passe en mode compact (libellé court, corps de 10) q
 | Variante | Fond | Texte | Filet | Rôle |
 |---|---|---|---|---|
 | `primaire` | `accent` de la rubrique, sinon `c.rouge` | blanc | = fond | Action principale, une seule par écran |
-| `bleu` | `#E02D24` | blanc | = fond | Action principale de Sport (le nom est historique, la couleur est rouge) |
+| `sport` | `#E02D24` | blanc | = fond | Action principale de Sport (squads, terrains, créneaux) |
 | `encre` | `c.noir` | `c.surEncre` | `c.noir` | Action forte neutre |
 | `contour` | transparent | `c.noir` | `c.line2` | Secondaire |
 | `basalte` | `#111116` | `#F2F2F5` | basalte | Pilule basalte posée sur un aplat d'accent |
@@ -508,17 +508,17 @@ Grille de 24 × 24, trait de 2, bouts et jonctions arrondis, sans remplissage ; 
 
 ### 7.2 Icônes de l'application (`NomIcone`, 61 noms)
 
-Tirées de l'ancien `icons.php` : `trophee`, `flamme`, `etoile`, `epingle`, `personnes`, `personne`, `drapeau`, `papillon`, `lune`, `oiseau`, `piece`, `billet`, `appareil`, `valide`, `echec`, `outil`, `loupe`, `vide`, `fleche-g`, `fleche-d`, `fleche-b`, `check`, `croix`, `musique`, `calendrier`.
+Tirées de l'ancien `icons.php` : `trophee`, `flamme`, `etoile`, `epingle`, `personnes`, `personne`, `drapeau`, `papillon`, `lune`, `oiseau`, `piece`, `billet` (billet de banque), `appareil`, `valide`, `echec`, `outil`, `loupe`, `vide`, `fleche-g`, `fleche-d`, `fleche-b`, `check`, `croix`, `musique`, `calendrier`.
 
 Tirées des gabarits : `cloche`, `carte`, `etoile-fine`, `horloge`, `eclair`, `marque-page`, `engrenage`, `ajout-personne`, `ticket`, `interdit`, `activite`, `chevron-b`, `chevron-g`, `chevron-d`.
 
-Ajoutées à la refonte 2026-11 : `reglages`, `balle`, `raquette`, `verre`, `micro`, `crayon`, `televerser`, `portefeuille`, `terrain`, `club`, `partage`, `info`, `image`, `cadenas`, `envoi`, `soleil`, `soleil-petit`, `deconnexion`, `musee`, `lien`, `qr`, `plus`.
+Ajoutées à la refonte 2026-11 : `reglages`, `balle`, `raquette`, `verre`, `micro`, `crayon`, `televerser`, `portefeuille`, `terrain`, `club`, `partage`, `info`, `image`, `cadenas`, `envoi` (avion en papier, distinct de `televerser`), `soleil`, `soleil-petit`, `deconnexion`, `musee`, `lien`, `qr`, `plus`.
 
-### 7.3 Icônes du site (`ICONES_SITE`, 37 noms)
+### 7.3 Icônes du site (`ICONES_SITE`, 37 noms, tracés repris de l'app)
 
-`tableau`, `calendrier`, `plus`, `plus-rond`, `qr`, `photo`, `carte`, `graphique`, `personnes`, `personne`, `sortie`, `menu`, `croix`, `fleche-d`, `fleche-g`, `check`, `crayon`, `poubelle`, `oeil`, `telephone`, `verrou`, `info`, `alerte`, `horloge`, `lieu`, `eclair`, `etoile`, `musique`, `verre`, `ballon`, `palette`, `billet`, `megaphone`, `cible`, `facture`, `reglages`, `telecharger`.
+`tableau`, `calendrier`, `plus`, `plus-rond`, `qr`, `photo`, `carte`, `graphique`, `personnes`, `personne`, `sortie`, `menu`, `croix`, `fleche-d`, `fleche-g`, `check`, `crayon`, `poubelle`, `oeil`, `telephone`, `verrou`, `info`, `alerte`, `horloge`, `lieu`, `eclair`, `etoile`, `musique`, `verre`, `ballon`, `palette`, `ticket`, `megaphone`, `cible`, `facture`, `engrenage`, `telecharger`.
 
-Équivalences entre les deux jeux quand le nom diffère : `cadenas` (app) correspond à `verrou` (site), `deconnexion` à `sortie`, `epingle` à `lieu`, `image` à `photo`, `balle` à `ballon`. Certains noms communs aux deux jeux désignent des **dessins différents** : voir section 12.
+Équivalences entre les deux jeux quand le nom diffère : `cadenas` (app) correspond à `verrou` (site), `deconnexion` à `sortie`, `epingle` à `lieu`, `image` à `photo`, `balle` à `ballon`. **Règle : un même nom désigne le même dessin des deux côtés**, et l'app fait foi (`verre`, `qr`, `ticket` et `engrenage` ont le tracé de l'app).
 
 ## 8. Landing page (vitrine)
 
@@ -651,6 +651,8 @@ Relevé dans le code :
 
 On ne compte aucune forme de vouvoiement dans `partenaire/*.php`, et aucune de tutoiement dans les phrases de l'espace pro web.
 
+**Règle (décidée le 2026-11-17) : on garde les deux.** L'application tutoie tout le monde, établissements compris : c'est la voix de l'app. Le site vouvoie les établissements : c'est le lieu du contrat, des paiements et des factures. Une phrase ne mélange jamais les deux, sauf le renvoi d'un étudiant égaré vers l'application.
+
 Constantes de style :
 - phrases courtes et concrètes, au présent (on parle de **potes**, de **soirées**, de **pass**) ; titres en deux temps, une affirmation puis une chute mise en valeur (mot surligné dans l'app, `<em>` bleu dans l'espace pro, `<span>` grisé sur la vitrine) ;
 - nombres à la française (`eurosSite()` : « 49,99 € », « 70 € » ; « -30 % » ; « HT / mois ») ; pas d'emoji ; boutons à l'infinitif ou à l'impératif (« Télécharger l'application », « Choisir Premium », « Appliquer », « Valider ») ;
@@ -661,39 +663,29 @@ Constantes de style :
 | Élément abandonné | Remplacé par | Traces restantes |
 |---|---|---|
 | Marque **Linkee** et sa charte « basalte / lave / craie » (lave violette `#8E6BFF`, lave foncée `#5B3BD6`, craie chaude `#F5F1E8`, gris `#4B4751` / `#67626D`) | Outsee, bleu `#1D55F0`, craie froide `#F2F2F5` | `assets/css/style.css` (back-office et anciennes pages via `includes/page.php`) ; PDF `docs/*_Linkee.pdf` ; clé `linkee.theme` lue pour la migration |
-| **Pantone 2728 C / `#0047BB`** comme bleu du logo et accent | `#1D55F0` (refonte du 2026-11-16) | Commentaires de `fixe.logo` et `fixe.surAccent` dans `theme.ts` |
+| **Pantone 2728 C / `#0047BB`** comme bleu du logo et accent | `#1D55F0` (refonte du 2026-11-16) | — (commentaires de `theme.ts` corrigés le 2026-11-17) |
 | **Unbounded** pour le logotype, les titres et les chiffres de l'app | Onest 700 | `unbounded-latin.woff2`, gardé pour les titres des pages de connexion du site |
 | **Instrument Sans** (texte) et **JetBrains Mono** (étiquettes) | Onest | `instrument-sans-latin.woff2`, `jetbrains-mono-latin.woff2` (chargés par `style.css`) ; rôles `mono*` de `police`, qui pointent vers Onest |
-| Thème sombre « la nuit » imposé par défaut | Préférence « Système » | Commentaire d'en-tête de `theme.ts` |
+| Thème sombre « la nuit » imposé par défaut | Préférence « Système » | — |
 | Ombres `sm` et `base` sur les cartes | Pas d'ombre, sauf ce qui flotte et le halo | `ombre()` renvoie `{}` pour ces niveaux |
 | Onglet actif qui s'élargissait à son libellé | Cases de largeur fixe (2026-11-16) | — |
-| Boutons « lave » en pilule | Boutons à rayon 16, de la couleur de la rubrique | Commentaires de `Bouton.tsx` (« lave », « pilule ») |
+| Boutons « lave » en pilule | Boutons à rayon 16, de la couleur de la rubrique | — |
 
-## 12. Écarts relevés entre le code et les documents
+## 12. Écarts relevés, et comment ils ont été tranchés (2026-11-17)
 
-Partout ci-dessous, le code fait foi.
+Le code fait foi ; chaque écart relevé à la rédaction de cette charte a reçu une décision.
 
-**Écarts entre les règles de marque énoncées et le code**
-
-1. **Unbounded sur la vitrine.** On attendait Unbounded pour les titres de la vitrine. En réalité, `vitrine.css` dit « Une seule police, Onest » et aucun titre `.lp-*` ne déclare `--f-display`. Unbounded ne sert qu'à `.auth__titre` et `.auth__visuel h2` (connexion, inscription, mot de passe). L'en-tête de `site.css` (« Unbounded : les grands titres de la vitrine ») est donc dépassé.
-2. **Volt `#C8F547` sur le site.** On l'attendait comme couleur du site, mais il n'apparaît dans aucun fichier du site. Il n'existe que dans l'app (`marque.lime`), pour le toast de succès et le point de l'encart `ok`.
-3. **Ionicons.** On attendait des Ionicons côté mobile, mais `@expo/vector-icons` est une dépendance de `package.json` jamais importée dans `mobile/src`. L'app dessine ses propres tracés SVG (`Icone.tsx`). Le commentaire de `ICONES_SITE` (« dans l'esprit des Ionicons de l'application ») est donc trompeur.
-
-**Écarts avec `docs/Kit_Marque_Outsee.html` (charte v1.0, antérieure à la refonte)**
-
-4. Le kit présente comme accent la lave violette `#8E6BFF`. Le code n'emploie plus que le bleu `#1D55F0`, et le violet Culture est `#7B4DF2`.
-5. Le kit donne craie `#F5F1E8`, basalte `#111013`, gris foncé `#4B4751` et gris `#67626D`. Le code emploie `#F2F2F5`, `#111116`, `#3C3C46` et `#5A5A66`.
-6. Le kit prévoit trois familles (Unbounded, Instrument Sans, JetBrains Mono) et un logotype en « Unbounded 800, -0,045 em ». Le code emploie Onest 700 à -0,035 em.
-7. Le kit pose la règle « texte sur un aplat vif : toujours basalte ». Le code pose du blanc sur l'accent bleu (`fixe.surAccent`). Le basalte reste réservé aux aplats clairs : volt, moutarde, alerte.
-8. Le kit annonce « boutons et pastilles en forme de pilule » et un sombre par défaut. Le code donne aux boutons de l'app et de l'espace pro un rayon de 16, à la pastille de l'app un rayon de 8, et choisit le thème « Système » par défaut. Seules les pilules de la vitrine sont arrondies.
-
-**Incohérences internes au code**
-
-9. **Deux basaltes.** `#111013` sert au site (`--basalte`), au splash, à `backgroundColor`, à `theme-color` et au bouton `basalte` désactivé. `#111116` sert à l'app (`fixe.basalte`, `noir`), à l'encre du site (`--encre`) et au logo.
-10. **Commentaires de `theme.ts`.** `fixe.logo` dit « Pantone 2728 C (sRGB #0047BB) » alors que la valeur est `#1D55F0`. `fixe.surAccent` annonce plus de 7:1 pour la craie sur l'accent ; avec `#1D55F0`, le calcul WCAG donne environ 5,8:1 pour le blanc et 3,2:1 pour le basalte. L'en-tête dit que chaque valeur est « reprise d'assets/css/style.css », alors que ce fichier garde la palette Linkee.
-11. **Commentaires de composants qui ne correspondent pas aux valeurs.** `BoutonIcone` est annoncé à 46 px et en fait 42. La `Pilule` est annoncée à rayon 16 et 44 px ; elle a un rayon de 12 et 40 de haut. La `Tuile` est annoncée à rayon 18 et emploie `rayon.md` (16). `Ecran.tsx` parle d'une gouttière de 20 ; `gutter` vaut 18. `Avatar` dit l'initiale en Unbounded ; elle est en Onest 700. L'`Etiquette` de champ est décrite comme une « micro-étiquette mono en capitales » ; elle est en Onest 500 à 14, sans capitales.
-12. **Variante `bleu` de `Bouton`.** Elle rend le rouge Sport `#E02D24`. Le nom est historique et piège à la lecture.
-13. **Icônes homonymes de dessins différents** entre l'app et le site. `reglages` : curseurs dans l'app, roue dentée sur le site (l'`engrenage` de l'app). `billet` : rectangle et rond dans l'app, ticket échancré sur le site (le `ticket` de l'app). `verre` : coupe triangulaire dans l'app, verre arrondi sur le site. `qr` : tracés légèrement différents. Par ailleurs, `envoi` et `televerser` ont le même tracé dans l'app, et `site.css` renvoie à `includes/icons.php` alors que le site emploie `ICONES_SITE`.
-14. **Espacement des surtitres.** L'app emploie +0,06 em (`Mono`, `lsEm.label`, `.lp-surtitre`) ; le site emploie +0,08 em (`.surtitre`, `.pro-nav__titre`).
-15. **Ton côté établissement.** L'espace partenaire de l'application tutoie (« ton quota », « ta formule »), alors que l'espace pro web et la vitrine vouvoient les établissements. Le même public est donc tutoyé sur mobile et vouvoyé sur le web.
-16. **Images inutilisées.** Les captures `assets/img/site/ecran-1.jpg` à `ecran-8.jpg` ne sont référencées par aucun fichier : la vitrine emploie `telephone-*.jpg`.
+| # | Écart relevé | Décision |
+|---|---|---|
+| 1 | L'en-tête de `site.css` annonçait Unbounded pour les titres de la vitrine, qui est en Onest. | Onest partout ; Unbounded reste réservé aux titres des pages de connexion. Commentaire de `site.css` corrigé. |
+| 2 | Le volt `#C8F547` était attendu sur le site, où il n'apparaît pas. | Le volt reste une couleur de l'app (toast de succès, encart `ok`). Le site n'en a pas besoin. |
+| 3 | `ICONES_SITE` se disait « dans l'esprit des Ionicons », que l'app n'emploie pas. | Commentaire corrigé : les tracés viennent de `Icone.tsx`. `@expo/vector-icons` reste dans `package.json` (dépendance du modèle Expo), sans être importé. |
+| 4 à 8 | `docs/Kit_Marque_Outsee.html` (charte v1.0) décrit l'ancienne marque : lave `#8E6BFF`, craie chaude, Unbounded / Instrument Sans / JetBrains Mono, pilules, sombre par défaut. | Le kit est marqué « document historique » en tête de page ; cette charte le remplace. |
+| 9 | Deux basaltes, `#111013` et `#111116`. | **`#111116` partout** dans l'app et le site actuels : `--basalte`, splash, `backgroundColor`, `theme-color`, voiles et dégradés. `#111013` ne subsiste que dans `style.css` (back-office, palette Linkee) et les anciens supports de `docs/`. |
+| 10 | Commentaires de `theme.ts` périmés (Pantone `#0047BB`, contraste annoncé à plus de 7:1, valeurs « reprises de style.css »). | Corrigés : `#1D55F0`, blanc sur l'accent à 5,8:1, basalte à 3,2:1, `theme.ts` est la référence. |
+| 11 | Commentaires de composants contraires aux valeurs (`BoutonIcone`, `Pilule`, `Tuile`, gouttière, `Avatar`, étiquette de champ, « lave » et « pilule » de `Bouton`). | Commentaires alignés sur les valeurs : 42 px, rayon 12 et 40 px, rayon 16, gouttière 18, Onest 700, Onest 500 à 14 sans capitales, boutons à rayon 16. |
+| 12 | La variante `bleu` de `Bouton` rendait le rouge Sport. | Renommée **`sport`**, dans le composant et ses six usages. |
+| 13 | Icônes homonymes de dessins différents ; `envoi` et `televerser` identiques dans l'app. | Un même nom, un même dessin : `verre` et `qr` du site prennent le tracé de l'app ; la roue dentée du site s'appelle `engrenage`, le ticket échancré `ticket`. `envoi` devient l'avion en papier. |
+| 14 | Surtitres à +0,08 em sur le site, +0,06 em dans l'app. | **+0,06 em partout** (`.surtitre`, `.pro-nav__titre`). |
+| 15 | Établissements tutoyés dans l'app, vouvoyés sur le site. | On garde les deux (section 10). |
+| 16 | Captures `assets/img/site/ecran-1.jpg` à `ecran-8.jpg` inutilisées. | Supprimées. |

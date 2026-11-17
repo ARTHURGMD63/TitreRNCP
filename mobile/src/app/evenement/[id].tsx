@@ -229,7 +229,7 @@ export default function FicheEvenement() {
         {majuscules(e.sport ? `${SPORTS[e.sport] ?? e.sport}${e.format ? ` · ${FORMATS_SPORT[e.format] ?? e.format}` : ''}` : (LIBELLES_TYPE[e.etablissement.type] ?? e.etablissement.type))} · {dateFr(e.date_heure, 'D j M')}{style}
       </Text>
       {e.sponsorise ? (
-        <Badge libelle="Sponsorisé" fond="rgba(17,16,19,0.1)" encre={encre} filet="rgba(17,16,19,0.3)" style={{ alignSelf: 'flex-start', marginBottom: 10 }} />
+        <Badge libelle="Sponsorisé" fond="rgba(17,17,22,0.1)" encre={encre} filet="rgba(17,17,22,0.3)" style={{ alignSelf: 'flex-start', marginBottom: 10 }} />
       ) : null}
       <View accessibilityRole="header">
         <Display taille={fs[7]} interligne={lh.display} couleur={encre}>{e.titre}</Display>
@@ -289,7 +289,7 @@ export default function FicheEvenement() {
       {photo ? (
         <ImageBackground source={{ uri: photo }} accessibilityLabel={e.photos[0]?.legende ?? `Photo de ${e.etablissement.nom}`} style={arrondi}>
           <LinearGradient
-            colors={['rgba(17,16,19,0.94)', 'rgba(17,16,19,0.74)', 'rgba(17,16,19,0.34)', 'rgba(17,16,19,0.18)']}
+            colors={['rgba(17,17,22,0.94)', 'rgba(17,17,22,0.74)', 'rgba(17,17,22,0.34)', 'rgba(17,17,22,0.18)']}
             locations={[0, 0.32, 0.62, 1]}
             start={{ x: 0, y: 1 }} end={{ x: 0, y: 0 }}
             style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}

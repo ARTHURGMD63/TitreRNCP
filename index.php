@@ -146,7 +146,7 @@ siteDebut('Outsee — Le réseau social des sorties étudiantes', [
       <?= $bulle('qr', '#111116', 'right:13%;top:16%', '-3s') ?>
       <?= $bulle('lieu', '#1D55F0', 'right:6%;top:44%', '-5s') ?>
       <?= $bulle('etoile', '#FFB020', 'right:12%;top:72%', '-2.5s') ?>
-      <?= $bulle('billet', '#7B4DF2', 'right:24%;top:58%', '-6s') ?>
+      <?= $bulle('ticket', '#7B4DF2', 'right:24%;top:58%', '-6s') ?>
 
       <div class="lp-interieur">
         <span class="lp-note"><b>Gratuit</b>Le réseau social des sorties étudiantes</span>
@@ -184,7 +184,7 @@ siteDebut('Outsee — Le réseau social des sorties étudiantes', [
         <li><?= iconeSite('horloge') ?> Afterworks</li>
         <li><?= iconeSite('ballon') ?> Padel et five</li>
         <li><?= iconeSite('palette') ?> Expos</li>
-        <li><?= iconeSite('billet') ?> Concerts</li>
+        <li><?= iconeSite('ticket') ?> Concerts</li>
       </ul>
     </div>
   </main>

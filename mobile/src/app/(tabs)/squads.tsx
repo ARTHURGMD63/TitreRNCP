@@ -411,7 +411,7 @@ function FeuilleCreation({ visible, onClose, onCree }: { visible: boolean; onClo
             : 'Gratuit et réservé à tes abonnés : seules les personnes dont tu as accepté la demande le voient et peuvent le rejoindre.'}
         </T>
       </View>
-      <Bouton libelle="Publier" variante="bleu" plein chargement={attente} onPress={creer} />
+      <Bouton libelle="Publier" variante="sport" plein chargement={attente} onPress={creer} />
       <Bouton libelle="Annuler" variante="contour" plein onPress={onClose} style={{ marginTop: 8 }} />
     </Feuille>
   );

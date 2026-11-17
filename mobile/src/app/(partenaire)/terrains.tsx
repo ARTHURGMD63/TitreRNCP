@@ -171,7 +171,7 @@ export default function Terrains() {
             <T taille={fs[3]} couleur={c.grisFonce}>Ajoute un premier terrain pour pouvoir publier des créneaux.</T>
           </Encart>
         ) : (
-          <Bouton libelle="Publier des créneaux" icone="plus" variante="bleu" plein onPress={() => setPublication(true)} style={{ marginBottom: 20 }} />
+          <Bouton libelle="Publier des créneaux" icone="plus" variante="sport" plein onPress={() => setPublication(true)} style={{ marginBottom: 20 }} />
         )}
 
         <TitreSection style={{ marginBottom: 12 }}>Les 7 prochains jours</TitreSection>
@@ -297,7 +297,7 @@ function FeuilleTerrain({ terrain, onClose, onEnregistre }: {
       {existant ? (
         <Case coche={actif} onChange={setActif} style={{ marginBottom: 16 }}>Terrain actif (réservable)</Case>
       ) : null}
-      <Bouton libelle="Enregistrer" variante="bleu" plein chargement={attente} onPress={enregistrer} />
+      <Bouton libelle="Enregistrer" variante="sport" plein chargement={attente} onPress={enregistrer} />
       {existant ? <Bouton libelle="Supprimer le terrain" variante="alerte" plein onPress={supprimer} style={{ marginTop: 8 }} /> : null}
       <Bouton libelle="Annuler" variante="contour" plein onPress={onClose} style={{ marginTop: 8 }} />
     </Feuille>
@@ -360,7 +360,7 @@ function FeuillePublication({ visible, terrains, onClose, onPublie }: {
             : 'Aucun créneau entier dans cette plage horaire.'
           : 'Choisis un jour pour voir les créneaux.'}
       </T>
-      <Bouton libelle="Mettre en ligne" variante="bleu" plein chargement={attente} desactive={debuts.length === 0} onPress={publier} />
+      <Bouton libelle="Mettre en ligne" variante="sport" plein chargement={attente} desactive={debuts.length === 0} onPress={publier} />
       <Bouton libelle="Annuler" variante="contour" plein onPress={onClose} style={{ marginTop: 8 }} />
     </Feuille>
   );

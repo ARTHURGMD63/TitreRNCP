@@ -27,7 +27,7 @@ export function useRubrique(r: Rubrique) {
 
 // ─── En-tête ────────────────────────────────────────────────────────────────
 
-/** Bouton d'icône de l'en-tête : carré arrondi surface de 46 px. */
+/** Bouton d'icône de l'en-tête : carré arrondi surface de 42 px, rayon 12. */
 export function BoutonIcone({ icone, libelle, onPress, pastille, etendu, style }: {
   icone: NomIcone;
   libelle: string;
@@ -327,7 +327,7 @@ export function CarteRefonte({ accent, children, style, rayonCarte = rayon.carte
 }
 
 /**
- * La tuile (stats, raccourcis Sport) : rayon 18, icône et compteur. Active,
+ * La tuile (stats, raccourcis Sport) : rayon 16, icône et compteur. Active,
  * elle passe à l'encre.
  */
 export function Tuile({ icone, libelle, compteur, actif, onPress, accentCompteur, droite, style }: {

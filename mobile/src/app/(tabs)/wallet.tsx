@@ -300,7 +300,7 @@ function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
       </View>
 
       {supprime ? (
-        <View style={{ backgroundColor: 'rgba(17,16,19,0.12)', borderRadius: 20, paddingVertical: 34, paddingHorizontal: 16, minHeight: 188, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+        <View style={{ backgroundColor: 'rgba(17,17,22,0.12)', borderRadius: 20, paddingVertical: 34, paddingHorizontal: 16, minHeight: 188, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           <Icone nom="interdit" taille={40} couleur="#666666" />
           <T taille={fs[4]} poids={700} couleur="#555555" style={{ textAlign: 'center' }}>{'Événement\nsupprimé'}</T>
         </View>

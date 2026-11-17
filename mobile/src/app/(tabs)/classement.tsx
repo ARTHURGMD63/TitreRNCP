@@ -96,7 +96,7 @@ export default function Classement() {
                         backgroundColor: premier ? c.lime : c.blanc, borderColor: premier ? c.lime : c.grisClair, minHeight: premier ? 118 : i === 1 ? 92 : 76,
                       }}>
                         <Display taille={fs[6]} couleur={premier ? fixe.surLave : c.noir}>{l.rang}</Display>
-                        <Text numberOfLines={1} style={{ fontFamily: mono(400), fontSize: fs[1], color: premier ? 'rgba(17,16,19,0.72)' : c.gris }}>{nombre(l.xp)} XP</Text>
+                        <Text numberOfLines={1} style={{ fontFamily: mono(400), fontSize: fs[1], color: premier ? 'rgba(17,17,22,0.72)' : c.gris }}>{nombre(l.xp)} XP</Text>
                       </View>
                     </Pressable>
                   );

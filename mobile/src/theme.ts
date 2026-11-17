@@ -1,13 +1,14 @@
 /**
- * Le design system de Outsee (charte v1.0), transposé pour React Native.
+ * Le design system d'Outsee, pour React Native : la référence de toutes les
+ * couleurs, tailles et rayons de l'application.
  *
- * Chaque valeur est reprise d'assets/css/style.css, jeton pour jeton : même
- * palette, mêmes graisses, même échelle typographique, mêmes rayons. Ce n'est
- * pas une palette « inspirée de » : un étudiant qui passe du site à
- * l'application doit voir le même produit.
+ * Depuis la refonte du 2026-11-16, c'est ce fichier qui fait foi, et la
+ * charte qui le documente est docs/CHARTE_GRAPHIQUE_OUTSEE.md. Le site
+ * (assets/css/site.css) en reprend les valeurs ; assets/css/style.css, lui,
+ * garde l'ancienne palette Linkee et ne sert plus qu'au back-office.
  *
- * Deux univers, comme le site : « la nuit » (basalte, par défaut) et « le
- * jour » (craie). Le choix se fait dans Moi › Apparence.
+ * Deux thèmes, clair (craie) et sombre (basalte). Par défaut, l'application
+ * suit le réglage du téléphone ; on le change dans Moi › Apparence.
  *
  * Les noms de jetons sont conservés tels quels — `noir`, `blanc`, `bg` — y
  * compris là où ils mentent en sombre (`noir` y vaut la craie) : c'est ce qui
@@ -31,19 +32,20 @@ export const fixe = {
    */
   surLave: '#111116',
   /**
-   * Texte sur l'aplat d'accent (bleu Pantone 2728 C). Le basalte n'y
-   * atteindrait qu'environ 2,4:1 ; la craie y dépasse 7:1.
+   * Texte sur l'aplat d'accent (bleu #1D55F0). Le blanc y atteint 5,8:1
+   * (WCAG AA, texte normal) ; le basalte n'y atteindrait que 3,2:1.
    */
   surAccent: '#FFFFFF',
   /** --sur-media : texte clair posé sur une photo. */
   surMedia: '#FFFFFF',
   /**
-   * Le bleu du logo : Pantone 2728 C (sRGB #0047BB). Depuis le 2026-11-10,
-   * c'est aussi l'accent de l'interface (le jeton `rouge`, ex-lave).
+   * Le bleu du logo, #1D55F0 (refonte du 2026-11-16, qui remplace le
+   * Pantone 2728 C #0047BB). C'est aussi l'accent de l'interface (le jeton
+   * `rouge`, nom historique). Dans les rubriques Sport et Culture, le logo
+   * prend la couleur de la rubrique (teintes()).
    *
-   * La teinte reste exacte même sur basalte, où le « ee » n'atteint
-   * qu'environ 2,4:1 : choix de marque assumé (2026-11-09), à ne pas
-   * éclaircir en mode sombre.
+   * La teinte reste exacte même sur basalte, où le « ee » atteint 3,2:1 :
+   * choix de marque, à ne pas éclaircir en mode sombre.
    */
   logo: '#1D55F0',
   /** Refonte 2026-11 : la barre d'onglets flottante, sombre dans les deux thèmes. */
@@ -62,7 +64,7 @@ export const fixe = {
  * charte), pour ne pas toucher aux règles qui l'emploient. Il vaut le bleu du
  * logo, identique dans les deux thèmes : les aplats portent du texte craie
  * (fixe.surAccent). Sur basalte, le texte d'accent passe par `surRougeClair`,
- * un bleu éclairci, car le 2728 C n'y serait pas lisible.
+ * un bleu éclairci, car #1D55F0 n'y atteindrait que 3,2:1.
  */
 const marque = {
   rouge: '#1D55F0', // accent : le bleu Outsee (refonte 2026-11)

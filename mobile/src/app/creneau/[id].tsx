@@ -257,7 +257,7 @@ export default function FicheCreneau() {
 
             <Bouton
               libelle={`Réserver · ${prixParJoueur(cr.prix, cr.places.total)}`}
-              variante="bleu"
+              variante="sport"
               plein
               chargement={envoi}
               onPress={() => agir(() => api.reserverCreneau(jeton, cr.id, { amis: choisis, ouvert: restantesApresMoi > 0 && ouvert, niveau }))}
@@ -268,7 +268,7 @@ export default function FicheCreneau() {
         {cr.peut_rejoindre ? (
           <Bouton
             libelle={`Prendre ma place · ${prixParJoueur(cr.prix, cr.places.total)}`}
-            variante="bleu"
+            variante="sport"
             plein
             chargement={envoi}
             onPress={() => agir(() => api.rejoindreCreneau(jeton, cr.id), true)}

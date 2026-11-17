@@ -113,7 +113,7 @@ function Polices({ children }: { children: React.ReactNode }) {
   });
   // Sans ses polices, l'écran s'afficherait une fraction de seconde en
   // police système puis sauterait : l'écran de lancement reste affiché.
-  if (!pretes) return <View style={{ flex: 1, backgroundColor: '#111013' }} />;
+  if (!pretes) return <View style={{ flex: 1, backgroundColor: '#111116' }} />;
   return <>{children}</>;
 }
 

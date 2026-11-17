@@ -1,7 +1,7 @@
 /**
  * La coquille d'un écran : .app-shell, .page-header et .page-content.
  *
- * Fond de page, marge haute sous la barre d'état, gouttière de 20 px, et la
+ * Fond de page, marge haute sous la barre d'état, gouttière de 18 px (gutter), et la
  * réserve basse qui empêche la barre d'onglets flottante de recouvrir la fin
  * du contenu (--nav-h + 16 px). Le tirer-pour-rafraîchir remplace le
  * rechargement de page du site.

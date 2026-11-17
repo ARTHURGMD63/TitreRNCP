@@ -1,16 +1,18 @@
 /**
- * Les boutons de la charte (.btn et ses variantes).
+ * Les boutons de la charte (docs/CHARTE_GRAPHIQUE_OUTSEE.md, § 6.1). Tous
+ * ont un rayon de 16 (rayon.bouton), pas de forme en pilule.
  *
- *  - primaire  : pilule d’accent, texte craie — une seule par écran ;
+ *  - primaire  : aplat de la couleur de la rubrique, texte blanc — une seule
+ *                action principale par écran ;
  *  - contour   : filet d'encre, fond transparent (secondaire) ;
- *  - basalte   : la pilule basalte posée sur un aplat lave (« Je fonce ») ;
- *  - texte     : un lien d'action en lave (tertiaire) ;
- *  - bleu      : l'action principale de l'univers sport (squads) ;
+ *  - basalte   : aplat basalte posé sur un aplat vif (« Je fonce ») ;
+ *  - texte     : un lien d'action à la couleur de l'accent (tertiaire) ;
+ *  - sport     : l'action principale de l'univers sport (squads, terrains), rouge Sport ;
  *  - alerte    : « Supprimer définitivement », en alerte vive.
  *
  * Désactivé, un bouton plein sort de la couleur (« Inscrit », « Complet ») :
- * la lave à demi effacée donnait un brun sans contraste — même règle que le
- * site.
+ * une couleur vive à demi effacée donne un aplat sale, sans contraste — même
+ * règle que le site.
  */
 
 import React from 'react';
@@ -21,7 +23,7 @@ import { useTheme } from '../useTheme';
 import { PressableAnime } from './Animations';
 import { Icone, type NomIcone } from './Icone';
 
-export type Variante = 'primaire' | 'contour' | 'basalte' | 'texte' | 'bleu' | 'alerte' | 'encre';
+export type Variante = 'primaire' | 'contour' | 'basalte' | 'texte' | 'sport' | 'alerte' | 'encre';
 
 type Props = {
   libelle: string;
@@ -56,8 +58,8 @@ export function Bouton({
 
   switch (variante) {
     case 'primaire': fond = accent ?? c.rouge; encre = fixe.surAccent; filet = fond; break;
-    // « bleu » : l'action principale de l'univers sport, rouge depuis la refonte.
-    case 'bleu': fond = '#E02D24'; encre = fixe.surAccent; filet = fond; break;
+    // « sport » : l'action principale de l'univers sport, au rouge de la rubrique.
+    case 'sport': fond = '#E02D24'; encre = fixe.surAccent; filet = fond; break;
     case 'encre': fond = c.noir; encre = c.surEncre; filet = c.noir; break;
     case 'alerte': fond = c.alerteVif; encre = fixe.surLave; break;
     case 'contour': fond = 'transparent'; encre = c.noir; filet = c.line2; break;
@@ -66,10 +68,10 @@ export function Bouton({
   }
 
   if (desactive && !chargement) {
-    if (variante === 'primaire' || variante === 'bleu' || variante === 'alerte' || variante === 'encre') {
+    if (variante === 'primaire' || variante === 'sport' || variante === 'alerte' || variante === 'encre') {
       fond = c.surface2; encre = c.grisFonce; filet = c.grisClair;
     } else if (variante === 'basalte') {
-      fond = 'rgba(17,16,19,0.14)'; encre = fixe.surAccent; filet = 'transparent';
+      fond = 'rgba(17,17,22,0.14)'; encre = fixe.surAccent; filet = 'transparent';
     }
   }
 

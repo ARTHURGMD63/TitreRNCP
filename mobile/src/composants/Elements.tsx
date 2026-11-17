@@ -18,7 +18,7 @@ import { T } from './Texte';
 
 /**
  * La chip de filtre de la refonte : fond surface sans bordure au repos,
- * encre (texte inversé) une fois choisie, rayon 16, 44 px de haut au moins.
+ * encre (texte inversé) une fois choisie, rayon 12, 40 px de haut au moins.
  *
  *  - `carre` : le petit carré coloré (28 px, rayon 10) qui porte l'icône de
  *    la catégorie en blanc ;
@@ -102,7 +102,8 @@ export function Badge({ libelle, fond, encre, filet, icone, espacement = lsEm.la
 
 /**
  * La photo, ou l'initiale sur un rond de couleur — le repli d'avatarHtml() :
- * Unbounded, basalte, corps de 40 % du diamètre (11 px au minimum).
+ * Onest 700 (police.display), encre choisie selon le fond (encreSur()), corps
+ * de 40 % du diamètre (11 px au minimum).
  */
 export function Avatar({ photo, prenom, taille = 48, fond, anneau }: {
   photo?: string | null;

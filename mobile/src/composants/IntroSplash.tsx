@@ -1,6 +1,6 @@
 /**
  * L'arrivée animée après l'écran de lancement natif (expo-splash-screen,
- * app.json → fond basalte #111013 + assets/splash-icon.png, les deux
+ * app.json → fond basalte #111116 + assets/splash-icon.png, les deux
  * anneaux seuls).
  *
  * Troisième version, après deux ratées : les deux premières tentaient de

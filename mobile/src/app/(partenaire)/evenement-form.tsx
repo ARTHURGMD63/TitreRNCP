@@ -326,7 +326,7 @@ export default function FormulaireEvenementPartenaire() {
 
         <Bouton libelle={evenementId ? 'Enregistrer les modifications' : "Publier l'événement"} plein
           desactive={!publiable || (sponsoNouveau && dejaTermine)}
-          variante={club ? 'bleu' : 'primaire'} chargement={enregistrement} onPress={enregistrer} style={{ marginTop: 4 }} />
+          variante={club ? 'sport' : 'primaire'} chargement={enregistrement} onPress={enregistrer} style={{ marginTop: 4 }} />
       </Contenu>
     </Ecran>
   );

@@ -2,9 +2,9 @@
  * Les champs de formulaire de la charte (.form-group, select, .case,
  * .filtre-annuaire, le sélecteur de centres d'intérêt).
  *
- *  - L'étiquette est une micro-étiquette mono en capitales, en gris.
+ *  - L'étiquette : Onest 500 à 14 (fs[4]), en gris, sans capitales.
  *  - Le champ : surface, filet fin, rayon 12, corps 16 (anti-zoom iOS sur le
- *    site, confort de lecture ici). Au focus, filet lave et halo lave clair
+ *    site, confort de lecture ici). Au focus, filet d'accent et halo clair
  *    de 3 px, dessiné autour sans déplacer la mise en page.
  *  - Un <select> ouvre une feuille listant les choix : le sélecteur natif
  *    d'un téléphone n'a ni la police ni les couleurs de la charte.

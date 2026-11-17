@@ -18,15 +18,16 @@ require_once __DIR__ . '/auth_check.php';
 require_once __DIR__ . '/config.php';
 
 /**
- * Pictogrammes du site (tracés 24 × 24, trait de 2, dans l'esprit des
- * Ionicons de l'application). Aucun emoji : voir includes/icons.php.
+ * Pictogrammes du site : tracés 24 × 24, trait de 2, repris des icônes
+ * dessinées de l'application (mobile/src/composants/Icone.tsx). Un même nom
+ * désigne le même dessin des deux côtés. Aucun emoji.
  */
 const ICONES_SITE = [
     'tableau'      => '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
     'calendrier'   => '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
     'plus'         => '<path d="M12 5v14M5 12h14"/>',
     'plus-rond'    => '<circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/>',
-    'qr'           => '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v.01M14 21h3M21 17v4h-4"/>',
+    'qr'           => '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/>',
     'photo'        => '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
     'carte'        => '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',
     'graphique'    => '<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/>',
@@ -50,14 +51,14 @@ const ICONES_SITE = [
     'eclair'       => '<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/>',
     'etoile'       => '<path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1Z"/>',
     'musique'      => '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
-    'verre'        => '<path d="M8 22h8M12 15v7M5 3h14l-1 6a6 6 0 0 1-12 0Z"/>',
+    'verre'        => '<path d="M8 22h8"/><path d="M12 15v7"/><path d="M5 3h14l-7 12z"/>',
     'ballon'       => '<circle cx="12" cy="12" r="10"/><path d="M12 2a15 15 0 0 0 0 20M2 12h20M4.9 5.6c4 2.2 10.2 2.2 14.2 0M4.9 18.4c4-2.2 10.2-2.2 14.2 0"/>',
     'palette'      => '<circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2a10 10 0 0 0 0 20c.9 0 1.6-.7 1.6-1.6 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.6 1.6-1.6H16a6 6 0 0 0 6-6c0-4.9-4.5-8.6-10-8.6Z"/>',
-    'billet'       => '<path d="M2 9a3 3 0 0 0 0 6v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3a3 3 0 0 0 0-6V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2M13 17v2M13 11v2"/>',
+    'ticket'       => '<path d="M2 9a3 3 0 0 0 0 6v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3a3 3 0 0 0 0-6V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2M13 17v2M13 11v2"/>',
     'megaphone'    => '<path d="m3 11 18-5v12L3 14Z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>',
     'cible'        => '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
     'facture'      => '<path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 .7V2l-1 .7L16 2l-3 2-3-2-3 2Z"/><path d="M8 8h8M8 12h8M8 16h5"/>',
-    'reglages'     => '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>',
+    'engrenage'    => '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>',
     'telecharger'  => '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
 ];
 
@@ -160,7 +161,7 @@ function siteDebut(string $titre, array $options = []): void
     echo "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n";
     echo '<title>' . htmlspecialchars($titre) . "</title>\n";
     echo '<meta name="description" content="' . htmlspecialchars($description, ENT_QUOTES) . "\">\n";
-    echo '<meta name="theme-color" content="#111013">' . "\n";
+    echo '<meta name="theme-color" content="#111116">' . "\n";
     echo metaCsrf() . "\n" . metaBase() . "\n";
     echo '<link rel="preload" href="' . htmlspecialchars(baseUrl('/assets/fonts/Onest_400Regular.ttf'), ENT_QUOTES) . '" as="font" type="font/ttf" crossorigin>' . "\n";
     echo '<link rel="stylesheet" href="' . htmlspecialchars(asset('/assets/css/site.css'), ENT_QUOTES) . "\">\n";
