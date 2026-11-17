@@ -248,11 +248,16 @@ export default function Hub() {
                   <T taille={fs[3]} poids={500} couleur={c.grisFonce} interligne={lh.snug} style={{ textAlign: 'center', maxWidth: 290 }}>
                     {filtreActif
                       ? 'Aucun événement ne correspond à cette recherche. Essaie un autre filtre.'
-                      : "Les établissements n'ont pas encore publié de soirée. Reviens d'ici quelques jours."}
+                      : "Les établissements n'ont pas encore publié de soirée près de toi. En attendant, suis des personnes pour voir où elles sortent, ou explore la culture et le sport."}
                   </T>
                   {filtreActif ? (
                     <Bouton libelle="Voir tous les événements" onPress={() => { choisirType('all'); choisirMusique(''); }} style={{ marginTop: 20, alignSelf: 'center' }} />
-                  ) : null}
+                  ) : (
+                    <View style={{ marginTop: 20, gap: 10, alignSelf: 'stretch' }}>
+                      <Bouton libelle="Trouver des gens à suivre" icone="personnes" plein onPress={() => router.navigate('/personnes')} />
+                      <Bouton libelle="Voir la culture" icone="musee" variante="contour" plein onPress={() => router.navigate('/culture')} />
+                    </View>
+                  )}
                 </View>
               ) : null}
 
