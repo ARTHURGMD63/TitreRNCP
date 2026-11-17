@@ -25,6 +25,7 @@ import { Avatar, Jauge } from '../../composants/Elements';
 import { estIcone, Icone, type NomIcone } from '../../composants/Icone';
 import { Display, Mono, T } from '../../composants/Texte';
 import { nombre } from '../../format';
+import { ecrireALEquipe } from '../../contact';
 import { useJeton, useSession } from '../../session';
 import { couleurCss, encreSur, fs, halo, lh, mono, police, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
@@ -258,6 +259,16 @@ export default function Moi() {
             <Mono>Depuis</Mono>
             <T taille={fs[2]} poids={600}>{moi.depuis}</T>
           </View>
+          <Pressable onPress={() => router.push('/compte' as never)} accessibilityRole="button" testID="mon-compte"
+            style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 46, paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: c.grisClair }}>
+            <T taille={fs[4]} poids={500}>Changer d&apos;e-mail ou de mot de passe</T>
+            <Icone nom="chevron-d" taille={18} couleur={c.gris} />
+          </Pressable>
+          <Pressable onPress={() => ecrireALEquipe(moi.email)} accessibilityRole="button" testID="aide-contact"
+            style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 46, paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: c.grisClair }}>
+            <T taille={fs[4]} poids={500}>Aide et contact</T>
+            <Icone nom="chevron-d" taille={18} couleur={c.gris} />
+          </Pressable>
           <Pressable onPress={deconnexion} accessibilityRole="button" testID="deconnexion" style={{ paddingVertical: 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             <Icone nom="deconnexion" taille={16} couleur={c.surRougeClair} />
             <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: c.surRougeClair }}>Se déconnecter</Text>

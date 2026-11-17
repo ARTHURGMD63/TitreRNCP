@@ -99,6 +99,7 @@ function Navigation() {
         <Stack.Screen name="legal/[page]" />
 
         <Stack.Protected guard={(etudiant && !nouveau) || partenaire}>
+          <Stack.Screen name="compte" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="supprimer-compte" />
         </Stack.Protected>
       </Stack>

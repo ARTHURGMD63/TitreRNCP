@@ -24,6 +24,7 @@ import { T, TitreSection } from '../../composants/Texte';
 import { TYPES_ETABLISSEMENT } from '../../catalogue';
 import { PAGES_LEGALES } from '../../legal';
 import { useToast } from '../../composants/Toast';
+import { ecrireALEquipe } from '../../contact';
 import { useJeton, useSession } from '../../session';
 import { fs, halo, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
@@ -201,6 +202,11 @@ export default function MoiPartenaire() {
           {PAGES_LEGALES.map(({ slug, libelle }) => (
             <Raccourci key={slug} icone="info" libelle={libelle} detail="Les règles d'Outsee" onPress={() => router.push(`/legal/${slug}` as never)} />
           ))}
+        </Apparition>
+
+        <Apparition index={5}>
+          <Raccourci icone="cadenas" libelle="Mon compte" detail="Changer d'e-mail ou de mot de passe" onPress={() => router.push('/compte' as never)} />
+          <Raccourci icone="info" libelle="Aide et contact" detail="Écrire à l'équipe Outsee" onPress={() => ecrireALEquipe(compte.email)} />
         </Apparition>
 
         <Bouton testID="deconnexion" libelle="Se déconnecter" icone="deconnexion" variante="contour" plein onPress={deconnexion} style={{ marginTop: 10 }} />

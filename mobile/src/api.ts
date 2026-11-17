@@ -764,6 +764,12 @@ export const api = {
   /** Un texte légal, sans jeton : on le lit avant de créer un compte. */
   legal: (slug: string) => appelApi<{ success: true; page: PageLegale }>('legal.php', { params: { page: slug } }),
   deconnexion: (jeton: string) => appelApi<{ success: true }>('logout.php', { methode: 'POST', jeton }),
+  /** Change le mot de passe ; les autres appareils sont déconnectés. */
+  changerMotDePasse: (jeton: string, motDePasse: string, nouveau: string) =>
+    appelApi<{ success: true }>('compte.php', { methode: 'POST', jeton, corps: { action: 'mot_de_passe', mot_de_passe: motDePasse, nouveau } }),
+  /** Change l'adresse de connexion ; l'ancienne adresse reçoit un avis. */
+  changerEmail: (jeton: string, motDePasse: string, email: string) =>
+    appelApi<{ success: true; email: string }>('compte.php', { methode: 'POST', jeton, corps: { action: 'email', mot_de_passe: motDePasse, email } }),
   moi: (jeton: string) => appelApi<{ utilisateur: Profil }>('me.php', { jeton }),
 
   evenements: (jeton: string, params?: { type?: string; musique?: string; q?: string; pe?: number }) =>
