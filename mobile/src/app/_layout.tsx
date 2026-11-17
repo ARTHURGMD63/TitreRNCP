@@ -30,6 +30,10 @@ import { FournisseurSession, useSession } from '../session';
 import { FournisseurTheme, useTheme } from '../useTheme';
 import { FournisseurToast } from '../composants/Toast';
 import { IntroSplash } from '../composants/IntroSplash';
+import { installerSuiviErreurs } from '../suiviErreurs';
+
+// Les plantages non rattrapés sont signalés au serveur (anonymement).
+installerSuiviErreurs();
 
 // L'écran de lancement (fond basalte, les deux anneaux) reste affiché tant
 // que l'application n'est pas prête : polices chargées ET session tranchée.
