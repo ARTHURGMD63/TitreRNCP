@@ -25,6 +25,8 @@ final class PagesProtegeesTest extends TestCase
         'confidentialite.php',
         'index.php',
         'mentions-legales.php',
+        // Sonde de disponibilité : répond 200 ou 503, sans aucune donnée.
+        'sante.php',
         'auth/forgot.php',
         'auth/login.php',
         'auth/logout.php',
