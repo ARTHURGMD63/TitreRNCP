@@ -22,7 +22,8 @@ import { useJeton } from '../../session';
 import { useTheme } from '../../useTheme';
 
 const ONGLETS: OngletBarre[] = [
-  { route: 'index', libelle: 'Tableau de bord', icone: 'appareil', court: 'Accueil' },
+  // « Tableau de bord » tronquait en « Tableau de b… » sur 375 px ; la barre des clubs dit déjà « Tableau ».
+  { route: 'index', libelle: 'Tableau', icone: 'appareil', court: 'Accueil' },
   { route: 'evenements', libelle: 'Événements', icone: 'calendrier', court: 'Soirées' },
   { route: 'moi', libelle: 'Moi', icone: 'personne' },
 ];
