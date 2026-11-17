@@ -104,14 +104,14 @@ Dans le tableau de bord Stripe, en **mode test** d'abord :
 4. **Facturation → Relances** : activer les relances automatiques (Smart Retries) et choisir **annuler l'abonnement** quand toutes les relances ont échoué. L'espace pro affiche l'alerte d'impayé pendant les relances, et la formule se ferme à l'annulation.
 5. **Factures** : raison sociale, adresse, numéro de TVA ; activer l'envoi des factures et des reçus par e-mail.
 6. **Développeurs → Webhooks** : ajouter le point de terminaison `https://<domaine>/webhooks/stripe.php` avec les événements :
-   `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed`.
+   `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.expired`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed`.
    Son secret de signature (`whsec_…`) va dans `stripe_webhook`.
 7. **Développeurs → Clés API** : la clé secrète va dans `stripe_secret`.
 
 Essai complet en mode test :
 - souscrire depuis l'espace pro avec la carte `4242 4242 4242 4242`, puis avec le prélèvement SEPA de test ;
 - vérifier la formule dans l'espace pro, puis dans l'application (après rechargement de l'écran Formule) ;
-- publier un événement au-delà du quota sur le site, attendre 5 minutes (cron), puis vérifier la ligne en attente sur le client Stripe ;
+- publier un événement au-delà du quota sur le site : la page de paiement Stripe s'ouvre, et l'événement n'apparaît qu'une fois la carte de test acceptée ; même chose pour une mise en avant payante ;
 - résilier depuis « Gérer mon paiement et mes factures ».
 
 Ensuite, refaire les étapes 1 à 7 en **mode production**, et remplacer les trois valeurs `sk_test` / `whsec` / `txr` par celles de production.

@@ -1095,6 +1095,26 @@ CREATE TABLE IF NOT EXISTS achats_partenaires (
     FOREIGN KEY (evenement_id) REFERENCES evenements(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Suppléments payés à la publication (migration v34) : les valeurs saisies
+-- attendent ici le retour du paiement Stripe.
+CREATE TABLE IF NOT EXISTS paiements_evenements (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    etablissement_id INT NOT NULL,
+    evenement_id INT NULL DEFAULT NULL,
+    valeurs JSON NOT NULL,
+    montant_supplement DECIMAL(8,2) NOT NULL DEFAULT 0,
+    montant_sponsoring DECIMAL(8,2) NOT NULL DEFAULT 0,
+    stripe_session_id VARCHAR(255) NULL DEFAULT NULL,
+    stripe_paiement_id VARCHAR(255) NULL DEFAULT NULL,
+    statut ENUM('en_attente','paye','expire') NOT NULL DEFAULT 'en_attente',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    paye_le DATETIME NULL DEFAULT NULL,
+    UNIQUE KEY uniq_paiement_session (stripe_session_id),
+    KEY k_paiement_etab (etablissement_id, statut),
+    FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE CASCADE,
+    FOREIGN KEY (evenement_id) REFERENCES evenements(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Événements Stripe déjà traités (migration v33).
 CREATE TABLE IF NOT EXISTS stripe_evenements (
     id VARCHAR(255) NOT NULL PRIMARY KEY,
@@ -1105,4 +1125,4 @@ CREATE TABLE IF NOT EXISTS stripe_evenements (
 
 INSERT IGNORE INTO schema_migrations (version) VALUES
 ('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
-('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27'), ('v28'), ('v29'), ('v30'), ('v31'), ('v32'), ('v33');
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27'), ('v28'), ('v29'), ('v30'), ('v31'), ('v32'), ('v33'), ('v34');

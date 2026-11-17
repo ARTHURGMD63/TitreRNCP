@@ -21,7 +21,7 @@ if (!$event || ($event['type'] ?? '') === 'sport') {
 }
 
 $erreurs = [];
-$valeurs = $event;
+$valeurs = traiterRetourPaiementEvenement($pdo, $etab) ?? $event;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrfVerify();
     ['erreurs' => $erreurs, 'valeurs' => $valeurs] = traiterFormulaireEvenement($pdo, $etab, $capacites, $event);
@@ -33,6 +33,7 @@ $inscrits = (int) $stmt->fetchColumn();
 
 proDebut('Modifier un événement', 'evenements', $etab);
 ?>
+<?= messageFlashPro() ?>
 <header class="pro-entete">
   <div>
     <a class="retour" href="<?= htmlspecialchars(baseUrl('/partenaire/evenements.php'), ENT_QUOTES) ?>"><?= iconeSite('fleche-g', 'icon-sm') ?> Mes événements</a>

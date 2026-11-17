@@ -12,6 +12,8 @@ $estClub   = ($etab['type'] ?? '') === 'club';
 
 $erreurs = [];
 $valeurs = ['type' => 'bar', 'quota' => 50];
+// Paiement abandonné : le formulaire revient tel qu'il avait été rempli.
+$valeurs = traiterRetourPaiementEvenement($pdo, $etab) ?? $valeurs;
 if (!$estClub && $_SERVER['REQUEST_METHOD'] === 'POST') {
     csrfVerify();
     ['erreurs' => $erreurs, 'valeurs' => $valeurs] = traiterFormulaireEvenement($pdo, $etab, $capacites, null);

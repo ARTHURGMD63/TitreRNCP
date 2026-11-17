@@ -11,8 +11,12 @@ require_once __DIR__ . '/../includes/site.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/sponsoring.php';
 require_once __DIR__ . '/../includes/evenements_temps.php';
+require_once __DIR__ . '/../includes/evenement_pro.php';
 
 $etab = ouvrirEspacePro($pdo);
+
+// Retour de la page de paiement d'un supplément ou d'une mise en avant.
+traiterRetourPaiementEvenement($pdo, $etab);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['supprimer'])) {
     csrfVerify();

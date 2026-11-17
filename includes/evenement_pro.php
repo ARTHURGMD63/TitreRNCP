@@ -15,6 +15,13 @@
  * a épuisé son quota publie un événement supplémentaire, en acceptant
  * explicitement son prix. Les achats passent par le site, jamais par
  * l'application (règles des stores).
+ *
+ * Paiement à la publication (migration v34) : quand Stripe est branché, un
+ * événement supplémentaire ou une mise en avant payante se paie sur la page
+ * de paiement de Stripe AVANT d'être mis en ligne. Les valeurs validées
+ * attendent dans `paiements_evenements` ; publierEvenementPaye() écrit
+ * l'événement au retour (webhook ou page de retour), une seule fois. Sans
+ * Stripe, le supplément s'ajoute au mois, comme avant.
  */
 
 require_once __DIR__ . '/crm.php';
@@ -24,6 +31,7 @@ require_once __DIR__ . '/capacites.php';
 require_once __DIR__ . '/evenements_temps.php';
 require_once __DIR__ . '/musique.php';
 require_once __DIR__ . '/temps_reel.php';
+require_once __DIR__ . '/stripe.php';
 
 /** Une date ISO en valeur de champ datetime-local. */
 function valeurDateLocale(?string $date): string
@@ -118,6 +126,46 @@ function traiterFormulaireEvenement(PDO $pdo, array $etab, array $capacites, ?ar
         return ['erreurs' => $erreurs, 'valeurs' => $v + ['accepte_supplement' => $accepteSupplement]];
     }
 
+    $sponsoPaye = $sponso['nouvelle'] && (float) $sponso['tarif'] > 0 ? (float) $sponso['tarif'] : 0.0;
+
+    // Quelque chose à payer, et Stripe branché : le paiement d'abord, la
+    // publication au retour. Rien n'est mis en ligne d'ici.
+    if (stripeActif() && ($supplement > 0 || $sponsoPaye > 0)) {
+        $erreur = ouvrirPaiementEvenement($pdo, $etab, $existant, $v, $supplement, $sponso);
+
+        return ['erreurs' => [$erreur], 'valeurs' => $v + ['accepte_supplement' => $accepteSupplement]];
+    }
+
+    try {
+        $id = ecrireEvenementPro($pdo, $etabId, $existant, $v, $supplement, $sponso);
+    } catch (Throwable $e) {
+        logErreur('Enregistrement d\'événement impossible', $e, ['etablissement' => $etabId]);
+
+        return ['erreurs' => ['L\'événement n\'a pas pu être enregistré. Réessayez dans un instant.'], 'valeurs' => $v];
+    }
+
+    $message = $existant === null ? 'Événement publié.' : 'Événement mis à jour.';
+    if ($supplement > 0) {
+        $message .= ' Supplément de ' . eurosSite($supplement) . ' HT ajouté à votre mois.';
+    }
+    if ($sponsoPaye > 0) {
+        $message .= ' Mise en avant de ' . eurosSite($sponsoPaye) . ' HT ajoutée à votre mois.';
+    }
+    flashPro($message);
+    header('Location: ' . baseUrl('/partenaire/evenements.php'));
+    exit;
+}
+
+/**
+ * Écrit l'événement (création ou modification) et ce qu'il consomme au
+ * registre des achats, dans une transaction. Renvoie son identifiant.
+ *
+ * @param array<string, mixed>      $v        valeurs validées du formulaire
+ * @param array<string, mixed>      $sponso   résultat de resoudreSponsoring()
+ * @param array<string, mixed>|null $existant l'événement modifié, null à la création
+ */
+function ecrireEvenementPro(PDO $pdo, int $etabId, ?array $existant, array $v, float $supplement, array $sponso): int
+{
     $commun = [
         $v['titre'], $v['description'], $v['type'], $v['style_musique'] ?: null, $v['date_heure'], $v['date_fin'],
         $v['quota'], $v['reduction'], $v['prix_normal'], $v['is_flash'], $v['flash_expiry'], $v['is_gratuit'], $v['lieu'],
@@ -154,10 +202,10 @@ function traiterFormulaireEvenement(PDO $pdo, array $etab, array $capacites, ?ar
         ]);
         $pdo->commit();
     } catch (Throwable $e) {
-        $pdo->rollBack();
-        logErreur('Enregistrement d\'événement impossible', $e, ['etablissement' => $etabId]);
-
-        return ['erreurs' => ['L\'événement n\'a pas pu être enregistré. Réessayez dans un instant.'], 'valeurs' => $v];
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
     }
 
     if ($existant === null) {
@@ -165,16 +213,189 @@ function traiterFormulaireEvenement(PDO $pdo, array $etab, array $capacites, ?ar
     }
     fluxToucher($pdo, canalEvenement($id));
 
-    $message = $existant === null ? 'Événement publié.' : 'Événement mis à jour.';
+    return $id;
+}
+
+// ─── Paiement à la publication ─────────────────────────────────────────────
+
+/**
+ * Met de côté les valeurs validées, ouvre la page de paiement Stripe et y
+ * envoie l'établissement. Ne revient qu'en cas d'échec, avec le message à
+ * afficher.
+ *
+ * @param array<string, mixed>      $etab
+ * @param array<string, mixed>|null $existant
+ * @param array<string, mixed>      $v
+ * @param array<string, mixed>      $sponso
+ */
+function ouvrirPaiementEvenement(PDO $pdo, array $etab, ?array $existant, array $v, float $supplement, array $sponso): string
+{
+    $etabId     = (int) $etab['id'];
+    $sponsoPaye = $sponso['nouvelle'] && (float) $sponso['tarif'] > 0 ? (float) $sponso['tarif'] : 0.0;
+
+    $pdo->prepare(
+        'INSERT INTO paiements_evenements (etablissement_id, evenement_id, valeurs, montant_supplement, montant_sponsoring)
+         VALUES (?,?,?,?,?)'
+    )->execute([
+        $etabId, $existant ? (int) $existant['id'] : null,
+        json_encode(['v' => $v, 'sponso' => $sponso], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+        $supplement, $sponsoPaye,
+    ]);
+    $paiementId = (int) $pdo->lastInsertId();
+
+    $lignes = [];
     if ($supplement > 0) {
-        $message .= ' Supplément de ' . eurosSite($supplement) . ' HT ajouté à votre mois.';
+        $lignes[] = ['libelle' => 'Événement supplémentaire — ' . $v['titre'], 'montant' => $supplement];
     }
-    if ($sponso['nouvelle'] && (float) $sponso['tarif'] > 0) {
-        $message .= ' Mise en avant de ' . eurosSite((float) $sponso['tarif']) . ' HT ajoutée à votre mois.';
+    if ($sponsoPaye > 0) {
+        $lignes[] = ['libelle' => libelleSponsoring((string) $sponso['formule']) . ' — ' . $v['titre'], 'montant' => $sponsoPaye];
     }
-    flashPro($message);
-    header('Location: ' . baseUrl('/partenaire/evenements.php'));
+    $retour = $existant === null
+        ? '/partenaire/create_event.php?paiement=annule&p=' . $paiementId
+        : '/partenaire/edit_event.php?id=' . (int) $existant['id'] . '&paiement=annule&p=' . $paiementId;
+
+    try {
+        $stmt = $pdo->prepare('SELECT email FROM users WHERE id = ?');
+        $stmt->execute([(int) $etab['user_id']]);
+        $session = stripeOuvrirPaiementUnique(
+            abonnementEtablissement($pdo, $etabId), $lignes,
+            ['type' => 'evenement', 'paiement_id' => (string) $paiementId, 'etablissement_id' => (string) $etabId],
+            $retour, $stmt->fetchColumn() ?: null
+        );
+        $pdo->prepare('UPDATE paiements_evenements SET stripe_session_id = ? WHERE id = ?')->execute([$session['id'], $paiementId]);
+    } catch (StripeErreur $e) {
+        logErreur('Stripe : paiement d\'événement impossible', $e, ['etablissement' => $etabId]);
+        $pdo->prepare('DELETE FROM paiements_evenements WHERE id = ?')->execute([$paiementId]);
+
+        return 'Le paiement en ligne est momentanément indisponible : rien n\'a été publié. Réessayez dans un instant.';
+    }
+
+    header('Location: ' . $session['url'], true, 303);
     exit;
+}
+
+/**
+ * Publie l'événement payé : appelée par le webhook (checkout.session.completed)
+ * et par la page de retour. La première arrivée s'en charge, la seconde ne
+ * fait rien : la ligne passe de « en_attente » à « paye » en une seule
+ * requête conditionnelle.
+ *
+ * @param array<string, mixed> $session l'objet Checkout Session
+ * @return array{ok:bool, message:string, evenement_id:?int}
+ */
+function publierEvenementPaye(PDO $pdo, array $session): array
+{
+    $paiementId = (int) ($session['metadata']['paiement_id'] ?? 0);
+    $stmt = $pdo->prepare('SELECT * FROM paiements_evenements WHERE id = ? AND stripe_session_id = ?');
+    $stmt->execute([$paiementId, (string) ($session['id'] ?? '')]);
+    $paiement = $stmt->fetch();
+    if (!$paiement) {
+        return ['ok' => false, 'message' => 'Paiement inconnu.', 'evenement_id' => null];
+    }
+    if ($paiement['statut'] === 'paye') {
+        return ['ok' => true, 'message' => 'Paiement reçu : événement publié.', 'evenement_id' => $paiement['evenement_id'] !== null ? (int) $paiement['evenement_id'] : null];
+    }
+    if (($session['payment_status'] ?? '') !== 'paid') {
+        return ['ok' => false, 'message' => 'Le paiement n\'est pas encore confirmé.', 'evenement_id' => null];
+    }
+
+    $reference = (string) ($session['payment_intent'] ?? '') ?: (string) $session['id'];
+    $prise = $pdo->prepare("UPDATE paiements_evenements SET statut = 'paye', paye_le = NOW(), stripe_paiement_id = ? WHERE id = ? AND statut <> 'paye'");
+    $prise->execute([$reference, $paiementId]);
+    if ($prise->rowCount() === 0) {
+        return ['ok' => true, 'message' => 'Paiement reçu : événement publié.', 'evenement_id' => null];
+    }
+
+    $etabId = (int) $paiement['etablissement_id'];
+    try {
+        $donnees  = json_decode((string) $paiement['valeurs'], true, 512, JSON_THROW_ON_ERROR);
+        $existant = null;
+        if ($paiement['evenement_id'] !== null) {
+            $stmt = $pdo->prepare('SELECT * FROM evenements WHERE id = ? AND etablissement_id = ?');
+            $stmt->execute([(int) $paiement['evenement_id'], $etabId]);
+            $existant = $stmt->fetch() ?: null;
+        }
+        $id = ecrireEvenementPro($pdo, $etabId, $existant, $donnees['v'], (float) $paiement['montant_supplement'], $donnees['sponso']);
+    } catch (Throwable $e) {
+        // Payé mais pas publié : la ligne revient en attente pour que la
+        // relance du webhook réessaie, et l'erreur part au journal.
+        $pdo->prepare("UPDATE paiements_evenements SET statut = 'en_attente', paye_le = NULL WHERE id = ?")->execute([$paiementId]);
+        logErreur('Stripe : événement payé non publié', $e, ['paiement' => $paiementId]);
+        throw $e;
+    }
+
+    // Les achats de cet événement sont réglés : la facturation mensuelle
+    // (cron/stripe.php) ne doit pas les reprendre.
+    $pdo->prepare('UPDATE achats_partenaires SET stripe_ligne = ? WHERE evenement_id = ? AND montant > 0 AND stripe_ligne IS NULL')
+        ->execute([mb_substr($reference, 0, 64), $id]);
+    $pdo->prepare('UPDATE paiements_evenements SET evenement_id = ? WHERE id = ?')->execute([$id, $paiementId]);
+
+    // Recettes encaissées, au registre financier.
+    $client = abonnementEtablissement($pdo, $etabId);
+    $titre  = (string) ($donnees['v']['titre'] ?? '');
+    $ajout  = $pdo->prepare(
+        "INSERT INTO finance_mouvements (sens, categorie, client_id, libelle, montant_ht, date_mouvement, statut, moyen, note)
+         VALUES ('recette', ?, ?, ?, ?, CURDATE(), 'regle', 'stripe', ?)"
+    );
+    if ((float) $paiement['montant_supplement'] > 0) {
+        $ajout->execute(['autre_recette', $client['id'] ?? null, 'Événement supplémentaire — ' . $titre, $paiement['montant_supplement'], 'Paiement Stripe ' . $reference]);
+    }
+    if ((float) $paiement['montant_sponsoring'] > 0) {
+        $ajout->execute(['sponsoring', $client['id'] ?? null, 'Mise en avant — ' . $titre, $paiement['montant_sponsoring'], 'Paiement Stripe ' . $reference]);
+    }
+
+    return [
+        'ok'           => true,
+        'message'      => $existant === null ? 'Paiement reçu : événement publié.' : 'Paiement reçu : mise en avant lancée.',
+        'evenement_id' => $id,
+    ];
+}
+
+/**
+ * Le retour de la page de paiement, sur l'espace pro.
+ *
+ *   ?paiement=ok&session=cs_…  publie (si le webhook n'est pas déjà passé) ;
+ *   ?paiement=annule&p=<id>    abandonne, et renvoie les valeurs saisies pour
+ *                              re-remplir le formulaire.
+ *
+ * @param array<string, mixed> $etab
+ * @return array<string, mixed>|null les valeurs à remettre dans le formulaire
+ */
+function traiterRetourPaiementEvenement(PDO $pdo, array $etab): ?array
+{
+    $etabId = (int) $etab['id'];
+
+    if (($_GET['paiement'] ?? '') === 'ok' && preg_match('/^cs_[A-Za-z0-9_]+$/', (string) ($_GET['session'] ?? ''))) {
+        try {
+            $session = stripeRequete('GET', 'checkout/sessions/' . $_GET['session']);
+            if ((int) ($session['metadata']['etablissement_id'] ?? 0) === $etabId) {
+                $res = publierEvenementPaye($pdo, $session);
+                flashPro($res['message'], $res['ok'] ? 'succes' : 'alerte');
+            }
+        } catch (Throwable $e) {
+            logErreur('Stripe : retour de paiement d\'événement', $e, ['etablissement' => $etabId]);
+            flashPro('Paiement reçu : l\'événement sera en ligne dans quelques instants.', 'alerte');
+        }
+        header('Location: ' . baseUrl('/partenaire/evenements.php'));
+        exit;
+    }
+
+    if (($_GET['paiement'] ?? '') === 'annule' && ctype_digit((string) ($_GET['p'] ?? ''))) {
+        $stmt = $pdo->prepare("SELECT valeurs FROM paiements_evenements WHERE id = ? AND etablissement_id = ? AND statut = 'en_attente'");
+        $stmt->execute([(int) $_GET['p'], $etabId]);
+        $valeurs = $stmt->fetchColumn();
+        $pdo->prepare("UPDATE paiements_evenements SET statut = 'expire' WHERE id = ? AND etablissement_id = ? AND statut = 'en_attente'")
+            ->execute([(int) $_GET['p'], $etabId]);
+        flashPro('Paiement annulé : rien n\'a été publié.', 'alerte');
+        if (is_string($valeurs)) {
+            $donnees = json_decode($valeurs, true);
+            if (is_array($donnees) && is_array($donnees['v'] ?? null)) {
+                return $donnees['v'] + ['accepte_supplement' => 1];
+            }
+        }
+    }
+
+    return null;
 }
 
 /**
@@ -287,7 +508,7 @@ function formulaireEvenementHtml(PDO $pdo, array $etab, array $capacites, array 
 
           <label class="interrupteur">
             <div><strong><?= iconeSite('etoile', 'icon-sm') ?> Mise en avant</strong>
-              <span><?= $offerte ? 'Une mise en avant offerte disponible ce mois-ci.' : 'En tête du fil des étudiants, facturée au mois.' ?></span></div>
+              <span><?= $offerte ? 'Une mise en avant offerte disponible ce mois-ci.' : (stripeActif() ? 'En tête du fil des étudiants, payée par carte à la publication.' : 'En tête du fil des étudiants, facturée au mois.') ?></span></div>
             <input type="checkbox" name="is_sponsorise" value="1" data-ouvre="bloc-sponso"<?= !empty($val('is_sponsorise')) ? ' checked' : '' ?>>
           </label>
           <div class="choix choix--liste" id="bloc-sponso" role="radiogroup" aria-label="Formule de mise en avant"<?= empty($val('is_sponsorise')) ? ' hidden' : '' ?>>
@@ -310,7 +531,11 @@ function formulaireEvenementHtml(PDO $pdo, array $etab, array $capacites, array 
             <p style="margin-top:8px;font-weight:600;">Votre quota de <?= (int) $usage['evenements']['quota'] ?> événements est atteint.</p>
             <label class="case" style="margin-top:14px;">
               <input type="checkbox" name="accepte_supplement" value="1"<?= !empty($val('accepte_supplement')) ? ' checked' : '' ?>>
-              <span>J'accepte le supplément de <strong><?= $h(eurosSite((float) PRIX_EVENEMENT_SUPPLEMENTAIRE)) ?> HT</strong> pour publier cet événement, ajouté à ma facture du mois.</span>
+              <?php if (stripeActif()): ?>
+                <span>J'accepte le supplément de <strong><?= $h(eurosSite((float) PRIX_EVENEMENT_SUPPLEMENTAIRE)) ?> HT</strong>, payé par carte au moment de publier cet événement.</span>
+              <?php else: ?>
+                <span>J'accepte le supplément de <strong><?= $h(eurosSite((float) PRIX_EVENEMENT_SUPPLEMENTAIRE)) ?> HT</strong> pour publier cet événement, ajouté à ma facture du mois.</span>
+              <?php endif; ?>
             </label>
           <?php elseif ($existant === null): ?>
             <p style="margin-top:8px;font-size:18px;font-weight:700;">Inclus dans votre formule</p>

@@ -9,7 +9,8 @@
  *     https://<domaine>/webhooks/stripe.php
  *
  * avec les événements checkout.session.completed,
- * checkout.session.async_payment_succeeded, customer.subscription.created,
+ * checkout.session.async_payment_succeeded, checkout.session.expired,
+ * customer.subscription.created,
  * customer.subscription.updated, customer.subscription.deleted, invoice.paid
  * et invoice.payment_failed. Le secret de signature (whsec_…) va dans
  * STRIPE_WEBHOOK_SECRET.

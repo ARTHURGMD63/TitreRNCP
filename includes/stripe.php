@@ -14,12 +14,13 @@
  *   3. le webhook met à jour `crm_clients` (formule, statut) par les mêmes
  *      fonctions que le reste du site — souscrireFormule() — si bien que les
  *      quotas lus par l'application suivent sans autre changement ;
- *   4. les suppléments du mois (événement au-delà du quota, mise en avant
- *      payante) restent inscrits au registre `achats_partenaires` à l'instant
- *      où ils sont consommés, puis partent chez Stripe comme lignes de la
- *      prochaine facture mensuelle (stripeSynchroniserAchats(), lancée par
- *      cron/stripe.php). La règle commerciale reste celle affichée : un seul
- *      prélèvement par mois ;
+ *   4. un supplément (événement au-delà du quota, mise en avant payante) se
+ *      paie au moment de la publication, par carte, sur une page de paiement
+ *      Stripe (stripeOuvrirPaiementUnique()) : l'événement n'est mis en ligne
+ *      qu'une fois le paiement reçu (publierEvenementPaye(), dans
+ *      includes/evenement_pro.php, migration v34). Un achat payant qui
+ *      n'aurait pas été réglé ainsi part sur la prochaine facture mensuelle
+ *      (stripeSynchroniserAchats(), cron/stripe.php) ;
  *   5. l'établissement change de carte, télécharge ses factures ou résilie
  *      seul, depuis l'espace client Stripe (stripeOuvrirPortail()).
  *
@@ -379,6 +380,69 @@ function stripeChangerFormule(string $abonnementId, string $offre, float $tarif)
 }
 
 /**
+ * Ouvre une page de paiement Stripe pour un achat ponctuel (événement
+ * supplémentaire, mise en avant), payé tout de suite par carte.
+ *
+ * Carte seulement : un prélèvement SEPA se confirme en plusieurs jours, et
+ * l'événement n'est publié qu'une fois le paiement reçu. Une facture avec
+ * TVA est émise (invoice_creation), comme pour l'abonnement.
+ *
+ * @param array<string, mixed>|null                     $client   la fiche crm_clients
+ * @param list<array{libelle:string, montant:float}>    $lignes
+ * @param array<string, string>                         $metadonnees
+ * @return array{id:string, url:string}
+ * @throws StripeErreur
+ */
+function stripeOuvrirPaiementUnique(?array $client, array $lignes, array $metadonnees, string $cheminAnnulation, ?string $email): array
+{
+    $taux  = stripeTauxTva();
+    $items = [];
+    foreach ($lignes as $ligne) {
+        $item = [
+            'price_data' => [
+                'currency'     => 'eur',
+                'unit_amount'  => stripeCentimes($ligne['montant']),
+                'tax_behavior' => 'exclusive',
+                'product_data' => ['name' => mb_substr($ligne['libelle'], 0, 250)],
+            ],
+            'quantity' => 1,
+        ];
+        if ($taux !== []) {
+            $item['tax_rates'] = $taux;
+        }
+        $items[] = $item;
+    }
+
+    $params = [
+        'mode'                 => 'payment',
+        'locale'               => 'fr',
+        'payment_method_types' => ['card'],
+        'client_reference_id'  => $metadonnees['etablissement_id'] ?? null,
+        'line_items'           => $items,
+        'metadata'             => $metadonnees,
+        'payment_intent_data'  => ['metadata' => $metadonnees],
+        'invoice_creation'     => ['enabled' => true],
+        'success_url'          => urlPublique('/partenaire/evenements.php?paiement=ok&session={CHECKOUT_SESSION_ID}'),
+        'cancel_url'           => urlPublique($cheminAnnulation),
+        // Une page de paiement laissée ouverte n'engage rien au-delà d'une heure.
+        'expires_at'           => time() + 3600,
+    ];
+    if (!empty($client['stripe_customer_id'])) {
+        $params['customer'] = (string) $client['stripe_customer_id'];
+    } elseif ($email !== null && $email !== '') {
+        $params['customer_email']  = $email;
+        $params['customer_creation'] = 'always';
+    }
+
+    $session = stripeRequete('POST', 'checkout/sessions', $params);
+    if (empty($session['url']) || empty($session['id'])) {
+        throw new StripeErreur('Stripe n’a pas renvoyé de page de paiement.');
+    }
+
+    return ['id' => (string) $session['id'], 'url' => (string) $session['url']];
+}
+
+/**
  * Ouvre l'espace client Stripe : moyen de paiement, factures, résiliation.
  *
  * @throws StripeErreur
@@ -619,7 +683,17 @@ function stripeTraiterEvenement(PDO $pdo, array $evenement): bool
         switch ($type) {
             case 'checkout.session.completed':
             case 'checkout.session.async_payment_succeeded':
-                stripeAppliquerCheckout($pdo, $obj);
+                if (($obj['metadata']['type'] ?? '') === 'evenement') {
+                    // Supplément ou mise en avant payés : l'événement se publie.
+                    require_once __DIR__ . '/evenement_pro.php';
+                    publierEvenementPaye($pdo, $obj);
+                } else {
+                    stripeAppliquerCheckout($pdo, $obj);
+                }
+                break;
+            case 'checkout.session.expired':
+                $pdo->prepare("UPDATE paiements_evenements SET statut = 'expire' WHERE stripe_session_id = ? AND statut = 'en_attente'")
+                    ->execute([(string) ($obj['id'] ?? '')]);
                 break;
             case 'customer.subscription.created':
             case 'customer.subscription.updated':

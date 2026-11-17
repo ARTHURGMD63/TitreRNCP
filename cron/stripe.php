@@ -1,8 +1,10 @@
 <?php
 /**
- * Envoie à Stripe les suppléments payants du mois (événements au-delà du
- * quota, mises en avant) comme lignes de la prochaine facture de chaque
- * établissement abonné.
+ * Filet de sécurité de la facturation : envoie à Stripe, comme lignes de la
+ * prochaine facture, les achats payants qui n'ont pas été réglés à la
+ * publication. Depuis la migration v34, un supplément se paie au moment où
+ * l'événement est mis en ligne (includes/evenement_pro.php) : ce script ne
+ * trouve normalement rien.
  *
  * À lancer toutes les cinq minutes, en ligne de commande :
  *     php cron/stripe.php
