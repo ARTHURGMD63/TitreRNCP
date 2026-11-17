@@ -29,6 +29,7 @@ require_once __DIR__ . '/interets.php';
 require_once __DIR__ . '/social.php';
 require_once __DIR__ . '/musique.php';
 require_once __DIR__ . '/agregats.php';
+require_once __DIR__ . '/cache.php';
 require_once __DIR__ . '/evenements_temps.php';
 
 /**
@@ -154,6 +155,63 @@ function hubAmisParEvenement(PDO $pdo, int $uid): array
     }
 
     return $par;
+}
+
+/** Durée de vie d'un annuaire en cache, en secondes. */
+const HUB_ANNUAIRE_TTL = 45;
+
+/**
+ * Le « numéro de version » de l'annuaire d'une personne : il fait partie de
+ * la clé de cache, si bien qu'en changer rend tous ses annuaires périmés d'un
+ * coup, sans avoir à les énumérer.
+ */
+function hubAnnuaireVersion(int $uid): string
+{
+    return (string) cacheGet('annuaire_version_' . $uid, '0');
+}
+
+/**
+ * Rend périmés les annuaires en cache d'une personne.
+ *
+ * À appeler quand une écriture change ce QU'ELLE voit : elle suit ou cesse de
+ * suivre quelqu'un, bloque ou débloque, change ses goûts ou son école. Ce
+ * que fait un tiers (une inscription, une squad) n'est pas suivi : l'annuaire
+ * se met à jour de lui-même au bout de HUB_ANNUAIRE_TTL secondes.
+ */
+function hubAnnuaireOublier(int $uid): void
+{
+    cacheSet('annuaire_version_' . $uid, bin2hex(random_bytes(4)), 86400);
+}
+
+/**
+ * hubAnnuaire() derrière un cache court, propre à chaque personne.
+ *
+ * Le classement par affinité parcourt tout l'annuaire : c'est la requête la
+ * plus chère de l'application, et la même personne la redemande à chaque
+ * retour sur l'onglet. Le résultat dépend de qui regarde (goûts, abonnements,
+ * blocages), donc la clé contient son identifiant — jamais de partage entre
+ * deux comptes.
+ *
+ * Pas de cache pour une recherche libre : le texte tapé varie à l'infini, ce
+ * ne serait que du remplissage qui n'est jamais relu.
+ *
+ * @param array{id:?int,ecole:string} $utilisateur
+ * @param array<string,mixed>         $criteres
+ * @return array<string,mixed> comme hubAnnuaire()
+ */
+function hubAnnuaireEnCache(PDO $pdo, array $utilisateur, array $criteres): array
+{
+    if ((string) $criteres['q'] !== '') {
+        return hubAnnuaire($pdo, $utilisateur, $criteres);
+    }
+
+    $uid = (int) $utilisateur['id'];
+    $cle = 'annuaire_' . $uid . '_' . hubAnnuaireVersion($uid) . '_' . md5(json_encode([
+        $utilisateur['ecole'] ?? '',
+        $criteres['ecole'], $criteres['interet'], $criteres['comme_moi'], $criteres['page_profils'],
+    ], JSON_THROW_ON_ERROR));
+
+    return cacheRemember($cle, HUB_ANNUAIRE_TTL, static fn(): array => hubAnnuaire($pdo, $utilisateur, $criteres));
 }
 
 /**

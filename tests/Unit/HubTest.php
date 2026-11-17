@@ -144,4 +144,29 @@ final class HubTest extends TestCase
         $this->assertStringNotContainsString('"', $lien);
         $this->assertStringContainsString('&amp;', $lien);
     }
+
+    public function testLaVersionDeLAnnuaireChangeQuandOnLOublie(): void
+    {
+        cacheVider();
+
+        $avant = hubAnnuaireVersion(7);
+        $this->assertSame($avant, hubAnnuaireVersion(7), 'sans écriture, la version ne bouge pas');
+
+        hubAnnuaireOublier(7);
+        $this->assertNotSame($avant, hubAnnuaireVersion(7), 'oublier rend les annuaires en cache périmés');
+
+        cacheVider();
+    }
+
+    public function testOublierNeToucheQueCettePersonne(): void
+    {
+        cacheVider();
+
+        $autre = hubAnnuaireVersion(8);
+        hubAnnuaireOublier(7);
+
+        $this->assertSame($autre, hubAnnuaireVersion(8), "l'annuaire d'une autre personne reste en cache");
+
+        cacheVider();
+    }
 }
