@@ -14,7 +14,7 @@
 // v2 : refonte Outsee — le logo change sans changer d'URL, l'ancien cache
 // doit donc être purgé. v3 : polices hébergées, ajoutées à la coquille.
 // v4 : renommage en Outsee, les caches « linkee-… » sont purgés.
-const VERSION = 'v4';
+const VERSION = 'v5';
 const CACHE_COQUILLE = 'outsee-coquille-' + VERSION;
 const CACHE_PAGES = 'outsee-pages-' + VERSION;
 
