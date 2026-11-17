@@ -188,23 +188,25 @@ function classementXp(PDO $pdo, array $criteres, int $limite = 50): array
 // ─── Classement servi depuis le cache ───────────────────────────────────────
 
 /**
- * Tous les étudiants et leur XP, du premier au dernier — calculé une fois
- * par minute pour toute l'application.
+ * Tous les étudiants et leur XP, du premier au dernier — calculé toutes les
+ * cinq minutes pour toute l'application.
  *
  * Mesuré sur un an d'exploitation simulé (5 000 étudiants, 40 000
  * inscriptions) : une agrégation coûte 60 à 130 ms, et la page du classement
  * en lançait deux ou trois par affichage. Recalculer la même liste pour
  * chaque visiteur, chaque seconde, ne tient pas à plusieurs centaines
- * d'utilisateurs simultanés. Une minute de retard sur l'XP des autres est
- * invisible ; celui de l'étudiant qui regarde est, lui, toujours recalculé
- * en direct (classementPourEtudiant()).
+ * d'utilisateurs simultanés. Quelques minutes de retard sur l'XP des autres
+ * sont invisibles ; celui de l'étudiant qui regarde est, lui, toujours
+ * recalculé en direct (classementPourEtudiant()). Cinq minutes plutôt
+ * qu'une depuis la préparation de la montée en charge : le calcul parcourt
+ * toutes les inscriptions, et son coût grandit avec elles.
  *
  * Le cache est partagé entre tous les visiteurs : n'y figurent que prénom,
  * nom, photo, école et XP, déjà visibles de tout étudiant connecté.
  *
  * @return list<array{id:int, prenom:string, nom:string, photo:?string, ecole:?string, promo:?string, xp:int}>
  */
-function classementGlobal(PDO $pdo, int $ttl = 60): array
+function classementGlobal(PDO $pdo, int $ttl = 300): array
 {
     require_once __DIR__ . '/cache.php';
 
