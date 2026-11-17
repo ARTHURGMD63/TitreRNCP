@@ -256,6 +256,7 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
   centaine de lignes de la vraie cause.
 
 ### Security
+- **Plus rien ne dépend de l'en-tête `Host`.** `Host: localhost` envoyé à l'adresse du serveur faisait renvoyer le code de réinitialisation de n'importe quel compte (`code_dev`), et le lien de réinitialisation par e-mail se construisait sur l'hôte demandé (empoisonnement du lien). Le mode développement se déclare désormais par `APP_ENV` (ou une requête venue de la machine elle-même, sans `APP_ENV`), et les adresses absolues viennent de `APP_URL` (`urlPublique()`). Les traces d'erreur ne s'affichent plus quand `APP_ENV` manque.
 - **Jeton CSRF sur les onze points d'écriture de l'API.** `api/follow.php`,
   `inscrire.php`, `annuler_pass.php`, `create_squad.php`, `delete_squad.php`,
   `rejoindre_squad.php`, `quitter_squad.php`, `remove_squad_member.php`,

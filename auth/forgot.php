@@ -30,10 +30,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // prefixeApplication() — et non plus deviné d'après le nom d'hôte, ce
         // qui produisait un lien sans « /TitreRNCP » dès qu'on ouvrait le site
         // à autre chose que localhost.
-        $host    = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $enHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-                || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
-        $base    = ($enHttps ? 'https://' : 'http://') . $host . baseUrl('');
+        // APP_URL en production : un Host forgé enverrait à la victime un
+        // vrai e-mail Outsee dont le lien pointe chez l'attaquant.
+        $base    = urlPublique();
 
         if ($token) {
             sendResetEmail($email, $token, $base);

@@ -147,6 +147,48 @@ final class ConfigTest extends TestCase
         }
     }
 
+    public function testLEnTeteHostNeSuffitPlusAPasserPourUnPosteDeDeveloppement(): void
+    {
+        // `Host: localhost` envoyé à l'adresse publique du serveur faisait
+        // renvoyer le code de réinitialisation de n'importe quel compte.
+        $avant = [$_SERVER['REMOTE_ADDR'] ?? null, $_SERVER['HTTP_HOST'] ?? null];
+        try {
+            putenv('APP_ENV');
+            $_SERVER['HTTP_HOST']   = 'localhost';
+            $_SERVER['REMOTE_ADDR'] = '203.0.113.7';
+            if (PHP_SAPI === 'cli') {
+                // En ligne de commande, seul APP_ENV décide : on le règle pour
+                // juger le cas d'une requête web.
+                putenv('APP_ENV=staging');
+            }
+            $this->assertFalse(estEnDeveloppement());
+
+            putenv('APP_ENV=production');
+            $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+            $this->assertFalse(estEnDeveloppement(), 'La production ne bascule jamais en mode développement.');
+
+            putenv('APP_ENV=local');
+            $_SERVER['REMOTE_ADDR'] = '203.0.113.7';
+            $this->assertTrue(estEnDeveloppement(), 'APP_ENV=local se déclare explicitement.');
+        } finally {
+            [$_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_HOST']] = $avant;
+        }
+    }
+
+    public function testLAdressePubliqueVientDuReglageEtPasDeLEnTeteHost(): void
+    {
+        $avant = getenv('APP_URL');
+        $hote  = $_SERVER['HTTP_HOST'] ?? null;
+        try {
+            putenv('APP_URL=https://outsee.fr/');
+            $_SERVER['HTTP_HOST'] = 'attaquant.example';
+            $this->assertSame('https://outsee.fr/auth/reset.php', urlPublique('/auth/reset.php'));
+        } finally {
+            putenv($avant === false ? 'APP_URL' : 'APP_URL=' . $avant);
+            $_SERVER['HTTP_HOST'] = $hote;
+        }
+    }
+
     public function testLaConfigurationLocaleEstUnTableau(): void
     {
         // configLocale() doit renvoyer un tableau même sans fichier, sinon
