@@ -171,8 +171,24 @@ export default function SuiviEvenement() {
           </Apparition>
         ) : null}
 
+        <Apparition index={5}>
+          <CarteRefonte>
+            <TitreSection>Liste des inscrits ({suivi.participants.length})</TitreSection>
+            {suivi.participants.length ? suivi.participants.map((p) => (
+              <View key={p.id} style={{ gap: 2, paddingVertical: 6 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
+                  <T taille={fs[4]} poids={700} style={{ flexShrink: 1 }}>{p.prenom} {p.nom}</T>
+                  {p.present ? <T taille={fs[4]} poids={600} couleur={c.succes}>Présent</T> : null}
+                </View>
+                <T taille={fs[4]} couleur={c.gris} selectable>{p.email}</T>
+                {p.ecole || p.promo ? <T taille={fs[4]} couleur={c.gris}>{[p.ecole, p.promo].filter(Boolean).join(' · ')}</T> : null}
+              </View>
+            )) : <T taille={fs[4]} couleur={c.gris}>Personne n&apos;est encore inscrit.</T>}
+          </CarteRefonte>
+        </Apparition>
+
         {mea.active ? (
-          <Apparition index={5}>
+          <Apparition index={6}>
             <CarteRefonte>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                 <TitreSection>Mise en avant</TitreSection>

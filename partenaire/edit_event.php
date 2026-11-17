@@ -54,5 +54,39 @@ proDebut('Modifier un événement', 'evenements', $etab);
   </div>
 <?php endif; ?>
 
+<?php
+$stmt = $pdo->prepare(
+    "SELECT u.prenom, u.nom, u.email, u.ecole, u.promo, i.statut, i.created_at
+       FROM inscriptions i JOIN users u ON u.id = i.user_id
+      WHERE i.evenement_id = ? AND i.statut <> 'annule' ORDER BY u.nom, u.prenom"
+);
+$stmt->execute([(int) $event['id']]);
+$participants = $stmt->fetchAll();
+$e = static fn ($v): string => htmlspecialchars((string) $v, ENT_QUOTES);
+?>
+<section class="carte" style="margin-bottom:20px;">
+  <h2 class="titre-section">Inscrits (<?= count($participants) ?>)</h2>
+  <?php if (!$participants): ?>
+    <p>Personne n'est encore inscrit.</p>
+  <?php else: ?>
+    <div style="overflow-x:auto;">
+      <table class="table" style="width:100%;">
+        <thead><tr><th>Nom</th><th>E-mail</th><th>École</th><th>Inscrit le</th><th>Présence</th></tr></thead>
+        <tbody>
+        <?php foreach ($participants as $p): ?>
+          <tr>
+            <td><?= $e($p['prenom'] . ' ' . $p['nom']) ?></td>
+            <td><a href="mailto:<?= $e($p['email']) ?>"><?= $e($p['email']) ?></a></td>
+            <td><?= $e(trim(($p['ecole'] ?? '') . ' ' . ($p['promo'] ?? ''))) ?></td>
+            <td><?= $e(date('d/m/Y', strtotime((string) $p['created_at']))) ?></td>
+            <td><?= $p['statut'] === 'checkin' ? 'Présent' : '—' ?></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  <?php endif; ?>
+</section>
+
 <?= formulaireEvenementHtml($pdo, $etab, $capacites, $valeurs, $event) ?>
 <?php proFin(); ?>

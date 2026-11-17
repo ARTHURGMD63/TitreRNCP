@@ -76,6 +76,29 @@ $ecoles = array_map(
     $lignesEcoles
 );
 
+// Les inscrits eux-mêmes, avec de quoi les joindre (nom, e-mail, école) : seul
+// l'établissement propriétaire de l'événement les voit (filtre plus haut).
+$stmt = $pdo->prepare(
+    "SELECT u.id, u.prenom, u.nom, u.email, u.ecole, u.promo, i.statut, i.created_at
+       FROM inscriptions i JOIN users u ON u.id = i.user_id
+      WHERE i.evenement_id = ? AND i.statut <> 'annule'
+      ORDER BY u.nom, u.prenom"
+);
+$stmt->execute([$eid]);
+$participants = array_map(
+    static fn (array $r): array => [
+        'id'         => (int) $r['id'],
+        'prenom'     => (string) $r['prenom'],
+        'nom'        => (string) $r['nom'],
+        'email'      => (string) $r['email'],
+        'ecole'      => $r['ecole'] !== null && $r['ecole'] !== '' ? (string) $r['ecole'] : null,
+        'promo'      => $r['promo'] !== null && $r['promo'] !== '' ? (string) $r['promo'] : null,
+        'present'    => $r['statut'] === 'checkin',
+        'inscrit_le' => (string) $r['created_at'],
+    ],
+    $stmt->fetchAll()
+);
+
 $stmt = $pdo->prepare('SELECT envoyer_le FROM sponsor_notifications WHERE evenement_id = ? ORDER BY envoyer_le');
 $stmt->execute([$eid]);
 $maintenant = date('Y-m-d H:i:s');
@@ -116,6 +139,7 @@ apiReponse([
     ],
     'courbe' => $courbe,
     'ecoles' => $ecoles,
+    'participants' => $participants,
     'mise_en_avant' => [
         'active'                 => (bool) $e['is_sponsorise'],
         'en_cours'               => sponsoringActif($e),
