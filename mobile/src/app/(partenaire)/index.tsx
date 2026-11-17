@@ -195,8 +195,9 @@ export default function TableauDeBordPartenaire() {
           </>
         )}
 
-        <Bouton libelle="Gérer les événements" variante="contour" plein onPress={() => router.navigate('/evenements')} style={{ marginBottom: 10 }} />
-        <Bouton libelle="Créer un événement" icone="plus" plein onPress={() => router.push({ pathname: '/evenement-form' })} />
+        {/* La création d'un événement passe par le bouton « + » de la barre
+            (ou l'onglet Événements pour un club) : pas de second bouton ici. */}
+        <Bouton libelle="Gérer les événements" variante="contour" plein onPress={() => router.navigate('/evenements')} />
       </Contenu>
     </Ecran>
   );
