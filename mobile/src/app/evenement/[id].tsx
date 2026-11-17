@@ -29,7 +29,7 @@ import { Icone, type NomIcone } from '../../composants/Icone';
 import { Display, Mono, T } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
-import { libelleApresEchecInscription, libelleInscription } from '../../regles';
+import { libelleApresEchecInscription, libelleInscription, prixEvenement } from '../../regles';
 import { dateFr, heure, majuscules, ts } from '../../format';
 import { useJeton } from '../../session';
 import { couleurs, fixe, fs, gutter, lh, lsEm, mono, rayon, sans } from '../../theme';
@@ -223,6 +223,7 @@ export default function FicheEvenement() {
   }
 
   // padding-top: 120px, et margin-top: -20px sur le site.
+  const prix = prixEvenement(e);
   const contenuHero = (
     <View style={{ paddingTop: 100 + top, paddingHorizontal: 16, paddingBottom: 32 }}>
       <Text style={{ fontFamily: mono(500), fontSize: fs[2], letterSpacing: lsEm.label * fs[2], textTransform: 'uppercase', color: accent, marginBottom: 10 }}>
@@ -235,6 +236,11 @@ export default function FicheEvenement() {
         <Display taille={fs[7]} interligne={lh.display} couleur={encre}>{e.titre}</Display>
         <Display taille={fs[5]} interligne={lh.display} couleur={encre} style={{ opacity: 0.85, marginTop: 4 }}>{e.etablissement.nom}</Display>
       </View>
+      {prix ? (
+        <T taille={fs[5]} poids={700} couleur={encre} style={{ marginTop: 14 }}>
+          {prix.barre ? `${prix.final}  ·  au lieu de ${prix.barre}` : prix.final}
+        </T>
+      ) : null}
       {(e.reduction ?? 0) > 0 || e.is_gratuit ? (
         <View style={{ alignSelf: 'flex-start', marginTop: 18, backgroundColor: flash && !photo ? fixe.basalte : c.rouge, borderRadius: rayon.pill, paddingVertical: 8, paddingHorizontal: 16 }}>
           <Display taille={fs[5] + 1} interligne={1.2} couleur={flash && !photo ? fixe.craie : fixe.surAccent}>
