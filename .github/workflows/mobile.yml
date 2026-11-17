@@ -36,6 +36,9 @@ on:
 
 env:
   EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
+  # Clé Google Maps Android (onglet « Secrets ») : sans elle, l'écran Carte
+  # plante sur Android. Voir mobile/app.config.js.
+  GOOGLE_MAPS_ANDROID_API_KEY: ${{ secrets.GOOGLE_MAPS_ANDROID_API_KEY }}
 
 jobs:
   android:
