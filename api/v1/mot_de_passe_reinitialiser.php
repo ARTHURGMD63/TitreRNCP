@@ -56,6 +56,6 @@ if (mb_strlen($pass) < $minimum) {
 }
 
 codeReinitialisationAppliquer($pdo, $compte['id'], $compte['email'], $pass);
-clearLoginAttempts($pdo, $ip);
+clearLoginAttempts($pdo, $ip, $email);
 
 apiReponse(['success' => true]);

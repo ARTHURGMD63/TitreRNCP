@@ -297,7 +297,10 @@ CREATE TABLE IF NOT EXISTS login_attempts (
     ip           VARCHAR(45)  NOT NULL,
     email        VARCHAR(255) NOT NULL,
     attempted_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_ip_time (ip, attempted_at)
+    INDEX idx_ip_time (ip, attempted_at),
+    -- Migration v33 : purge des anciennes tentatives et compteur par compte.
+    INDEX idx_login_time (attempted_at),
+    INDEX idx_login_email (email(191), attempted_at)
 );
 
 CREATE TABLE IF NOT EXISTS password_resets (
@@ -1329,4 +1332,4 @@ CREATE TABLE IF NOT EXISTS achats_partenaires (
 
 INSERT IGNORE INTO schema_migrations (version) VALUES
 ('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
-('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27'), ('v28'), ('v29'), ('v30'), ('v31'), ('v32');
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27'), ('v28'), ('v29'), ('v30'), ('v31'), ('v32'), ('v33');

@@ -256,6 +256,7 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
   centaine de lignes de la vraie cause.
 
 ### Security
+- **Limiteur de connexion par compte** (migration v33). Une connexion réussie effaçait tous les échecs de l'adresse IP : quatre essais sur le compte d'une victime, une connexion sur le sien, et la force brute devenait illimitée. Les échecs se comptent désormais par compte et par adresse, et seuls ceux du compte connecté s'effacent. Un campus qui sort par une seule adresse IP n'est plus bloqué par cinq fautes de frappe d'étudiants différents.
 - **Plus rien ne dépend de l'en-tête `Host`.** `Host: localhost` envoyé à l'adresse du serveur faisait renvoyer le code de réinitialisation de n'importe quel compte (`code_dev`), et le lien de réinitialisation par e-mail se construisait sur l'hôte demandé (empoisonnement du lien). Le mode développement se déclare désormais par `APP_ENV` (ou une requête venue de la machine elle-même, sans `APP_ENV`), et les adresses absolues viennent de `APP_URL` (`urlPublique()`). Les traces d'erreur ne s'affichent plus quand `APP_ENV` manque.
 - **Jeton CSRF sur les onze points d'écriture de l'API.** `api/follow.php`,
   `inscrire.php`, `annuler_pass.php`, `create_squad.php`, `delete_squad.php`,

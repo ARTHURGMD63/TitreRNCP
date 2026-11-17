@@ -30,7 +30,7 @@ if ($email === '' || $mdp === '') {
 // passe en rafale, pendant que le site compte consciencieusement ses cinq
 // tentatives.
 $ip = ipClient();
-if (isRateLimited($pdo, $ip)) {
+if (isRateLimited($pdo, $ip, 5, 900, $email)) {
     apiErreur('Trop de tentatives. Reessaie dans quinze minutes.', 429, 'trop_de_tentatives');
 }
 
@@ -53,7 +53,7 @@ if (!$valide) {
     apiErreur('Identifiants incorrects', 401, 'identifiants');
 }
 
-clearLoginAttempts($pdo, $ip);
+clearLoginAttempts($pdo, $ip, $email);
 
 $jeton = apiCreerJeton($pdo, (int) $u['id'], isset($corps['appareil']) ? (string) $corps['appareil'] : null);
 

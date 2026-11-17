@@ -317,19 +317,40 @@ function ipClient(): string {
 }
 
 /**
- * Limite les tentatives de login par IP.
+ * Limite les tentatives par IP, et par compte quand l'e-mail est connu.
  * Retourne true si bloqué, false sinon.
+ *
+ * Sans e-mail : au plus $maxAttempts tentatives par IP dans la fenêtre.
+ *
+ * Avec l'e-mail (connexion) : trois compteurs.
+ *   - IP + compte : $maxAttempts — la règle d'avant, pour un compte visé ;
+ *   - compte, toutes IP : 2 × $maxAttempts — un compte attaqué depuis
+ *     plusieurs adresses reste protégé ;
+ *   - IP, tous comptes : 10 × $maxAttempts — un campus entier sort souvent
+ *     par une seule adresse (NAT) : cinq fautes de frappe d'étudiants
+ *     différents ne doivent pas bloquer tout le monde, mais un robot qui
+ *     balaie les comptes depuis une adresse est arrêté.
  */
-function isRateLimited(PDO $pdo, string $ip, int $maxAttempts = 5, int $windowSeconds = 900): bool {
-    // Nettoie les anciennes entrées
+function isRateLimited(PDO $pdo, string $ip, int $maxAttempts = 5, int $windowSeconds = 900, ?string $email = null): bool {
+    // Nettoie les anciennes entrées (index sur attempted_at, migration v33).
     $pdo->prepare("DELETE FROM login_attempts WHERE attempted_at < DATE_SUB(NOW(), INTERVAL ? SECOND)")
         ->execute([$windowSeconds]);
 
-    $stmt = $pdo->prepare(
-        "SELECT COUNT(*) FROM login_attempts WHERE ip = ? AND attempted_at > DATE_SUB(NOW(), INTERVAL ? SECOND)"
-    );
-    $stmt->execute([$ip, $windowSeconds]);
-    return (int)$stmt->fetchColumn() >= $maxAttempts;
+    $compter = static function (string $where, array $params) use ($pdo, $windowSeconds): int {
+        $stmt = $pdo->prepare(
+            "SELECT COUNT(*) FROM login_attempts WHERE $where AND attempted_at > DATE_SUB(NOW(), INTERVAL ? SECOND)"
+        );
+        $stmt->execute([...$params, $windowSeconds]);
+        return (int) $stmt->fetchColumn();
+    };
+
+    if ($email === null || $email === '') {
+        return $compter('ip = ?', [$ip]) >= $maxAttempts;
+    }
+
+    return $compter('ip = ? AND email = ?', [$ip, $email]) >= $maxAttempts
+        || $compter('email = ?', [$email]) >= 2 * $maxAttempts
+        || $compter('ip = ?', [$ip]) >= 10 * $maxAttempts;
 }
 
 function recordLoginAttempt(PDO $pdo, string $ip, string $email): void {
@@ -337,9 +358,19 @@ function recordLoginAttempt(PDO $pdo, string $ip, string $email): void {
         ->execute([$ip, $email]);
 }
 
-function clearLoginAttempts(PDO $pdo, string $ip): void {
-    $pdo->prepare("DELETE FROM login_attempts WHERE ip = ?")
-        ->execute([$ip]);
+/**
+ * Efface les échecs du compte qui vient de se connecter, depuis cette IP.
+ *
+ * Plus jamais toute l'IP : sinon quatre essais sur le compte d'une victime,
+ * une connexion réussie sur son propre compte, et le compteur repartait de
+ * zéro — une force brute illimitée.
+ */
+function clearLoginAttempts(PDO $pdo, string $ip, ?string $email = null): void {
+    if ($email === null || $email === '') {
+        return;
+    }
+    $pdo->prepare("DELETE FROM login_attempts WHERE ip = ? AND email = ?")
+        ->execute([$ip, $email]);
 }
 
 // ─── Politique de mot de passe ────────────────────────────────────

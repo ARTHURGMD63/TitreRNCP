@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim((string) ($_POST['email'] ?? ''));
     $pass  = (string) ($_POST['password'] ?? '');
 
-    if (isRateLimited($pdo, $ip)) {
+    if (isRateLimited($pdo, $ip, 5, 900, $email)) {
         $erreur = 'Trop de tentatives. Réessaie dans quinze minutes.';
     } elseif ($email === '' || $pass === '') {
         $erreur = 'Merci de renseigner ton e-mail et ton mot de passe.';
@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             recordLoginAttempt($pdo, $ip, $email);
             $erreur = 'E-mail ou mot de passe incorrect.';
         } else {
-            clearLoginAttempts($pdo, $ip);
+            clearLoginAttempts($pdo, $ip, $email);
 
             if ($user['type'] === 'etudiant') {
                 // Aucun accès web pour un compte étudiant : l'application.
