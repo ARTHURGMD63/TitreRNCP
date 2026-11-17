@@ -429,6 +429,13 @@ function consumeResetToken(PDO $pdo, string $token, string $newPassword): bool {
     $pdo->prepare("UPDATE users SET password=? WHERE email=?")
         ->execute([password_hash($newPassword, PASSWORD_DEFAULT), $email]);
 
+    // Un mot de passe changé ferme les accès ouverts avec l'ancien : jetons de
+    // l'application (un téléphone volé reste connecté sinon) et codes de
+    // réinitialisation en cours.
+    $pdo->prepare("DELETE t FROM api_tokens t JOIN users u ON u.id = t.user_id WHERE u.email = ?")
+        ->execute([$email]);
+    $pdo->prepare("DELETE FROM password_resets WHERE email = ? AND used = 0")->execute([$email]);
+
     return true;
 }
 
