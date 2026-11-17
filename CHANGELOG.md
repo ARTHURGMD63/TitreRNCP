@@ -8,6 +8,7 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **Site vitrine et espace pro.** Le site ne sert plus qu'aux établissements : vitrine dans le design de la refonte (tarifs lus dans la grille, liens des stores), page « c'est dans l'appli » pour les étudiants, à qui la connexion web est refusée, inscription réservée aux établissements. L'espace pro est refait : tableau de bord sur données réelles, événements, création et modification (supplément au-delà du quota accepté sur le site), photos, formule et achats, scan des pass.
 - **Grille tarifaire partenaires** (`docs/Grille_Tarifaire_Outsee.xlsx`, migration v30) : quota d'événements par mois et par formule, événements supplémentaires payants (9 € HT, confirmés avant publication), notifications comprises dans les posts sponsorisés, écran « Mon mois » et suivi par événement dans l'application.
 
 - **Registre des achats non contournable** (migration v31) : chaque événement publié, offre flash et mise en avant s'inscrit dans `achats_partenaires` et n'en sort jamais. Supprimer un événement ne rend ni quota, ni offre flash, ni mise en avant offerte, et ne supprime pas un supplément dû. Quotas relus sous verrou, dans une transaction.

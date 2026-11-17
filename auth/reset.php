@@ -2,7 +2,7 @@
 // La session est demarree par auth_check.php, qui pose d'abord les
 // drapeaux du cookie : la demarrer ici la ferait naitre sans eux.
 require_once __DIR__ . '/../includes/auth_check.php';
-require_once __DIR__ . '/../includes/page.php';
+require_once __DIR__ . '/../includes/site.php';
 require_once __DIR__ . '/../includes/db.php';
 
 $token = trim($_GET['token'] ?? $_POST['token'] ?? '');
@@ -38,62 +38,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-<?php pageDebut('Outsee — Nouveau mot de passe'); ?>
-<div class="auth-page">
-  <div class="auth-logo">
-    <a class="bouton-retour" href="<?= baseUrl('/auth/login.php') ?>" aria-label="Retour à la connexion"><?= icon('fleche-g') ?></a>
-  </div>
-
-  <h1 class="auth-headline titre-page">
-    <div class="display" style="font-size:var(--fs-8);">Nouveau</div>
-    <div class="display-italic" style="font-size:var(--fs-8);">mot de passe</div>
-  </h1>
-
-  <?php if ($success): ?>
-    <div class="encart-ok" role="status">
-      Mot de passe mis à jour !
+<?php siteDebut('Nouveau mot de passe — Outsee'); ?>
+<div class="auth">
+  <div class="auth__formulaire">
+    <div class="auth__haut">
+      <?= marqueSite('', baseUrl('/')) ?>
     </div>
-    <a href="<?= baseUrl('/auth/login.php') ?>" class="btn btn-primary btn-full">
-      Se connecter
-    </a>
-
-  <?php elseif (!$email && !$_POST): ?>
-    <div class="form-error">
-      Lien invalide ou expiré. <a href="<?= baseUrl('/auth/forgot.php') ?>">Faire une nouvelle demande</a>
-    </div>
-
-  <?php else: ?>
-    <?php if ($error): ?>
-      <div class="form-error"><?= htmlspecialchars($error) ?></div>
-    <?php endif; ?>
-
-    <p style="font-size:var(--fs-5);color:var(--gris-fonce);line-height:var(--lh-normal);margin-bottom:24px;">
-      Choisis un nouveau mot de passe (8 caractères minimum).
-    </p>
-
-    <form method="POST">
-      <?= csrfField() ?>
-      <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
-
-      <div class="form-group">
-        <label for="password">Nouveau mot de passe</label>
-        <input type="password" id="password" name="password" autocomplete="new-password"
-               placeholder="••••••••" minlength="8" required autofocus>
+    <main class="auth__corps" id="contenu">
+      <h1 class="auth__titre">Nouveau <em>mot de passe.</em></h1>
+      <div class="auth__form">
+        <?php if ($success): ?>
+          <div class="message message--succes" role="status"><?= iconeSite('check') ?><span>Mot de passe modifié. Connectez-vous avec le nouveau : dans l'application si vous êtes étudiant, ici si vous gérez un établissement.</span></div>
+          <a class="bouton bouton--plein bouton--bloc" href="<?= htmlspecialchars(baseUrl('/auth/login.php'), ENT_QUOTES) ?>">Se connecter</a>
+        <?php elseif (!$email): ?>
+          <div class="message message--erreur" role="alert"><?= iconeSite('alerte') ?><span>Ce lien est invalide ou a expiré. Demandez-en un nouveau.</span></div>
+          <a class="bouton bouton--clair bouton--bloc" href="<?= htmlspecialchars(baseUrl('/auth/forgot.php'), ENT_QUOTES) ?>">Recevoir un nouveau lien</a>
+        <?php else: ?>
+          <form method="post" class="auth__form" style="margin-top:0;" novalidate>
+            <?= csrfField() ?>
+            <input type="hidden" name="token" value="<?= htmlspecialchars($token, ENT_QUOTES) ?>">
+            <?php if ($error): ?>
+              <div class="message message--erreur" role="alert"><?= iconeSite('alerte') ?><span><?= htmlspecialchars($error) ?></span></div>
+            <?php endif; ?>
+            <div class="champ">
+              <label for="password">Nouveau mot de passe</label>
+              <input type="password" id="password" name="password" autocomplete="new-password" required autofocus>
+            </div>
+            <div class="champ">
+              <label for="password_confirm">Confirmation</label>
+              <input type="password" id="password_confirm" name="password_confirm" autocomplete="new-password" required>
+            </div>
+            <button type="submit" class="bouton bouton--plein bouton--grand bouton--bloc">Enregistrer</button>
+          </form>
+        <?php endif; ?>
       </div>
-      <div class="form-group">
-        <label for="password_confirm">Confirmer</label>
-        <input type="password" id="password_confirm" name="password_confirm"
-               placeholder="••••••••" minlength="8" required>
-      </div>
-      <button type="submit" class="btn btn-primary btn-full" style="margin-top:8px;">
-        Enregistrer
-      </button>
-    </form>
-  <?php endif; ?>
-
-  <div class="auth-link">
-    <a href="<?= baseUrl('/auth/login.php') ?>" style="font-weight:var(--fw-medium);color:var(--gris);">Retour à la connexion</a>
+    </main>
   </div>
+  <aside class="auth__visuel" aria-hidden="true">
+    <h2>Un nouveau départ, <em>en deux champs.</em></h2>
+  </aside>
 </div>
-</body>
-</html>
+<?php siteFin(); ?>

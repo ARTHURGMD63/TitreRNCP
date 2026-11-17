@@ -1,397 +1,242 @@
 <?php
-require_once __DIR__ . '/../includes/auth_check.php';
-require_once __DIR__ . '/../includes/page.php';
+/**
+ * Tableau de bord de l'établissement.
+ *
+ * Mêmes données que api/v1/partenaire_dashboard.php (l'écran d'accueil
+ * partenaire de l'application) : le prochain événement ou celui en cours,
+ * inscrits et entrées, inscriptions des six dernières heures, écoles, et le
+ * mois de l'établissement (quotas, achats).
+ *
+ * L'ancienne version affichait des valeurs inventées — tendance tirée au
+ * hasard, conseil écrit en dur, répartition d'écoles de secours, âge moyen
+ * deviné d'après la promo. Elles ont disparu : ce qui n'est pas mesuré ne
+ * s'affiche pas.
+ */
+require_once __DIR__ . '/../includes/site.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/crm.php';
-requirePartner();
-$user = currentUser();
-$uid = $user['id'];
+require_once __DIR__ . '/../includes/capacites.php';
+require_once __DIR__ . '/../includes/evenements_temps.php';
 
-// Get partner's etablissement
-$stmt = $pdo->prepare("SELECT * FROM etablissements WHERE user_id=? LIMIT 1");
-$stmt->execute([$uid]);
-$etab = $stmt->fetch();
+$etab = ouvrirEspacePro($pdo);
+$eid0 = (int) $etab['id'];
 
-exigerAbonnement($pdo, $etab);
+$capacites = capacitesEtablissement($pdo, $eid0);
+$usage     = usagePartenaireMois($pdo, $eid0, $capacites);
+$client    = abonnementEtablissement($pdo, $eid0);
 
-if (!$etab) {
-    header('Location: ' . baseUrl('/partenaire/evenements.php'));
-    exit;
-}
+// Le prochain événement, ou celui en cours tant qu'il n'est pas terminé.
+$stmt = $pdo->prepare(
+    'SELECT * FROM evenements WHERE etablissement_id = ? AND '
+    . sqlFinEffectiveEvenement('date_heure', 'date_fin')
+    . ' >= ? ORDER BY date_heure ASC LIMIT 1'
+);
+$stmt->execute([$eid0, date('Y-m-d H:i:s')]);
+$event = $stmt->fetch() ?: null;
 
-// Get next upcoming event
-$stmt = $pdo->prepare("SELECT * FROM evenements WHERE etablissement_id=? AND date_heure >= NOW() ORDER BY date_heure ASC LIMIT 1");
-$stmt->execute([$etab['id']]);
-$event = $stmt->fetch();
-
-$nbInscrits   = 0;
-$nbCheckin    = 0;
-$ageMoy       = 0;
-$chartLabels  = [];
-$chartValues  = [];
-$schoolStats  = [];
-$nbTotal      = 0;
-$trend        = '+0%';
-$conseil      = '—';
+$nbInscrits = $nbCheckin = 0;
+$ecoles = $histo = $recentes = [];
 
 if ($event) {
-    $eid = $event['id'];
+    $eid = (int) $event['id'];
 
-    // Inscriptions count
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM inscriptions WHERE evenement_id=? AND statut='inscrit'");
+    $stmt = $pdo->prepare("SELECT statut, COUNT(*) FROM inscriptions WHERE evenement_id = ? AND statut IN ('inscrit','checkin') GROUP BY statut");
     $stmt->execute([$eid]);
-    $nbInscrits = (int)$stmt->fetchColumn();
-
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM inscriptions WHERE evenement_id=? AND statut='checkin'");
-    $stmt->execute([$eid]);
-    $nbCheckin = (int)$stmt->fetchColumn();
-
-    $nbTotal = $nbInscrits + $nbCheckin;
-
-    // Average age (based on promo: L1=19,L2=20,L3=21,M1=22,M2=23,BUT1=19,BUT2=20,BUT3=21)
-    $promoAges = ['L1'=>19,'L2'=>20,'L3'=>21,'M1'=>22,'M2'=>23,'BUT1'=>19,'BUT2'=>20,'BUT3'=>21];
-    $stmt = $pdo->prepare("SELECT u.promo FROM inscriptions i JOIN users u ON u.id=i.user_id WHERE i.evenement_id=? AND u.promo IS NOT NULL");
-    $stmt->execute([$eid]);
-    $promos = $stmt->fetchAll(PDO::FETCH_COLUMN);
-    if ($promos) {
-        $ages = array_filter(array_map(fn($p) => $promoAges[$p] ?? null, $promos));
-        $ageMoy = $ages ? round(array_sum($ages)/count($ages), 1) : 21.4;
-    } else {
-        $ageMoy = 21.4;
+    foreach ($stmt->fetchAll(PDO::FETCH_KEY_PAIR) as $statut => $nb) {
+        if ($statut === 'inscrit') {
+            $nbInscrits = (int) $nb;
+        } else {
+            $nbCheckin = (int) $nb;
+        }
     }
 
-    // School breakdown
-    $stmt = $pdo->prepare("SELECT u.ecole, COUNT(*) as cnt FROM inscriptions i JOIN users u ON u.id=i.user_id WHERE i.evenement_id=? AND u.ecole IS NOT NULL GROUP BY u.ecole ORDER BY cnt DESC");
+    $stmt = $pdo->prepare("SELECT u.ecole, COUNT(*) AS nb FROM inscriptions i JOIN users u ON u.id = i.user_id
+                            WHERE i.evenement_id = ? AND i.statut != 'annule' AND u.ecole IS NOT NULL AND u.ecole != ''
+                            GROUP BY u.ecole ORDER BY nb DESC LIMIT 6");
     $stmt->execute([$eid]);
-    $schools = $stmt->fetchAll();
-    $totalSchool = array_sum(array_column($schools, 'cnt')) ?: 1;
-    $schoolColors = ['var(--rouge)','var(--bleu)','var(--lime)','var(--orange)','var(--gris)'];
-    foreach ($schools as $i => $s) {
-        $schoolStats[] = [
-            'nom' => $s['ecole'],
-            'pct' => round($s['cnt'] / $totalSchool * 100),
-            'color' => $schoolColors[$i % count($schoolColors)],
-        ];
-    }
-    if (empty($schoolStats)) {
-        $schoolStats = [
-            ['nom'=>'UCA — Droit & Éco','pct'=>42,'color'=>'var(--rouge)'],
-            ['nom'=>'SIGMA Clermont','pct'=>28,'color'=>'var(--bleu)'],
-            ['nom'=>'INP Ingénieurs','pct'=>18,'color'=>'var(--lime)'],
-            ['nom'=>'Autres','pct'=>12,'color'=>'var(--orange)'],
-        ];
+    $lignes = $stmt->fetchAll();
+    $totalEcoles = array_sum(array_column($lignes, 'nb')) ?: 1;
+    foreach ($lignes as $l) {
+        $ecoles[] = ['nom' => (string) $l['ecole'], 'pct' => (int) round((int) $l['nb'] / $totalEcoles * 100)];
     }
 
-    // Chart: inscriptions last 6 hours by 30-min slots
+    // Inscriptions par heure, sur les six dernières heures (une requête).
+    $stmt = $pdo->prepare("SELECT FLOOR(TIMESTAMPDIFF(MINUTE, created_at, ?) / 60) AS h, COUNT(*)
+                             FROM inscriptions WHERE evenement_id = ? AND created_at > ? AND created_at <= ?
+                            GROUP BY h");
+    $maintenant = date('Y-m-d H:i:s');
+    $stmt->execute([$maintenant, $eid, date('Y-m-d H:i:s', time() - 6 * 3600), $maintenant]);
+    $parHeure = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
     for ($h = 5; $h >= 0; $h--) {
-        $slot = date('H\hi', strtotime("-{$h} hour"));
-        $chartLabels[] = $slot;
-        $from = date('Y-m-d H:i:s', strtotime("-" . ($h+1) . " hour"));
-        $to   = date('Y-m-d H:i:s', strtotime("-{$h} hour"));
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM inscriptions WHERE evenement_id=? AND created_at BETWEEN ? AND ?");
-        $stmt->execute([$eid, $from, $to]);
-        $chartValues[] = (int)$stmt->fetchColumn();
+        $histo[] = ['libelle' => date('H\h', time() - $h * 3600), 'valeur' => (int) ($parHeure[$h] ?? 0)];
     }
 
-    // Trend vs last thursday (mock for now)
-    $trend = $nbTotal > 20 ? '+340% vs jeudi moy.' : '+' . rand(50,200) . '% vs jeudi moy.';
-
-    // Conseil
-    $pctL2L3 = 68; // Could be calculated from promo data
-    $conseil = "68% des inscrits ont déjà utilisé un deal similaire. Prépare 2 bartenders en plus entre 21h et 22h30.";
+    $stmt = $pdo->prepare("SELECT u.prenom, u.nom, u.ecole, u.promo, i.created_at, i.statut
+                             FROM inscriptions i JOIN users u ON u.id = i.user_id
+                            WHERE i.evenement_id = ? AND i.statut != 'annule'
+                            ORDER BY i.created_at DESC LIMIT 6");
+    $stmt->execute([$eid]);
+    $recentes = $stmt->fetchAll();
 }
 
-$eventDay = mb_strtoupper(dateFr($event['date_heure'] ?? 'now', 'l'));
-$eventDayNum = $event ? date('j', strtotime($event['date_heure'])) : date('j');
-$eventType = $event ? mb_strtoupper($event['titre']) : 'HAPPY HOUR';
-$ouverture = $event ? date('H\hi', strtotime($event['date_heure'])) : '19h30';
+$total     = $nbInscrits + $nbCheckin;
+$places    = $event ? (int) $event['quota'] : 0;
+$presence  = $total > 0 ? (int) round($nbCheckin / $total * 100) : null;
+$remplissage = $places > 0 ? min(100, (int) round($total / $places * 100)) : 0;
+$enCours   = $event && strtotime((string) $event['date_heure']) <= time();
+$maxHisto  = max(1, ...array_column($histo ?: [['valeur' => 0]], 'valeur'));
+$prenom    = (string) ($_SESSION['user_prenom'] ?? '');
+
+$ev = $usage['evenements'];
+
+proDebut('Tableau de bord', 'tableau', $etab, ['scripts' => SCRIPTS_SCAN_PRO]);
 ?>
-<?php pageDebut('Outsee — Dashboard Partenaire', ['univers' => 'pro', 'scripts' => ['/assets/vendor/chart.umd.min.js', '/assets/vendor/html5-qrcode.min.js']]); ?>
-<div class="partner-shell">
+<?= messageFlashPro() ?>
 
-  <!-- Sidebar -->
-  <aside class="partner-sidebar">
-    <div class="sidebar-brand">
-      <?= marqueOutsee('pro') ?>
-    </div>
+<header class="pro-entete">
+  <div>
+    <p class="surtitre"><?= $prenom !== '' ? 'Bonjour ' . htmlspecialchars($prenom) : 'Tableau de bord' ?></p>
+    <?php if ($event): ?>
+      <h1 class="titre-pro"><?= $total ?> étudiant<?= $total > 1 ? 's' : '' ?>, <em><?= $enCours ? 'sur place ou en route.' : 'déjà inscrit' . ($total > 1 ? 's.' : '.') ?></em></h1>
+      <p class="pro-entete__sous"><?= htmlspecialchars((string) $event['titre']) ?> · <?= htmlspecialchars(dateFr($event['date_heure'], 'D j M')) ?> à <?= date('H\hi', strtotime((string) $event['date_heure'])) ?></p>
+    <?php else: ?>
+      <h1 class="titre-pro">Aucune soirée <em>à venir.</em></h1>
+      <p class="pro-entete__sous">Publiez un événement : il apparaîtra dans le fil des étudiants de <?= htmlspecialchars((string) ($etab['ville'] ?? 'votre ville')) ?>.</p>
+    <?php endif; ?>
+  </div>
+  <div class="pro-entete__actions">
+    <?php if ($event): ?>
+      <button type="button" class="bouton bouton--encre" data-scanner="<?= (int) $event['id'] ?>" data-titre="<?= htmlspecialchars((string) $event['titre'], ENT_QUOTES) ?>"><?= iconeSite('qr') ?> Scanner un pass</button>
+    <?php endif; ?>
+    <a class="bouton bouton--plein" href="<?= htmlspecialchars(baseUrl('/partenaire/create_event.php'), ENT_QUOTES) ?>"><?= iconeSite('plus') ?> Créer un événement</a>
+  </div>
+</header>
 
-    <nav class="sidebar-nav">
-      <a href="<?= baseUrl('/partenaire/dashboard.php') ?>" class="sidebar-link active">
-        <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg> Dashboard
-      </a>
-      <a href="<?= baseUrl('/partenaire/evenements.php') ?>" class="sidebar-link">
-        <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Événements
-      </a>
-      <a href="<?= baseUrl('/partenaire/create_event.php') ?>" class="sidebar-link">
-        <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> Créer un event
-      </a>
-      <a href="<?= baseUrl('/partenaire/photos.php') ?>" class="sidebar-link">
-        <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Photos
-      </a>
-      <a href="<?= baseUrl('/partenaire/abonnement.php') ?>" class="sidebar-link">
-        <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Abonnement
-      </a>
-    </nav>
-
-    <div class="sidebar-venue" style="margin-top:48px;padding-top:20px;border-top:1px solid var(--gris-clair);">
-      <div class="sidebar-venue-name"><?= htmlspecialchars(mb_strtoupper($etab['nom'] ?? '')) ?></div>
-      <div class="sidebar-venue-city"><?= htmlspecialchars($etab['ville'] ?? 'Clermont-Ferrand') ?></div>
-      <a href="<?= baseUrl('/auth/logout.php') ?>" class="lien-action" style="margin-top:12px;font-size:var(--fs-2);color:var(--gris);text-decoration:none;">
-        → Déconnexion
-      </a>
-    </div>
-  </aside>
-
-  <!-- Main content -->
-  <main class="partner-main">
-
-    <!-- Header -->
-    <div class="partner-header">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;">
-        <div>
-          <div class="event-label"><?= $eventDay ?> <?= $eventDayNum ?> · <?= $eventType ?></div>
-          <h1 class="partner-headline titre-page">
-            <?= $nbTotal ?> étudiant<?= $nbTotal > 1 ? 's' : '' ?>,
-            <em>en route.</em>
-          </h1>
+<div class="grille-tdb">
+  <div class="pile">
+    <?php if ($event): ?>
+      <div class="tuiles">
+        <div class="tuile tuile--accent">
+          <div class="tuile__libelle">Inscrits</div>
+          <div class="tuile__valeur"><?= $total ?><?php if ($places > 0): ?> <small>/ <?= $places ?></small><?php endif; ?></div>
+          <div class="tuile__note"><?= $places > 0 ? $remplissage . ' % des places' : 'Places illimitées' ?></div>
         </div>
-        <div style="text-align:right;font-family:var(--font-mono);font-size:var(--fs-2);color:var(--gris);font-weight:var(--fw-medium);letter-spacing:var(--ls-label);text-transform:uppercase;padding-top:8px;">
-          <?= htmlspecialchars(mb_strtoupper($etab['nom'])) ?><br>
-          <span style="font-weight:var(--fw-regular);">· <?= htmlspecialchars(mb_strtoupper($etab['ville'])) ?></span>
+        <div class="tuile">
+          <div class="tuile__libelle">Entrées scannées</div>
+          <div class="tuile__valeur"><?= $nbCheckin ?></div>
+          <div class="tuile__note"><?= $presence !== null ? $presence . ' % de présence' : 'Aucun inscrit pour l\'instant' ?></div>
+        </div>
+        <div class="tuile">
+          <div class="tuile__libelle">Places restantes</div>
+          <div class="tuile__valeur"><?= $places > 0 ? max(0, $places - $total) : '—' ?></div>
+          <div class="tuile__note"><?= $places > 0 && $total >= $places ? 'Complet' : 'Ouvert aux inscriptions' ?></div>
         </div>
       </div>
-    </div>
 
-    <div class="dashboard-grid">
-      <div class="dashboard-left">
-
-        <!-- Stat Cards -->
-        <div class="partner-stat-grid">
-          <div class="partner-stat-card">
-            <div class="ps-label">Inscrits</div>
-            <div class="ps-value" id="live-inscrits"
-                 data-live-event="<?= (int) ($event['id'] ?? 0) ?>" data-live="inscrits"><?= $nbInscrits ?></div>
-            <div class="ps-sub" style="color:var(--succes);font-weight:var(--fw-bold);">+<?= max(0, $nbInscrits - 2) ?> en 1h</div>
-          </div>
-          <div class="partner-stat-card">
-            <div class="ps-label" style="color:var(--gris);">Check-in</div>
-            <div class="ps-value"><?= $nbCheckin ?></div>
-            <div class="ps-sub" style="color:var(--gris);">Ouvre <?= $ouverture ?></div>
-          </div>
-          <div class="partner-stat-card card-neutre">
-            <div class="ps-label">Âge moy.</div>
-            <div class="ps-value"><?= $ageMoy ?></div>
-            <div class="ps-sub">68% L2-L3</div>
-          </div>
+      <section class="carte" aria-labelledby="t-histo">
+        <div class="carte__tete">
+          <h2 class="carte__titre" id="t-histo">Inscriptions des six dernières heures</h2>
+          <span class="carte__sous"><?= array_sum(array_column($histo, 'valeur')) ?> au total</span>
         </div>
-
-        <!-- Chart -->
-        <div class="chart-card">
-          <div class="chart-header">
-            <span class="chart-label">Inscriptions · 6 dernières heures</span>
-            <span class="chart-trend"><?= $trend ?></span>
-          </div>
-          <div style="height:160px;">
-            <canvas id="inscriptions-chart"
-                    data-labels='<?= json_encode($chartLabels) ?>'
-                    data-values='<?= json_encode($chartValues) ?>'>
-            </canvas>
-          </div>
-        </div>
-
-        <!-- Recent signups -->
-        <?php
-        $stmt = $pdo->prepare("SELECT u.prenom, u.nom, u.ecole, u.promo, i.created_at
-            FROM inscriptions i JOIN users u ON u.id=i.user_id
-            WHERE i.evenement_id=?
-            ORDER BY i.created_at DESC LIMIT 5");
-        $stmt->execute([$event['id'] ?? 0]);
-        $recents = $stmt->fetchAll();
-        if ($recents):
-        ?>
-        <div class="chart-card">
-          <div class="chart-header">
-            <span class="chart-label">Dernières inscriptions</span>
-            <span style="font-family:var(--font-mono);font-size:var(--fs-2);color:var(--gris);"><?= $nbTotal ?> total</span>
-          </div>
-          <?php foreach ($recents as $r): ?>
-          <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--gris-clair);">
-            <div style="width:32px;height:32px;border-radius:50%;background:var(--bleu);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:var(--fs-2);font-weight:var(--fw-display);color:var(--sur-lave);flex-shrink:0;">
-              <?= mb_strtoupper(mb_substr($r['prenom'],0,1).mb_substr($r['nom'],0,1)) ?>
+        <div class="histo" role="img" aria-label="<?= htmlspecialchars(implode(', ', array_map(static fn ($h) => $h['libelle'] . ' : ' . $h['valeur'], $histo)), ENT_QUOTES) ?>">
+          <?php foreach ($histo as $h): ?>
+            <div class="histo__col">
+              <span class="histo__val"><?= $h['valeur'] ?: '' ?></span>
+              <div class="histo__barre<?= $h['valeur'] === 0 ? ' histo__barre--vide' : '' ?>" style="height:<?= max(4, (int) round($h['valeur'] / $maxHisto * 100)) ?>%"></div>
+              <span class="histo__lib"><?= htmlspecialchars($h['libelle']) ?></span>
             </div>
-            <div style="flex:1;">
-              <div style="font-size:var(--fs-4);font-weight:var(--fw-semibold);"><?= htmlspecialchars($r['prenom'].' '.$r['nom']) ?></div>
-              <div style="font-size:var(--fs-2);color:var(--gris);"><?= htmlspecialchars($r['ecole'] ?? '—') ?> · <?= htmlspecialchars($r['promo'] ?? '—') ?></div>
-            </div>
-            <div style="font-family:var(--font-mono);font-size:var(--fs-2);color:var(--gris);"><?= date('H\hi', strtotime($r['created_at'])) ?></div>
-          </div>
           <?php endforeach; ?>
         </div>
-        <?php endif; ?>
+      </section>
 
-      </div><!-- .dashboard-left -->
-
-      <div class="dashboard-right">
-
-        <!-- Profil de salle -->
-        <div class="salle-panel">
-          <div class="sp-label">Profil de salle</div>
-          <div class="sp-title">
-            Qui vient <em>ce soir ?</em>
-          </div>
-
-          <div class="school-bar">
-            <?php foreach ($schoolStats as $s): ?>
-            <div class="school-row">
-              <div class="school-name"><?= htmlspecialchars($s['nom']) ?></div>
-              <div class="school-track">
-                <div class="school-fill" style="width:<?= $s['pct'] ?>%;background:<?= $s['color'] ?>;"></div>
-              </div>
-              <div class="school-pct"><?= $s['pct'] ?>%</div>
+      <div class="grille-2">
+        <section class="carte" aria-labelledby="t-ecoles">
+          <div class="carte__tete"><h2 class="carte__titre" id="t-ecoles">Qui vient ?</h2></div>
+          <?php if ($ecoles): ?>
+            <div class="barres">
+              <?php foreach ($ecoles as $e): ?>
+                <div class="barres__ligne">
+                  <span><?= htmlspecialchars($e['nom']) ?></span><b><?= $e['pct'] ?> %</b>
+                  <div class="jauge"><span style="width:<?= $e['pct'] ?>%"></span></div>
+                </div>
+              <?php endforeach; ?>
             </div>
-            <?php endforeach; ?>
-          </div>
-        </div>
-
-        <!-- Conseil -->
-        <div class="conseil-card">
-          <strong>CONSEIL</strong> — <?= htmlspecialchars($conseil) ?>
-        </div>
-
-        <!-- Quick actions -->
-        <div style="display:flex;flex-direction:column;gap:8px;">
-          <?php if ($event): ?>
-          <button class="btn btn-outline btn-full" id="btn-start-scan">
-            <?= icon('appareil', 'icon-sm') ?> Scanner un Pass
-          </button>
+          <?php else: ?>
+            <p class="carte__sous">Les écoles des inscrits apparaîtront ici.</p>
           <?php endif; ?>
-          <a href="<?= baseUrl('/partenaire/evenements.php') ?>" class="btn btn-outline btn-full">
-            Gérer les événements
-          </a>
-          <a href="<?= baseUrl('/partenaire/create_event.php') ?>" class="btn btn-primary btn-full">
-            + Créer un événement
-          </a>
-        </div>
+        </section>
 
-      </div><!-- .dashboard-right -->
-    </div><!-- .dashboard-grid -->
-
-  </main>
-</div><!-- .partner-shell -->
-
-<!-- Scanner Modal -->
-<div class="modal-overlay" id="modal-scanner">
-  <div class="modal-sheet" style="background:var(--noir);color:var(--blanc);border-color:var(--noir);">
-    <div class="modal-handle" style="background:var(--gris-fonce);"></div>
-    <div style="font-family:var(--font-display);font-size:var(--fs-7);font-weight:var(--fw-black);letter-spacing:var(--ls-display);margin-bottom:20px;text-align:center;">
-      Scanner un Pass
-    </div>
-    
-    <div id="reader" style="width:100%; border-radius:var(--radius); overflow:hidden; border:var(--border); box-shadow:var(--shadow); margin-bottom: 20px; background:var(--blanc);"></div>
-    
-    <div id="scan-result" style="text-align:center;font-weight:var(--fw-bold);font-size:var(--fs-5);min-height:24px;margin-bottom:20px;"></div>
-    
-    <button type="button" class="btn btn-outline btn-full" id="btn-close-scan" style="color:var(--blanc);border-color:var(--blanc);">Fermer</button>
+        <section class="carte" aria-labelledby="t-recentes">
+          <div class="carte__tete"><h2 class="carte__titre" id="t-recentes">Dernières inscriptions</h2></div>
+          <?php if ($recentes): ?>
+            <div class="liste">
+              <?php foreach ($recentes as $r): ?>
+                <div class="liste__ligne">
+                  <span class="avatar"><?= htmlspecialchars(initialesSite((string) $r['prenom'], (string) $r['nom'])) ?></span>
+                  <div class="liste__corps">
+                    <div class="liste__titre"><?= htmlspecialchars($r['prenom'] . ' ' . mb_substr((string) $r['nom'], 0, 1) . '.') ?></div>
+                    <div class="liste__sous"><?= htmlspecialchars(trim(($r['ecole'] ?? '') . ' ' . ($r['promo'] ?? '')) ?: 'Étudiant') ?></div>
+                  </div>
+                  <?php if ($r['statut'] === 'checkin'): ?>
+                    <span class="pastille pastille--succes">Entré</span>
+                  <?php else: ?>
+                    <span class="liste__fin"><?= date('H\hi', strtotime((string) $r['created_at'])) ?></span>
+                  <?php endif; ?>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          <?php else: ?>
+            <p class="carte__sous">Aucune inscription pour l'instant.</p>
+          <?php endif; ?>
+        </section>
+      </div>
+    <?php else: ?>
+      <section class="carte vide">
+        <div class="vide__icone"><?= iconeSite('calendrier', 'icon-lg') ?></div>
+        <h3>Votre prochaine soirée commence ici</h3>
+        <p>Un titre, une date, une réduction pour les étudiants : deux minutes suffisent.</p>
+        <a class="bouton bouton--plein" href="<?= htmlspecialchars(baseUrl('/partenaire/create_event.php'), ENT_QUOTES) ?>"><?= iconeSite('plus') ?> Créer un événement</a>
+      </section>
+    <?php endif; ?>
   </div>
+
+  <aside class="pile">
+    <section class="carte carte--accent" aria-labelledby="t-mois">
+      <p class="surtitre">Mon mois · formule <?= htmlspecialchars(crmLibelleOffre((string) $capacites['offre'])) ?></p>
+      <h2 class="carte__titre" id="t-mois" style="margin-top:10px;font-size:22px;"><?= (int) $ev['publies'] ?> événement<?= $ev['publies'] > 1 ? 's' : '' ?> publié<?= $ev['publies'] > 1 ? 's' : '' ?> sur <?= (int) $ev['quota'] ?></h2>
+      <div class="jauge" style="margin-top:14px;"><span style="width:<?= $ev['quota'] > 0 ? min(100, (int) round($ev['publies'] / $ev['quota'] * 100)) : 0 ?>%"></span></div>
+      <p class="carte__sous" style="margin-top:10px;">
+        <?php if ($ev['restants'] > 0): ?>
+          Encore <?= (int) $ev['restants'] ?> compris dans votre formule ce mois-ci.
+        <?php else: ?>
+          Quota atteint : chaque événement en plus coûte <?= htmlspecialchars(eurosSite((float) $ev['prix_supplement'])) ?> HT.
+        <?php endif; ?>
+      </p>
+      <?php if (!empty($capacites['en_periode_offerte']) && !empty($client['essai_jusqu_au'])): ?>
+        <p class="carte__sous" style="margin-top:6px;">Période offerte jusqu'au <?= htmlspecialchars(dateFr($client['essai_jusqu_au'], 'j M Y')) ?>.</p>
+      <?php endif; ?>
+    </section>
+
+    <section class="carte" aria-labelledby="t-achats">
+      <div class="carte__tete"><h2 class="carte__titre" id="t-achats">Ce mois-ci</h2></div>
+      <div class="liste">
+        <div class="liste__ligne">
+          <div class="liste__corps"><div class="liste__titre">Offres flash</div><div class="liste__sous">Comprises dans la formule</div></div>
+          <span class="liste__fin"><?= $usage['flash']['quota'] === null ? $usage['flash']['utilises'] . ' (illimité)' : $usage['flash']['utilises'] . ' / ' . $usage['flash']['quota'] ?></span>
+        </div>
+        <div class="liste__ligne">
+          <div class="liste__corps"><div class="liste__titre">Mises en avant offertes</div><div class="liste__sous">Restantes ce mois-ci</div></div>
+          <span class="liste__fin"><?= (int) $usage['mises_en_avant']['offertes_restantes'] ?> / <?= (int) $usage['mises_en_avant']['offertes_droit'] ?></span>
+        </div>
+        <div class="liste__ligne">
+          <div class="liste__corps"><div class="liste__titre">Achats en plus</div><div class="liste__sous">Événements supplémentaires et mises en avant</div></div>
+          <strong><?= htmlspecialchars(eurosSite((float) $usage['achats_total'])) ?></strong>
+        </div>
+      </div>
+      <a class="bouton bouton--clair bouton--bloc" style="margin-top:18px;" href="<?= htmlspecialchars(baseUrl('/partenaire/abonnement.php'), ENT_QUOTES) ?>">Voir ma formule et mes achats</a>
+    </section>
+  </aside>
 </div>
 
-<script src="<?= asset('/assets/js/app.js') ?>"></script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const btnStart = document.getElementById('btn-start-scan');
-    const btnClose = document.getElementById('btn-close-scan');
-    const modalScanner = document.getElementById('modal-scanner');
-    const resultDiv = document.getElementById('scan-result');
-    
-    let html5QrcodeScanner = null;
-    const eventId = <?= $event['id'] ?? 0 ?>;
-
-    if (!btnStart) return;
-
-    const playBeep = () => {
-        try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, ctx.currentTime);
-            gain.gain.setValueAtTime(0.1, ctx.currentTime);
-            osc.start();
-            gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1);
-            osc.stop(ctx.currentTime + 0.1);
-        } catch(e) {}
-    };
-
-    let isScanning = false;
-
-    btnStart.addEventListener('click', () => {
-        window.ouvrirModale ? window.ouvrirModale(modalScanner) : modalScanner.classList.add('open');
-        resultDiv.textContent = "En attente de scan...";
-        resultDiv.style.color = 'var(--blanc)';
-        
-        html5QrcodeScanner = new Html5Qrcode("reader");
-        html5QrcodeScanner.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: { width: 250, height: 250 } },
-            onScanSuccess,
-            (err) => {} // ignore frame errors
-        ).catch(err => {
-            resultDiv.textContent = "Erreur caméra: " + err;
-            resultDiv.style.color = 'var(--rouge)';
-        });
-    });
-
-    btnClose.addEventListener('click', () => {
-        if (html5QrcodeScanner) {
-            html5QrcodeScanner.stop().then(() => {
-                html5QrcodeScanner.clear();
-            }).catch(console.error);
-        }
-        window.fermerModale ? window.fermerModale(modalScanner) : modalScanner.classList.remove('open');
-    });
-
-    function onScanSuccess(decodedText, decodedResult) {
-        if (isScanning) return;
-        isScanning = true;
-        
-        html5QrcodeScanner.pause(true);
-
-        // enTetesJson() vient d'app.js : le check-in écrit en base, il lui
-        // faut le jeton CSRF comme à tout autre point d'écriture.
-        fetch(BASE + '/partenaire/api_scan.php', {
-            method: 'POST',
-            headers: enTetesJson(),
-            body: JSON.stringify({ qr_code: decodedText, event_id: eventId })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                playBeep();
-                resultDiv.textContent = data.message;
-                resultDiv.style.color = "var(--succes)";
-                resultDiv.style.color = 'var(--lime)';
-                setTimeout(() => location.reload(), 1500);
-            } else {
-                resultDiv.textContent = data.message;
-                resultDiv.style.color = "var(--danger)";
-                resultDiv.style.color = 'var(--rouge)';
-                setTimeout(() => {
-                    isScanning = false;
-                    html5QrcodeScanner.resume();
-                    resultDiv.textContent = "En attente de scan...";
-                    resultDiv.style.color = 'var(--blanc)';
-                }, 2000);
-            }
-        })
-        .catch(err => {
-            resultDiv.textContent = "Erreur de connexion";
-            isScanning = false;
-            html5QrcodeScanner.resume();
-        });
-    }
-});
-</script>
-</body>
-</html>
+<?= $event ? modaleScanPro() : '' ?>
+<?php proFin(); ?>

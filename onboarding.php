@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/auth_check.php';
 require_once __DIR__ . '/includes/page.php';
-requireLogin();
+requireStudent(); // l'accueil des nouveaux étudiants se fait dans l'application
 $prenom = $_SESSION['user_prenom'] ?? 'toi';
 ?>
 <?php ob_start(); ?>

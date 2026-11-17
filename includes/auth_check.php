@@ -44,7 +44,10 @@ require_once __DIR__ . '/urls.php';
  */
 function modeBientotDisponible(): bool
 {
-    return reglageBooleen('APP_COMING_SOON', 'coming_soon', true);
+    // Faux par défaut depuis la refonte du site (2026-11) : la date de
+    // lancement est passée et la page d'attente a laissé place à la vitrine.
+    // APP_COMING_SOON=1 rétablit la fermeture si besoin.
+    return reglageBooleen('APP_COMING_SOON', 'coming_soon', false);
 }
 
 /**
@@ -75,6 +78,7 @@ function verifierGateBientotDisponible(): void
 
     static $autorises = [
         '/index.php',
+        '/application.php',
         '/auth/login.php',
         '/mentions-legales.php',
         '/confidentialite.php',
@@ -118,7 +122,8 @@ function accueilSelonType(?string $type): string {
     return match ($type) {
         'partenaire' => baseUrl('/partenaire/dashboard.php'),
         'admin'      => baseUrl('/admin/index.php'),
-        default      => baseUrl('/explore.php'),
+        // Le site ne sert plus d'interface aux étudiants : l'application.
+        default      => baseUrl('/application.php'),
     };
 }
 
@@ -187,12 +192,18 @@ function requireAdmin(): void {
     }
 }
 
+/**
+ * Les anciennes pages étudiantes du site (explore.php, wallet.php…).
+ *
+ * Depuis que l'application est l'unique interface étudiante, elles ne
+ * s'affichent plus : un étudiant (connecté ou non) est renvoyé vers
+ * application.php, un établissement ou un admin vers son espace. Les points
+ * d'API qu'utilise l'application (api/*.php) ne passent pas par ici.
+ */
 function requireStudent(): void {
-    requireLogin();
-    if (($_SESSION['user_type'] ?? '') !== 'etudiant') {
-        header('Location: ' . accueilSelonType($_SESSION['user_type'] ?? null));
-        exit;
-    }
+    $type = $_SESSION['user_type'] ?? null;
+    header('Location: ' . ($type === 'partenaire' || $type === 'admin' ? accueilSelonType($type) : baseUrl('/application.php')));
+    exit;
 }
 
 function isLoggedIn(): bool {

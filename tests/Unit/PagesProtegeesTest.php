@@ -19,6 +19,8 @@ final class PagesProtegeesTest extends TestCase
 {
     /** Pages ouvertes à tous, par choix : vitrine, textes légaux, authentification. */
     private const PUBLIQUES = [
+        // Page d'arrivée des étudiants : « c'est dans l'application ».
+        'application.php',
         'cgu.php',
         'confidentialite.php',
         'index.php',
@@ -98,9 +100,12 @@ final class PagesProtegeesTest extends TestCase
         $pages = array_diff($this->pages('partenaire/*.php'), self::API_PARTENAIRE);
         $this->assertNotEmpty($pages);
 
+        // ouvrirEspacePro() (includes/site.php) appelle requirePartner() en
+        // premier : c'est la garde de l'espace pro refait.
         $sansGarde = array_values(array_filter(
             $pages,
             fn (string $p): bool => !str_contains($this->contenu($p), 'requirePartner(')
+                && !str_contains($this->contenu($p), 'ouvrirEspacePro(')
         ));
 
         $this->assertSame([], $sansGarde, 'Pages partenaire sans requirePartner() : ' . implode(', ', $sansGarde));
