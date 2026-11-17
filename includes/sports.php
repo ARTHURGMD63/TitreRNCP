@@ -13,6 +13,8 @@
  * l'autre aussi.
  */
 
+require_once __DIR__ . '/comptes.php';
+
 /**
  * Les sports proposés, dans leur ordre d'affichage.
  *
@@ -20,8 +22,6 @@
  *
  * @return array<string, string> code => libellé
  */
-require_once __DIR__ . '/comptes.php';
-
 function catalogueSports(): array
 {
     return [

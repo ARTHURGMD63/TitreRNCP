@@ -19,7 +19,11 @@
 
 require_once __DIR__ . '/crm.php';
 
-/** Les types d'établissements, avec leur famille. @return array<string, array{libelle:string, famille:string}> */
+/**
+ * Les types d'établissements, avec leur famille.
+ *
+ * @return array<string, array{libelle:string, famille:string}>
+ */
 function typesEtablissement(): array
 {
     return [
