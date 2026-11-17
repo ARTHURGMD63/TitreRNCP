@@ -38,6 +38,7 @@ import { T, TitreEcran, TitreSection } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
 import { compteARebours, court, dateFr, nombre, ts } from '../../format';
+import { prixEvenement } from '../../regles';
 import { useJeton, useSession } from '../../session';
 import { fixe, fs, gutter, halo, lh, rayon, sans, type Rubrique } from '../../theme';
 import { useTheme } from '../../useTheme';
@@ -421,6 +422,10 @@ function pastillePrix(p: Pass, reduction: number) {
   const g = genreDe(p);
   if (g === 'partie') return (p.sport && SPORTS[p.sport]) || 'Sport';
   if (g === 'culture') return (p.prix_normal ?? 0) > 0 ? `${nombre(p.prix_normal!, 2)} €` : 'Entrée libre';
+  // Même règle que la fiche de l'événement : un prix saisi s'affiche, réduit
+  // le cas échéant ; « gratuite » seulement quand il n'y en a vraiment pas.
+  const prix = prixEvenement({ prix_normal: p.prix_normal, reduction, is_gratuit: p.is_gratuit ?? false });
+  if (prix) return reduction > 0 ? `${prix.final} · -${reduction}%` : prix.final;
   return reduction > 0 ? `-${reduction}%` : 'Entrée gratuite';
 }
 
@@ -430,6 +435,8 @@ function economie(p: Pass) {
   if ((p.reduction ?? 0) > 0 && (p.prix_normal ?? 0) > 0) {
     return '-' + nombre(Math.round((p.prix_normal! * p.reduction!) / 100 * 100) / 100, 2) + '€';
   }
+  // Payant sans réduction : rien d'économisé, mais ce n'est pas gratuit.
+  if (!p.is_gratuit && (p.prix_normal ?? 0) > 0) return '';
   return 'Gratuit';
 }
 
