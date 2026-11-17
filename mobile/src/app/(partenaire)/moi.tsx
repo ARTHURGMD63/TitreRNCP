@@ -22,6 +22,7 @@ import { Icone, type NomIcone } from '../../composants/Icone';
 import { Champ, Selecteur } from '../../composants/Formulaire';
 import { T, TitreSection } from '../../composants/Texte';
 import { TYPES_ETABLISSEMENT } from '../../catalogue';
+import { PAGES_LEGALES } from '../../legal';
 import { useToast } from '../../composants/Toast';
 import { useJeton, useSession } from '../../session';
 import { fs, halo, rayon, sans } from '../../theme';
@@ -193,7 +194,13 @@ export default function MoiPartenaire() {
 
         <Apparition index={3}>
           <Raccourci icone="image" libelle="Photos de l'établissement" detail="La galerie de ta page" onPress={() => router.push('/photos')} />
-          <Raccourci icone="carte" libelle="Mon abonnement" detail="Ta formule et ses options" onPress={() => router.push('/abonnement')} />
+          <Raccourci icone="carte" libelle="Ma formule" detail="Ta formule et l'usage du mois" onPress={() => router.push('/abonnement')} />
+        </Apparition>
+
+        <Apparition index={4}>
+          {PAGES_LEGALES.map(({ slug, libelle }) => (
+            <Raccourci key={slug} icone="info" libelle={libelle} detail="Les règles d'Outsee" onPress={() => router.push(`/legal/${slug}` as never)} />
+          ))}
         </Apparition>
 
         <Bouton testID="deconnexion" libelle="Se déconnecter" icone="deconnexion" variante="contour" plein onPress={deconnexion} style={{ marginTop: 10 }} />
