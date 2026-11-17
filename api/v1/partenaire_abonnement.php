@@ -28,6 +28,7 @@ if (!$etab) {
 }
 
 /**
+ * @param array<string, mixed>|null $clientActuel
  * @return list<array<string, mixed>>
  */
 function partenaireAbonnementFormules(PDO $pdo, string $typeEtablissement, ?array $clientActuel): array
@@ -73,31 +74,12 @@ function partenaireAbonnementClient(?array $client): ?array
 
 $methode = (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET');
 
+// L'application ne vend rien (règles Apple 3.1.1 et Google Play Billing) :
+// la formule se souscrit et se paie sur le site, par Stripe
+// (partenaire/abonnement.php). Les anciennes versions de l'application qui
+// postent encore ici reçoivent un refus neutre, sans lien ni prix.
 if ($methode === 'POST') {
-    $corps = apiCorps();
-    $offre = (string) ($corps['offre'] ?? '');
-
-    $stmtEmail = $pdo->prepare('SELECT email FROM users WHERE id = ?');
-    $stmtEmail->execute([$uid]);
-
-    // Toutes les règles (type du compte, une formule par mois, période offerte
-    // une seule fois, fondateur réservé au lancement) vivent dans
-    // souscrireFormule(), partagée avec le site.
-    $res = souscrireFormule($pdo, $etab, $u, $offre, $stmtEmail->fetchColumn() ?: null);
-    if (!$res['ok']) {
-        $statut = match ($res['code']) {
-            'offre_invalide' => 422,
-            'fondateur_complet', 'changement_limite' => 409,
-            default => 500,
-        };
-        apiErreur($res['message'], $statut, $res['code']);
-    }
-
-    apiReponse([
-        'success' => true,
-        'message' => $res['message'],
-        'client'  => partenaireAbonnementClient(abonnementEtablissement($pdo, (int) $etab['id'])),
-    ]);
+    apiErreur('La formule ne se gère pas dans l’application.', 403, 'souscription_hors_app');
 }
 
 apiExigerMethode('GET');

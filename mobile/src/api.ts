@@ -825,8 +825,6 @@ export const api = {
     appelApi<Ok>('partenaire_profil.php', { methode: 'POST', jeton, corps }),
   partenaireAbonnement: (jeton: string) =>
     appelApi<{ success: true } & ReponseAbonnementPartenaire>('partenaire_abonnement.php', { jeton }),
-  partenaireSouscrire: (jeton: string, offre: string) =>
-    appelApi<Ok & { client: ClientPartenaireAbonnement | null }>('partenaire_abonnement.php', { methode: 'POST', jeton, corps: { offre } }),
   partenairePhotos: (jeton: string) =>
     appelApi<{ success: true } & ReponsePhotosPartenaire>('partenaire_photos.php', { jeton }),
   partenaireAjouterPhoto: (jeton: string, formulaire: FormData) =>

@@ -19,6 +19,7 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 - Une formule se change une fois par mois, la période offerte ne s'accorde qu'à la première souscription, le fondateur est réservé à la première souscription (`includes/souscription.php`, partagé par l'application et le site).
 
 ### Changed
+- **L'application ne vend plus rien** (règles Apple 3.1.1 / 3.1.3, Google Play Billing). L'écran Formule n'affiche que l'état du compte, sans prix ni lien ; au-delà du quota, un événement ne se publie pas depuis l'application ; seule la mise en avant comprise dans la formule s'y prend. L'API refuse de même la souscription (403 `souscription_hors_app`), le supplément (409 `quota_atteint`) et la mise en avant payante, pour les anciennes versions aussi.
 - **Tarifs alignés sur la grille.** BDE 25 €, Fondateur 39 € (8 événements par mois pendant 3 mois, puis 6), Club 49 € (12), Essentiel 49,99 € (6), Premium 69,99 € (15, 1 flash, 1 mise en avant offerte) ; posts sponsorisés Coup de projecteur 70 € (48 h) et Top du fil 350 € (7 jours). La formule « Premium 129 € » n'est plus vendue.
 - Le tableau de bord partenaire n'affiche plus de chiffres inventés (tendance, conseil, âge moyen estimé, répartition par école de secours).
 - **Ultraviolet.** L'accent passe du orange lave `#FF5424` au violet `#8E6BFF` (texte lisible `#5B3BD6` sur craie, teintes claires `#ECE6FF` / `#231B3F`) : site, mobile, icônes, `Logo.png`, supports `docs/`. Les jetons gardent leurs noms (`--rouge`, `lave`).

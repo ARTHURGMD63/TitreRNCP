@@ -79,10 +79,10 @@ export function UsageMois({ usage, offreLibelle, essaiJusquau, club }: {
       />
       <T taille={fs[4]} couleur={c.gris} style={{ marginTop: -8 }}>
         {depasse
-          ? `${ev.supplementaires} événement${ev.supplementaires > 1 ? 's' : ''} en supplément · ${euros(ev.prix_supplement)} HT pièce.`
+          ? `${ev.supplementaires} événement${ev.supplementaires > 1 ? 's' : ''} en supplément ce mois-ci.`
           : ev.restants > 0
-            ? `Encore ${ev.restants} événement${ev.restants > 1 ? 's' : ''} compris dans ta formule. Au-delà : ${euros(ev.prix_supplement)} HT l'événement.`
-            : `Quota atteint. Le prochain événement coûte ${euros(ev.prix_supplement)} HT.`}
+            ? `Encore ${ev.restants} événement${ev.restants > 1 ? 's' : ''} compris dans ta formule ce mois-ci.`
+            : 'Quota du mois atteint.'}
       </T>
 
       {!club && flash.quota !== 0 ? (

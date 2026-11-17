@@ -23,6 +23,14 @@ require_once __DIR__ . '/../../includes/musique.php';
 require_once __DIR__ . '/../../includes/temps_reel.php';
 require_once __DIR__ . '/../../includes/sports.php';
 
+/**
+ * Refus d'un achat demandé par l'application. Elle ne vend rien (règles Apple
+ * 3.1.1 et Google Play Billing) : les mises en avant payantes et les
+ * événements au-delà du quota se prennent sur le site. Message neutre, sans
+ * lien ni prix, comme l'exigent les stores.
+ */
+const MESSAGE_ACHAT_HORS_APP = 'Cette mise en avant ne se prend pas dans l’application. Seule celle comprise dans ta formule peut être lancée ici.';
+
 $u   = apiPartenaire($pdo);
 $uid = (int) $u['id'];
 
@@ -266,7 +274,6 @@ $isGratuit    = !empty($corps['is_gratuit']) ? 1 : 0;
 $lieu         = trim((string) ($corps['lieu'] ?? ''));
 $isSponsorise = !$estClub && !empty($corps['is_sponsorise']) ? 1 : 0;
 $sponsorFormule = $isSponsorise ? (string) ($corps['sponsor_formule'] ?? '') : null;
-$accepteSupplement = !empty($corps['accepte_supplement']);
 $notifsDemandees = [];
 if ($isSponsorise && is_array($corps['sponsor_notifications'] ?? null)) {
     foreach ($corps['sponsor_notifications'] as $n) {
@@ -338,6 +345,10 @@ try {
             $pdo->rollBack();
             $refuser(array_values(array_filter(array_merge([$sponso["erreur"]], $erreursNotifs))));
         }
+        if ($sponso['nouvelle'] && (float) $sponso['tarif'] > 0) {
+            $pdo->rollBack();
+            $refuser([MESSAGE_ACHAT_HORS_APP]);
+        }
         $isSponsorise   = $sponso['is_sponsorise'];
         $sponsorFormule = $sponso['formule'];
         $sponsorTarif   = $sponso['tarif'];
@@ -372,22 +383,18 @@ try {
         apiReponse(['success' => true, 'message' => 'Événement mis à jour.', 'id' => $eid]);
     }
 
-    // Création. Au-delà du quota mensuel, l'événement est un supplément
-    // payant : il ne part jamais sans que l'établissement ait vu le prix et
-    // l'ait accepté.
+    // Création. Au-delà du quota mensuel, l'événement serait un supplément
+    // payant : l'application ne vend rien (règles Apple 3.1.1 et Google Play
+    // Billing), le supplément ne se prend que sur le site. L'API refuse donc,
+    // quoi que dise `accepte_supplement` (que d'anciennes versions envoient).
     $supplementTarif = 0.0;
     if (evenementSeraSupplementaire($pdo, (int) $etab['id'], $capacites)) {
-        if (!$accepteSupplement) {
-            $pdo->rollBack();
-            apiReponse([
-                'success' => false,
-                'code'    => 'supplement_requis',
-                'message' => 'Ton quota de ' . (int) $capacites['evenements_quota_actuel'] . ' événements du mois est atteint. Cet événement supplémentaire coûte '
-                    . number_format(PRIX_EVENEMENT_SUPPLEMENTAIRE, 2, ',', ' ') . ' € HT.',
-                'supplement_tarif' => (float) PRIX_EVENEMENT_SUPPLEMENTAIRE,
-            ], 409);
-        }
-        $supplementTarif = (float) PRIX_EVENEMENT_SUPPLEMENTAIRE;
+        $pdo->rollBack();
+        apiReponse([
+            'success' => false,
+            'code'    => 'quota_atteint',
+            'message' => 'Ton quota de ' . (int) $capacites['evenements_quota_actuel'] . ' événements du mois est atteint.',
+        ], 409);
     }
 
     $sponso = resoudreSponsoring($pdo, (int) $etab['id'], $capacites, null, (bool) $isSponsorise, $sponsorFormule, $dateHeure, $dateFin);
@@ -395,6 +402,10 @@ try {
     if ($sponso['erreur'] !== null || $erreursNotifs) {
         $pdo->rollBack();
         $refuser(array_values(array_filter(array_merge([$sponso["erreur"]], $erreursNotifs))));
+    }
+    if ($sponso['nouvelle'] && (float) $sponso['tarif'] > 0) {
+        $pdo->rollBack();
+        $refuser([MESSAGE_ACHAT_HORS_APP]);
     }
     $isSponsorise   = $sponso['is_sponsorise'];
     $sponsorFormule = $sponso['formule'];
@@ -436,8 +447,6 @@ fluxToucher($pdo, CANAL_GLOBAL);
 
 apiReponse([
     'success' => true,
-    'message' => $supplementTarif > 0
-        ? 'Événement créé. Supplément de ' . number_format($supplementTarif, 2, ',', ' ') . ' € HT ajouté à ton mois.'
-        : 'Événement créé.',
+    'message' => 'Événement créé.',
     'id'      => $nouvelId,
 ]);
