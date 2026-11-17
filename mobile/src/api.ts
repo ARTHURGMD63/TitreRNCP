@@ -769,7 +769,21 @@ export const api = {
     appelApi<{ success: true }>('compte.php', { methode: 'POST', jeton, corps: { action: 'mot_de_passe', mot_de_passe: motDePasse, nouveau } }),
   /** Change l'adresse de connexion ; l'ancienne adresse reçoit un avis. */
   changerEmail: (jeton: string, motDePasse: string, email: string) =>
-    appelApi<{ success: true; email: string }>('compte.php', { methode: 'POST', jeton, corps: { action: 'email', mot_de_passe: motDePasse, email } }),
+    appelApi<{ success: true; envoye: true; email: string; code_dev?: string }>('compte.php', { methode: 'POST', jeton, corps: { action: 'email', mot_de_passe: motDePasse, email } }),
+  /** Second temps : le code est juste, l'adresse change et l'ancienne en est avertie. */
+  confirmerEmail: (jeton: string, motDePasse: string, code: string) =>
+    appelApi<{ success: true; email: string }>('compte.php', { methode: 'POST', jeton, corps: { action: 'email_confirmer', mot_de_passe: motDePasse, code } }),
+  /** Un texte légal, sans jeton : on le lit avant de créer un compte. */
+  legal: (slug: string) => appelApi<{ success: true; page: PageLegale }>('legal.php', { params: { page: slug } }),
+  deconnexion: (jeton: string) => appelApi<{ success: true }>('logout.php', { methode: 'POST', jeton }),
+  /** Les catégories de notification de ce compte et ce qui est activé. */
+  pushReglages: (jeton: string) => appelApi<{ categories: CategoriePush[] }>('push.php', { jeton }),
+  pushEnregistrer: (jeton: string, jetonExpo: string, plateforme: 'ios' | 'android', appareil?: string) =>
+    appelApi<{ success: true }>('push.php', { methode: 'POST', jeton, corps: { action: 'enregistrer', jeton: jetonExpo, plateforme, appareil } }),
+  pushRetirer: (jeton: string, jetonExpo: string) =>
+    appelApi<{ success: true }>('push.php', { methode: 'POST', jeton, corps: { action: 'retirer', jeton: jetonExpo } }),
+  pushPreference: (jeton: string, categorie: string, actif: boolean) =>
+    appelApi<{ categories: CategoriePush[] }>('push.php', { methode: 'POST', jeton, corps: { action: 'preference', categorie, actif } }),
   moi: (jeton: string) => appelApi<{ utilisateur: Profil }>('me.php', { jeton }),
 
   evenements: (jeton: string, params?: { type?: string; musique?: string; q?: string; pe?: number }) =>

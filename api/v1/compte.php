@@ -8,22 +8,26 @@
  *       L'appareil qui fait la demande reste connecté.
  *
  *   { action: "email", mot_de_passe: "<actuel>", email: "<nouvelle adresse>" }
- *       Change l'adresse de connexion. L'ancienne adresse reçoit un avis.
- *       La confirmation par un lien envoyé à la nouvelle adresse viendra
- *       s'ajouter ici : pour l'instant, le mot de passe actuel fait office de
- *       preuve que c'est bien le titulaire qui demande.
+ *       Premier temps : envoie un code à six chiffres à la NOUVELLE adresse.
+ *       Rien ne change encore. En local, le code est rendu dans `code_dev`.
  *
- * Dans les deux cas le mot de passe actuel est exigé, avec la même limite de
+ *   { action: "email_confirmer", mot_de_passe: "<actuel>", code: "<code reçu>" }
+ *       Second temps : le code est juste, l'adresse du compte change et
+ *       l'ancienne adresse reçoit un avis.
+ *
+ * Dans tous les cas le mot de passe actuel est exigé, avec la même limite de
  * tentatives que la connexion : un jeton volé ne doit pas permettre de
  * prendre le compte de quelqu'un.
  *
  * Réponses : { success: true } ; 403 mot_de_passe (actuel faux) ; 409
- * email_pris ; 422 (valeur refusée) ; 429 trop_de_tentatives.
+ * email_pris ; 422 (valeur refusée, code_invalide) ; 429 trop_de_tentatives
+ * ou code_recent.
  */
 
 require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/security.php';
 require_once __DIR__ . '/../../includes/mail.php';
+require_once __DIR__ . '/../../includes/email_changement.php';
 
 apiExigerMethode('POST');
 
@@ -31,7 +35,7 @@ $u   = apiUtilisateur($pdo);
 $uid = (int) $u['id'];
 
 if (!in_array((string) $u['type'], ['etudiant', 'partenaire'], true)) {
-    apiErreur('Ce type de compte ne se modifie pas depuis l\'application.', 403, 'type_non_modifiable');
+    apiErreur("Ce type de compte ne se modifie pas depuis l'application.", 403, 'type_non_modifiable');
 }
 
 $ip = ipClient();
@@ -60,7 +64,7 @@ if ($action === 'mot_de_passe') {
         apiErreur("Le nouveau mot de passe doit faire au moins $min caractères.", 422, 'mot_de_passe_court');
     }
     if (hash_equals($actuel, $nouveau)) {
-        apiErreur('Le nouveau mot de passe doit être différent de l\'actuel.', 422, 'mot_de_passe_identique');
+        apiErreur("Le nouveau mot de passe doit être différent de l'actuel.", 422, 'mot_de_passe_identique');
     }
 
     $pdo->beginTransaction();
@@ -76,32 +80,77 @@ if ($action === 'mot_de_passe') {
             $pdo->rollBack();
         }
         logErreur('Changement de mot de passe impossible', $e, ['utilisateur' => $uid]);
-        apiErreur('Le mot de passe n\'a pas pu être changé. Réessaie dans un instant.', 500, 'changement');
+        apiErreur("Le mot de passe n'a pas pu être changé. Réessaie dans un instant.", 500, 'changement');
     }
 
     apiReponse(['success' => true]);
 }
 
+// Changer d'adresse : deux temps. « email » envoie un code à la NOUVELLE
+// adresse ; « email_confirmer » le vérifie et change alors l'adresse du compte.
 if ($action === 'email') {
     $nouvelle = mb_strtolower(trim(is_string($corps['email'] ?? null) ? $corps['email'] : ''));
     $ancienne = (string) $u['email'];
 
     if (!filter_var($nouvelle, FILTER_VALIDATE_EMAIL) || mb_strlen($nouvelle) > 190) {
-        apiErreur('Cette adresse e-mail n\'est pas valide.', 422, 'email_invalide');
+        apiErreur("Cette adresse e-mail n'est pas valide.", 422, 'email_invalide');
     }
     if (mb_strtolower($ancienne) === $nouvelle) {
-        apiErreur('C\'est déjà l\'adresse de ton compte.', 422, 'email_identique');
+        apiErreur("C'est déjà l'adresse de ton compte.", 422, 'email_identique');
+    }
+    $stmt = $pdo->prepare('SELECT 1 FROM users WHERE email = ?');
+    $stmt->execute([$nouvelle]);
+    if ($stmt->fetchColumn()) {
+        apiErreur('Cette adresse est déjà utilisée par un autre compte.', 409, 'email_pris');
+    }
+
+    $code = emailChangementDemander($pdo, $uid, $nouvelle);
+    if ($code === null) {
+        apiErreur("Un code vient d'être envoyé. Patiente une minute avant d'en demander un autre.", 429, 'code_recent');
+    }
+
+    $envoye = envoyerEmail(
+        $nouvelle,
+        'Outsee — Confirme ta nouvelle adresse',
+        "Bonjour,\n\n"
+        . "Voici le code pour confirmer que cette adresse est bien la tienne :\n\n"
+        . "    $code\n\n"
+        . 'Il est valable ' . EMAIL_CHANGEMENT_VALIDITE_MIN . " minutes. Saisis-le dans l'application Outsee.\n\n"
+        . "Si tu n'as rien demandé, ignore cet e-mail : rien ne change.\n\n"
+        . "L'équipe Outsee"
+    );
+    if (!$envoye) {
+        $pdo->prepare('DELETE FROM changements_email WHERE user_id = ?')->execute([$uid]);
+        apiErreur("Le code n'a pas pu être envoyé. Vérifie l'adresse et réessaie.", 502, 'envoi');
+    }
+
+    $reponse = ['success' => true, 'envoye' => true, 'email' => $nouvelle];
+    // En local rien ne part (voir envoyerEmail) : le code est rendu pour pouvoir
+    // tester le parcours, comme pour le mot de passe oublié.
+    if (estEnLocal()) {
+        $reponse['code_dev'] = $code;
+    }
+    apiReponse($reponse);
+}
+
+if ($action === 'email_confirmer') {
+    $saisie   = is_scalar($corps['code'] ?? null) ? (string) $corps['code'] : '';
+    $ancienne = (string) $u['email'];
+    $nouvelle = emailChangementConfirmer($pdo, $uid, $saisie);
+
+    if ($nouvelle === null) {
+        apiErreur('Code incorrect ou expiré. Redemande un code.', 422, 'code_invalide');
     }
 
     try {
         $pdo->prepare('UPDATE users SET email = ? WHERE id = ?')->execute([$nouvelle, $uid]);
     } catch (PDOException $e) {
-        // Code MySQL 1062 (clé dupliquée) : l'adresse appartient à un autre compte.
+        // Code MySQL 1062 (clé dupliquée) : quelqu'un a pris l'adresse entre-temps.
         if (($e->errorInfo[1] ?? null) === 1062) {
             apiErreur('Cette adresse est déjà utilisée par un autre compte.', 409, 'email_pris');
         }
-        logErreur('Changement d\'e-mail impossible', $e, ['utilisateur' => $uid]);
-        apiErreur('L\'adresse n\'a pas pu être changée. Réessaie dans un instant.', 500, 'changement');
+        logErreur("Changement d'e-mail impossible", $e, ['utilisateur' => $uid]);
+        apiErreur("L'adresse n'a pas pu être changée. Réessaie dans un instant.", 500, 'changement');
     }
 
     // Les codes de réinitialisation en cours visaient l'ancienne adresse.
@@ -113,14 +162,14 @@ if ($action === 'email') {
     try {
         envoyerEmail(
             $ancienne,
-            'Outsee — L\'adresse de ton compte a changé',
+            "Outsee — L'adresse de ton compte a changé",
             "Bonjour,\n\n"
             . "L'adresse e-mail de ton compte Outsee vient d'être remplacée par $nouvelle.\n\n"
             . "Si c'est bien toi, tu n'as rien à faire. Sinon, écris-nous tout de suite à contact@outsee.fr.\n\n"
             . "L'équipe Outsee"
         );
     } catch (Throwable $e) {
-        logErreur('Avis de changement d\'e-mail non envoyé', $e, ['utilisateur' => $uid]);
+        logErreur("Avis de changement d'e-mail non envoyé", $e, ['utilisateur' => $uid]);
     }
 
     apiReponse(['success' => true, 'email' => $nouvelle]);
