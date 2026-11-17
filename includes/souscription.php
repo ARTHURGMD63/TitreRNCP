@@ -19,11 +19,16 @@ require_once __DIR__ . '/crm.php';
 require_once __DIR__ . '/comptes.php';
 
 /**
+ * Les garde-fous d'une souscription, sans rien écrire.
+ *
+ * Le paiement en ligne (includes/stripe.php) les applique avant d'envoyer
+ * l'établissement sur la page de paiement : refuser après le paiement serait
+ * trop tard. souscrireFormule() les rejoue au moment d'écrire.
+ *
  * @param array<string, mixed> $etab
- * @param array<string, mixed> $utilisateur id, prenom, nom
- * @return array{ok:bool, code:string, message:string}
+ * @return array{ok:bool, code:string, message:string}|null null si rien ne s'y oppose
  */
-function souscrireFormule(PDO $pdo, array $etab, array $utilisateur, string $offre, ?string $emailContact = null): array
+function controlerSouscription(PDO $pdo, array $etab, string $offre): ?array
 {
     if (!compteValide($etab)) {
         return ['ok' => false, 'code' => 'validation_requise', 'message' => 'Ton compte BDE doit d’abord être validé par l’équipe Outsee.'];
@@ -45,6 +50,23 @@ function souscrireFormule(PDO $pdo, array $etab, array $utilisateur, string $off
         return ['ok' => false, 'code' => 'changement_limite', 'message' => "Tu as déjà changé de formule ce mois-ci. Prochain changement possible à partir du $prochain."];
     }
 
+    return null;
+}
+
+/**
+ * @param array<string, mixed> $etab
+ * @param array<string, mixed> $utilisateur id, prenom, nom
+ * @return array{ok:bool, code:string, message:string}
+ */
+function souscrireFormule(PDO $pdo, array $etab, array $utilisateur, string $offre, ?string $emailContact = null): array
+{
+    $refus = controlerSouscription($pdo, $etab, $offre);
+    if ($refus !== null) {
+        return $refus;
+    }
+
+    $client   = abonnementEtablissement($pdo, (int) $etab['id']);
+    $dispo    = formulesSouscriptibles($pdo, (string) ($etab['type'] ?? ''), $client);
     $tarif    = (float) $dispo[$offre]['tarif'];
     $premiere = $client === null || empty($client['signe_le']);
     $finEssai = $premiere ? finEssaiPourFormule($offre) : ($client['essai_jusqu_au'] ?? null);

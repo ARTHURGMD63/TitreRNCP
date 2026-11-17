@@ -727,6 +727,13 @@ CREATE TABLE IF NOT EXISTS crm_clients (
     essai_jusqu_au   DATE NULL,
     -- Dernier changement de formule (migration v31) : un par mois au plus.
     offre_changee_le DATE NULL DEFAULT NULL,
+    -- Lien avec Stripe (migration v33) : client, abonnement, état, fin de
+    -- période, date du lien.
+    stripe_customer_id     VARCHAR(64) NULL DEFAULT NULL,
+    stripe_subscription_id VARCHAR(64) NULL DEFAULT NULL,
+    stripe_statut          VARCHAR(32) NULL DEFAULT NULL,
+    stripe_periode_fin     DATE NULL DEFAULT NULL,
+    stripe_lie_le          DATETIME NULL DEFAULT NULL,
     signe_le         DATE NULL,
     perdu_le         DATE NULL,
     motif_perte      VARCHAR(255) NULL,
@@ -737,6 +744,7 @@ CREATE TABLE IF NOT EXISTS crm_clients (
     UNIQUE KEY uniq_etablissement (etablissement_id),
     KEY k_statut (statut),
     KEY k_responsable (responsable_id),
+    KEY k_crm_stripe_abonnement (stripe_subscription_id),
     CONSTRAINT fk_crm_client_etab
         FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE SET NULL,
     CONSTRAINT fk_crm_client_resp
@@ -1078,11 +1086,21 @@ CREATE TABLE IF NOT EXISTS achats_partenaires (
     montant DECIMAL(8,2) NOT NULL DEFAULT 0,
     formule VARCHAR(20) NULL DEFAULT NULL,
     libelle VARCHAR(255) NULL DEFAULT NULL,
+    -- Ligne de facture Stripe (migration v33) ; NULL = pas encore envoyée.
+    stripe_ligne VARCHAR(64) NULL DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY k_achats_mois (etablissement_id, mois, nature),
     KEY k_achats_evenement (evenement_id),
     FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE CASCADE,
     FOREIGN KEY (evenement_id) REFERENCES evenements(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Événements Stripe déjà traités (migration v33).
+CREATE TABLE IF NOT EXISTS stripe_evenements (
+    id VARCHAR(255) NOT NULL PRIMARY KEY,
+    type VARCHAR(100) NOT NULL,
+    recu_le TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY k_stripe_evenements_date (recu_le)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT IGNORE INTO schema_migrations (version) VALUES
