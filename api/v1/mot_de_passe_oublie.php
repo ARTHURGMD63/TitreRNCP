@@ -24,7 +24,7 @@ apiExigerMethode('POST');
 // Sans cette garde, un tiers connaissant l'adresse d'une victime pouvait la
 // bombarder de mails de réinitialisation à volonté — nuisance directe, et
 // risque de faire flaguer le domaine d'envoi comme source de spam.
-$ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+$ip = ipClient();
 if (isRateLimited($pdo, $ip, 5, 900)) {
     apiErreur('Trop de tentatives. Réessaie dans quinze minutes.', 429, 'trop_de_tentatives');
 }

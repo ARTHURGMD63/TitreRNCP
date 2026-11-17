@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Même garde qu'au login, un seuil plus large : cette page répond
     // différemment selon qu'un e-mail existe déjà, ce qui en ferait sinon un
     // outil d'énumération des comptes à débit illimité.
-    $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+    $ip = ipClient();
     $tropDeTentatives = isRateLimited($pdo, $ip, 20, 900);
 
     $type    = in_array($_POST['type'] ?? '', ['etudiant','partenaire']) ? $_POST['type'] : 'etudiant';

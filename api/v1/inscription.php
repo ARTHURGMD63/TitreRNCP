@@ -24,7 +24,7 @@ apiExigerMethode('POST');
 // Même garde que login.php, un seuil plus large : cet endpoint répond
 // différemment selon qu'un e-mail existe déjà (409) ou non (201), ce qui en
 // ferait sinon un outil d'énumération des comptes à débit illimité.
-$ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+$ip = ipClient();
 if (isRateLimited($pdo, $ip, 20, 900)) {
     apiErreur('Trop de tentatives. Réessaie dans quinze minutes.', 429, 'trop_de_tentatives');
 }

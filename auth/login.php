@@ -16,8 +16,7 @@ $error = '';
 $expiree = !empty($_SESSION['session_expiree']);
 unset($_SESSION['session_expiree']);
 
-$ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-$ip = trim(explode(',', $ip)[0]); // Prend la première IP si proxy
+$ip = ipClient();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrfVerify();

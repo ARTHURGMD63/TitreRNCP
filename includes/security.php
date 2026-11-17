@@ -267,6 +267,56 @@ function protegerEcritureApi(): void {
 // ─── Rate limiting (anti-bruteforce) ──────────────────────────────────────
 
 /**
+ * L'adresse IP du client, y compris derrière le répartiteur de charge.
+ *
+ * POURQUOI : en production (Render, Railway, Docker derrière un proxy), la
+ * connexion TCP vient du répartiteur, pas de l'utilisateur. `REMOTE_ADDR`
+ * vaut alors l'adresse interne du proxy, la même pour tout le monde. Le
+ * limiteur de connexion comptait donc les échecs de TOUS les utilisateurs
+ * ensemble : cinq fautes de frappe, d'où qu'elles viennent, bloquaient la
+ * connexion de chacun pendant quinze minutes — et une connexion réussie
+ * effaçait le compteur de l'attaquant.
+ *
+ * Les en-têtes de transfert ne sont crus que si la connexion vient d'une
+ * adresse privée ou de bouclage : un client direct sur Internet ne peut pas
+ * se faire passer pour un proxy, et un X-Forwarded-For qu'il ajouterait
+ * lui-même est ignoré.
+ *
+ * Ordre : CF-Connecting-IP (posé par Cloudflare, qui écrase toute valeur
+ * envoyée par le client), puis l'entrée la plus à droite de X-Forwarded-For
+ * qui n'est pas une adresse privée (celles de gauche sont écrites par le
+ * client, celles de droite par les proxys de confiance).
+ */
+function ipClient(): string {
+    $direct   = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+    $valide   = static fn (string $ip): bool => filter_var($ip, FILTER_VALIDATE_IP) !== false;
+    $publique = static fn (string $ip): bool => filter_var(
+        $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+    ) !== false;
+
+    if (!$valide($direct)) {
+        return '0.0.0.0';
+    }
+    if ($publique($direct)) {
+        return $direct; // aucun proxy devant nous : l'adresse est la bonne
+    }
+
+    $cf = trim((string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? ''));
+    if ($cf !== '' && $valide($cf)) {
+        return $cf;
+    }
+
+    $chaine = array_reverse(array_map('trim', explode(',', (string) ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ''))));
+    foreach ($chaine as $ip) {
+        if ($valide($ip) && $publique($ip)) {
+            return $ip;
+        }
+    }
+
+    return $direct;
+}
+
+/**
  * Limite les tentatives de login par IP.
  * Retourne true si bloqué, false sinon.
  */

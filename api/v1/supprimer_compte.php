@@ -28,7 +28,7 @@ $uid = (int) $u['id'];
 
 // Même garde que la connexion : ce point vérifie un mot de passe, il ne doit
 // pas permettre d'en tester à volonté depuis un jeton volé.
-$ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+$ip = ipClient();
 if (isRateLimited($pdo, $ip, 5, 900)) {
     apiErreur('Trop de tentatives. Réessaie dans quinze minutes.', 429, 'trop_de_tentatives');
 }

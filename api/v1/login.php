@@ -29,7 +29,7 @@ if ($email === '' || $mdp === '') {
 // sinon l'API deviendrait le chemin non protege pour essayer des mots de
 // passe en rafale, pendant que le site compte consciencieusement ses cinq
 // tentatives.
-$ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+$ip = ipClient();
 if (isRateLimited($pdo, $ip)) {
     apiErreur('Trop de tentatives. Reessaie dans quinze minutes.', 429, 'trop_de_tentatives');
 }

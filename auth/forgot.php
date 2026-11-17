@@ -12,7 +12,7 @@ $devLink = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrfVerify();
     $email = trim($_POST['email'] ?? '');
-    $ip    = (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+    $ip    = ipClient();
 
     // Sans cette garde, connaître l'adresse d'une victime suffisait à la
     // bombarder de mails de réinitialisation à volonté.
