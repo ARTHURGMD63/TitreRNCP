@@ -186,3 +186,52 @@ function exigerAbonnementValide(PDO $pdo, array $etab): void
         apiErreur('Ta formule ne correspond pas à ton type de compte. Choisis-en une qui convient.', 403, 'abonnement_requis');
     }
 }
+
+/**
+ * E-mail de bienvenue d'un établissement qui vient de s'inscrire.
+ *
+ * Un compte créé depuis l'application n'a rien à y faire tant qu'il n'a pas
+ * de formule, et la formule se règle sur le site (règles des stores) : sans
+ * ce message, rien ne lui dit où aller. L'envoi ne doit jamais empêcher
+ * l'inscription : l'échec est ignoré, le compte existe déjà.
+ */
+function emailBienvenueEtablissement(string $email, string $prenom, string $nomEtablissement, ?string $type): bool
+{
+    require_once __DIR__ . '/mail.php';
+    require_once __DIR__ . '/config.php';
+
+    $etapes = "1. Connectez-vous sur " . urlPublique('/auth/login.php') . " avec cette adresse e-mail et votre mot de passe.
+"
+        . "2. Choisissez votre formule dans « Ma formule ».
+"
+        . "3. Revenez dans l'application Outsee : votre tableau de bord et la création d'événements s'ouvrent.
+";
+
+    $validation = verificationRequise($type)
+        ? "
+Votre compte BDE doit d'abord être validé par l'équipe Outsee : vous recevrez un e-mail dès que ce sera fait, et vous ne pourrez publier qu'à partir de là.
+"
+        : '';
+
+    try {
+        return envoyerEmail(
+            $email,
+            'Outsee — Bienvenue, voici la suite',
+            "Bonjour " . nettoyerEntete($prenom) . ",
+
+"
+            . "Le compte de « " . nettoyerEntete($nomEtablissement) . " » est créé. Pour publier vos événements :
+
+"
+            . $etapes . $validation
+            . "
+Une question ? Répondez à contact@outsee.fr.
+
+L'équipe Outsee"
+        );
+    } catch (Throwable $e) {
+        logErreur('E-mail de bienvenue établissement non envoyé', $e);
+
+        return false;
+    }
+}
