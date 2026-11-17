@@ -658,6 +658,8 @@ export type SuiviEvenementPartenaire = {
   };
   courbe: { jour: string; inscriptions: number; cumul: number }[];
   ecoles: { nom: string; nombre: number; pourcentage: number }[];
+  /** Les inscrits (hors annulés) avec leurs coordonnées, pour l'établissement propriétaire. */
+  participants: { id: number; prenom: string; nom: string; email: string; ecole: string | null; promo: string | null; present: boolean; inscrit_le: string }[];
   mise_en_avant: {
     active: boolean; en_cours: boolean; formule: string | null; libelle: string | null; offerte: boolean; jusqu_au: string | null;
     /** Quand elle a démarré (heure de Paris), null pour une mise en avant d'avant le suivi du début. */
