@@ -114,6 +114,7 @@ CREATE TABLE IF NOT EXISTS evenements (
     sponsor_formule ENUM('boost24','top7','premium30') DEFAULT NULL,
     sponsor_tarif DECIMAL(8,2) NOT NULL DEFAULT 0,
     sponsor_jusqu_au DATETIME DEFAULT NULL,
+    sponsor_debut DATETIME DEFAULT NULL,
     -- Prix d'un événement publié au-delà du quota mensuel (migration v30).
     supplement_tarif DECIMAL(8,2) NOT NULL DEFAULT 0,
     lieu VARCHAR(255),

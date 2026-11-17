@@ -42,6 +42,9 @@ proDebut('Modifier un événement', 'evenements', $etab);
   </div>
 </header>
 
+<?php if (!empty($event['is_sponsorise'])): ?>
+  <?= sponsoringChronoHtml($event) ?>
+<?php endif; ?>
 <?php if ($inscrits > 0): ?>
   <div class="message message--alerte" style="margin-bottom:20px;"><?= iconeSite('info') ?><span><?= $inscrits ?> étudiant<?= $inscrits > 1 ? 's sont inscrits' : ' est inscrit' ?> : prévenez-les si vous changez la date ou l'avantage.</span></div>
 <?php endif; ?>

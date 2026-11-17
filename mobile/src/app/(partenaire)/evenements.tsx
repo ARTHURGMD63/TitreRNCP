@@ -19,6 +19,7 @@ import { FORMATS_SPORT, SPORTS } from '../../catalogue';
 import { Apparition, PressableAnime } from '../../composants/Animations';
 import { Bouton } from '../../composants/Bouton';
 import { CarreIcone, CarteRefonte, EnTeteApp, Pastille, useRubrique } from '../../composants/Design';
+import { ResteMiseEnAvant } from '../../composants/ChronoMiseEnAvant';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Jauge } from '../../composants/Elements';
 import { Icone, type NomIcone } from '../../composants/Icone';
@@ -98,6 +99,12 @@ function CarteEvenementPartenaire({ ev, onSupprime }: { ev: EvenementPartenaire;
           {ev.supplement_tarif > 0 ? <Pastille libelle={`Supplément ${euros(ev.supplement_tarif)}`} fond={c.alerteClair} encre={c.alerte} /> : null}
           {ev.is_sponsorise && ev.sponsor_tarif > 0 ? <Pastille libelle={`Sponso. ${euros(ev.sponsor_tarif)}`} fond={c.alerteClair} encre={c.alerte} /> : null}
         </View>
+        {ev.is_sponsorise && ev.sponsorise_actif ? (
+          <View style={{ gap: 2, marginTop: 6 }}>
+            {ev.sponsor_debut ? <T taille={fs[4]} couleur={c.gris}>Lancée le {dateFr(ev.sponsor_debut, 'l j F · H\\hi')}</T> : null}
+            <ResteMiseEnAvant restantS={ev.sponsor_restant_s} couleur={c.grisFonce} />
+          </View>
+        ) : null}
         <Pastille libelle={LIBELLES_STATUT[ev.statut]} point={statut.point} fond={statut.fond} encre={statut.encre} />
       </View>
 

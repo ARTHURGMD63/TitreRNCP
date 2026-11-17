@@ -111,6 +111,7 @@ proDebut('Mes événements', 'evenements', $etab, ['scripts' => SCRIPTS_SCAN_PRO
                 <?php if (!empty($e['is_flash'])): ?><span class="pastille pastille--alerte"><?= iconeSite('eclair', 'icon-sm') ?> Flash</span><?php endif; ?>
                 <?php if (!empty($e['is_sponsorise'])): ?><span class="pastille<?= sponsoringActif($e) ? '' : ' pastille--neutre' ?>"><?= iconeSite('etoile', 'icon-sm') ?> <?= sponsoringActif($e) ? htmlspecialchars(libelleSponsoring($e['sponsor_formule'])) : 'Mise en avant terminée' ?></span><?php endif; ?>
               </div>
+              <?= sponsoringChronoHtml($e, true) ?>
             </td>
             <td style="white-space:nowrap;"><?= htmlspecialchars(dateFr($e['date_heure'], 'D j M')) ?><br><span class="carte__sous"><?= date('H\hi', strtotime((string) $e['date_heure'])) ?></span></td>
             <td style="min-width:110px;">

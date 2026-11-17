@@ -19,6 +19,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 
 import { api, ErreurApi, type ReponseFormulaireEvenementPartenaire } from '../../api';
 import { Bouton } from '../../composants/Bouton';
+import { ChronoMiseEnAvant } from '../../composants/ChronoMiseEnAvant';
 import { useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { BoutonRetour, Encart } from '../../composants/Elements';
@@ -69,7 +70,7 @@ export default function FormulaireEvenementPartenaire() {
   const [sponsorFormule, setSponsorFormule] = useState('');
   const [sponsorNotifs, setSponsorNotifs] = useState<(Date | null)[]>([]);
   // Mise en avant en cours : payée jusqu'à sa fin, elle ne se change ni ne se retire.
-  const [sponsorActif, setSponsorActif] = useState<{ formule: string; jusquau: string; envoyees: string[] } | null>(null);
+  const [sponsorActif, setSponsorActif] = useState<{ formule: string; jusquau: string; debut: string | null; restantS: number | null; envoyees: string[] } | null>(null);
   // L'instant d'ouverture de l'écran : base de la fenêtre annoncée (pas d'horloge dans le rendu).
   const [maintenant] = useState(() => Date.now());
   const [sponsorTermine, setSponsorTermine] = useState<string | null>(null);
@@ -99,7 +100,7 @@ export default function FormulaireEvenementPartenaire() {
         setIsSponsorise(e.is_sponsorise);
         setSponsorFormule(e.sponsor_formule ?? rep.formules_sponsoring.find((f) => f.offrable)?.code ?? '');
         setSponsorActif(e.sponsor_actif && e.sponsor_formule && e.sponsor_jusqu_au
-          ? { formule: e.sponsor_formule, jusquau: e.sponsor_jusqu_au, envoyees: e.sponsor_notifications_envoyees } : null);
+          ? { formule: e.sponsor_formule, jusquau: e.sponsor_jusqu_au, debut: e.sponsor_debut, restantS: e.sponsor_restant_s, envoyees: e.sponsor_notifications_envoyees } : null);
         setSponsorTermine(e.sponsor_termine ? e.sponsor_jusqu_au : null);
         setSponsorNotifs(e.sponsor_notifications.map((h) => new Date(h.replace(' ', 'T'))));
       } else {
@@ -266,8 +267,18 @@ export default function FormulaireEvenementPartenaire() {
             <T taille={fs[4]} poids={700} couleur={bleu.texteDoux}>
               Mise en avant en cours · {donnees.formules_sponsoring.find((f) => f.code === sponsorActif.formule)?.nom}
             </T>
+            <ChronoMiseEnAvant
+              debut={sponsorActif.debut}
+              jusquau={sponsorActif.jusquau}
+              restantS={sponsorActif.restantS}
+              dureeS={null}
+              enCours
+              couleur={bleu.texteDoux}
+              piste={bleu.accent}
+              remplissage={bleu.accent}
+            />
             <T taille={fs[4]} couleur={bleu.texteDoux}>
-              En tête du fil jusqu&apos;au {dateFr(sponsorActif.jusquau, 'l j F · H\\hi')}. Elle est payée jusque-là : elle ne se change ni ne se retire.
+              Elle est payée jusque-là : elle ne se change ni ne se retire.
             </T>
           </View>
         ) : peutOffrir ? (

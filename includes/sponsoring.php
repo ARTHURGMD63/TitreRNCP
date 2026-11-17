@@ -135,3 +135,78 @@ function sponsoringActif(array $evenement): bool
     $fin = $evenement['sponsor_jusqu_au'] ?? null;
     return $fin === null || strtotime($fin) > time();
 }
+
+/**
+ * Le déroulé d'une mise en avant : quand elle a démarré, quand elle se
+ * termine, combien de temps il reste.
+ *
+ * Tout est calculé ICI, côté serveur : `sponsor_debut` et `sponsor_jusqu_au`
+ * sont des heures de Paris sans fuseau, et un téléphone réglé ailleurs les lirait
+ * de travers. L'application reçoit `restant_s` et décompte à partir de là.
+ *
+ * `debut` est null pour une mise en avant lancée avant la migration v37 : on
+ * n'affiche alors que sa fin. `fin` est null pour une mise en avant sans borne.
+ *
+ * @param array<string, mixed> $evenement
+ * @param int|null             $maintenant l'heure Unix, pour les tests
+ * @return array{formule:?string, nom:?string, debut:?string, fin:?string, restant_s:?int, duree_s:?int, ecoule_pct:?int, actif:bool, terminee:bool}|null
+ *         null quand l'événement n'a jamais eu de mise en avant
+ */
+function sponsoringChrono(array $evenement, ?int $maintenant = null): ?array
+{
+    if (empty($evenement['is_sponsorise'])) {
+        return null;
+    }
+    $maintenant ??= time();
+    $debut = !empty($evenement['sponsor_debut']) ? (string) $evenement['sponsor_debut'] : null;
+    $fin   = !empty($evenement['sponsor_jusqu_au']) ? (string) $evenement['sponsor_jusqu_au'] : null;
+    $tDebut = $debut !== null ? strtotime($debut) : false;
+    $tFin   = $fin !== null ? strtotime($fin) : false;
+
+    $restant = $tFin !== false ? max(0, $tFin - $maintenant) : null;
+    $duree   = ($tDebut !== false && $tFin !== false && $tFin > $tDebut) ? $tFin - $tDebut : null;
+    $pct     = null;
+    if ($duree !== null) {
+        $pct = (int) max(0, min(100, round(($maintenant - $tDebut) / $duree * 100)));
+    }
+    $code = isset($evenement['sponsor_formule']) ? (string) $evenement['sponsor_formule'] : null;
+    $actif = $tFin === false || $tFin > $maintenant;
+
+    return [
+        'formule'    => $code,
+        'nom'        => $code !== null ? libelleSponsoring($code) : null,
+        'debut'      => $tDebut !== false ? $debut : null,
+        'fin'        => $tFin !== false ? $fin : null,
+        'restant_s'  => $restant,
+        'duree_s'    => $duree,
+        'ecoule_pct' => $pct,
+        'actif'      => $actif,
+        'terminee'   => !$actif,
+    ];
+}
+
+/**
+ * Une durée en secondes, lisible : « 1 j 23 h 05 min », « 4 h 12 min »,
+ * « 8 min », « moins d'une minute ».
+ */
+function dureeLisible(int $secondes): string
+{
+    $secondes = max(0, $secondes);
+    $jours    = intdiv($secondes, 86400);
+    $heures   = intdiv($secondes % 86400, 3600);
+    $minutes  = intdiv($secondes % 3600, 60);
+
+    // Les unités à zéro disparaissent : « 2 j » et non « 2 j 0 h 00 min ».
+    $parts = [];
+    if ($jours > 0) {
+        $parts[] = $jours . ' j';
+    }
+    if ($heures > 0) {
+        $parts[] = $heures . ' h';
+    }
+    if ($minutes > 0) {
+        $parts[] = ($jours > 0 || $heures > 0 ? sprintf('%02d', $minutes) : (string) $minutes) . ' min';
+    }
+
+    return $parts ? implode(' ', $parts) : "moins d'une minute";
+}

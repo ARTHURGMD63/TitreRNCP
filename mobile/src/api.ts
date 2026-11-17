@@ -543,6 +543,9 @@ export type EvenementPartenaire = {
   supplement_tarif: number;
   sponsor_tarif: number;
   statut: 'passe' | 'complet' | 'actif';
+  sponsor_debut: string | null;
+  sponsor_jusqu_au: string | null;
+  sponsor_restant_s: number | null;
 };
 
 export type FormulePartenaire = { code: string; nom: string; tarif: number; resume: string; heures: number; notifications: number; offrable?: boolean };
@@ -575,6 +578,8 @@ export type EvenementFormulairePartenaire = {
   supplement_tarif: number;
 };
 
+  sponsor_debut: string | null;
+  sponsor_restant_s: number | null;
 export type ReponseFormulaireEvenementPartenaire = {
   evenement: EvenementFormulairePartenaire | null;
   /** Un club ne publie que des événements sportifs (type 'sport'). */
@@ -655,6 +660,10 @@ export type SuiviEvenementPartenaire = {
     notifications: { envoyer_le: string; envoyee: boolean }[]; notifications_incluses: number;
   };
   cout: { supplement: number; sponsoring: number; total: number };
+    /** Quand elle a démarré (heure de Paris), null pour une mise en avant d'avant le suivi du début. */
+    debut: string | null;
+    /** Secondes restantes, calculées par le serveur : l'application décompte à partir de là. */
+    restant_s: number | null; duree_s: number | null; ecoule_pct: number | null;
 };
 
 export type PhotoEtablissement = { id: number; url: string | null; legende: string | null; position: number };

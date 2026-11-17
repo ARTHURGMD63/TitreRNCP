@@ -15,6 +15,7 @@ import { api, ErreurApi, type SuiviEvenementPartenaire } from '../../api';
 import { Apparition, Compteur } from '../../composants/Animations';
 import { Bouton } from '../../composants/Bouton';
 import { CarteRefonte, Pastille, useRubrique } from '../../composants/Design';
+import { ChronoMiseEnAvant } from '../../composants/ChronoMiseEnAvant';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { BoutonRetour, Jauge } from '../../composants/Elements';
 import { Mono, T, TitreEcran, TitreSection } from '../../composants/Texte';
@@ -178,11 +179,16 @@ export default function SuiviEvenement() {
                 <Pastille libelle={mea.en_cours ? 'En cours' : 'Terminée'} fond={mea.en_cours ? c.succesClair : c.surface2} encre={mea.en_cours ? c.succes : c.gris} />
               </View>
               <T taille={fs[4]} poids={700}>{mea.libelle}{mea.offerte ? ' · offerte' : ''}</T>
-              {mea.jusqu_au ? (
-                <T taille={fs[4]} couleur={c.gris}>
-                  {mea.en_cours ? 'Jusqu\'au ' : 'Terminée le '}{dateFr(mea.jusqu_au, 'l j F · H\\hi')}
-                </T>
-              ) : null}
+              <ChronoMiseEnAvant
+                debut={mea.debut}
+                jusquau={mea.jusqu_au}
+                restantS={mea.restant_s}
+                dureeS={mea.duree_s}
+                enCours={mea.en_cours}
+                couleur={c.gris}
+                piste={c.surface2}
+                remplissage={c.succes}
+              />
               {mea.notifications_incluses > 0 ? (
                 <View style={{ gap: 4, marginTop: 4 }}>
                   <T taille={fs[4]} poids={700}>Notifications ({mea.notifications.length} / {mea.notifications_incluses})</T>

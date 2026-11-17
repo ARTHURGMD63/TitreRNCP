@@ -389,3 +389,10 @@ h1, h2, h3, h4, p { margin: 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Déroulé d une mise en avant : début, fin et compte à rebours (espace pro). */
+.sponso-chrono { padding: 14px 16px; border-radius: 14px; background: var(--bleu-doux); color: var(--bleu-fonce); margin-bottom: 20px; font-size: 15px; }
+.sponso-chrono__titre { font-weight: 700; display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+.sponso-chrono__ligne { margin-top: 2px; }
+.sponso-chrono--fini { background: var(--craie); color: var(--gris-fonce); }
+.sponso-chrono--compact { padding: 0; margin: 6px 0 0; background: none; border-radius: 0; font-size: 13px; color: var(--gris); }

@@ -151,6 +151,9 @@ function traiterFormulaireEvenement(PDO $pdo, array $etab, array $capacites, ?ar
     if ($sponsoPaye > 0) {
         $message .= ' Mise en avant de ' . eurosSite($sponsoPaye) . ' HT ajoutée à votre mois.';
     }
+    if (!empty($sponso['nouvelle'])) {
+        $message .= messageLancementMiseEnAvant($pdo, $id);
+    }
     flashPro($message);
     header('Location: ' . baseUrl('/partenaire/evenements.php'));
     exit;
@@ -170,6 +173,9 @@ function ecrireEvenementPro(PDO $pdo, int $etabId, ?array $existant, array $v, f
         $v['titre'], $v['description'], $v['type'], $v['style_musique'] ?: null, $v['date_heure'], $v['date_fin'],
         $v['quota'], $v['reduction'], $v['prix_normal'], $v['is_flash'], $v['flash_expiry'], $v['is_gratuit'], $v['lieu'],
         $sponso['is_sponsorise'], $sponso['formule'], $sponso['tarif'], $sponso['fin'],
+        // Le moment où une NOUVELLE mise en avant part (heure de Paris, comme sa fin) ;
+        // null quand elle ne change pas : COALESCE garde alors le début déjà enregistré.
+        !empty($sponso['nouvelle']) ? date('Y-m-d H:i:s') : null,
     ];
 
     $pdo->beginTransaction();
@@ -181,16 +187,16 @@ function ecrireEvenementPro(PDO $pdo, int $etabId, ?array $existant, array $v, f
         if ($existant === null) {
             $pdo->prepare(
                 'INSERT INTO evenements (titre, description, type, style_musique, date_heure, date_fin, quota, reduction, prix_normal,
-                                         is_flash, flash_expiry, is_gratuit, lieu, is_sponsorise, sponsor_formule, sponsor_tarif, sponsor_jusqu_au,
+                                         is_flash, flash_expiry, is_gratuit, lieu, is_sponsorise, sponsor_formule, sponsor_tarif, sponsor_jusqu_au, sponsor_debut,
                                          supplement_tarif, etablissement_id)
-                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
             )->execute([...$commun, $supplement, $etabId]);
             $id = (int) $pdo->lastInsertId();
         } else {
             $id = (int) $existant['id'];
             $pdo->prepare(
                 'UPDATE evenements SET titre=?, description=?, type=?, style_musique=?, date_heure=?, date_fin=?, quota=?, reduction=?, prix_normal=?,
-                                       is_flash=?, flash_expiry=?, is_gratuit=?, lieu=?, is_sponsorise=?, sponsor_formule=?, sponsor_tarif=?, sponsor_jusqu_au=?
+                                       is_flash=?, flash_expiry=?, is_gratuit=?, lieu=?, is_sponsorise=?, sponsor_formule=?, sponsor_tarif=?, sponsor_jusqu_au=?, sponsor_debut=COALESCE(?, sponsor_debut)
                   WHERE id = ? AND etablissement_id = ?'
             )->execute([...$commun, $id, $etabId]);
         }
@@ -214,6 +220,89 @@ function ecrireEvenementPro(PDO $pdo, int $etabId, ?array $existant, array $v, f
     fluxToucher($pdo, canalEvenement($id));
 
     return $id;
+}
+
+// ─── Déroulé d'une mise en avant ───────────────────────────────────────────
+
+/** « Mar 17 Nov à 15h59 », pour une heure de base (heure de Paris). */
+function quandSponsoring(string $horodatage): string
+{
+    return dateFr($horodatage, 'D j M') . ' à ' . date("H\\hi", (int) strtotime($horodatage));
+}
+
+/**
+ * Le déroulé d'une mise en avant, à afficher : quand elle a démarré, quand
+ * elle se termine, et un compte à rebours qui tourne (assets/js/site.js,
+ * attribut `data-compte-a-rebours`). Une chaîne vide si l'événement n'a
+ * jamais eu de mise en avant.
+ *
+ * @param array<string, mixed> $e       une ligne `evenements`
+ * @param bool                 $compact une seule ligne, pour la liste des événements
+ */
+function sponsoringChronoHtml(array $e, bool $compact = false): string
+{
+    $c = sponsoringChrono($e);
+    if ($c === null) {
+        return '';
+    }
+
+    $code   = (string) $c['formule'];
+    $nom    = (string) (formulesSponsoring()[$code]['nom'] ?? formulesSponsoringAnciennes()[$code]['nom'] ?? 'Mise en avant');
+    $debut  = $c['debut'] !== null ? quandSponsoring($c['debut']) : null;
+    $fin    = $c['fin'] !== null ? quandSponsoring($c['fin']) : null;
+    $tourne = $c['actif'] && $c['restant_s'] !== null;
+    $compte = $tourne ? '<strong data-compte-a-rebours>' . htmlspecialchars(dureeLisible((int) $c['restant_s'])) . '</strong>' : '';
+    $attrs  = $tourne
+        ? ' data-restant-s="' . (int) $c['restant_s'] . '"' . ($c['duree_s'] !== null ? ' data-duree-s="' . (int) $c['duree_s'] . '"' : '')
+        : '';
+
+    if ($compact) {
+        if (!$c['actif']) {
+            return '<div class="sponso-chrono sponso-chrono--compact sponso-chrono--fini">Terminée' . ($fin !== null ? ' le ' . htmlspecialchars($fin) : '') . '</div>';
+        }
+
+        return '<div class="sponso-chrono sponso-chrono--compact"' . $attrs . '>'
+            . ($debut !== null ? 'Lancée le ' . htmlspecialchars($debut) . ' · ' : '')
+            . ($compte !== '' ? 'reste ' . $compte : ($fin !== null ? "jusqu'au " . htmlspecialchars($fin) : 'en cours'))
+            . '</div>';
+    }
+
+    $html  = '<div class="sponso-chrono' . ($c['actif'] ? '' : ' sponso-chrono--fini') . '"' . $attrs . '>';
+    $html .= '<div class="sponso-chrono__titre">' . iconeSite('etoile', 'icon-sm') . ' ' . htmlspecialchars($nom) . ' · '
+           . ($c['actif'] ? 'en cours' : 'terminée') . '</div>';
+    if ($debut !== null) {
+        $html .= '<div class="sponso-chrono__ligne">Lancée le <strong>' . htmlspecialchars($debut) . '</strong></div>';
+    }
+    if ($fin !== null) {
+        $html .= '<div class="sponso-chrono__ligne">' . ($c['actif'] ? 'Se termine le ' : 'Terminée le ') . '<strong>' . htmlspecialchars($fin) . '</strong></div>';
+    }
+    if ($compte !== '') {
+        $html .= '<div class="sponso-chrono__ligne">Temps restant : ' . $compte . '</div>';
+    }
+    if ($tourne && $c['ecoule_pct'] !== null) {
+        $html .= '<div class="jauge" style="margin-top:8px;"><span data-compte-jauge style="width:' . (int) $c['ecoule_pct'] . '%"></span></div>';
+    }
+
+    return $html . '</div>';
+}
+
+/**
+ * La phrase qui dit, au moment du lancement, quand la mise en avant démarre et
+ * jusqu'à quand elle court. Vide si l'événement n'en a pas.
+ */
+function messageLancementMiseEnAvant(PDO $pdo, int $evenementId): string
+{
+    $stmt = $pdo->prepare('SELECT is_sponsorise, sponsor_formule, sponsor_debut, sponsor_jusqu_au FROM evenements WHERE id = ?');
+    $stmt->execute([$evenementId]);
+    $c = sponsoringChrono($stmt->fetch() ?: []);
+    if ($c === null || $c['fin'] === null) {
+        return '';
+    }
+
+    $depart = $c['debut'] !== null ? quandSponsoring($c['debut']) : null;
+
+    return ' Mise en avant lancée' . ($depart !== null ? ' le ' . $depart : '') . ", jusqu'au " . quandSponsoring($c['fin'])
+        . ($c['duree_s'] !== null ? ' (' . dureeLisible($c['duree_s']) . ').' : '.');
 }
 
 // ─── Paiement à la publication ─────────────────────────────────────────────
@@ -346,7 +435,8 @@ function publierEvenementPaye(PDO $pdo, array $session): array
 
     return [
         'ok'           => true,
-        'message'      => $existant === null ? 'Paiement reçu : événement publié.' : 'Paiement reçu : mise en avant lancée.',
+        'message'      => ($existant === null ? 'Paiement reçu : événement publié.' : 'Paiement reçu : mise en avant lancée.')
+                          . messageLancementMiseEnAvant($pdo, $id),
         'evenement_id' => $id,
     ];
 }

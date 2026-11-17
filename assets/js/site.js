@@ -35,6 +35,33 @@
       }
     });
 
+    // Compte à rebours d'une mise en avant : <div data-restant-s="…" data-duree-s="…"> contenant
+    // <strong data-compte-a-rebours> (et, en option, <span data-compte-jauge>). Le temps restant
+    // vient du serveur, donc l'horloge du navigateur n'a pas d'importance.
+    document.querySelectorAll('[data-restant-s]').forEach(function (bloc) {
+      var restant = parseInt(bloc.getAttribute('data-restant-s'), 10);
+      var duree = parseInt(bloc.getAttribute('data-duree-s'), 10);
+      var fin = Date.now() + restant * 1000;
+      var compte = bloc.querySelector('[data-compte-a-rebours]');
+      var jauge = bloc.querySelector('[data-compte-jauge]');
+      if (!compte || isNaN(restant)) return;
+      function deux(n) { return (n < 10 ? '0' : '') + n; }
+      var timer;
+      function tick() {
+        var s = Math.max(0, Math.round((fin - Date.now()) / 1000));
+        var j = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+        compte.textContent = (j > 0 ? j + ' j ' : '') + (j > 0 || h > 0 ? h + ' h ' : '') + deux(m) + ' min ' + deux(s % 60) + ' s';
+        if (jauge && duree > 0) jauge.style.width = Math.min(100, Math.max(0, (duree - s) / duree * 100)) + '%';
+        if (s <= 0) {
+          clearInterval(timer);
+          compte.textContent = 'terminée';
+          bloc.classList.add('sponso-chrono--fini');
+        }
+      }
+      timer = setInterval(tick, 1000);
+      tick();
+    });
+
     // Confirmation avant une action destructrice : <form data-confirmer="…">.
     document.querySelectorAll('form[data-confirmer]').forEach(function (form) {
       form.addEventListener('submit', function (e) {
