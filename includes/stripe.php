@@ -149,6 +149,13 @@ function stripeRequete(string $methode, string $chemin, array $params = [], ?str
     if ($methode !== 'GET') {
         curl_setopt($ch, CURLOPT_POSTFIELDS, $corps);
     }
+    // Le PHP de WAMP n'a aucune liste d'autorités de certification : sans
+    // elle, chaque appel échoue en « unable to get local issuer certificate ».
+    // Sous Windows, on prend le magasin de certificats du système. Le
+    // certificat reste vérifié ; le serveur Linux, lui, a sa propre liste.
+    if (PHP_OS_FAMILY === 'Windows' && (string) ini_get('curl.cainfo') === '' && defined('CURLSSLOPT_NATIVE_CA')) {
+        curl_setopt($ch, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
+    }
     $reponse = curl_exec($ch);
     $code    = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
     $reseau  = curl_error($ch);
