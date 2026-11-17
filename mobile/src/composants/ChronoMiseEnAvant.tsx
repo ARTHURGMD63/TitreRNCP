@@ -32,24 +32,21 @@ export function formaterDuree(secondes: number): string {
  * `restantS` null : pas de décompte (mise en avant sans borne).
  */
 export function useSecondesRestantes(restantS: number | null): number | null {
-  const [fin, setFin] = useState<number | null>(restantS === null ? null : Date.now() + restantS * 1000);
-  const [reste, setReste] = useState<number | null>(restantS);
+  // `base` rappelle de quelle valeur du serveur part le décompte : quand l'écran
+  // se recharge et reçoit un nouveau `restantS`, le temps écoulé repart de zéro
+  // sans qu'aucun état ne soit écrit directement depuis l'effet.
+  const [suivi, setSuivi] = useState<{ base: number | null; ecoule: number }>({ base: restantS, ecoule: 0 });
 
-  // Une nouvelle valeur du serveur (rechargement de l'écran) recale le décompte.
   useEffect(() => {
-    setFin(restantS === null ? null : Date.now() + restantS * 1000);
-    setReste(restantS);
+    if (restantS === null) return undefined;
+    const debut = Date.now();
+    const t = setInterval(() => setSuivi({ base: restantS, ecoule: Math.round((Date.now() - debut) / 1000) }), 1000);
+    return () => clearInterval(t);
   }, [restantS]);
 
-  useEffect(() => {
-    if (fin === null) return undefined;
-    const tick = () => setReste(Math.max(0, Math.round((fin - Date.now()) / 1000)));
-    tick();
-    const t = setInterval(tick, 1000);
-    return () => clearInterval(t);
-  }, [fin]);
-
-  return reste;
+  if (restantS === null) return null;
+  const ecoule = suivi.base === restantS ? suivi.ecoule : 0;
+  return Math.max(0, restantS - ecoule);
 }
 
 /** Une ligne : « reste 1 j 23 h 05 min 12 s », à mettre dans une liste. */
