@@ -262,6 +262,8 @@ export type Pass = {
   statut: string;
   reduction: number | null;
   prix_normal: number | null;
+  /** Absent des pass Culture et des parties. */
+  is_gratuit?: boolean;
   economie: number | null;
   evenement_supprime: boolean;
   etab_type: string | null;

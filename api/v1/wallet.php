@@ -53,7 +53,7 @@ $finEff = sqlFinEffectiveEvenement();
 
 $stmt = $pdo->prepare("
     SELECT i.id, i.qr_code, i.statut, i.created_at,
-           e.id AS evenement_id, e.titre, e.date_heure, e.reduction, e.prix_normal, e.lieu, e.type AS evenement_type,
+           e.id AS evenement_id, e.titre, e.date_heure, e.reduction, e.prix_normal, e.is_gratuit, e.lieu, e.type AS evenement_type,
            et.nom AS etablissement_nom, et.type AS etab_type,
            CASE WHEN e.id IS NULL THEN 1 ELSE 0 END AS evenement_supprime
       FROM inscriptions i
@@ -101,7 +101,7 @@ $limite  = $parPage * $page;
 
 $stmt = $pdo->prepare("
     SELECT i.id, i.statut, i.created_at,
-           e.id AS evenement_id, e.titre, e.date_heure, e.reduction, e.prix_normal, e.type AS evenement_type,
+           e.id AS evenement_id, e.titre, e.date_heure, e.reduction, e.prix_normal, e.is_gratuit, e.type AS evenement_type,
            et.nom AS etablissement_nom
       FROM inscriptions i
       JOIN evenements e      ON e.id = i.evenement_id
@@ -146,6 +146,7 @@ function apiPass(array $p, bool $avecCode): array
         'statut'        => (string) $p['statut'],
         'reduction'     => $reduction,
         'prix_normal'   => $prix,
+        'is_gratuit'    => (bool) ($p['is_gratuit'] ?? false),
         // L'economie que ce pass represente, calculee ici : l'application ne
         // doit pas avoir a connaitre la regle commerciale pour afficher un
         // montant, sinon elle finira par en afficher une autre que le web.
