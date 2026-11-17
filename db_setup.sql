@@ -1124,6 +1124,81 @@ CREATE TABLE IF NOT EXISTS stripe_evenements (
     KEY k_stripe_evenements_date (recu_le)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Notifications push (migration v35).
+-- Appareils qui reçoivent les notifications push (jeton Expo, un par
+-- installation de l'application). Un jeton appartient à UN compte à la fois :
+-- quand quelqu'un d'autre se connecte sur le même téléphone, il change de
+-- propriétaire (voir pushEnregistrerAppareil()).
+CREATE TABLE IF NOT EXISTS appareils_push (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    jeton VARCHAR(255) NOT NULL,
+    plateforme ENUM('ios','android') NOT NULL,
+    appareil VARCHAR(120) NULL DEFAULT NULL,
+    actif TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    derniere_vue DATETIME NULL DEFAULT NULL,
+    UNIQUE KEY uniq_appareil_jeton (jeton),
+    KEY k_appareil_user (user_id, actif),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Ce que la personne a choisi de ne pas recevoir. Absence de ligne = reçoit :
+-- une nouvelle catégorie est active pour tout le monde sans rien écrire.
+CREATE TABLE IF NOT EXISTS preferences_push (
+    user_id INT NOT NULL,
+    categorie VARCHAR(30) NOT NULL,
+    actif TINYINT(1) NOT NULL DEFAULT 1,
+    PRIMARY KEY (user_id, categorie),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- File d'envoi : tout message part d'ici, qu'il soit immédiat ou programmé.
+--   cle           identifie l'événement à l'origine (« invitation:12 ») : la
+--                 même clé pour la même personne ne s'écrit qu'une fois, donc
+--                 un rappel ou une invitation ne part jamais deux fois ;
+--   envoyer_apres UTC ; reporté au matin quand le message tombe la nuit ;
+--   statut        en_attente, envoye, ignore (préférence, plafond, aucun
+--                 appareil) ou echec (Expo injoignable, après plusieurs essais).
+CREATE TABLE IF NOT EXISTS push_envois (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    categorie VARCHAR(30) NOT NULL,
+    cle VARCHAR(120) NOT NULL,
+    titre VARCHAR(120) NOT NULL,
+    corps VARCHAR(255) NOT NULL,
+    donnees TEXT NULL,
+    envoyer_apres DATETIME NOT NULL,
+    statut ENUM('en_attente','envoye','ignore','echec') NOT NULL DEFAULT 'en_attente',
+    tentatives TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    envoye_le DATETIME NULL DEFAULT NULL,
+    UNIQUE KEY uniq_push_cle (user_id, cle),
+    KEY k_push_file (statut, envoyer_apres),
+    KEY k_push_user_date (user_id, statut, envoye_le),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- v36 : confirmation du changement d'e-mail, double authentification des administrateurs.
+CREATE TABLE IF NOT EXISTS changements_email (
+    user_id INT PRIMARY KEY,
+    nouvel_email VARCHAR(190) NOT NULL,
+    code_hash CHAR(64) NOT NULL,
+    essais TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    expire_le DATETIME NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS totp_comptes (
+    user_id INT PRIMARY KEY,
+    secret VARCHAR(64) NOT NULL,
+    dernier_pas BIGINT NOT NULL DEFAULT 0,
+    codes_secours TEXT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 INSERT IGNORE INTO schema_migrations (version) VALUES
 ('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
-('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27'), ('v28'), ('v29'), ('v30'), ('v31'), ('v32'), ('v33'), ('v34');
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27'), ('v28'), ('v29'), ('v30'), ('v31'), ('v32'), ('v33'), ('v34'), ('v35'), ('v36'), ('v37');
