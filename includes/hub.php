@@ -84,8 +84,11 @@ function hubCriteres(array $get): array
         'comme_moi'       => $interet === FILTRE_MES_INTERETS,
         // max(1, …) : « ?p=-3 » ou « ?p=abc » ne doit pas produire un LIMIT
         // négatif, qui est une erreur SQL et non une page vide.
-        'page_profils'    => max(1, (int) ($get['p'] ?? 1)),
-        'page_evenements' => max(1, (int) ($get['pe'] ?? 1)),
+        // min(20, …) : « Voir plus » rallonge la liste depuis le début, et
+        // « ?pe=1000 » demandait 24 000 lignes d'un coup — de quoi occuper un
+        // processus PHP et la base pour une seule requête.
+        'page_profils'    => min(20, max(1, (int) ($get['p'] ?? 1))),
+        'page_evenements' => min(20, max(1, (int) ($get['pe'] ?? 1))),
     ];
 }
 
