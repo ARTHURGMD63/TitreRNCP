@@ -366,6 +366,9 @@ export type TerrainClub = {
 
 export type ReponseTerrainsClub = { terrains: TerrainClub[]; sports_club: string[]; sports: { code: string; libelle: string }[] };
 
+/** Une catégorie de notification push (voir includes/push.php). */
+export type CategoriePush = { code: string; libelle: string; detail: string; modifiable: boolean; actif: boolean };
+
 export type Notification = {
   type: 'demande' | 'invitation' | 'ami' | 'lieu';
   ts: string;
@@ -540,12 +543,12 @@ export type EvenementPartenaire = {
   is_flash: boolean;
   is_sponsorise: boolean;
   sponsorise_actif: boolean;
-  supplement_tarif: number;
-  sponsor_tarif: number;
-  statut: 'passe' | 'complet' | 'actif';
   sponsor_debut: string | null;
   sponsor_jusqu_au: string | null;
   sponsor_restant_s: number | null;
+  supplement_tarif: number;
+  sponsor_tarif: number;
+  statut: 'passe' | 'complet' | 'actif';
 };
 
 export type FormulePartenaire = { code: string; nom: string; tarif: number; resume: string; heures: number; notifications: number; offrable?: boolean };
@@ -575,11 +578,11 @@ export type EvenementFormulairePartenaire = {
   sponsor_actif: boolean;
   sponsor_termine: boolean;
   sponsor_jusqu_au: string | null;
+  sponsor_debut: string | null;
+  sponsor_restant_s: number | null;
   supplement_tarif: number;
 };
 
-  sponsor_debut: string | null;
-  sponsor_restant_s: number | null;
 export type ReponseFormulaireEvenementPartenaire = {
   evenement: EvenementFormulairePartenaire | null;
   /** Un club ne publie que des événements sportifs (type 'sport'). */
@@ -657,13 +660,13 @@ export type SuiviEvenementPartenaire = {
   ecoles: { nom: string; nombre: number; pourcentage: number }[];
   mise_en_avant: {
     active: boolean; en_cours: boolean; formule: string | null; libelle: string | null; offerte: boolean; jusqu_au: string | null;
-    notifications: { envoyer_le: string; envoyee: boolean }[]; notifications_incluses: number;
-  };
-  cout: { supplement: number; sponsoring: number; total: number };
     /** Quand elle a démarré (heure de Paris), null pour une mise en avant d'avant le suivi du début. */
     debut: string | null;
     /** Secondes restantes, calculées par le serveur : l'application décompte à partir de là. */
     restant_s: number | null; duree_s: number | null; ecoule_pct: number | null;
+    notifications: { envoyer_le: string; envoyee: boolean }[]; notifications_incluses: number;
+  };
+  cout: { supplement: number; sponsoring: number; total: number };
 };
 
 export type PhotoEtablissement = { id: number; url: string | null; legende: string | null; position: number };
@@ -770,13 +773,10 @@ export const api = {
    */
   supprimerCompte: (jeton: string, motDePasse: string) =>
     appelApi<{ success: true; supprime: boolean; demande?: boolean }>('supprimer_compte.php', { methode: 'POST', jeton, corps: { mot_de_passe: motDePasse } }),
-  /** Un texte légal, sans jeton : on le lit avant de créer un compte. */
-  legal: (slug: string) => appelApi<{ success: true; page: PageLegale }>('legal.php', { params: { page: slug } }),
-  deconnexion: (jeton: string) => appelApi<{ success: true }>('logout.php', { methode: 'POST', jeton }),
   /** Change le mot de passe ; les autres appareils sont déconnectés. */
   changerMotDePasse: (jeton: string, motDePasse: string, nouveau: string) =>
     appelApi<{ success: true }>('compte.php', { methode: 'POST', jeton, corps: { action: 'mot_de_passe', mot_de_passe: motDePasse, nouveau } }),
-  /** Change l'adresse de connexion ; l'ancienne adresse reçoit un avis. */
+  /** Premier temps : un code part vers la nouvelle adresse. `code_dev` n'est rempli qu'en local. */
   changerEmail: (jeton: string, motDePasse: string, email: string) =>
     appelApi<{ success: true; envoye: true; email: string; code_dev?: string }>('compte.php', { methode: 'POST', jeton, corps: { action: 'email', mot_de_passe: motDePasse, email } }),
   /** Second temps : le code est juste, l'adresse change et l'ancienne en est avertie. */
