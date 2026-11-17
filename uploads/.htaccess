@@ -2,7 +2,15 @@
 # Aucun script ne doit y être exécuté, même si un fichier malveillant
 # parvenait à être déposé.
 
-php_flag engine off
+# Sous PHP-FPM (sans mod_php), php_flag provoque une erreur 500 sur toutes
+# les images : la directive ne s'applique que là où mod_php existe. Les
+# règles ci-dessous (RemoveHandler, refus des .php) couvrent les deux cas.
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
 
 <IfModule mod_authz_core.c>
     Require all granted
