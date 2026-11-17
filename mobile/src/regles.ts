@@ -122,6 +122,19 @@ export function formatEuros(montant: number): string {
 }
 
 /**
+ * Le prix d'un événement tel que l'étudiant le paie : le prix habituel fixé
+ * par l'établissement, moins la réduction. `null` quand aucun prix n'est
+ * renseigné ou que l'entrée est gratuite (la mention « Gratuit » existe déjà).
+ */
+export function prixEvenement(ev: { prix_normal: number | null; reduction: number | null; is_gratuit: boolean }): { final: string; barre: string | null } | null {
+  const normal = ev.prix_normal ?? 0;
+  if (ev.is_gratuit || normal <= 0) return null;
+  const reduction = Math.max(0, Math.min(100, ev.reduction ?? 0));
+  if (reduction <= 0) return { final: formatEuros(normal), barre: null };
+  return { final: formatEuros(normal * (1 - reduction / 100)), barre: formatEuros(normal) };
+}
+
+/**
  * La part de chacun : le club fixe le prix du terrain, l'application le
  * divise par le nombre de joueurs d'une partie complète. Le paiement se fait
  * au club, d'où « sur place ».

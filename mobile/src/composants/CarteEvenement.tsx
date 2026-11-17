@@ -17,6 +17,7 @@ import { router } from 'expo-router';
 import { actions, ErreurApi, type Evenement } from '../api';
 import { LIBELLES_TYPE } from '../catalogue';
 import { dateFr, ts } from '../format';
+import { prixEvenement } from '../regles';
 import { useJeton } from '../session';
 import { fixe, fs, rayon, sans } from '../theme';
 import { useTheme } from '../useTheme';
@@ -230,6 +231,7 @@ function Carte({ ev, accent, premiere, flash, onInviter }: { ev: Evenement; acce
   const inscrit = etat === 'inscrit' || etat === 'vient';
   const ouvrir = () => router.push({ pathname: '/evenement/[id]', params: { id: String(ev.id) } });
   const reduction = ev.reduction ?? 0;
+  const prix = prixEvenement(ev);
 
   const encre = accent ? '#FFFFFF' : c.noir;
   const secondaire = accent ? bleu.surAccent2 : c.gris;
@@ -248,6 +250,7 @@ function Carte({ ev, accent, premiere, flash, onInviter }: { ev: Evenement; acce
         {reduction > 0 ? (
           <Pastille petite libelle={`-${reduction}% ${ev.is_gratuit ? '· entrée gratuite' : 'sur conso'}`} fond={accent ? voile : c.succesClair} encre={accent ? '#FFFFFF' : c.succes} />
         ) : null}
+        {prix ? <Pastille petite libelle={`Prix ${prix.final}`} fond={accent ? voile : c.surface2} encre={encre} /> : null}
         {ev.is_gratuit && reduction <= 0 ? <Pastille petite libelle="Gratuit" fond={accent ? voile : c.surface2} encre={encre} /> : null}
         {ev.sponsorise ? <Pastille petite libelle="Sponsorisé" fond={accent ? voile : c.surface2} encre={accent ? '#FFFFFF' : c.grisFonce} /> : null}
       </View>
