@@ -1,0 +1,39 @@
+# ============================================================
+#  Outsee — MariaDB sur le VPS-4 OVH (48 Go de RAM)
+#  Installé dans /etc/mysql/mariadb.conf.d/99-outsee.cnf.
+#
+#  La base n'écoute que la machine : l'application s'y connecte en local,
+#  rien ne l'expose sur Internet. Les sauvegardes partent hors du VPS
+#  (voir docs/DEPLOIEMENT_VPS_OVH.md).
+# ============================================================
+
+[mysqld]
+bind-address              = 127.0.0.1
+skip_name_resolve         = ON
+character-set-server      = utf8mb4
+collation-server          = utf8mb4_unicode_ci
+default_storage_engine    = InnoDB
+# Fuseau : celui du système (Europe/Paris, posé par installer_serveur.sh),
+# comme PHP. Un décalage fixe se tromperait d'une heure l'été.
+
+# Mémoire : la base garde tout son jeu de travail en RAM.
+innodb_buffer_pool_size   = 12G
+innodb_log_file_size      = 1G
+innodb_flush_method       = O_DIRECT
+# 1 : chaque paiement enregistré survit à une coupure.
+innodb_flush_log_at_trx_commit = 1
+innodb_io_capacity        = 2000
+innodb_io_capacity_max    = 4000
+
+# 80 processus PHP-FPM + cron + administration.
+max_connections           = 300
+thread_handling           = pool-of-threads
+thread_pool_size          = 12
+table_open_cache          = 4000
+tmp_table_size            = 64M
+max_heap_table_size       = 64M
+
+# Les requêtes lentes se lisent ici avant de devenir des pannes.
+slow_query_log            = 1
+slow_query_log_file       = /var/log/mysql/lentes.log
+long_query_time           = 0.2
