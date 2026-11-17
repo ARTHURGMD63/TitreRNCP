@@ -7,8 +7,9 @@
  * prendre le compte de quelqu'un.
  *
  * Changer de mot de passe déconnecte les autres appareils. Changer d'adresse
- * prévient l'ancienne ; la confirmation par un lien envoyé à la nouvelle
- * viendra s'y ajouter.
+ * se fait en deux temps : un code part vers la NOUVELLE adresse, et celle du
+ * compte ne change qu'une fois ce code saisi ; l'ancienne adresse est alors
+ * prévenue.
  */
 
 import React, { useState } from 'react';
@@ -37,6 +38,9 @@ export default function MonCompte() {
   const [erreurEmail, setErreurEmail] = useState<string | null>(null);
   const [succesEmail, setSuccesEmail] = useState<string | null>(null);
   const [enCoursEmail, setEnCoursEmail] = useState(false);
+  // Non nul entre la demande et la confirmation : un code est parti vers cette adresse.
+  const [adresseEnAttente, setAdresseEnAttente] = useState<string | null>(null);
+  const [codeEmail, setCodeEmail] = useState('');
 
   const [actuel, setActuel] = useState('');
   const [nouveau, setNouveau] = useState('');
@@ -45,7 +49,8 @@ export default function MonCompte() {
   const [succesMdp, setSuccesMdp] = useState<string | null>(null);
   const [enCoursMdp, setEnCoursMdp] = useState(false);
 
-  async function changerEmail() {
+  // Premier temps : un code part vers la nouvelle adresse.
+  async function demanderCodeEmail() {
     setSuccesEmail(null);
     const adresse = email.trim();
     if (!adresse || !adresse.includes('@')) {
@@ -60,15 +65,42 @@ export default function MonCompte() {
     setErreurEmail(null);
     try {
       const rep = await api.changerEmail(jeton, mdpEmail, adresse);
-      if (profil) mettreAJour({ ...profil, email: rep.email });
-      setSuccesEmail(`Adresse changée. Connecte-toi désormais avec ${rep.email}. L'ancienne adresse a reçu un avis.`);
-      setEmail('');
-      setMdpEmail('');
+      setAdresseEnAttente(rep.email);
+      // En local rien ne part : le serveur rend le code pour pouvoir tester.
+      if (rep.code_dev) setCodeEmail(rep.code_dev);
     } catch (e) {
       setErreurEmail(e instanceof ErreurApi ? e.message : 'Changement impossible, réessaie dans un instant.');
     } finally {
       setEnCoursEmail(false);
     }
+  }
+
+  // Second temps : le code reçu à la nouvelle adresse change celle du compte.
+  async function confirmerEmail() {
+    if (!codeEmail.trim()) {
+      setErreurEmail('Saisis le code reçu par e-mail.');
+      return;
+    }
+    setEnCoursEmail(true);
+    setErreurEmail(null);
+    try {
+      const rep = await api.confirmerEmail(jeton, mdpEmail, codeEmail.trim());
+      if (profil) mettreAJour({ ...profil, email: rep.email });
+      setSuccesEmail(`Adresse changée. Connecte-toi désormais avec ${rep.email}. L'ancienne adresse a reçu un avis.`);
+      annulerChangementEmail();
+    } catch (e) {
+      setErreurEmail(e instanceof ErreurApi ? e.message : 'Confirmation impossible, réessaie dans un instant.');
+    } finally {
+      setEnCoursEmail(false);
+    }
+  }
+
+  function annulerChangementEmail() {
+    setAdresseEnAttente(null);
+    setCodeEmail('');
+    setEmail('');
+    setMdpEmail('');
+    setErreurEmail(null);
   }
 
   async function changerMotDePasse() {
@@ -115,27 +147,50 @@ export default function MonCompte() {
           </T>
           {succesEmail ? <Encart genre="ok">{succesEmail}</Encart> : null}
           {erreurEmail ? <Encart genre="erreur">{erreurEmail}</Encart> : null}
-          <Champ
-            etiquette="Nouvelle adresse"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="nouvelle@adresse.fr"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoComplete="email"
-            textContentType="emailAddress"
-          />
-          <Champ
-            etiquette="Ton mot de passe actuel"
-            value={mdpEmail}
-            onChangeText={setMdpEmail}
-            placeholder="••••••••"
-            secureTextEntry
-            autoComplete="current-password"
-            textContentType="password"
-          />
-          <Bouton libelle="Changer d'adresse" plein chargement={enCoursEmail} onPress={changerEmail} />
+          {adresseEnAttente ? (
+            <>
+              <Encart genre="info">
+                Un code à six chiffres vient d&apos;être envoyé à {adresseEnAttente}. Saisis-le pour confirmer : l&apos;adresse de ton compte ne change qu&apos;à ce moment-là.
+              </Encart>
+              <Champ
+                etiquette="Code reçu par e-mail"
+                value={codeEmail}
+                onChangeText={setCodeEmail}
+                placeholder="123456"
+                keyboardType="number-pad"
+                autoComplete="one-time-code"
+                textContentType="oneTimeCode"
+                returnKeyType="go"
+                onSubmitEditing={confirmerEmail}
+              />
+              <Bouton libelle="Confirmer la nouvelle adresse" plein chargement={enCoursEmail} onPress={confirmerEmail} />
+              <Bouton libelle="Annuler" variante="contour" plein onPress={annulerChangementEmail} style={{ marginTop: 10 }} />
+            </>
+          ) : (
+            <>
+              <Champ
+                etiquette="Nouvelle adresse"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="nouvelle@adresse.fr"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="email"
+                textContentType="emailAddress"
+              />
+              <Champ
+                etiquette="Ton mot de passe actuel"
+                value={mdpEmail}
+                onChangeText={setMdpEmail}
+                placeholder="••••••••"
+                secureTextEntry
+                autoComplete="current-password"
+                textContentType="password"
+              />
+              <Bouton libelle="Recevoir un code de confirmation" plein chargement={enCoursEmail} onPress={demanderCodeEmail} />
+            </>
+          )}
         </View>
 
         <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 14, marginBottom: 16 }}>
