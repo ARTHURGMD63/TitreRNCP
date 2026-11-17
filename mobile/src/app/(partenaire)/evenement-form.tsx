@@ -197,6 +197,9 @@ export default function FormulaireEvenementPartenaire() {
               <T taille={fs[4]} couleur={c.alerte}>
                 Tu as publié {donnees.usage.evenements.publies} événements sur les {donnees.usage.evenements.quota} compris dans ta formule ce mois-ci.
               </T>
+              <T taille={fs[4]} couleur={c.alerte}>
+                Pour publier un événement de plus, connecte-toi sur le site outsee.fr avec les mêmes identifiants : l&apos;événement supplémentaire se règle là-bas, au moment de le publier. Une mise en avant payante se règle de la même façon.
+              </T>
             </View>
           ) : (
             <T taille={fs[4]} couleur={c.gris} style={{ marginBottom: 12 }}>

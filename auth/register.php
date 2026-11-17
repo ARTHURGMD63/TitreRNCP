@@ -77,6 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->prepare('INSERT INTO etablissements (user_id, nom, type, ville, verification) VALUES (?,?,?,?,?)')
                 ->execute([$userId, $etabNom, $etabType, $ville, verificationInitiale($etabType)]);
             $pdo->commit();
+            emailBienvenueEtablissement($email, $prenom, $etabNom, $etabType);
 
             session_regenerate_id(true);
             $_SESSION['user_id']     = $userId;

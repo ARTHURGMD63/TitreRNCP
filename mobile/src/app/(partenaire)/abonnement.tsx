@@ -71,8 +71,8 @@ export default function AbonnementPartenaire() {
         {!donnees.validation.valide ? (
           <Encart genre={donnees.validation.statut === 'refusee' ? 'erreur' : 'info'}>
             {donnees.validation.statut === 'refusee'
-              ? `Ton compte BDE n'a pas été validé${donnees.validation.note ? ` : ${donnees.validation.note}` : '.'} Écris-nous si c'est une erreur.`
-              : "Ton compte BDE est en attente de validation par l'équipe Outsee. Tu pourras publier dès qu'il sera validé."}
+              ? `Ton compte BDE n'a pas été validé${donnees.validation.note ? ` : ${donnees.validation.note}` : '.'} Si c'est une erreur, écris-nous à contact@outsee.fr depuis l'adresse de ton compte.`
+              : "Ton compte BDE est en attente de validation par l'équipe Outsee. Tu pourras publier dès qu'il sera validé. Une question ? contact@outsee.fr."}
           </Encart>
         ) : null}
 
@@ -88,7 +88,7 @@ export default function AbonnementPartenaire() {
           </View>
         ) : donnees.validation.valide ? (
           <Encart genre="info">
-            Aucune formule active sur ce compte pour le moment. Dès qu&apos;elle le sera, ton espace s&apos;ouvrira ici.
+            Ton espace s&apos;active depuis le site outsee.fr : connecte-toi avec le même e-mail et le même mot de passe, choisis ta formule dans « Ma formule », puis reviens ici. Dès qu&apos;elle est active, cet écran s&apos;ouvre tout seul.
           </Encart>
         ) : null}
 
@@ -109,7 +109,7 @@ export default function AbonnementPartenaire() {
         </View>
 
         <T taille={fs[4]} couleur={c.gris} style={{ marginBottom: 18 }}>
-          La formule et la facturation ne se gèrent pas dans l&apos;application.
+          La formule et la facturation se gèrent sur le site outsee.fr, depuis ton espace établissement (connexion avec les mêmes identifiants), pas dans l&apos;application.
         </T>
       </Contenu>
     </Ecran>

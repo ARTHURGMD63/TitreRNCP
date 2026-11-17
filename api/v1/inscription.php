@@ -89,6 +89,7 @@ try {
     if ($type === 'partenaire' && $etablNom) {
         $pdo->prepare('INSERT INTO etablissements (user_id, nom, type, ville, verification) VALUES (?,?,?,?,?)')
             ->execute([$userId, $etablNom, $etablType, $etablVille, verificationInitiale($etablType)]);
+        emailBienvenueEtablissement($email, $prenom, $etablNom, $etablType);
     }
 } catch (PDOException $e) {
     // Code MySQL 1062 (clé dupliquée), et non le texte du message : sur un
