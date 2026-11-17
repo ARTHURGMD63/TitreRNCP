@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Outsee — Plaquette établissements</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600;700;800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Plaquette établissements Outsee — v2 (novembre 2026)
+
+   Uniquement l'espace établissement : bars, restaurants, boîtes,
+   afterworks, BDE, clubs sportifs. Rien pour les étudiants ici,
+   voir Plaquette_Etudiants_Outsee.html.
+
+   Charte : kit de marque 2026-11 (accent bleu #1D55F0, craie,
+   Unbounded + Instrument Sans). Prix : docs/Grille_Tarifaire_Outsee.xlsx.
+   Les écrans dessinés sont des aperçus de démonstration, chiffres fictifs.
+   ============================================================ */
+:root{
+  --bg:#F5F1E8; --blanc:#FFFFFF; --surface-2:#EFEAE0;
+  --noir:#111013; --gris-fonce:#4B4751; --gris:#67626D;
+  --gris-clair:#E8E2D6; --line-2:#DCD5C7;
+  --accent:#1D55F0; --accent-deep:#1A47C8; --accent-clair:#E3EAFF;
+  --sport:#E02D24; --sport-deep:#A3160F; --sport-clair:#FDE3E1;
+  --lime:#C8F547; --lime-deep:#4D6B00; --lime-clair:#EEF9CF;
+  --orange:#FFC23D; --orange-deep:#8A5A00; --orange-clair:#FFF1CC;
+  --succes:#137A44; --danger:#B3261E;
+  --font-display:'Unbounded','Arial Black',sans-serif;
+  --font-sans:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+}
+@page{ size:A4 landscape; margin:0; }
+*{ box-sizing:border-box; margin:0; padding:0; }
+html,body{ background:var(--bg); }
+body{
+  font-family:var(--font-sans); color:var(--noir);
+  font-size:10pt; line-height:1.5; -webkit-print-color-adjust:exact; print-color-adjust:exact;
+}
+.page{
+  position:relative; width:297mm; height:210mm; overflow:hidden;
+  background:var(--bg); page-break-after:always; break-after:page;
+  padding:17mm 20mm 16mm;
+}
+.page:last-child{ page-break-after:auto; }
+.page.sombre{ background:var(--noir); color:var(--bg); }
+.page.accent{ background:var(--accent); color:#fff; }
+
+.folio{
+  position:absolute; left:20mm; right:20mm; bottom:7mm;
+  display:flex; justify-content:space-between;
+  font-family:var(--font-mono); font-size:6.3pt; letter-spacing:.14em; text-transform:uppercase; color:var(--gris);
+  border-top:1px solid var(--line-2); padding-top:2.6mm;
+}
+.sombre .folio{ color:rgba(245,241,232,.45); border-top-color:rgba(245,241,232,.18); }
+.accent .folio{ color:rgba(255,255,255,.7); border-top-color:rgba(255,255,255,.28); }
+
+.kicker{ font-family:var(--font-mono); font-size:7pt; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); margin-bottom:4.5mm; }
+.sombre .kicker{ color:#7FA0FF; }
+.accent .kicker{ color:#E3EAFF; }
+.kicker.sport{ color:var(--sport); }
+
+h1{ font-family:var(--font-display); font-weight:800; font-size:40pt; line-height:1; letter-spacing:-.035em; }
+h1 em{ font-style:normal; color:var(--accent); display:block; }
+.sombre h1 em{ color:#7FA0FF; }
+h2{ font-family:var(--font-display); font-weight:800; font-size:23pt; line-height:1.06; letter-spacing:-.035em; margin-bottom:5mm; }
+h2 em{ font-style:normal; color:var(--accent); }
+.sombre h2{ color:var(--bg); } .sombre h2 em{ color:#7FA0FF; }
+.accent h2{ color:#fff; } .accent h2 em{ color:#FFE58A; }
+h3{ font-family:var(--font-sans); font-weight:700; font-size:10.8pt; letter-spacing:-.01em; margin-bottom:1.6mm; color:var(--noir); }
+.sombre h3{ color:var(--bg); } .accent h3{ color:#fff; }
+.lede{ font-size:11pt; line-height:1.5; color:var(--gris-fonce); max-width:155mm; }
+.sombre .lede{ color:rgba(245,241,232,.82); } .accent .lede{ color:#E3EAFF; }
+p{ color:var(--gris-fonce); font-size:9.3pt; }
+.sombre p{ color:rgba(245,241,232,.78); } .accent p{ color:#E3EAFF; }
+strong{ color:var(--noir); font-weight:700; }
+.sombre strong{ color:var(--bg); } .accent strong{ color:#fff; }
+small,.note{ font-size:7.6pt; color:var(--gris); line-height:1.45; }
+.sombre .note{ color:rgba(245,241,232,.55); }
+
+/* logo */
+.logo{ display:flex; align-items:center; gap:3mm; font-family:var(--font-display); font-weight:800; font-size:15pt; letter-spacing:-.04em; }
+.logo svg{ width:10mm; height:10mm; flex:0 0 auto; }
+.logo b{ color:var(--accent); font-weight:800; }
+.sombre .logo b{ color:#7FA0FF; }
+.logo i{ font-style:normal; font-weight:400; color:var(--gris); letter-spacing:-.03em; }
+.sombre .logo i{ color:#8A858F; }
+
+/* grilles et cartes */
+.g2{ display:grid; grid-template-columns:repeat(2,1fr); gap:6mm; }
+.g3{ display:grid; grid-template-columns:repeat(3,1fr); gap:6mm; }
+.g4{ display:grid; grid-template-columns:repeat(4,1fr); gap:5mm; }
+.g5{ display:grid; grid-template-columns:repeat(5,1fr); gap:3.6mm; }
+.carte{ background:var(--blanc); border:1px solid var(--line-2); border-radius:5mm; padding:5.5mm; }
+.carte.sombre-c{ background:#1B1A1F; border-color:#2C2B31; }
+.carte.clair{ background:var(--accent-clair); border-color:#C9D6FF; }
+.carte.vide{ background:transparent; border-style:dashed; }
+.num{ font-family:var(--font-display); font-weight:800; font-size:20pt; color:var(--accent); letter-spacing:-.04em; line-height:1; margin-bottom:2.5mm; }
+.ico{ width:9mm; height:9mm; border-radius:2.8mm; background:var(--accent-clair); color:var(--accent-deep); display:grid; place-items:center; margin-bottom:3mm; }
+.ico svg{ width:5mm; height:5mm; }
+.ico.sport{ background:var(--sport-clair); color:var(--sport-deep); }
+.ico.nuit{ background:var(--accent); color:#fff; }
+.sombre .ico{ background:#23222A; color:#9DB6FF; }
+
+.liste{ list-style:none; }
+.liste li{ position:relative; padding-left:5.5mm; margin-bottom:2.2mm; font-size:9.3pt; color:var(--gris-fonce); line-height:1.42; }
+.liste li::before{ content:""; position:absolute; left:0; top:1.55mm; width:2.4mm; height:2.4mm; border-radius:50%; background:var(--accent); }
+.liste.sport li::before{ background:var(--sport); }
+.sombre .liste li{ color:rgba(245,241,232,.82); }
+.accent .liste li{ color:#E3EAFF; } .accent .liste li::before{ background:#FFE58A; }
+
+.pastille{ display:inline-block; font-family:var(--font-mono); font-size:6.3pt; font-weight:600; letter-spacing:.1em; text-transform:uppercase; padding:1mm 2.4mm; border-radius:20mm; background:var(--accent-clair); color:var(--accent-deep); }
+.pastille.noire{ background:var(--noir); color:var(--bg); }
+.pastille.sport{ background:var(--sport-clair); color:var(--sport-deep); }
+.pastille.ok{ background:var(--lime-clair); color:var(--lime-deep); }
+
+/* maquettes de téléphone — aperçus dessinés, chiffres fictifs */
+.tel{ width:50mm; flex:0 0 auto; background:#16161C; border-radius:7.2mm; padding:1.5mm; box-shadow:0 5mm 9mm rgba(17,16,19,.22); }
+.ecran{ background:#F2F2F5; border-radius:5.8mm; height:96mm; overflow:hidden; padding:3.4mm 2.8mm; font-size:5pt; line-height:1.35; color:#111116; }
+.tel.long .ecran{ height:106mm; }
+.e-logo{ display:flex; align-items:center; gap:1.2mm; font-family:var(--font-display); font-weight:800; font-size:6.4pt; letter-spacing:-.04em; margin-bottom:2.2mm; }
+.e-logo svg{ width:4.2mm; height:4.2mm; } .e-logo b{ color:var(--accent); }
+.e-titre{ font-family:var(--font-display); font-weight:800; font-size:9pt; letter-spacing:-.04em; line-height:1.02; margin-bottom:2.4mm; }
+.e-titre em{ font-style:normal; color:var(--accent); }
+.e-carte{ background:#fff; border-radius:2.6mm; padding:2.2mm; margin-bottom:1.8mm; }
+.e-carte.bleue{ background:var(--accent); color:#fff; }
+.e-mini{ font-family:var(--font-mono); font-size:3.8pt; letter-spacing:.1em; text-transform:uppercase; opacity:.75; margin-bottom:.8mm; }
+.e-ligne{ display:flex; justify-content:space-between; gap:1mm; margin-top:.9mm; }
+.e-jauge{ height:1.2mm; background:#EDEDF1; border-radius:1mm; margin-top:.8mm; overflow:hidden; }
+.e-jauge i{ display:block; height:100%; background:var(--accent); border-radius:1mm; }
+.e-jauge i.rouge{ background:var(--danger); } .e-jauge i.vert{ background:#22B573; }
+.e-trois{ display:flex; gap:1.2mm; margin-top:1.6mm; }
+.e-trois div{ flex:1; background:rgba(255,255,255,.18); border-radius:1.6mm; padding:1.3mm; }
+.e-trois b{ display:block; font-family:var(--font-display); font-size:7.5pt; font-weight:800; }
+.e-bouton{ background:var(--accent); color:#fff; font-weight:700; text-align:center; border-radius:2mm; padding:1.6mm; margin-top:1.4mm; }
+.e-bouton.clair{ background:#E3EAFF; color:var(--accent-deep); }
+.e-barres{ display:flex; align-items:flex-end; gap:.7mm; height:11mm; margin-top:1.2mm; }
+.e-barres i{ flex:1; background:var(--accent); border-radius:.6mm .6mm 0 0; }
+.e-alerte{ background:#FFF1CC; color:#8A5A00; border-radius:2.2mm; padding:2mm; margin-bottom:1.8mm; }
+.e-pastille{ display:inline-block; font-size:3.9pt; font-weight:700; padding:.5mm 1.4mm; border-radius:3mm; background:#EDEDF1; margin-right:.6mm; }
+.e-pastille.b{ background:#E3EAFF; color:#1A47C8; }
+.legende{ font-family:var(--font-mono); font-size:6pt; letter-spacing:.1em; text-transform:uppercase; color:var(--gris); text-align:center; margin-top:3mm; }
+
+/* tableaux */
+table{ width:100%; border-collapse:collapse; font-size:8.6pt; }
+th{ font-family:var(--font-mono); font-size:6.4pt; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--gris); text-align:left; padding:2mm 2.4mm; border-bottom:1.5px solid var(--noir); }
+td{ padding:2.2mm 2.4mm; border-bottom:1px solid var(--line-2); color:var(--gris-fonce); vertical-align:top; }
+td b{ color:var(--noir); }
+
+/* tarifs */
+.prix{ display:flex; flex-direction:column; background:var(--blanc); border:1px solid var(--line-2); border-radius:5mm; padding:4.4mm 4mm; }
+.prix.fort{ background:var(--accent); border-color:var(--accent); color:#fff; }
+.prix.fort h3,.prix.fort .montant,.prix.fort strong{ color:#fff; }
+.prix.fort p,.prix.fort li{ color:#E3EAFF; }
+.prix.fort li::before{ background:#FFE58A; }
+.prix.club-c{ border-color:#F2B8B4; }
+.prix .quand{ font-family:var(--font-mono); font-size:5.8pt; letter-spacing:.1em; text-transform:uppercase; color:var(--gris); margin-bottom:2mm; min-height:8mm; }
+.prix.fort .quand{ color:#C9D6FF; }
+.montant{ font-family:var(--font-display); font-weight:800; font-size:20pt; letter-spacing:-.045em; line-height:1; margin:1.2mm 0 .6mm; }
+.montant small{ font-family:var(--font-sans); font-weight:500; font-size:7.4pt; letter-spacing:0; color:var(--gris); }
+.prix.fort .montant small{ color:#C9D6FF; }
+.prix ul{ list-style:none; margin-top:2.4mm; }
+.prix li{ position:relative; padding-left:4mm; font-size:8.1pt; line-height:1.38; margin-bottom:1.5mm; color:var(--gris-fonce); }
+.prix li::before{ content:""; position:absolute; left:0; top:1.3mm; width:1.9mm; height:1.9mm; border-radius:50%; background:var(--accent); }
+.prix.club-c li::before{ background:var(--sport); }
+
+.fil-vertical{ border-left:2px solid var(--line-2); padding-left:6mm; margin-left:2.5mm; }
+.etape{ position:relative; margin-bottom:5mm; }
+.etape::before{ content:""; position:absolute; left:-8.6mm; top:.6mm; width:5mm; height:5mm; border-radius:50%; background:var(--accent); border:1.2mm solid var(--bg); box-shadow:0 0 0 1px var(--accent); }
+.accent .etape::before{ background:#FFE58A; border-color:var(--accent); box-shadow:0 0 0 1px #FFE58A; }
+</style>
+</head>
+<body>
+
+<!-- Symboles d'icônes (traits arrondis, 24 × 24) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></symbol>
+    <symbol id="i-qr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><path d="M14 14h2.5v2.5M20.5 14v.01M14 20.5h.01M17 20.5h3.5V18"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.7a3.5 3.5 0 0 1 0 6.6M18 14.9c1.9.7 3.2 2.3 3.5 5.1"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2.5 5 13.5h6l-1 8 8-11h-6z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21.5s7-6.2 7-11.5a7 7 0 0 0-14 0c0 5.3 7 11.5 7 11.5z"/><circle cx="12" cy="10" r="2.6"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15zM10 21h4"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 4h9v5.5a4.5 4.5 0 0 1-9 0zM7.5 6H4v1.5A3.5 3.5 0 0 0 7.8 11M16.5 6H20v1.5a3.5 3.5 0 0 1-3.8 3.5M12 14v4M8.5 20.5h7"/></symbol>
+    <symbol id="i-glass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14l-2 7.5a5 5 0 0 1-10 0zM12 16.5V21M8 21h8"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h3l1.6-2.5h6.8L17 8.5h3V19H4z"/><circle cx="12" cy="13.5" r="3.4"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8 6.8 19.6l1-5.8-4.3-4.1 5.9-.8z"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4M5 4.5h12l-2 4 2 4H5"/></symbol>
+    <symbol id="i-court" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M12 5v14M3 12h18"/></symbol>
+    <symbol id="i-euro" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 6.5A7 7 0 1 0 17.5 17.5M4 10.5h9M4 13.5h9"/></symbol>
+    <symbol id="i-logo" viewBox="0 0 512 512">
+      <rect width="512" height="512" rx="112" fill="currentColor"/>
+      <circle cx="196.5" cy="255.5" r="88.5" fill="none" stroke="#111116" stroke-width="43"/>
+      <circle cx="314.5" cy="255.5" r="88.5" fill="none" stroke="#F2F2F5" stroke-width="43"/>
+      <path d="M196.5 344a88.5 88.5 0 0 0 88.5-45" fill="none" stroke="#111116" stroke-width="43" clip-path="inset(50% 0 0 0)"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ══════════ 1 · Couverture ══════════ -->
+<section class="page sombre" style="padding:0;">
+  <div style="position:absolute; inset:0; display:flex;">
+    <div style="flex:1; padding:18mm 0 16mm 20mm; display:flex; flex-direction:column;">
+      <div class="logo" style="color:var(--bg);"><svg style="color:#1D55F0"><use href="#i-logo"/></svg><span>Outs<b>ee</b> <i>pro</i></span></div>
+      <div style="margin-top:auto;">
+        <div class="kicker">Bars · Restaurants · Boîtes · Afterworks · BDE · Clubs sportifs</div>
+        <h1 style="color:var(--bg);">Vos soirées creuses<em>ont un public.</em></h1>
+        <p class="lede" style="margin-top:8mm; max-width:122mm;">
+          Outsee amène des étudiants clermontois dans votre établissement
+          les soirs où votre salle est vide — et vous dit combien sont
+          <strong>réellement venus</strong>.
+        </p>
+      </div>
+      <div style="margin-top:14mm; display:flex; gap:12mm; font-family:var(--font-mono); font-size:6.6pt; letter-spacing:.16em; text-transform:uppercase; color:rgba(245,241,232,.55);">
+        <span>Clermont-Ferrand</span><span>Plaquette établissements</span><span>Novembre 2026</span>
+      </div>
+    </div>
+    <div style="width:118mm; display:flex; align-items:center; justify-content:center; gap:5mm; padding-right:14mm;">
+      <div class="tel long" style="margin-top:14mm;">
+        <div class="ecran">
+          <div class="e-logo"><svg style="color:#1D55F0"><use href="#i-logo"/></svg>Outs<b>ee</b></div>
+          <div class="e-titre">Mon<br><em>mois.</em></div>
+          <div class="e-carte">
+            <div class="e-ligne"><b>Événements publiés</b><span>4 / 6</span></div>
+            <div class="e-jauge"><i style="width:66%"></i></div>
+            <div class="e-ligne" style="margin-top:1.6mm"><b>Offre flash</b><span>0 / 1</span></div>
+            <div class="e-jauge"><i style="width:0"></i></div>
+            <div class="e-ligne" style="margin-top:1.8mm; border-top:.2mm solid #E4E4EA; padding-top:1.4mm"><b>À payer en plus</b><b style="color:#137A44">Rien</b></div>
+          </div>
+          <div class="e-carte bleue">
+            <div class="e-mini">Prochaine soirée</div>
+            <b style="font-family:var(--font-display); font-size:6.6pt; letter-spacing:-.03em">Soirée Étudiants — DJ Groove</b>
+            <div class="e-trois"><div><b>46</b>Inscrits</div><div><b>31</b>Check-in</div><div><b>67 %</b>Présence</div></div>
+            <div class="e-bouton clair">Scanner un pass</div>
+          </div>
+        </div>
+      </div>
+      <div class="tel long" style="margin-top:-8mm;">
+        <div class="ecran">
+          <div class="e-logo"><svg style="color:#1D55F0"><use href="#i-logo"/></svg>Outs<b>ee</b></div>
+          <div class="e-titre">Suivi de<br><em>Jeudi Pass.</em></div>
+          <div class="e-carte">
+            <div class="e-ligne"><b>46 / 60 places</b><span>77 % rempli</span></div>
+            <div class="e-jauge"><i style="width:77%"></i></div>
+            <div class="e-ligne" style="margin-top:1.6mm"><b>31 présents</b><span>67 % des inscrits</span></div>
+            <div class="e-jauge"><i class="vert" style="width:67%"></i></div>
+          </div>
+          <div class="e-carte">
+            <div class="e-mini" style="color:#67626D">Inscriptions par jour</div>
+            <div class="e-barres"><i style="height:30%"></i><i style="height:55%"></i><i style="height:40%"></i><i style="height:80%"></i><i style="height:100%"></i><i style="height:65%"></i><i style="height:45%"></i><i style="height:70%"></i></div>
+          </div>
+          <div class="e-carte">
+            <div class="e-ligne"><b>UCA — Droit &amp; Éco</b><span>42 %</span></div><div class="e-jauge"><i style="width:42%"></i></div>
+            <div class="e-ligne" style="margin-top:1.4mm"><b>SIGMA Clermont</b><span>28 %</span></div><div class="e-jauge"><i style="width:28%"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 2 · Le constat ══════════ -->
+<section class="page">
+  <div class="kicker">Le constat</div>
+  <h2>Trois soirs sur sept,<br><em>la salle tourne à vide.</em></h2>
+  <div class="g3" style="margin-top:9mm;">
+    <div class="carte"><div class="num">01</div><h3>Un mardi coûte aussi cher qu'un samedi.</h3>
+      <p>Le loyer, le personnel, la licence, l'électricité : rien de tout cela baisse quand la salle se vide. Seule la recette baisse. Remplir un soir creux ne coûte presque rien de plus — c'est de la marge, pas du chiffre d'affaires en plus.</p></div>
+    <div class="carte"><div class="num">02</div><h3>Une story ne remplit pas une salle.</h3>
+      <p>Vous publiez, quelques centaines de vues défilent, et personne ne vous dit qu'il vient. Le soir venu, vous ouvrez sans savoir si vous préparez pour vingt personnes ou pour deux.</p></div>
+    <div class="carte"><div class="num">03</div><h3>Le « deal étudiant » ne se mesure pas.</h3>
+      <p>Une affiche à l'entrée, une remise accordée au jugé, aucune trace. À la fin du mois, impossible de dire si l'opération a fonctionné, ni qui elle a fait venir.</p></div>
+  </div>
+  <div style="margin-top:12mm; border-top:1.5px solid var(--noir); padding-top:5mm;">
+    <p style="font-family:var(--font-display); font-weight:700; font-size:14pt; letter-spacing:-.03em; line-height:1.2; color:var(--noir); max-width:200mm;">
+      Le problème n'est pas de trouver des étudiants.
+      <span style="color:var(--accent);">C'est de savoir lesquels viennent, et de le prouver.</span>
+    </p>
+  </div>
+  <div class="folio"><span>Outsee · Plaquette établissements</span><span>2</span></div>
+</section>
+
+<!-- ══════════ 3 · La réponse ══════════ -->
+<section class="page">
+  <div class="kicker">La réponse</div>
+  <h2>L'application où les étudiants de Clermont<br><em>cherchent quoi faire ce soir.</em></h2>
+  <p class="lede" style="margin-bottom:8mm;">Vous y existez de trois façons, sans rien faire de plus que publier vos soirées.</p>
+  <div class="g3">
+    <div class="carte"><div class="ico"><svg><use href="#i-cal"/></svg></div><h3>Dans le fil des soirées</h3>
+      <p>Vos événements sont classés par date et filtrés par type de lieu. L'étudiant voit votre offre, vos places restantes et lesquels de ses amis y vont déjà.</p></div>
+    <div class="carte"><div class="ico"><svg><use href="#i-pin"/></svg></div><h3>Sur la carte</h3>
+      <p>Votre établissement est placé sur la carte interactive de la ville, avec ses photos, sa note et ses prochaines soirées. Une soirée proche s'ouvre en un geste.</p></div>
+    <div class="carte"><div class="ico"><svg><use href="#i-bell"/></svg></div><h3>Dans la cloche de vos abonnés</h3>
+      <p>Un étudiant peut suivre votre lieu. Quand vous publiez une nouvelle soirée, elle apparaît dans ses notifications — sans que vous ayez rien à envoyer.</p></div>
+  </div>
+  <div class="g3" style="margin-top:6mm;">
+    <div class="carte clair"><h3>Ils réservent une place</h3><p>Et repartent avec un pass — un QR code — à présenter à l'entrée.</p></div>
+    <div class="carte clair"><h3>Ils invitent leurs amis</h3><p>Depuis la fiche de la soirée, en un geste. Une inscription en amène d'autres.</p></div>
+    <div class="carte clair"><h3>Vous gardez la main</h3><p>Votre remise, votre quota de places, votre date : vous fixez tout, y compris une remise à zéro.</p></div>
+  </div>
+  <div class="folio"><span>Outsee · Plaquette établissements</span><span>3</span></div>
+</section>
+
+<!-- ══════════ 4 · Trois gestes ══════════ -->
+<section class="page">
+  <div class="kicker">Côté établissement</div>
+  <h2>Trois gestes, <em>et c'est tout.</em></h2>
+  <div class="g3" style="margin-top:7mm;">
+    <div class="carte"><div class="num">1</div><h3>Vous publiez votre soirée</h3>
+      <p>Un titre, une date, le nombre de places que vous réservez, la remise que vous accordez — ou aucune. Deux minutes depuis votre téléphone, avec un aperçu de ce que ça vous coûte avant de valider.</p></div>
+    <div class="carte"><div class="num">2</div><h3>Les étudiants s'inscrivent</h3>
+      <p>Ils réservent une place, invitent leurs amis, et vous voyez le compteur monter en direct. Un rappel part automatiquement la veille, pour que l'inscription ne se transforme pas en oubli.</p></div>
+    <div class="carte"><div class="num">3</div><h3>Vous scannez à l'entrée</h3>
+      <p>Chaque étudiant présente son pass. Un scan depuis votre téléphone, et l'inscription devient une présence vérifiée. Pas de boîtier, pas de matériel à acheter.</p></div>
+  </div>
+  <div class="g2" style="margin-top:8mm; align-items:stretch;">
+    <div class="carte clair"><h3>Et si vous ne scannez pas ?</h3>
+      <p>Rien ne casse. Vous pouvez aussi valider une personne à la main depuis la liste des invités. Si vous ne faites ni l'un ni l'autre, vous gardez le nombre d'inscrits et vous perdez seulement le taux de présence. Le scan est un outil, pas une contrainte à l'entrée.</p></div>
+    <div class="carte"><h3>Et si la soirée change ?</h3>
+      <p>Une soirée se modifie jusqu'à la dernière minute : date, places, remise, description. Un événement peut aussi être supprimé. Attention : il compte toujours dans votre quota du mois, voir page 12.</p></div>
+  </div>
+  <div class="folio"><span>Outsee · Plaquette établissements</span><span>4</span></div>
+</section>
+
+<!-- ══════════ 5 · L'application ══════════ -->
+<section class="page">
+  <div style="display:flex; gap:12mm;">
+    <div style="width:112mm;">
+      <div class="kicker">Votre application</div>
+      <h2>Tout votre établissement,<br><em>dans la poche.</em></h2>
+      <p class="lede" style="margin-bottom:6mm;">L'espace établissement est dans l'application Outsee : derrière le bar, au moment du coup de feu, comme à la maison.</p>
+      <ul class="liste">
+        <li><strong>Tableau de bord</strong> : la prochaine soirée (ou celle en cours), inscrits, check-in, taux de présence, dernières inscriptions.</li>
+        <li><strong>Mon mois</strong> : événements publiés sur votre quota, offre flash, mise en avant offerte, et ce que vous payez en plus.</li>
+        <li><strong>Mes événements</strong> : toutes vos soirées, passées et à venir, avec inscrits, présents et statut.</li>
+        <li><strong>Suivi d'un événement</strong> : remplissage, présence, courbe des inscriptions, écoles de vos inscrits.</li>
+        <li><strong>Scan et liste des invités</strong> : scanner un pass, ou chercher un nom et valider à la main.</li>
+        <li><strong>Votre page</strong> : nom, adresse, position sur la carte, photos que les étudiants voient.</li>
+        <li><strong>Votre abonnement</strong> : formule en cours, ce qu'elle comprend, achats possibles.</li>
+      </ul>
+    </div>
+    <div style="display:flex; gap:5mm; padding-top:2mm;">
+      <div>
+        <div class="tel"><div class="ecran">
+          <div class="e-logo"><svg style="color:#1D55F0"><use href="#i-logo"/></svg>Outs<b>ee</b></div>
+          <div class="e-titre">Mes 5<br><em>événements.</em></div>
+          <div class="e-bouton">+ Créer un événement</div>
+          <div class="e-carte" style="margin-top:1.8mm"><span class="e-pastille">Bar</span><span class="e-pastille b">Flash</span><span class="e-pastille" style="background:#E8F6EE;color:#137A44">Actif</span>
+            <b style="display:block; font-family:var(--font-display); font-size:6.2pt; letter-spacing:-.03em; margin-top:1mm">Jeudi Pass — 2 pour 1</b>
+            <div style="color:#67626D">jeu. 19 nov. · 21h00</div>
+            <div class="e-ligne"><b>46/60 inscrits</b><span>31 check-in</span></div><div class="e-jauge"><i style="width:77%"></i></div>
+            <div style="display:flex; gap:.8mm; margin-top:1.4mm"><div class="e-bouton clair" style="flex:1;margin:0">Suivi</div><div class="e-bouton" style="flex:1;margin:0">Scanner</div></div></div>
+          <div class="e-carte"><span class="e-pastille">Bar</span><span class="e-pastille" style="background:#E8F6EE;color:#137A44">Actif</span>
+            <b style="display:block; font-family:var(--font-display); font-size:6.2pt; letter-spacing:-.03em; margin-top:1mm">Blind test du mardi</b>
+            <div style="color:#67626D">mar. 24 nov. · 20h30</div>
+            <div class="e-ligne"><b>12/40 inscrits</b><span>0 check-in</span></div><div class="e-jauge"><i style="width:30%"></i></div></div>
+        </div><div class="legende">Mes événements</div></div>
+      </div>
+      <div>
+        <div class="tel"><div class="ecran">
+          <div class="e-logo"><svg style="color:#1D55F0"><use href="#i-logo"/></svg>Outs<b>ee</b></div>
+          <div class="e-titre">Créer<br><em>un événement.</em></div>
+          <div class="e-alerte"><b>Quota du mois atteint</b><br>6 événements sur les 6 compris. Celui-ci est un supplément : 9 € HT.<br><span style="display:inline-block;margin-top:1mm">&#9632; Je confirme ce supplément.</span></div>
+          <div class="e-carte"><b>Post sponsorisé</b> — Coup de projecteur · 70 € HT
+            <div style="color:#1A47C8; font-weight:700; margin-top:.8mm">Visible en tête jusqu'au ven. 20 nov. · 22h00 (48 h)</div></div>
+          <div class="e-carte"><b>Ce que ça te coûte</b>
+            <div class="e-ligne"><span>Événement</span><span>9 € HT</span></div>
+            <div class="e-ligne"><span>Coup de projecteur</span><span>70 € HT</span></div>
+            <div class="e-ligne" style="border-top:.2mm solid #E4E4EA; padding-top:.8mm"><b>Total en plus</b><b style="color:#B3261E">79 € HT</b></div></div>
+          <div class="e-bouton">Publier · 79 € HT en plus</div>
+        </div><div class="legende">Créer un événement</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="note" style="position:absolute; left:20mm; bottom:16mm;">Écrans de démonstration — chiffres fictifs.</div>
+  <div class="folio"><span>Outsee · Plaquette établissements</span><span>5</span></div>
+</section>
+
+<!-- ══════════ 6 · Inscrits ≠ venus ══════════ -->
+<section class="page">
+  <div class="kicker">Ce que personne d'autre ne vous donne</div>
+  <h2>« Inscrits » n'est pas « venus ».<br><em>Outsee compte les deux.</em></h2>
+  <div style="display:flex; gap:14mm; margin-top:7mm;">
+    <div style="flex:1;">
+      <p class="lede" style="font-size:10.4pt;">Une affiche vous donne des passages. Une page d'événement vous donne des « intéressés ». Ni l'une ni l'autre ne vous dit qui a franchi la porte.</p>
+      <p class="lede" style="font-size:10.4pt; margin-top:4mm;">Le pass scanné à l'entrée, si : il transforme une intention en présence vérifiée, soirée par soirée. C'est le seul chiffre qui permet de dire si l'opération valait le coup — et de décider, le mois suivant, de recommencer ou d'arrêter.</p>
+      <div class="g2" style="margin-top:8mm; gap:4mm;">
+        <div class="carte" style="text-align:center;"><div class="num" style="font-size:30pt; margin:0;">18</div><small>Inscrits</small></div>
+        <div class="carte" style="text-align:center;"><div class="num" style="font-size:30pt; margin:0; color:var(--succes);">14</div><small>Scannés à l'entrée</small></div>
+      </div>
+      <p style="margin-top:5mm;"><strong>78 % de présence sur cette soirée.</strong> Un chiffre qui vous appartient, que vous pouvez comparer d'une semaine à l'autre, et opposer à n'importe quelle promesse d'audience.</p>
+      <div class="note" style="margin-top:3mm;">Exemple chiffré, à titre d'illustration.</div>
+    </div>
+    <div style="width:92mm;">
+      <div class="carte">
+        <h3>Le suivi de chaque soirée</h3>
+        <ul class="liste" style="margin-top:3mm;">
+          <li><strong>Remplissage</strong> : inscrits sur places, places restantes.</li>
+          <li><strong>Présence</strong> : présents sur inscrits, annulations.</li>
+          <li><strong>Courbe des inscriptions</strong>, jour par jour, depuis la publication.</li>
+          <li><strong>Qui vient</strong> : la répartition par école de vos inscrits.</li>
+          <li><strong>Mise en avant</strong> : en cours ou terminée, notifications programmées ou envoyées.</li>
+          <li><strong>Coût</strong> : ce que cette soirée vous a coûté en plus de l'abonnement.</li>
+        </ul>
+        <p class="note" style="margin-top:3mm;">Aucun chiffre estimé ni inventé : chacun vient des inscriptions réelles.</p>
+      </div>
+    </div>
+  </div>
+  <div class="folio"><span>Outsee · Plaquette établissements</span><span>6</span></div>
+</section>
+
+<!-- ══════════ 7 · Qui vient ce soir ══════════ -->
+<section class="page">
+  <div class="kicker">Avant même d'ouvrir</div>
+  <h2>Vous savez <em>qui vient ce soir.</em></h2>
+  <div style="display:flex; gap:12mm; margin-top:4mm;">
+    <div style="flex:1;">
+      <p class="lede" style="font-size:10.4pt;">Une soirée remplie à 56 % par des étudiants en droit ne se prépare pas comme une soirée d'école d'ingénieurs. Ni la musique, ni la carte, ni le nombre de personnes au bar.</p>
+      <ul class="liste" style="margin-top:6mm;">
+        <li>De quelles écoles viennent vos inscrits, en pourcentage.</li>
+        <li>À quel rythme ils s'inscrivent, jour par jour — pour savoir quand relancer.</li>
+        <li>Combien de places il vous reste à vendre.</li>
+        <li>Les dernières inscriptions, à l'heure près, et la liste de qui est déjà entré.</li>
+        <li>L'historique de vos soirées précédentes, pour comparer.</li>
+      </ul>
+      <div class="carte clair" style="margin-top:6mm;"><h3>Vous ne récupérez pas un fichier d'étudiants.</h3>
+        <p>Vous voyez qui s'est inscrit à vos soirées et des statistiques agrégées sur votre salle. Les comptes, eux, restent chez Outsee : c'est ce qui permet aux étudiants de s'inscrire sans se méfier.</p></div>
+    </div>
+    <div style="width:98mm;">
+      <div class="carte">
+        <div class="kicker" style="margin-bottom:1.5mm;">Profil de salle · exemple</div>
+        <h3 style="font-family:var(--font-display); letter-spacing:-.03em; font-size:12pt; margin-bottom:4mm;">Qui vient ?</h3>
+        <div style="margin-bottom:3.4mm;"><div style="display:flex; justify-content:space-between; font-size:8.6pt;"><b>UCA — Droit &amp; Éco</b><span>42 %</span></div><div class="e-jauge" style="height:2.2mm;"><i style="width:42%"></i></div></div>
+        <div style="margin-bottom:3.4mm;"><div style="display:flex; justify-content:space-between; font-size:8.6pt;"><b>SIGMA Clermont</b><span>28 %</span></div><div class="e-jauge" style="height:2.2mm;"><i style="width:28%; background:#7B4DF2"></i></div></div>
+        <div style="margin-bottom:3.4mm;"><div style="display:flex; justify-content:space-between; font-size:8.6pt;"><b>INP Ingénieurs</b><span>18 %</span></div><div class="e-jauge" style="height:2.2mm;"><i style="width:18%; background:#22B573"></i></div></div>
+        <div><div style="display:flex; justify-content:space-between; font-size:8.6pt;"><b>Autres écoles</b><span>12 %</span></div><div class="e-jauge" style="height:2.2mm;"><i style="width:12%; background:#FF8A3D"></i></div></div>
+      </div>
+      <div class="note" style="margin-top:3mm;">Exemple chiffré, à titre d'illustration.</div>
+    </div>
+  </div>
+  <div class="folio"><span>Outsee · Plaquette établissements</span><span>7</span></div>
+</section>
+
+<!-- ══════════ 8 · Le vrai moteur ══════════ -->
+<section class="page sombre">
+  <div class="kicker">Le vrai moteur</div>
+  <h2>Un étudiant seul <em>ne sort pas.</em></h2>
+  <p class="lede" style="margin-bottom:8mm;">C'est la différence entre une application de bons plans et Outsee : personne ne décide seul de sortir un mardi. On y va parce qu'un ami y va.</p>
+  <div class="g4">
+    <div class="carte sombre-c"><div class="ico"><svg><use href="#i-users"/></svg></div><h3>Inviter</h3><p>Chaque étudiant qui réserve peut inviter ses amis depuis la fiche de la soirée. Ce qui arrive chez vous est une table, pas un tabouret.</p></div>
+    <div class="carte sombre-c"><div class="ico"><svg><use href="#i-star"/></svg></div><h3>Suivre</h3><p>Sur la fiche de votre soirée, un étudiant voit lesquels de ses amis y vont déjà. C'est l'argument qui décide, bien avant la remise.</p></div>
+    <div class="carte sombre-c"><div class="ico"><svg><use href="#i-flag"/></svg></div><h3>Squads</h3><p>Les étudiants forment des groupes de sortie. Quand le groupe existe déjà, il ne reste plus qu'à lui proposer une destination.</p></div>
+    <div class="carte sombre-c"><div class="ico"><svg><use href="#i-bell"/></svg></div><h3>Rappel</h3><p>Un rappel part la veille, avec l'heure et le lieu. Celui qui ne peut plus venir annule son pass — et sa place repart à quelqu'un d'autre.</p></div>
+  </div>
+  <div style="margin-top:12mm; border-top:1px solid rgba(245,241,232,.2); padding-top:6mm;">
+    <p style="font-family:var(--font-display); font-weight:700; font-size:15pt; letter-spacing:-.03em; line-height:1.2; color:var(--bg);">Vous ne remplissez pas une salle un étudiant à la fois. <span style="color:#7FA0FF;">Vous la remplissez par tables de quatre.</span></p>
+  </div>
+  <div class="folio"><span>Outsee · Plaquette établissements</span><span>8</span></div>
+</section>
+
+<!-- ══════════ 9 · Chaque type d'établissement ══════════ -->
+<section class="page">
+  <div class="kicker">Pour chaque établissement</div>
+  <h2>Un compte qui correspond <em>à ce que vous êtes.</em></h2>
+  <p class="lede" style="margin-bottom:6mm; max-width:200mm;">À l'inscription, vous choisissez votre type de compte. Il décide de l'espace où vos événements apparaissent et des formules que vous pouvez prendre. Il se fige dès que vous avez choisi une formule.</p>
+  <div class="g3">
+    <div class="carte">
+      <div class="ico nuit"><svg><use href="#i-glass"/></svg></div>
+      <span class="pastille">Bars · Restaurants · Boîtes · Afterworks</span>
+      <h3 style="margin-top:3mm;">La sortie</h3>
+      <ul class="liste" style="margin-top:2mm;">
+        <li>Vos soirées dans le fil Explorer et sur la carte.</li>
+        <li>Offre flash, Coup de projecteur, Top du fil.</li>
+        <li>Remise étudiante, places limitées, entrée gratuite : vous choisissez.</li>
+        <li>Formules Fondateur, Essentiel (bars, restaurants, afterworks) et Premium (discothèques, et bars qui veulent plus d'événements).</li>
+      </ul>
+    </div>
+    <div class="carte">
+      <div class="ico nuit"><svg><use href="#i-users"/></svg></div>
+      <span class="pastille">BDE · Associations</span>
+      <h3 style="margin-top:3mm;">L'association</h3>
+      <ul class="liste" style="margin-top:2mm;">
+        <li>Un BDE n'a pas de lieu à lui : il choisit le type de ses soirées (bar, boîte, restaurant, afterwork).</li>
+        <li>Vous cherchez du monde à vos événements et la preuve, auprès de vos adhérents comme de vos partenaires, que vous l'avez amené. Les présences scannées servent exactement à cela.</li>
+        <li>Formule BDE à 25 € HT par mois. <strong>Votre compte est validé par l'équipe Outsee avant de pouvoir publier.</strong></li>
+      </ul>
+    </div>
+    <div class="carte" style="border-color:#F2B8B4;">
+      <div class="ico sport"><svg><use href="#i-trophy"/></svg></div>
+      <span class="pastille sport">Clubs et établissements sportifs</span>
+      <h3 style="margin-top:3mm;">Le sport</h3>
+      <ul class="liste sport" style="margin-top:2mm;">
+        <li>Vos événements dans l'onglet Sport : tournois, stages, initiations. Pas dans le fil des soirées.</li>
+        <li>Vos terrains et vos créneaux, que les joueurs réservent depuis l'application.</li>
+        <li>Les parties à compléter : un joueur cherche des partenaires, votre créneau se remplit.</li>
+        <li><strong>Les joueurs règlent leurs terrains chez vous : Outsee ne prend aucune commission.</strong></li>
+        <li>Formule Club, 49 € HT par mois.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note" style="margin-top:5mm;">L'espace Culture de l'application — expositions, concerts, nuits des musées — est alimenté par la ville depuis l'administration : il n'existe pas de compte établissement « culture » et aucun établissement n'y publie.</div>
+  <div class="folio"><span>Outsee · Plaquette établissements</span><span>9</span></div>
+</section>
+
+<!-- ══════════ 10 · Se faire remarquer ══════════ -->
+<section class="page">
+  <div class="kicker">Se faire remarquer</div>
+  <h2>Trois façons de passer <em>en tête du fil.</em></h2>
+  <div class="g3" style="margin-top:6mm;">
+    <div class="prix">
+      <div class="quand">Compris dans Fondateur et Premium</div>
+      <div class="ico nuit"><svg><use href="#i-bolt"/></svg></div>
+      <h3>L'offre flash</h3>
+      <div class="montant" style="font-size:14pt;">Incluse</div>
+      <ul><li>Une offre limitée dans le temps, remontée dans le fil jusqu'à son expiration.</li>
+        <li>Une par mois dans les formules Fondateur et Premium.</li>
+        <li>Elle compte à la publication : la supprimer ne la rend pas.</li></ul>
+    </div>
+    <div class="prix">
+      <div class="quand">Post sponsorisé · à l'unité</div>
+      <div class="ico nuit"><svg><use href="#i-star"/></svg></div>
+      <h3>Coup de projecteur</h3>
+      <div class="montant">70 €<small> HT</small></div>
+      <ul><li>48 h en tête du fil Explore.</li>
+        <li>1 notification envoyée à vos abonnés, à l'heure que vous choisissez.</li>
+        <li>Badge « Sponsorisé » sur la carte de l'événement.</li>
+        <li>Le Premium en comprend un par mois.</li></ul>
+    </div>
+    <div class="prix fort">
+      <div class="quand">Post sponsorisé · à l'unité</div>
+      <div class="ico" style="background:rgba(255,255,255,.18); color:#fff;"><svg><use href="#i-flag"/></svg></div>
+      <h3>Top du fil</h3>
+      <div class="montant">350 €<small> HT</small></div>
+      <ul><li>7 jours en tête du fil, devant les Coups de projecteur.</li>
+        <li>3 notifications, aux heures que vous choisissez.</li>
+        <li>Badge « Sponsorisé » pendant toute la durée.</li></ul>
+    </div>
+  </div>
+  <div class="g2" style="margin-top:6mm;">
+    <div class="carte"><h3>Sans surprise avant d'acheter</h3>
+      <p>Le formulaire annonce la <strong>vraie fin</strong> de la mise en avant avant que vous validiez. Elle court à partir de l'achat et s'arrête au plus tard à la fin de l'événement : si la soirée est demain, vous voyez la durée réelle, en heures, avant de payer. Un événement déjà terminé ne peut pas être mis en avant.</p></div>
+    <div class="carte"><h3>Une règle simple une fois achetée</h3>
+      <p>Une mise en avant en cours est payée jusqu'à sa fin : elle ne se change ni ne se retire, et modifier le titre de la soirée ne la rachète pas. Terminée, elle ne se renouvelle jamais toute seule : il faut la racheter volontairement. Les notifications partent avant le début de l'événement.</p></div>
+  </div>
+  <div class="folio"><span>Outsee · Plaquette établissements</span><span>10</span></div>
+</section>
+
+<!-- ══════════ 11 · Les formules ══════════ -->
+<section class="page">
+  <div class="kicker">Les formules</div>
+  <h2>Cinq formules, <em>un prix par mois.</em></h2>
+  <p class="lede" style="margin-bottom:5mm; max-width:230mm;">Prix HT par mois. Sans engagement de durée, résiliable au mois par simple message. Aucune donnée bancaire dans l'application : l'équipe Outsee met en place le prélèvement avant la première échéance.</p>
+  <div class="g5">
+    <div class="prix">
+      <div class="quand">BDE et associations</div><h3>BDE</h3>
+      <div class="montant">25 €<small> /mois</small></div>
+      <ul><li><strong>4</strong> événements par mois</li><li>Compte validé par l'équipe avant publication</li><li>Pour organiser vos soirées sans lieu à vous</li></ul>
+    </div>
+    <div class="prix fort">
+      <div class="quand">Offre de lancement · 15 places</div><h3>Fondateur</h3>
+      <div class="montant">39 €<small> /mois</small></div>
+      <ul><li><strong>0 € pendant 3 mois</strong>, avec 8 événements par mois</li><li>Puis 6 événements par mois, <strong>39 € gelés</strong></li><li>1 offre flash par mois</li><li>Bars, restaurants, boîtes, afterworks</li></ul>
+    </div>
+    <div class="prix club-c">
+      <div class="quand">Clubs et établissements sportifs</div><h3>Club</h3>
+      <div class="montant">49 €<small> /mois</small></div>
+      <ul><li><strong>12</strong> événements par mois</li><li>Terrains et créneaux illimités</li><li>Aucune commission sur les réservations</li></ul>
+    </div>
+    <div class="prix">
+      <div class="quand">Bars et restaurants</div><h3>Essentiel</h3>
+      <div class="montant">49,99 €<small> /mois</small></div>
+      <ul><li><strong>6</strong> événements par mois</li><li>Page établissement, tableau de bord, scan</li><li>Pass, rappel de la veille</li></ul>
+    </div>
+    <div class="prix">
+      <div class="quand">Discothèques et groupes</div><h3>Premium</h3>
+      <div class="montant">69,99 €<small> /mois</small></div>
+      <ul><li><strong>15</strong> événements par mois</li><li>1 offre flash par mois</li><li>1 mise en avant offerte par mois (un Coup de projecteur)</li></ul>
+    </div>
+  </div>
+  <div class="note" style="margin-top:5mm;">Toutes les formules comprennent la page établissement avec photos, le tableau de bord, le scan des pass et le rappel de la veille. Une première période d'essai est offerte : un mois, trois mois pour les fondateurs. Les prix s'entendent hors taxes.</div>
+  <div class="folio"><span>Outsee · Plaquette établissements</span><span>11</span></div>
+</section>
+
+<!-- ══════════ 12 · Compris / en plus ══════════ -->
+<section class="page">
+  <div class="kicker">Sans surprise</div>
+  <h2>Ce qui est compris, <em>ce qui se paie en plus.</em></h2>
+  <div style="display:flex; gap:11mm; margin-top:4mm;">
+    <div style="flex:1;">
+      <table>
+        <tr><th>Dans votre abonnement</th><th>Si vous dépassez</th></tr>
+        <tr><td><b>Un quota d'événements par mois</b> selon la formule (4 à 15)</td><td><b>9 € HT</b> par événement supplémentaire</td></tr>
+        <tr><td><b>Offre flash</b> : 1 par mois (Fondateur, Premium)</td><td>Non disponible au-delà : elle ne s'achète pas</td></tr>
+        <tr><td><b>Mise en avant offerte</b> : 1 Coup de projecteur par mois (Premium)</td><td><b>70 €</b> le Coup de projecteur, <b>350 €</b> le Top du fil</td></tr>
+        <tr><td>Page établissement, photos, tableau de bord, scan, rappel</td><td>—</td></tr>
+      </table>
+      <div class="carte clair" style="margin-top:5mm;"><h3>Vous le voyez avant, vous le confirmez</h3>
+        <p>Rien n'est facturé sans que vous ayez vu le prix et confirmé au moment de publier. Au-delà de votre quota, un bandeau vous le dit et la publication attend votre case de confirmation.</p></div>
+      <div class="carte" style="margin-top:4mm;"><h3>Les règles du quota</h3>
+        <p>Le mois est celui du calendrier, et c'est la date de publication qui compte. Supprimer un événement ne rend pas le quota : ce qui a été publié est compté, et ce qui a été acheté reste acheté.</p></div>
+    </div>
+    <div style="width:96mm;">
+      <div class="carte">
+        <div class="kicker" style="margin-bottom:2mm;">Exemple · formule Essentiel</div>
+        <h3 style="font-family:var(--font-display); letter-spacing:-.03em; font-size:11.5pt;">Un mois chargé</h3>
+        <table style="margin-top:2mm;">
+          <tr><td>Abonnement Essentiel</td><td style="text-align:right;"><b>49,99 €</b></td></tr>
+          <tr><td>8 événements publiés : 6 compris, <b>2 en supplément</b> (2 × 9 €)</td><td style="text-align:right;"><b>18,00 €</b></td></tr>
+          <tr><td>1 Coup de projecteur</td><td style="text-align:right;"><b>70,00 €</b></td></tr>
+          <tr><td style="border-bottom:0;"><b>Total HT du mois</b></td><td style="text-align:right; border-bottom:0; color:var(--accent);"><b>137,99 €</b></td></tr>
+        </table>
+        <p class="note" style="margin-top:2.4mm;">Dans l'application, l'écran « Mon mois » affiche en permanence la ligne « À payer en plus ce mois-ci » : vous n'avez pas de calcul à faire.</p>
+      </div>
+      <div class="carte" style="margin-top:4mm;"><h3>Changer de formule</h3>
+        <p>Une fois par mois. La période d'essai offerte ne s'accorde qu'à la première souscription.</p></div>
+    </div>
+  </div>
+  <div class="folio"><span>Outsee · Plaquette établissements</span><span>12</span></div>
+</section>
+
+<!-- ══════════ 13 · Offre fondateur ══════════ -->
+<section class="page accent">
+  <div class="kicker">L'offre de lancement</div>
+  <h2>Partenaire <em>fondateur.</em></h2>
+  <div style="display:flex; gap:14mm; margin-top:3mm;">
+    <div style="flex:1;">
+      <p class="lede" style="font-size:10.8pt;">Outsee démarre. Nous ne vous vendons pas une audience déjà constituée : nous la construisons, établissement par établissement, à Clermont-Ferrand. Les premiers partenaires ne paient pas pour de la visibilité — ils en obtiennent, parce qu'ils sont les seuls sur la carte.</p>
+      <ul class="liste" style="margin-top:6mm;">
+        <li><strong>0 € pendant 3 mois</strong>, avec 8 événements par mois.</li>
+        <li>Puis <strong>39 € HT par mois, tarif gelé</strong> tant que votre abonnement n'est pas interrompu.</li>
+        <li>6 événements par mois après la période offerte, 1 offre flash par mois.</li>
+        <li>Page établissement avec photos, tableau de bord, scan des pass, rappel de la veille.</li>
+        <li>Aucun engagement de durée. Aucune exclusivité : Outsee ne vous interdit rien.</li>
+      </ul>
+    </div>
+    <div style="width:84mm;">
+      <div style="background:#fff; color:var(--noir); border-radius:6mm; padding:8mm 7mm;">
+        <div style="font-family:var(--font-mono); font-size:6.6pt; letter-spacing:.16em; text-transform:uppercase; color:var(--gris);">Places restantes</div>
+        <div style="font-family:var(--font-display); font-weight:800; font-size:44pt; letter-spacing:-.05em; color:var(--accent); line-height:1; margin:2mm 0;">15</div>
+        <div style="font-size:9pt; color:var(--gris-fonce);">places fondateur au total, jusqu'au <strong style="color:var(--noir);">31 décembre 2026</strong> — ou jusqu'à la dernière place.</div>
+        <div style="border-top:1px solid var(--line-2); margin-top:5mm; padding-top:4mm; font-size:8.4pt; color:var(--gris-fonce);">La rareté est réelle : la seizième signature n'est pas possible, et l'offre ferme à la date annoncée. Le tarif fondateur est réservé à la première souscription.</div>
+      </div>
+    </div>
+  </div>
+  <div class="folio"><span>Outsee · Plaquette établissements</span><span>13</span></div>
+</section>
+
+<!-- ══════════ 14 · Mise en route ══════════ -->
+<section class="page">
+  <div style="display:flex; gap:16mm;">
+    <div style="flex:1;">
+      <div class="kicker">Mise en route</div>
+      <h2>De l'inscription<br><em>à votre première soirée.</em></h2>
+      <div class="fil-vertical" style="margin-top:6mm;">
+        <div class="etape"><h3>1 · Vous créez votre compte</h3><p>Depuis l'application : nom, type d'établissement, ville. Votre adresse et votre position sur la carte se règlent ensuite, avec vos photos.</p></div>
+        <div class="etape"><h3>2 · Votre type de compte est vérifié (BDE uniquement)</h3><p>Un BDE est validé par l'équipe Outsee avant de pouvoir choisir sa formule et publier. Vous voyez l'état de la demande dans l'application ; en cas de refus, la raison vous est donnée.</p></div>
+        <div class="etape"><h3>3 · Vous choisissez votre formule</h3><p>Elle est proposée selon votre type de compte. Aucune donnée bancaire n'est demandée dans l'application.</p></div>
+        <div class="etape"><h3>4 · Vous publiez une soirée test</h3><p>Vous la scannez à l'entrée, et vous regardez le chiffre : votre taux de présence. S'il ne vous convainc pas, il n'y a rien à résilier de lourd : vous arrêtez quand vous voulez.</p></div>
+      </div>
+    </div>
+    <div style="width:92mm; padding-top:12mm;">
+      <div class="carte"><div class="ico"><svg><use href="#i-lock"/></svg></div><h3>Vos données et celles des étudiants</h3>
+        <p>Les comptes étudiants restent chez Outsee : vous voyez les inscrits à vos soirées et des statistiques agrégées, pas un fichier d'adresses. Les mots de passe ne sont jamais lisibles, y compris par nous.</p></div>
+      <div class="carte" style="margin-top:4mm;"><div class="ico"><svg><use href="#i-check"/></svg></div><h3>Les mineurs</h3>
+        <p>La date de naissance est demandée à l'inscription et vérifiée par le serveur : un compte ne peut pas être créé avant 18 ans. Cela ne remplace pas votre contrôle à l'entrée, mais vous évite de voir arriver des lycéens envoyés par une application.</p></div>
+    </div>
+  </div>
+  <div class="folio"><span>Outsee · Plaquette établissements</span><span>14</span></div>
+</section>
+
+<!-- ══════════ 15 · Le terrain ══════════ -->
+<section class="page sombre">
+  <div class="kicker">Le terrain</div>
+  <h2>Clermont-Ferrand,<br><em>42 500 étudiants.</em></h2>
+  <div style="display:flex; gap:14mm; margin-top:5mm;">
+    <div style="flex:1;">
+      <p class="lede">L'UCA, SIGMA Clermont, l'INP, l'IFSI, Hesias et les autres. Une ville étudiante dense, où tout le monde se connaît — et où une soirée qui marche se sait en deux jours.</p>
+      <p style="margin-top:5mm;">À l'échelle du pays, 3 012 800 étudiants. Outsee commence par le bassin clermontois, parce qu'un réseau ne se construit pas partout à la fois.</p>
+      <p class="note" style="margin-top:7mm;">Sources : effectifs étudiants de l'agglomération clermontoise et effectifs nationaux de l'enseignement supérieur.</p>
+    </div>
+    <div style="width:96mm;">
+      <div class="carte sombre-c"><h3>Ce qu'il faut savoir</h3>
+        <p>Outsee démarre. L'audience se construit établissement par établissement, et c'est aussi pour cela que l'offre de lancement est ce qu'elle est : elle ne durera pas.</p>
+        <p style="margin-top:3mm;">Nous préférons vous le dire maintenant que vous le découvrir sur un mardi creux : le nombre d'étudiants inscrits à vos soirées dépendra aussi de ce que vous publiez, de votre offre et de la régularité de vos soirées.</p></div>
+    </div>
+  </div>
+  <div class="folio"><span>Outsee · Plaquette établissements</span><span>15</span></div>
+</section>
+
+<!-- ══════════ 16 · Questions ══════════ -->
+<section class="page">
+  <div class="kicker">Les questions qu'on nous pose</div>
+  <h2>Avant que vous ne <em>la posiez.</em></h2>
+  <div class="g3" style="margin-top:4mm; gap:5mm 6mm;">
+    <div class="carte" style="padding:4.6mm;"><h3>Suis-je obligé d'accorder une remise ?</h3><p>Non. Vous fixez ce que vous voulez, y compris rien du tout. Certaines soirées marchent sur l'événement seul — un blind test, un tournoi, un concert.</p></div>
+    <div class="carte" style="padding:4.6mm;"><h3>Combien de temps ça me prend ?</h3><p>Publier une soirée : deux minutes. Scanner les pass : le temps que les étudiants entrent. Aucun rapport à remplir, aucun rendez-vous mensuel.</p></div>
+    <div class="carte" style="padding:4.6mm;"><h3>Est-ce exclusif ?</h3><p>Non. Vous continuez vos affiches, votre Instagram, vos partenariats BDE. Outsee s'ajoute, ne remplace rien et ne vous interdit rien.</p></div>
+    <div class="carte" style="padding:4.6mm;"><h3>Et si personne ne vient ?</h3><p>Vous l'aurez su avant d'ouvrir : le compteur d'inscrits est visible en direct. Une soirée qui ne prend pas peut être modifiée ou annulée jusqu'à la dernière minute.</p></div>
+    <div class="carte" style="padding:4.6mm;"><h3>Et si je dépasse mon quota ?</h3><p>Vous pouvez publier : l'événement est un supplément à 9 € HT, annoncé avant la publication et confirmé par vous. Vous ne payez jamais sans l'avoir vu.</p></div>
+    <div class="carte" style="padding:4.6mm;"><h3>Puis-je arrêter ?</h3><p>Oui, au mois, par simple message. Il n'y a pas d'engagement de durée.</p></div>
+    <div class="carte" style="padding:4.6mm;"><h3>Que deviennent les données des étudiants ?</h3><p>Elles restent chez Outsee. Vous voyez les inscrits à vos soirées et des statistiques agrégées. Vous ne récupérez pas de fichier d'adresses.</p></div>
+    <div class="carte" style="padding:4.6mm;"><h3>Je gère un club sportif : suis-je concerné ?</h3><p>Oui, avec votre propre espace : événements sportifs, terrains, créneaux, parties à compléter. Les joueurs règlent leurs terrains chez vous, sans commission.</p></div>
+    <div class="carte" style="padding:4.6mm;"><h3>Je suis un BDE : que se passe-t-il à l'inscription ?</h3><p>Votre compte est validé par l'équipe avant de pouvoir publier. Dès qu'il l'est, vous choisissez la formule BDE à 25 € HT par mois.</p></div>
+  </div>
+  <div class="folio"><span>Outsee · Plaquette établissements</span><span>16</span></div>
+</section>
+
+<!-- ══════════ 17 · Prochaine étape ══════════ -->
+<section class="page sombre" style="display:flex; flex-direction:column;">
+  <div class="logo" style="color:var(--bg);"><svg style="color:#1D55F0"><use href="#i-logo"/></svg><span>Outs<b>ee</b> <i>pro</i></span></div>
+  <div style="margin-top:12mm; display:flex; gap:16mm;">
+    <div style="flex:1;">
+      <div class="kicker">La prochaine étape</div>
+      <h2 style="font-size:28pt; margin-bottom:6mm;">Une soirée test,<br><em>sans engagement.</em></h2>
+      <p class="lede" style="max-width:140mm;">On choisit ensemble une de vos soirées creuses — un mardi, un mercredi — et on la publie. Vous scannez les pass à l'entrée, et vous regardez le chiffre.</p>
+      <div class="g3" style="margin-top:9mm; gap:5mm;">
+        <div><div class="kicker" style="margin-bottom:2mm;">Cette semaine</div><p>Vingt minutes ensemble : on crée votre établissement, vos photos, votre première soirée.</p></div>
+        <div><div class="kicker" style="margin-bottom:2mm;">La semaine suivante</div><p>Vous regardez le compteur monter, vous scannez les pass à l'entrée.</p></div>
+        <div><div class="kicker" style="margin-bottom:2mm;">Le lendemain</div><p>Vous avez un taux de présence. À vous de dire si ça valait le coup.</p></div>
+      </div>
+    </div>
+    <div style="width:78mm;">
+      <div style="border:1.5px dashed rgba(245,241,232,.4); border-radius:5mm; padding:7mm 6mm;">
+        <div class="kicker" style="margin-bottom:3mm;">Votre contact</div>
+        <div style="font-family:var(--font-display); font-weight:800; font-size:15pt; letter-spacing:-.03em; color:var(--bg);">Arthur Gramond</div>
+        <div style="margin-top:5mm; display:flex; flex-direction:column; gap:3mm; font-size:9pt; color:rgba(245,241,232,.55);">
+          <div style="border-bottom:1px dashed rgba(245,241,232,.3); padding-bottom:1.6mm;">téléphone — à compléter</div>
+          <div style="border-bottom:1px dashed rgba(245,241,232,.3); padding-bottom:1.6mm;">adresse e-mail — à compléter</div>
+          <div style="border-bottom:1px dashed rgba(245,241,232,.3); padding-bottom:1.6mm;">adresse du site — à compléter</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="folio"><span>Outsee · Clermont-Ferrand · Novembre 2026</span><span>17</span></div>
+</section>
+
+<script>
+/* apercu-page : ?p=N n'affiche que la page N (contrôle visuel page par page) ; sans paramètre, rien ne change. */
+(function(){var m=location.search.match(/[?&]p=(\d+)/);if(!m)return;var n=+m[1];
+document.querySelectorAll('section.page').forEach(function(s,i){if(i+1!==n)s.style.display='none';});})();
+</script>
+</body>
+</html>
