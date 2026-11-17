@@ -12,6 +12,7 @@
  */
 require_once __DIR__ . '/../includes/site.php';
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/totp.php';
 
 if (!empty($_SESSION['user_id'])) {
     header('Location: ' . accueilSelonType($_SESSION['user_type'] ?? null));
@@ -27,8 +28,41 @@ unset($_SESSION['session_expiree']);
 
 $ip = ipClient();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// Double authentification des administrateurs (includes/totp.php) : le mot de
+// passe a été accepté, il reste à saisir le code. L'identité attend dans la
+// session, cinq minutes au plus — jamais dans la page.
+$enAttente = $_SESSION['totp_attente'] ?? null;
+if (is_array($enAttente) && time() - (int) ($enAttente['a'] ?? 0) > 300) {
+    unset($_SESSION['totp_attente']);
+    $enAttente = null;
+}
+$etapeCode = false;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && is_array($enAttente) && isset($_POST['code_totp'])) {
     csrfVerify();
+    $etapeCode = true;
+    $cleLimite = 'totp:' . (int) $enAttente['id'];
+
+    if (isRateLimited($pdo, $ip, 5, 900, $cleLimite)) {
+        $erreur = 'Trop de tentatives. Réessaie dans quinze minutes.';
+    } elseif (!totpAccepterConnexion($pdo, (int) $enAttente['id'], (string) $_POST['code_totp'])) {
+        recordLoginAttempt($pdo, $ip, $cleLimite);
+        $erreur = 'Code de vérification incorrect.';
+    } else {
+        clearLoginAttempts($pdo, $ip, $cleLimite);
+        $stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
+        $stmt->execute([(int) $enAttente['id']]);
+        $user = $stmt->fetch();
+        unset($_SESSION['totp_attente']);
+
+        if ($user && $user['type'] === 'admin') {
+            ouvrirSessionWeb($user);
+        }
+        $etapeCode = false;
+    }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrfVerify();
+    unset($_SESSION['totp_attente']);
 
     $email = trim((string) ($_POST['email'] ?? ''));
     $pass  = (string) ($_POST['password'] ?? '');
@@ -59,15 +93,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
 
-            session_regenerate_id(true);
-            $_SESSION['user_id']     = (int) $user['id'];
-            $_SESSION['user_prenom'] = $user['prenom'];
-            $_SESSION['user_nom']    = $user['nom'];
-            $_SESSION['user_type']   = $user['type'];
-            $_SESSION['user_ecole']  = $user['ecole'];
-
-            header('Location: ' . accueilSelonType($user['type']));
-            exit;
+            if ($user['type'] === 'admin' && totpActif($pdo, (int) $user['id'])) {
+                $_SESSION['totp_attente'] = ['id' => (int) $user['id'], 'a' => time()];
+                $etapeCode = true;
+            } else {
+                ouvrirSessionWeb($user);
+            }
         }
     }
 }
@@ -96,6 +127,15 @@ siteDebut('Connexion — Outsee pro', ['description' => "Connectez-vous à l'esp
           <div class="message message--erreur" role="alert"><?= iconeSite('alerte') ?><span><?= htmlspecialchars($erreur) ?></span></div>
         <?php endif; ?>
 
+        <?php if ($etapeCode): ?>
+        <div class="champ">
+          <label for="code_totp">Code de vérification</label>
+          <input type="text" id="code_totp" name="code_totp" inputmode="numeric" autocomplete="one-time-code" required autofocus
+                 placeholder="123456">
+          <span class="champ__aide">Le code à six chiffres de votre application d'authentification, ou un code de secours.</span>
+        </div>
+        <button type="submit" class="bouton bouton--plein bouton--grand bouton--bloc">Valider</button>
+        <?php else: ?>
         <div class="champ">
           <label for="email">E-mail</label>
           <input type="email" id="email" name="email" autocomplete="username" required autofocus
@@ -110,6 +150,7 @@ siteDebut('Connexion — Outsee pro', ['description' => "Connectez-vous à l'esp
         </div>
 
         <button type="submit" class="bouton bouton--plein bouton--grand bouton--bloc">Se connecter</button>
+        <?php endif; ?>
       </form>
 
       <p class="auth__bas">Pas encore de compte ? <a href="<?= htmlspecialchars(baseUrl('/auth/register.php'), ENT_QUOTES) ?>">Créer mon espace pro</a></p>
@@ -128,3 +169,24 @@ siteDebut('Connexion — Outsee pro', ['description' => "Connectez-vous à l'esp
   </aside>
 </div>
 <?php siteFin(); ?>
+<?php
+/**
+ * Ouvre la session web d'un établissement ou d'un administrateur, puis le
+ * renvoie vers son espace. Définie ici, après le flux : l'ordre du fichier
+ * montre que le renvoi des étudiants vers l'application précède toute
+ * ouverture de session (voir AccueilTest).
+ *
+ * @param array<string, mixed> $user
+ */
+function ouvrirSessionWeb(array $user): never
+{
+    session_regenerate_id(true);
+    $_SESSION['user_id']     = (int) $user['id'];
+    $_SESSION['user_prenom'] = $user['prenom'];
+    $_SESSION['user_nom']    = $user['nom'];
+    $_SESSION['user_type']   = $user['type'];
+    $_SESSION['user_ecole']  = $user['ecole'];
+
+    header('Location: ' . accueilSelonType($user['type']));
+    exit;
+}

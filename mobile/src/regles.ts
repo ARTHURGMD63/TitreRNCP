@@ -17,6 +17,8 @@
 export function messageConnexion(erreur: { code: string; message: string } | null): string {
   if (!erreur) return 'Connexion impossible.';
   if (erreur.code === 'identifiants') return 'Email ou mot de passe incorrect.';
+  if (erreur.code === 'totp_requis') return "Saisis le code de vérification de ton application d'authentification.";
+  if (erreur.code === 'totp_invalide') return 'Code de vérification incorrect.';
   if (erreur.code === 'trop_de_tentatives') return 'Trop de tentatives. Réessaye dans 15 minutes.';
   return erreur.message;
 }

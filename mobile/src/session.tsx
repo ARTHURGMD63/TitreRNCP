@@ -29,7 +29,7 @@ type EtatSession = {
   enCours: boolean;
   /** Vrai juste après une inscription : l'accueil (onboarding) s'affiche. */
   nouveau: boolean;
-  connexion: (email: string, motDePasse: string) => Promise<void>;
+  connexion: (email: string, motDePasse: string, codeTotp?: string) => Promise<void>;
   inscription: (champs: Record<string, unknown>) => Promise<void>;
   terminerAccueil: () => void;
   /** Après « Enregistrer les modifications » : photo, école, promo. */
@@ -125,10 +125,10 @@ export function FournisseurSession({ children }: { children: React.ReactNode }) 
       enCours,
       nouveau,
 
-      async connexion(email, motDePasse) {
+      async connexion(email, motDePasse, codeTotp) {
         setEnCours(true);
         try {
-          const rep = await api.connexion(email.trim(), motDePasse, nomAppareil());
+          const rep = await api.connexion(email.trim(), motDePasse, nomAppareil(), codeTotp);
           await ecrireJeton(rep.token);
           setJeton(rep.token);
           setProfil(rep.utilisateur);
