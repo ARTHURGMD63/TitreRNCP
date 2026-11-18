@@ -18,7 +18,7 @@ import type { Creneau, EvenementSport, JoueurCreneau } from '../api';
 import { FORMATS_SPORT, NIVEAUX_SQUAD, SPORTS } from '../catalogue';
 import { dateFr, majuscules } from '../format';
 import { formatEuros, libellePlaces, prixParJoueur } from '../regles';
-import { fs, rayon, sans, teintes, taille } from '../theme';
+import { espace, fs, rayon, sans, taille, teintes } from '../theme';
 import { useTheme } from '../useTheme';
 import { PressableAnime } from './Animations';
 import { BoutonAction, Pastille, teinteAvatar } from './Design';
@@ -113,7 +113,7 @@ function CadreCarte({ children, onPress, libelleAcces }: { children: React.React
       onPress={onPress}
       accessibilityRole={onPress ? 'link' : undefined}
       accessibilityLabel={libelleAcces}
-      style={{ borderRadius: rayon.carte, padding: 14, marginBottom: 16, backgroundColor: c.blanc, gap: 8 }}
+      style={{ borderRadius: rayon.carte, padding: espace.carte, marginBottom: espace.entreCartes, backgroundColor: c.blanc, gap: espace.ecart }}
     >
       {children}
     </Pressable>
@@ -222,7 +222,7 @@ export function CarteEvenementSport({ ev, onPress }: { ev: EvenementSport; onPre
 export function VideSport({ titre, texte }: { titre: string; texte?: string }) {
   const { c } = useTheme();
   return (
-    <View style={{ alignItems: 'center', paddingVertical: 32, paddingHorizontal: 20, backgroundColor: c.blanc, borderRadius: rayon.carte, marginBottom: 16 }}>
+    <View style={{ alignItems: 'center', ...espace.vide, backgroundColor: c.blanc, borderRadius: rayon.carte, marginBottom: espace.entreCartes }}>
       <View style={{ marginBottom: 12 }}><Icone nom="trophee" taille={32} couleur={c.gris} /></View>
       <T taille={fs[5] + 1} poids={700} style={{ textAlign: 'center' }}>{titre}</T>
       {texte ? <T taille={fs[4]} couleur={c.gris} style={{ marginTop: 6, textAlign: 'center' }}>{texte}</T> : null}

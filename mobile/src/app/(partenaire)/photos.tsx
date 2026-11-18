@@ -21,7 +21,7 @@ import { T, TitreEcran } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
 import { useJeton } from '../../session';
-import { rayon, fs } from '../../theme';
+import { espace, fs, rayon } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 export default function PhotosPartenaire() {
@@ -132,7 +132,7 @@ export default function PhotosPartenaire() {
         </View>
 
         {photos.length === 0 ? (
-          <View style={{ alignItems: 'center', paddingVertical: 36, backgroundColor: c.blanc, borderRadius: rayon.carte }}>
+          <View style={{ alignItems: 'center', ...espace.vide, backgroundColor: c.blanc, borderRadius: rayon.carte }}>
             <Icone nom="image" taille={32} couleur={c.gris} />
             <T taille={fs[4]} couleur={c.gris} style={{ marginTop: 12 }}>Aucune photo pour le moment.</T>
           </View>

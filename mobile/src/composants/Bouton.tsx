@@ -10,15 +10,23 @@
  *  - sport     : l'action principale de l'univers sport (squads, terrains), rouge Sport ;
  *  - alerte    : « Supprimer définitivement », en alerte vive.
  *
- * Désactivé, un bouton plein sort de la couleur (« Inscrit », « Complet ») :
- * une couleur vive à demi effacée donne un aplat sale, sans contraste — même
- * règle que le site.
+ * Les états, les mêmes pour tous les boutons de l'application (Bouton,
+ * BoutonAction, BoutonContour, depuis le 2026-11-18) :
+ *
+ *  - appui      : réduction à 0,97 (PressableAnime) ;
+ *  - chargement : les couleurs restent, l'icône cède la place à une roue et
+ *                 le libellé reste — le bouton ne change pas de largeur ;
+ *  - fait       : l'action est acquise (« Inscrit ») : il garde sa couleur,
+ *                 porte la coche et ne répond plus ;
+ *  - désactivé  : il sort de la couleur (surface 2, encre gris foncé) quelle
+ *                 que soit la variante. Plus d'opacité réduite : un texte à
+ *                 demi effacé tombait sous 4,5:1.
  */
 
 import React from 'react';
 import { ActivityIndicator, Text, View, type StyleProp, type ViewStyle, type TextStyle } from 'react-native';
 
-import { fixe, fs, rayon, sans, toucheMin } from '../theme';
+import { fixe, fs, hauteurBouton, rayon, sans } from '../theme';
 import { useTheme } from '../useTheme';
 import { PressableAnime } from './Animations';
 import { Icone, type NomIcone } from './Icone';
@@ -32,6 +40,8 @@ type Props = {
   plein?: boolean;
   desactive?: boolean;
   chargement?: boolean;
+  /** L'action est acquise (« Inscrit ») : couleur gardée, coche, sans réponse à l'appui. */
+  fait?: boolean;
   icone?: NomIcone;
   /** Côté de l'icône ; « Suivant → » la porte à droite. */
   iconeADroite?: boolean;
@@ -46,11 +56,11 @@ type Props = {
 };
 
 export function Bouton({
-  libelle, onPress, variante = 'primaire', plein, desactive, chargement, icone, iconeADroite,
+  libelle, onPress, variante = 'primaire', plein, desactive, chargement, fait, icone, iconeADroite,
   style, styleTexte, taillePolice = fs[4] + 1, accessibilityLabel, accent, testID,
 }: Props) {
   const { c } = useTheme();
-  const inactif = desactive || chargement;
+  const inactif = desactive || chargement || fait;
 
   let fond = 'transparent';
   let encre = c.noir;
@@ -67,15 +77,18 @@ export function Bouton({
     case 'texte': fond = 'transparent'; encre = c.surRougeClair; break;
   }
 
-  if (desactive && !chargement) {
-    if (variante === 'primaire' || variante === 'sport' || variante === 'alerte' || variante === 'encre') {
-      fond = c.surface2; encre = c.grisFonce; filet = c.grisClair;
-    } else if (variante === 'basalte') {
+  if (desactive && !chargement && !fait) {
+    if (variante === 'basalte') {
+      // Posé sur un aplat vif : un voile plutôt que la surface claire.
       fond = 'rgba(17,17,22,0.14)'; encre = fixe.surAccent; filet = 'transparent';
+    } else if (variante === 'texte') {
+      encre = c.gris;
+    } else {
+      fond = c.surface2; encre = c.grisFonce; filet = c.surface2;
     }
   }
 
-  const opaciteDesactive = desactive && (variante === 'contour' || variante === 'texte') ? 0.5 : 1;
+  const iconeAffichee = fait ? 'check' : icone;
 
   return (
     <PressableAnime
@@ -84,30 +97,27 @@ export function Bouton({
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? libelle}
-      accessibilityState={{ disabled: !!inactif, busy: !!chargement }}
+      accessibilityState={{ disabled: !!inactif, busy: !!chargement, checked: fait || undefined }}
       style={[
         {
           flexDirection: iconeADroite ? 'row-reverse' : 'row',
           alignItems: 'center', justifyContent: 'center', gap: 8,
           paddingVertical: 10, paddingHorizontal: variante === 'texte' ? 4 : 18,
-          minHeight: plein ? 46 : toucheMin,
-          borderRadius: rayon.md, borderWidth: 1.5, borderColor: filet, backgroundColor: fond,
-          opacity: opaciteDesactive,
+          minHeight: plein ? hauteurBouton.plein : hauteurBouton.normal,
+          borderRadius: rayon.bouton, borderWidth: 1.5, borderColor: filet, backgroundColor: fond,
         },
         plein ? { alignSelf: 'stretch' } : { alignSelf: 'flex-start' },
         style,
       ]}
     >
       {chargement ? (
-        <ActivityIndicator size="small" color={encre} />
-      ) : (
-        <>
-          {icone ? <Icone nom={icone} taille={16} couleur={encre} /> : null}
-          <Text numberOfLines={1} style={[{ fontFamily: sans(700), fontSize: taillePolice, color: encre }, styleTexte]}>
-            {libelle}
-          </Text>
-        </>
-      )}
+        <ActivityIndicator size="small" color={encre} style={{ width: 16, height: 16 }} />
+      ) : iconeAffichee ? (
+        <Icone nom={iconeAffichee} taille={16} couleur={encre} trait={fait ? 2.5 : undefined} />
+      ) : null}
+      <Text numberOfLines={1} style={[{ fontFamily: sans(700), fontSize: taillePolice, color: encre }, styleTexte]}>
+        {libelle}
+      </Text>
     </PressableAnime>
   );
 }

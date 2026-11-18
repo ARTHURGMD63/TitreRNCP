@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { Image, Pressable, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Image, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { router } from 'expo-router';
 
 import { encreSur, fixe, fs, lsEm, mono, police, rayon, sans, toucheMin } from '../theme';
@@ -145,15 +145,15 @@ export function Segments<K extends string>({ options, valeur, onChange, style }:
       {options.map((o) => {
         const actif = o.code === valeur;
         return (
-          <Pressable
+          <PressableAnime
             key={o.code}
             onPress={() => onChange(o.code)}
             accessibilityRole="tab"
             accessibilityState={{ selected: actif }}
             style={{ flex: 1, minHeight: toucheMin, paddingVertical: 12, paddingHorizontal: 6, borderRadius: rayon.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: actif ? c.noir : 'transparent' }}
           >
-            <Text numberOfLines={1} style={{ fontFamily: sans(600), fontSize: fs[4], color: actif ? c.bg : c.gris }}>{o.libelle}</Text>
-          </Pressable>
+            <Text numberOfLines={1} style={{ fontFamily: sans(600), fontSize: fs[4], color: actif ? c.surEncre : c.grisFonce }}>{o.libelle}</Text>
+          </PressableAnime>
         );
       })}
     </View>
@@ -205,7 +205,7 @@ export function BoutonRetour({ media, vers, style, libelle = 'Retour' }: {
 }) {
   const { c } = useTheme();
   return (
-    <Pressable
+    <PressableAnime
       onPress={() => (vers ? router.navigate(vers as never) : router.canGoBack() ? router.back() : router.navigate('/'))}
       accessibilityRole="button"
       accessibilityLabel={libelle}
@@ -217,7 +217,7 @@ export function BoutonRetour({ media, vers, style, libelle = 'Retour' }: {
       ]}
     >
       <Icone nom="chevron-g" taille={20} couleur={media ? fixe.craie : c.noir} />
-    </Pressable>
+    </PressableAnime>
   );
 }
 

@@ -11,18 +11,18 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Animated, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Animated, Easing, Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 
 import { actions, ErreurApi, type Evenement } from '../api';
-import { LIBELLES_TYPE } from '../catalogue';
+import { ICONES_TYPE, LIBELLES_TYPE } from '../catalogue';
 import { dateFr, heure, ts } from '../format';
 import { prixEvenement } from '../regles';
 import { useJeton } from '../session';
-import { fixe, fs, rayon, sans } from '../theme';
+import { couleursCategorie, espace, fixe, fs, rayon, sans } from '../theme';
 import { useTheme } from '../useTheme';
-import { PressableAnime } from './Animations';
-import { BoutonAction, BoutonContour, CarteRefonte, Pastille, QuiYVa, useRubrique } from './Design';
+import { PressableAnime, useMouvementReduit } from './Animations';
+import { BoutonAction, BoutonContour, CarreIcone, CarteRefonte, Pastille, QuiYVa, useRubrique } from './Design';
 import { Icone } from './Icone';
 import { T } from './Texte';
 import { useToast } from './Toast';
@@ -48,19 +48,26 @@ function useMaintenant(actif = true, jusqua?: number) {
   return maintenant;
 }
 
-/** Un point qui respire (opacité 1 → 0,25 → 1), pour dire « ça se passe maintenant ». */
+/**
+ * Un point qui respire (opacité 1 → 0,4 → 1, en sinus sur 1,8 s), pour dire
+ * « ça se passe maintenant ». Le battement linéaire de 1,3 s clignotait
+ * plus qu'il ne respirait ; immobile en mouvement réduit.
+ */
 function usePouls() {
+  const reduit = useMouvementReduit();
   const [opacite] = useState(() => new Animated.Value(1));
   useEffect(() => {
+    if (reduit) { opacite.setValue(1); return; }
+    const courbe = Easing.inOut(Easing.sin);
     const boucle = Animated.loop(
       Animated.sequence([
-        Animated.timing(opacite, { toValue: 0.25, duration: 650, useNativeDriver: true }),
-        Animated.timing(opacite, { toValue: 1, duration: 650, useNativeDriver: true }),
+        Animated.timing(opacite, { toValue: 0.4, duration: 900, easing: courbe, useNativeDriver: true }),
+        Animated.timing(opacite, { toValue: 1, duration: 900, easing: courbe, useNativeDriver: true }),
       ])
     );
     boucle.start();
     return () => boucle.stop();
-  }, [opacite]);
+  }, [opacite, reduit]);
   return opacite;
 }
 
@@ -74,7 +81,7 @@ export function PastilleEnCours({ quoi = 'Soirée', surAccent, petite }: { quoi?
   return (
     <View
       accessible accessibilityLabel={`${quoi} en cours`}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: petite ? 3 : 5, paddingHorizontal: petite ? 8 : 10, borderRadius: petite ? 8 : rayon.sm, backgroundColor: surAccent ? 'rgba(255,255,255,0.18)' : c.surface2 }}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: petite ? 3 : 5, paddingHorizontal: petite ? 8 : 10, borderRadius: petite ? 8 : rayon.sm, backgroundColor: surAccent ? fixe.voileAccent : c.surface2 }}
     >
       <Animated.View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: fixe.enCours, opacity: opacite }} />
       <Text style={{ fontFamily: sans(500), fontSize: petite ? fs[2] : fs[3], color: surAccent ? '#FFFFFF' : c.noir }}>En cours</Text>
@@ -88,7 +95,7 @@ export function PastilleAVenir({ quoi = 'Soirée', surAccent, petite }: { quoi?:
   return (
     <View
       accessible accessibilityLabel={`${quoi} à venir`}
-      style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: petite ? 3 : 5, paddingHorizontal: petite ? 8 : 10, borderRadius: petite ? 8 : rayon.sm, backgroundColor: surAccent ? 'rgba(255,255,255,0.18)' : c.surface2 }}
+      style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: petite ? 3 : 5, paddingHorizontal: petite ? 8 : 10, borderRadius: petite ? 8 : rayon.sm, backgroundColor: surAccent ? fixe.voileAccent : c.surface2 }}
     >
       <Text style={{ fontFamily: sans(500), fontSize: petite ? fs[2] : fs[3], color: surAccent ? '#FFFFFF' : c.noir }}>À venir</Text>
     </View>
@@ -150,24 +157,23 @@ function BoutonSuivreLieu({ etabId, suivi, media }: { etabId: number; suivi: boo
   const abonne = etat === 'accepted';
   const fond = abonne ? (media ? '#FFFFFF' : c.noir) : 'transparent';
   const encre = abonne ? (media ? '#111116' : c.surEncre) : media ? '#FFFFFF' : c.noir;
-  const filet = abonne ? fond : media ? 'rgba(255,255,255,0.45)' : c.line2;
+  const filet = abonne ? fond : media ? fixe.filetMedia : c.line2;
 
   return (
     <PressableAnime
       onPress={basculer}
       accessibilityRole="button"
       accessibilityLabel={abonne ? 'Ne plus suivre ce lieu' : 'Suivre ce lieu'}
+      accessibilityState={{ busy: attente, checked: abonne }}
+      disabled={attente}
       hitSlop={8}
-      style={{ flexShrink: 0, flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: filet, borderRadius: 8, minHeight: 28, paddingHorizontal: 10, backgroundColor: fond }}
+      style={{ flexShrink: 0, flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1.5, borderColor: filet, borderRadius: 8, minHeight: 30, paddingHorizontal: 10, backgroundColor: fond }}
     >
-      {attente ? (
-        <Text style={{ fontFamily: sans(600), fontSize: fs[2], color: encre }}>…</Text>
-      ) : (
-        <>
-          {abonne ? <Icone nom="check" taille={12} couleur={encre} trait={2.5} /> : null}
-          <Text style={{ fontFamily: sans(600), fontSize: fs[2], color: encre }}>{abonne ? 'Suivi' : '+ Suivre'}</Text>
-        </>
-      )}
+      {/* Même règle que les autres boutons : en attente, la roue prend la
+          place de l'icône et le libellé reste, la largeur ne bouge pas. */}
+      {attente ? <ActivityIndicator size="small" color={encre} style={{ width: 12, height: 12, transform: [{ scale: 0.7 }] }} />
+        : abonne ? <Icone nom="check" taille={12} couleur={encre} trait={2.5} /> : null}
+      <Text style={{ fontFamily: sans(600), fontSize: fs[2], color: encre }}>{abonne ? 'Suivi' : '+ Suivre'}</Text>
     </PressableAnime>
   );
 }
@@ -217,7 +223,10 @@ function useInscription(ev: Evenement) {
  * Partagé avec CarteCulture.
  */
 export const TITRE = 18;
-export const STYLE_CARTE = { padding: 14, gap: 8, borderRadius: 20 } as const;
+export const STYLE_CARTE = { padding: espace.carte, gap: espace.ecart, borderRadius: rayon.carte } as const;
+
+/** Le carré de catégorie des cartes, à gauche du titre (36 px, comme les chips du hub en plus grand). */
+export const CARRE_CATEGORIE = 36;
 
 /**
  *  - en haut : pastille de statut (« En cours », « À venir », ou le
@@ -251,7 +260,8 @@ function Carte({ ev, accent, premiere, flash, onInviter }: { ev: Evenement; acce
 
   const encre = accent ? '#FFFFFF' : c.noir;
   const secondaire = accent ? bleu.surAccent2 : c.gris;
-  const voile = 'rgba(255,255,255,0.18)';
+  const voile = fixe.voileAccent;
+  const teinteType = couleursCategorie[ev.type] ?? bleu.accent;
   const plage = `${heure(ev.date_heure)}${ev.date_fin ? ` – ${heure(ev.date_fin)}` : ''}`;
   const dateType = `${dateFr(ev.date_heure, 'D j M')} · ${plage} · ${LIBELLES_TYPE[ev.type] ?? ev.type}`;
   const surtitre = ev.style_musique ? libelleStyle(ev.style_musique) : LIBELLES_TYPE[ev.type] ?? ev.type;
@@ -278,9 +288,16 @@ function Carte({ ev, accent, premiere, flash, onInviter }: { ev: Evenement; acce
         {ev.sponsorise ? <Pastille petite libelle="Sponsorisé" fond={accent ? voile : c.surface2} encre={accent ? '#FFFFFF' : c.grisFonce} /> : null}
       </View>
 
-      <Pressable onPress={ouvrir} accessibilityRole="link" accessibilityHint="Ouvre la fiche de l'événement" style={{ gap: 1, marginTop: 2 }}>
-        <Text style={{ fontFamily: sans(600), fontSize: 10, letterSpacing: 0.06 * 10, textTransform: 'uppercase', color: secondaire }}>{surtitre}</Text>
-        <Text numberOfLines={2} style={{ fontFamily: sans(700), fontSize: TITRE, lineHeight: TITRE * 1.2, letterSpacing: -0.02 * TITRE, color: encre }}>{ev.titre}</Text>
+      {/* Le carré de catégorie, aux couleurs de la chip du hub : on relie la
+          soirée à son filtre d'un coup d'œil. Cerné de blanc sur l'accent. */}
+      <Pressable onPress={ouvrir} accessibilityRole="link" accessibilityHint="Ouvre la fiche de l'événement" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 2 }}>
+        <View style={accent ? { borderRadius: 16, borderWidth: 2, borderColor: 'rgba(255,255,255,0.9)' } : null}>
+          <CarreIcone icone={ICONES_TYPE[ev.type] ?? 'calendrier'} fond={teinteType} encre="#FFFFFF" taille={CARRE_CATEGORIE} />
+        </View>
+        <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
+          <Text numberOfLines={1} style={{ fontFamily: sans(600), fontSize: fs[1], letterSpacing: 0.06 * fs[1], textTransform: 'uppercase', color: secondaire }}>{surtitre}</Text>
+          <Text numberOfLines={2} style={{ fontFamily: sans(700), fontSize: TITRE, lineHeight: TITRE * 1.2, letterSpacing: -0.02 * TITRE, color: encre }}>{ev.titre}</Text>
+        </View>
       </Pressable>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>

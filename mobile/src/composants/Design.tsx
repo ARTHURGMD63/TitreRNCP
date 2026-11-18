@@ -8,9 +8,9 @@
  */
 
 import React from 'react';
-import { Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { fixe, fs, gutter, halo, rayon, sans, teintes, type Rubrique } from '../theme';
+import { espace, fixe, fs, gutter, halo, hauteurBouton, rayon, sans, teintes, type Rubrique } from '../theme';
 import { useTheme } from '../useTheme';
 import { Confettis, paletteConfettis, PressableAnime } from './Animations';
 import { Avatar } from './Elements';
@@ -141,6 +141,10 @@ export function Pastille({ libelle, fond, encre, point, icone, filet, grande, pe
  *
  * `confettis` : chaque nouvelle valeur (> 0) lance l'explosion depuis le
  * bouton — à n'incrémenter qu'après la réussite de l'action réelle.
+ *
+ * États (les mêmes que Bouton) : en chargement, la roue remplace l'icône
+ * dans le carré et le libellé reste ; désactivé, surface 2 et encre gris
+ * foncé, carré compris, sur une carte blanche comme sur une carte accent.
  */
 export function BoutonAction({ libelle, onPress, icone = 'chevron-d', surAccent, accent, fait, desactive, chargement, iconeADroite, confettis = 0, fin, style, accessibilityLabel, testID }: {
   /**
@@ -174,7 +178,8 @@ export function BoutonAction({ libelle, onPress, icone = 'chevron-d', surAccent,
     else { fond = accent; encre = '#FFFFFF'; carre = '#FFFFFF'; encreCarre = accent; }
   }
   const inactif = desactive || chargement;
-  const attenue = desactive && !fait;
+  const attenue = desactive && !fait && !chargement;
+  const hauteur = fin ? hauteurBouton.fin : hauteurBouton.normal;
   return (
     <View style={[fin ? { flexShrink: 1 } : { flex: 1 }, style]}>
       <PressableAnime
@@ -186,16 +191,19 @@ export function BoutonAction({ libelle, onPress, icone = 'chevron-d', surAccent,
         accessibilityState={{ disabled: !!inactif, busy: !!chargement, checked: fait }}
         style={{
           flexDirection: iconeADroite ? 'row-reverse' : 'row', alignItems: 'center', gap: fin ? 8 : 10,
-          minHeight: fin ? 40 : 44, padding: 5, paddingRight: iconeADroite ? 5 : fin ? 16 : 14, paddingLeft: iconeADroite ? 16 : 5,
-          borderRadius: fin ? rayon.sm : rayon.md, backgroundColor: attenue ? c.surface2 : fond,
-          borderWidth: fait && surAccent ? 0 : 0,
+          minHeight: hauteur, padding: 5, paddingRight: iconeADroite ? 5 : fin ? 16 : 14, paddingLeft: iconeADroite ? 16 : 5,
+          borderRadius: fin ? rayon.sm : rayon.bouton, backgroundColor: attenue ? c.surface2 : fond,
         }}
       >
-        <View style={{ width: fin ? 30 : 34, height: fin ? 30 : 34, borderRadius: fin ? 9 : 10, backgroundColor: attenue ? c.grisClair : carre, alignItems: 'center', justifyContent: 'center' }}>
-          <Icone nom={fait ? 'check' : icone} taille={fin ? 16 : 18} couleur={attenue ? c.gris : encreCarre} trait={2.5} />
+        <View style={{ width: hauteur - 10, height: hauteur - 10, borderRadius: fin ? 9 : 10, backgroundColor: attenue ? c.grisClair : carre, alignItems: 'center', justifyContent: 'center' }}>
+          {chargement ? (
+            <ActivityIndicator size="small" color={encreCarre} />
+          ) : (
+            <Icone nom={fait ? 'check' : icone} taille={fin ? 16 : 18} couleur={attenue ? c.grisFonce : encreCarre} trait={2.5} />
+          )}
         </View>
         <Text numberOfLines={1} style={{ ...(fin ? { flexShrink: 1 } : { flex: 1 }), fontFamily: sans(700), fontSize: fin ? fs[4] : fs[4] + 1, color: attenue ? c.grisFonce : encre }}>
-          {chargement ? '…' : libelle}
+          {libelle}
         </Text>
       </PressableAnime>
       <Confettis declencheur={confettis} couleurs={paletteConfettis(accent)} />
@@ -208,8 +216,9 @@ export function BoutonAction({ libelle, onPress, icone = 'chevron-d', surAccent,
  * `iconeSeule` : un carré de 40 px, le libellé ne servant qu'aux lecteurs
  * d'écran (cartes d'événement).
  */
-export function BoutonContour({ libelle, icone, onPress, surAccent, iconeSeule, style }: {
+export function BoutonContour({ libelle, icone, onPress, surAccent, iconeSeule, desactive, style }: {
   iconeSeule?: boolean;
+  desactive?: boolean;
   libelle: string;
   icone?: NomIcone;
   onPress: () => void;
@@ -217,16 +226,21 @@ export function BoutonContour({ libelle, icone, onPress, surAccent, iconeSeule, 
   style?: StyleProp<ViewStyle>;
 }) {
   const { c } = useTheme();
-  const encre = surAccent ? '#FFFFFF' : c.noir;
+  const encre = desactive ? c.grisFonce : surAccent ? '#FFFFFF' : c.noir;
+  const hauteur = iconeSeule ? hauteurBouton.fin : hauteurBouton.normal;
   return (
     <PressableAnime
       onPress={onPress}
+      disabled={desactive}
       accessibilityRole="button"
       accessibilityLabel={libelle}
+      accessibilityState={{ disabled: !!desactive }}
       style={[{
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-        minHeight: iconeSeule ? 40 : 44, width: iconeSeule ? 40 : undefined, paddingHorizontal: iconeSeule ? 0 : 14,
-        borderRadius: iconeSeule ? rayon.sm : rayon.md, borderWidth: 1.5, borderColor: surAccent ? 'rgba(255,255,255,0.45)' : c.line2,
+        minHeight: hauteur, width: iconeSeule ? hauteur : undefined, paddingHorizontal: iconeSeule ? 0 : 14,
+        borderRadius: iconeSeule ? rayon.sm : rayon.bouton, borderWidth: 1.5,
+        borderColor: desactive ? c.surface2 : surAccent ? fixe.filetMedia : c.line2,
+        backgroundColor: desactive ? c.surface2 : 'transparent',
       }, style]}
     >
       {icone ? <Icone nom={icone} taille={18} couleur={encre} /> : null}
@@ -316,7 +330,7 @@ export function CarteRefonte({ accent, children, style, rayonCarte = rayon.carte
   return (
     <View
       style={[
-        { backgroundColor: accent ?? c.blanc, borderRadius: rayonCarte, padding: 14, gap: 8, marginBottom: 16 },
+        { backgroundColor: accent ?? c.blanc, borderRadius: rayonCarte, padding: espace.carte, gap: espace.ecart, marginBottom: espace.entreCartes },
         accent ? halo(accent) : null,
         style,
       ]}
@@ -429,7 +443,7 @@ export function PanneauFiltres<K extends string>({ visible, onClose, section, op
       <PressableAnime
         onPress={() => { onAppliquer(brouillon); onClose(); }}
         accessibilityRole="button"
-        style={{ minHeight: 46, borderRadius: rayon.md, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}
+        style={{ minHeight: hauteurBouton.plein, borderRadius: rayon.bouton, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}
       >
         <Text style={{ fontFamily: sans(700), fontSize: fs[5] + 1, color: '#FFFFFF' }}>Appliquer</Text>
       </PressableAnime>

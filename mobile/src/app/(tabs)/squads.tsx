@@ -42,7 +42,7 @@ import { confirmer } from '../../confirmer';
 import { court, dateFr } from '../../format';
 import { libelleVisibilite, niveauCompatible } from '../../regles';
 import { useJeton } from '../../session';
-import { couleursCategorie, fs, gutter, rayon, sans, taille } from '../../theme';
+import { couleursCategorie, espace, fs, gutter, rayon, sans, taille } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 type Rubrique = 'parties' | 'terrains' | 'clubs' | 'abonnements';
@@ -125,7 +125,7 @@ function CarteSquad({ s, onGerer }: { s: Squad; onGerer: () => void }) {
   );
 
   return (
-    <View style={{ borderRadius: rayon.carte, padding: 14, marginBottom: 16, backgroundColor: c.blanc, gap: 8 }}>
+    <View style={{ borderRadius: rayon.carte, padding: espace.carte, marginBottom: espace.entreCartes, backgroundColor: c.blanc, gap: espace.ecart }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <Pastille libelle={NIVEAUX_SQUAD[s.niveau] ?? s.niveau} fond={sport.doux} encre={sport.texteDoux} />
         <Pastille libelle={dateFr(s.date_heure, 'D j M · H\\hi')} fond={c.noir} encre={c.surEncre} style={{ flexShrink: 1 }} />

@@ -36,7 +36,7 @@ import { confirmer } from '../../confirmer';
 import { dateFr } from '../../format';
 import { debutsCreneaux, formatEuros, joursRecurrents } from '../../regles';
 import { useJeton } from '../../session';
-import { fs, rayon } from '../../theme';
+import { espace, fs, rayon } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 const RECURRENCES = [
@@ -181,7 +181,7 @@ export default function Terrains() {
           </View>
         ) : (
           Object.entries(parJour).map(([jour, liste]) => (
-            <View key={jour} style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, paddingHorizontal: 18, paddingTop: 16, paddingBottom: 6, marginBottom: 12 }}>
+            <View key={jour} style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, paddingHorizontal: espace.carte, paddingTop: espace.carte, paddingBottom: 6, marginBottom: espace.entreCartes }}>
               <T taille={fs[5] + 1} poids={700} style={{ marginBottom: 8 }}>{dateFr(`${jour} 12:00:00`, 'l j F')}</T>
               {liste.map((cr) => <LigneCreneau key={cr.id} cr={cr} onToucher={() => toucherCreneau(cr)} />)}
             </View>
