@@ -62,4 +62,29 @@ final class RgpdTest extends TestCase
         $this->assertTrue(hachageDemonstration('$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'));
         $this->assertFalse(hachageDemonstration(password_hash('autre', PASSWORD_DEFAULT)));
     }
+
+    public function testLesComptesDeDemoSeRouvrentEnProductionAvecCOMPTES_DEMO(): void
+    {
+        $demo   = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi';
+        $avant  = [getenv('APP_ENV'), getenv('COMPTES_DEMO')];
+
+        try {
+            putenv('APP_ENV=production');
+            putenv('COMPTES_DEMO');
+            $this->assertTrue(hachageInterdit($demo), 'fermés par défaut en production');
+
+            putenv('COMPTES_DEMO=1');
+            $this->assertFalse(hachageInterdit($demo), 'rouverts par COMPTES_DEMO=1');
+
+            putenv('COMPTES_DEMO=0');
+            $this->assertTrue(hachageInterdit($demo), 'refermés par COMPTES_DEMO=0');
+
+            putenv('APP_ENV=development');
+            putenv('COMPTES_DEMO');
+            $this->assertFalse(hachageInterdit($demo), 'toujours ouverts hors production');
+        } finally {
+            putenv($avant[0] === false ? 'APP_ENV' : 'APP_ENV=' . $avant[0]);
+            putenv($avant[1] === false ? 'COMPTES_DEMO' : 'COMPTES_DEMO=' . $avant[1]);
+        }
+    }
 }
