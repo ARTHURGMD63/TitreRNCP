@@ -19,14 +19,14 @@ import { Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 
 import { api, ErreurApi, type EvenementCulture } from '../api';
-import { LIBELLES_CULTURE } from '../catalogue';
+import { COULEUR_CULTURE_REPLI, ICONES_CULTURE, LIBELLES_CULTURE } from '../catalogue';
 import { libelleBoutonCulture, libellePlaces, libellePrix, surPlusieursJours, type EtatInscriptionCulture } from '../culture';
 import { dateFr, majuscules, ts } from '../format';
 import { useJeton } from '../session';
-import { fs, lh, sans } from '../theme';
+import { couleursCategorie, fixe, fs, lh, sans } from '../theme';
 import { useTheme } from '../useTheme';
-import { PastilleAVenir, PastilleEnCours, STYLE_CARTE, TITRE } from './CarteEvenement';
-import { BoutonAction, BoutonContour, CarteRefonte, Pastille, QuiYVa, useRubrique } from './Design';
+import { CARRE_CATEGORIE, PastilleAVenir, PastilleEnCours, STYLE_CARTE, TITRE } from './CarteEvenement';
+import { BoutonAction, BoutonContour, CarreIcone, CarteRefonte, Pastille, QuiYVa, useRubrique } from './Design';
 import { Icone } from './Icone';
 import { T } from './Texte';
 import { useToast } from './Toast';
@@ -104,7 +104,7 @@ export function CarteCulture({ ev, onInviter, accent = false }: { ev: EvenementC
 
   const encre = accent ? '#FFFFFF' : c.noir;
   const secondaire = accent ? violet.surAccent2 : c.gris;
-  const voile = 'rgba(255,255,255,0.18)';
+  const voile = fixe.voileAccent;
 
   return (
     <CarteRefonte accent={accent ? violet.accent : undefined} style={STYLE_CARTE}>
@@ -116,9 +116,15 @@ export function CarteCulture({ ev, onInviter, accent = false }: { ev: EvenementC
         <Pastille petite libelle={libellePrix(ev.prix)} fond={accent ? '#FFFFFF' : c.noir} encre={accent ? '#111116' : c.surEncre} />
       </View>
 
-      <Pressable onPress={ouvrir} accessibilityRole="link" accessibilityHint="Ouvre la fiche de l'événement" style={{ gap: 1, marginTop: 2 }}>
-        <Text style={{ fontFamily: sans(600), fontSize: 10, letterSpacing: 0.06 * 10, textTransform: 'uppercase', color: secondaire }}>{etiquetteCulture(ev)}</Text>
-        <Text numberOfLines={2} style={{ fontFamily: sans(700), fontSize: TITRE, lineHeight: TITRE * 1.2, letterSpacing: -0.02 * TITRE, color: encre }}>{ev.titre}</Text>
+      {/* Même tête que la carte des soirées : carré de catégorie, surtitre, titre. */}
+      <Pressable onPress={ouvrir} accessibilityRole="link" accessibilityHint="Ouvre la fiche de l'événement" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 2 }}>
+        <View style={accent ? { borderRadius: 16, borderWidth: 2, borderColor: 'rgba(255,255,255,0.9)' } : null}>
+          <CarreIcone icone={ICONES_CULTURE[ev.categorie] ?? 'musee'} fond={couleursCategorie[ev.categorie] ?? COULEUR_CULTURE_REPLI} encre="#FFFFFF" taille={CARRE_CATEGORIE} />
+        </View>
+        <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
+          <Text numberOfLines={1} style={{ fontFamily: sans(600), fontSize: fs[1], letterSpacing: 0.06 * fs[1], textTransform: 'uppercase', color: secondaire }}>{etiquetteCulture(ev)}</Text>
+          <Text numberOfLines={2} style={{ fontFamily: sans(700), fontSize: TITRE, lineHeight: TITRE * 1.2, letterSpacing: -0.02 * TITRE, color: encre }}>{ev.titre}</Text>
+        </View>
       </Pressable>
 
       <Pressable onPress={ouvrir} style={{ gap: 3 }}>

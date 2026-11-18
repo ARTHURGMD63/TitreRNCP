@@ -1,28 +1,31 @@
 /**
  * La fiche d'une soirée — view_event.php.
  *
- * Le hero porte la photo du lieu sous un voile dégradé (ou, sans photo,
- * l'aplat lave d'un flash, ou la surface rayée de la maquette), le rond de
- * retour, « Partager », l'étiquette « BAR · JEU 12 MARS · TECHNO », le titre,
- * le lieu et la réduction en pilule. Puis la jauge d'inscription, la
+ * Le hero porte la photo du lieu sous un voile dégradé, sinon (depuis le
+ * 2026-11-18) un dégradé de la couleur de la rubrique — bleu, ou rouge pour
+ * une séance de sport — frappé en filigrane de l'icône du type de lieu, à la
+ * place de la surface rayée grise. Puis le retour, « Partager », le statut
+ * et la date, l'étiquette « BAR · JEU 12 MARS · TECHNO », le titre, le lieu
+ * et la réduction. Puis la jauge d'inscription, la
  * description, les photos du lieu, les amis qui y vont, la date et le lieu,
  * et « Rejoindre l'événement ».
  */
 
 import React, { useCallback, useState } from 'react';
-import { Image, ImageBackground, Pressable, ScrollView, Share, Text, View, useWindowDimensions } from 'react-native';
+import { Image, ImageBackground, ScrollView, Share, Text, View, useWindowDimensions } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
-import Svg, { Defs, Pattern, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { actions, adresseServeur, api, ErreurApi, type EvenementDetail, type PhotoEvenement, type ReponsePhotosEvenement } from '../../api';
 import { Bouton } from '../../composants/Bouton';
-import { FORMATS_SPORT, LIBELLES_TYPE, SPORTS } from '../../catalogue';
-import { libelleStyle, nomsCollaborateurs } from '../../composants/CarteEvenement';
+import { FORMATS_SPORT, ICONES_TYPE, LIBELLES_TYPE, SPORTS } from '../../catalogue';
+import { PressableAnime } from '../../composants/Animations';
+import { libelleStyle, nomsCollaborateurs, PastilleAVenir, PastilleEnCours } from '../../composants/CarteEvenement';
+import { Pastille, useRubrique } from '../../composants/Design';
 import { Chargement, Ecran, Erreur } from '../../composants/Ecran';
-import { Avatar, Badge, BoutonRetour, Jauge } from '../../composants/Elements';
+import { Avatar, BoutonRetour, Jauge } from '../../composants/Elements';
 import { Feuille } from '../../composants/Feuille';
 import { Champ, Selecteur } from '../../composants/Formulaire';
 import { Icone, type NomIcone } from '../../composants/Icone';
@@ -32,7 +35,7 @@ import { confirmer } from '../../confirmer';
 import { libelleApresEchecInscription, libelleInscription, prixEvenement } from '../../regles';
 import { dateFr, heure, majuscules, ts } from '../../format';
 import { useJeton } from '../../session';
-import { couleurs, fixe, fs, gutter, lh, lsEm, mono, rayon, sans } from '../../theme';
+import { couleurs, espace, fixe, fs, gutter, lh, lsEm, mono, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 const MOTIFS_PHOTO = [
@@ -52,23 +55,10 @@ function Section({ icone, children }: { icone?: NomIcone; children: string }) {
   );
 }
 
-/** Le repli sans photo : repeating-linear-gradient(135deg, surface 0 22px, surface-2 22px 44px). */
-function Rayures({ a, b }: { a: string; b: string }) {
-  return (
-    <Svg style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} width="100%" height="100%">
-      <Defs>
-        <Pattern id="rayures" patternUnits="userSpaceOnUse" width={62.2} height={62.2} patternTransform="rotate(45)">
-          <Rect x={0} y={0} width={31.1} height={62.2} fill={a} />
-          <Rect x={31.1} y={0} width={31.1} height={62.2} fill={b} />
-        </Pattern>
-      </Defs>
-      <Rect x={0} y={0} width="100%" height="100%" fill="url(#rayures)" />
-    </Svg>
-  );
-}
-
 export default function FicheEvenement() {
   const { c } = useTheme();
+  const bleu = useRubrique('bleu');
+  const sport = useRubrique('sport');
   const jeton = useJeton();
   const toast = useToast();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -191,8 +181,14 @@ export default function FicheEvenement() {
 
   const flash = e.is_flash && ts(e.flash_expiry) > instant;
   const photo = e.photos[0]?.url ?? null;
-  const encre = photo ? fixe.craie : flash ? fixe.surAccent : c.noir;
-  const accent = photo ? couleurs.sombre.surRougeClair : flash ? fixe.surAccent : c.surRougeClair;
+  // Sans photo, le hero est un aplat de la rubrique : texte blanc dans les
+  // deux cas, secondaire en surAccent2 (4,5:1 au moins sur l'aplat).
+  const teinte = e.sport ? sport : bleu;
+  const encre = photo ? fixe.craie : fixe.surAccent;
+  const accent = photo ? couleurs.sombre.surRougeClair : teinte.surAccent2;
+  const secondaireHero = photo ? fixe.craie : teinte.surAccent2;
+  const fin = ts(e.date_fin ?? null);
+  const enCours = instant >= ts(e.date_heure) && (!fin || instant <= fin);
   const pct = e.places.pourcentage ?? 0;
   const style = e.style_musique ? ' · ' + majuscules(libelleStyle(e.style_musique)) : '';
   const inscrit = e.deja_inscrit || inscription === 'vient';
@@ -228,18 +224,22 @@ export default function FicheEvenement() {
   // padding-top: 120px, et margin-top: -20px sur le site.
   const prix = prixEvenement(e);
   const contenuHero = (
-    <View style={{ paddingTop: 100 + top, paddingHorizontal: 16, paddingBottom: 32 }}>
-      <Text style={{ fontFamily: mono(500), fontSize: fs[2], letterSpacing: lsEm.label * fs[2], textTransform: 'uppercase', color: accent, marginBottom: 10 }}>
+    <View style={{ paddingTop: 96 + top, paddingHorizontal: gutter, paddingBottom: 28 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+        {enCours ? <PastilleEnCours surAccent /> : <PastilleAVenir surAccent />}
+        {flash ? <Pastille grande icone="eclair" libelle="Offre flash" fond={fixe.voileAccent} encre={fixe.surAccent} /> : null}
+        {e.sponsorise ? <Pastille grande libelle="Sponsorisé" fond={fixe.voileAccent} encre={fixe.surAccent} /> : null}
+      </View>
+      <Text style={{ fontFamily: sans(600), fontSize: fs[2], letterSpacing: lsEm.label * fs[2], textTransform: 'uppercase', color: accent, marginBottom: 8 }}>
         {majuscules(e.sport ? `${SPORTS[e.sport] ?? e.sport}${e.format ? ` · ${FORMATS_SPORT[e.format] ?? e.format}` : ''}` : (LIBELLES_TYPE[e.etablissement.type] ?? e.etablissement.type))} · {dateFr(e.date_heure, 'D j M')}{style}
       </Text>
-      {e.sponsorise ? (
-        <Badge libelle="Sponsorisé" fond="rgba(17,17,22,0.1)" encre={encre} filet="rgba(17,17,22,0.3)" style={{ alignSelf: 'flex-start', marginBottom: 10 }} />
-      ) : null}
       <View accessibilityRole="header">
         <Display taille={fs[7]} interligne={lh.display} couleur={encre}>{e.titre}</Display>
-        <Display taille={fs[5]} interligne={lh.display} couleur={encre} style={{ opacity: 0.85, marginTop: 4 }}>{e.etablissement.nom}</Display>
+        {/* La hiérarchie passe par la taille, plus par l'opacité : un texte
+            blanc à 85 % sur le dégradé tombait sous 4,5:1. */}
+        <T taille={fs[5]} poids={600} interligne={lh.snug} couleur={secondaireHero} style={{ marginTop: 6 }}>{e.etablissement.nom}</T>
         {e.collaborateurs?.length ? (
-          <T taille={fs[4]} couleur={encre} style={{ opacity: 0.85, marginTop: 6 }}>
+          <T taille={fs[4]} couleur={secondaireHero} style={{ marginTop: 4 }}>
             En collaboration avec <T taille={fs[4]} poids={700} couleur={encre}>{nomsCollaborateurs(e.collaborateurs)}</T>
           </T>
         ) : null}
@@ -250,8 +250,8 @@ export default function FicheEvenement() {
         </T>
       ) : null}
       {(e.reduction ?? 0) > 0 || e.is_gratuit ? (
-        <View style={{ alignSelf: 'flex-start', marginTop: 18, backgroundColor: flash && !photo ? fixe.basalte : c.rouge, borderRadius: rayon.pill, paddingVertical: 8, paddingHorizontal: 16 }}>
-          <Display taille={fs[5] + 1} interligne={1.2} couleur={flash && !photo ? fixe.craie : fixe.surAccent}>
+        <View style={{ alignSelf: 'flex-start', marginTop: 16, backgroundColor: fixe.surAccent, borderRadius: rayon.sm, paddingVertical: 7, paddingHorizontal: 14 }}>
+          <Display taille={fs[5] + 1} interligne={1.2} couleur={photo ? bleu.accentDeep : teinte.accentDeep}>
             {(e.reduction ?? 0) > 0 ? `-${e.reduction}%` : 'Gratuit'}
           </Display>
         </View>
@@ -311,21 +311,30 @@ export default function FicheEvenement() {
           {contenuHero}
         </ImageBackground>
       ) : (
-        <View style={[arrondi, { backgroundColor: flash ? c.rouge : c.blanc }]}>
-          {flash ? null : <Rayures a={c.blanc} b={c.surface2} />}
+        <View style={arrondi}>
+          <LinearGradient
+            colors={[teinte.accent, teinte.accentDeep]}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+          />
+          {/* Le filigrane : l'icône du type de lieu, très grande, coupée par le bord. */}
+          <View pointerEvents="none" accessible={false} style={{ position: 'absolute', right: -36, bottom: -28, opacity: 0.14 }}>
+            <Icone nom={(e.sport ? 'balle' : ICONES_TYPE[e.etablissement.type]) ?? 'calendrier'} taille={210} couleur="#FFFFFF" trait={1.5} />
+          </View>
           {contenuHero}
         </View>
       )}
 
-      <BoutonRetour media style={{ position: 'absolute', top: top + 36, left: 20 }} />
-      <Pressable
+      <BoutonRetour media style={{ position: 'absolute', top: top + 36, left: gutter }} />
+      {/* Même gabarit que le bouton de retour : 42 px, rayon 12, basalte. */}
+      <PressableAnime
         onPress={partager}
         accessibilityRole="button"
-        style={{ position: 'absolute', top: top + 36, right: 20, flexDirection: 'row', alignItems: 'center', gap: 7, minHeight: 44, paddingHorizontal: 18, borderRadius: rayon.pill, backgroundColor: fixe.basalte }}
+        style={{ position: 'absolute', top: top + 36, right: gutter, flexDirection: 'row', alignItems: 'center', gap: 7, height: 42, paddingHorizontal: 14, borderRadius: rayon.sm, backgroundColor: fixe.basalte }}
       >
         <Icone nom="partage" taille={16} couleur={fixe.craie} />
         <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: fixe.craie }}>Partager</Text>
-      </Pressable>
+      </PressableAnime>
 
       <View style={{ paddingHorizontal: gutter, marginTop: 24 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -333,9 +342,9 @@ export default function FicheEvenement() {
             <Icone nom="personnes" taille={20} couleur={c.grisFonce} />
             <T taille={fs[4]} poids={700}>{e.places.inscrits} / {e.places.quota} inscrits</T>
           </View>
-          <Text style={{ fontFamily: mono(600), fontSize: fs[4], color: c.surRougeClair }}>{pct}%</Text>
+          <Text style={{ fontFamily: mono(600), fontSize: fs[4], color: teinte.texteDoux }}>{pct}%</Text>
         </View>
-        <Jauge pourcentage={pct} piste={c.grisClair} remplissage={c.rouge} hauteur={8} />
+        <Jauge pourcentage={pct} piste={c.grisClair} remplissage={teinte.accent} hauteur={8} />
 
         {photosData && !photosData.reserve_participants ? (
           <View style={{ marginTop: 32 }}>
@@ -359,13 +368,13 @@ export default function FicheEvenement() {
             {photosData.photos.length ? (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 8 }}>
                 {photosData.photos.map((p) => (
-                  <Pressable key={p.id} onPress={() => setPhotoOuverte(p)} accessibilityRole="button" accessibilityLabel={`Photo de ${p.auteur.prenom}`}>
+                  <PressableAnime key={p.id} onPress={() => setPhotoOuverte(p)} accessibilityRole="button" accessibilityLabel={`Photo de ${p.auteur.prenom}`}>
                     <Image source={{ uri: p.url ?? undefined }} style={{ height: 200, width: 150, borderRadius: rayon.md }} resizeMode="cover" />
                     <View style={{ position: 'absolute', bottom: 8, left: 8, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Avatar photo={p.auteur.photo_url} prenom={p.auteur.prenom} taille={22} />
-                      <Text style={{ fontFamily: sans(700), fontSize: fs[2], color: fixe.craie }}>{p.auteur.prenom}</Text>
+                      <Text style={{ fontFamily: sans(700), fontSize: fs[2], color: fixe.craie, textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 4 }}>{p.auteur.prenom}</Text>
                     </View>
-                  </Pressable>
+                  </PressableAnime>
                 ))}
               </ScrollView>
             ) : (
@@ -401,18 +410,19 @@ export default function FicheEvenement() {
             <Section>Tes potes qui y vont</Section>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               {e.amis.map((f) => (
-                <Pressable key={f.id} onPress={() => router.push({ pathname: '/etudiant/[id]', params: { id: String(f.id) } })}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.pill, paddingVertical: 5, paddingLeft: 5, paddingRight: 14 }}>
-                  <Avatar photo={f.photo_url} prenom={f.prenom} taille={24} />
+                <PressableAnime key={f.id} onPress={() => router.push({ pathname: '/etudiant/[id]', params: { id: String(f.id) } })}
+                  accessibilityRole="link" accessibilityLabel={`Profil de ${f.prenom}`}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 40, backgroundColor: c.blanc, borderRadius: rayon.sm, paddingVertical: 5, paddingLeft: 5, paddingRight: 14 }}>
+                  <Avatar photo={f.photo_url} prenom={f.prenom} taille={28} />
                   <T taille={fs[3]} poids={600}>{f.prenom}</T>
-                </Pressable>
+                </PressableAnime>
               ))}
             </View>
           </View>
         ) : null}
 
         <View style={{ flexDirection: 'row', gap: 12, marginTop: 24 }}>
-          <View style={{ flex: 1, backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.md, padding: 16 }}>
+          <View style={{ flex: 1, backgroundColor: c.blanc, borderRadius: rayon.tuile, padding: espace.carte }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 8 }}>
               <Icone nom="horloge" taille={16} couleur={c.gris} />
               <Mono>Date &amp; heure</Mono>
@@ -420,7 +430,7 @@ export default function FicheEvenement() {
             <T taille={fs[4]} poids={700}>{dateFr(e.date_heure, 'j M Y')}</T>
             <Text style={{ fontFamily: mono(400), fontSize: fs[4], color: c.grisFonce }}>{heure(e.date_heure)}{e.date_fin ? ` – ${heure(e.date_fin)}` : ''}</Text>
           </View>
-          <View style={{ flex: 1, backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.md, padding: 16 }}>
+          <View style={{ flex: 1, backgroundColor: c.blanc, borderRadius: rayon.tuile, padding: espace.carte }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 8 }}>
               <Icone nom="epingle" taille={16} couleur={c.gris} />
               <Mono>Lieu</Mono>
@@ -431,7 +441,7 @@ export default function FicheEvenement() {
         </View>
 
         {!inscrit ? (
-          <View testID="evenement-cloture" style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12, backgroundColor: closes ? c.surface2 : c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.md, padding: 14 }}>
+          <View testID="evenement-cloture" style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12, backgroundColor: closes ? c.surface2 : c.blanc, borderRadius: rayon.tuile, padding: espace.carte }}>
             <Icone nom={closes ? 'cadenas' : 'horloge'} taille={16} couleur={closes ? c.grisFonce : c.gris} />
             <T taille={fs[4]} poids={600} couleur={closes ? c.grisFonce : c.noir} style={{ flex: 1 }}>
               {closes
@@ -445,13 +455,13 @@ export default function FicheEvenement() {
           <Bouton
             plein
             testID="evenement-rejoindre"
-            variante={inscription === 'vient' ? 'contour' : 'primaire'}
+            variante="primaire"
+            accent={teinte.accent}
             libelle={libelleInscription(inscription, !!e.deja_inscrit, libelleErreur, e.places.complet, closes)}
-            icone={inscrit ? 'check' : undefined}
-            desactive={inscrit || e.places.complet || closes}
+            fait={inscrit}
+            desactive={e.places.complet || closes}
             chargement={inscription === 'attente'}
             onPress={rejoindre}
-            style={{ paddingVertical: 14 }}
           />
         </View>
       </View>

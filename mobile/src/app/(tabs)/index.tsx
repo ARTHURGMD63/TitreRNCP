@@ -29,21 +29,14 @@ import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecr
 import { Pilule } from '../../composants/Elements';
 import { RangeeDefilante } from '../../composants/RangeeDefilante';
 import { Feuille } from '../../composants/Feuille';
-import { Icone, type NomIcone } from '../../composants/Icone';
+import { Icone } from '../../composants/Icone';
 import { ElementNotification, FeuilleInvitation, FermerFeuille, NotificationsVides, SurtitreFeuille } from '../../composants/Social';
 import { Display, T, TitreEcran } from '../../composants/Texte';
+import { ICONES_TYPE } from '../../catalogue';
 import { ts } from '../../format';
 import { useJeton } from '../../session';
 import { couleursCategorie, espace, fs, gutter, lh, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
-
-/** L'icône du petit carré coloré de chaque chip (« Tout » n'en a pas). */
-const ICONES_TYPE: Record<string, NomIcone | undefined> = {
-  'pour-moi': 'etoile-fine',
-  bar: 'verre',
-  boite: 'musique',
-  resto: 'billet',
-};
 
 const TYPES = [
   { code: 'all', libelle: 'Tout' },

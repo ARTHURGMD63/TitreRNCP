@@ -5,6 +5,8 @@
  * Une fois connecté, l'écran Moi les reçoit du serveur (api/v1/moi.php).
  */
 
+import type { NomIcone } from './composants/Icone';
+
 export const ECOLES = ['UCA', 'SIGMA Clermont', 'INP Ingénieurs', 'IFSI', 'Autre'];
 
 export const PROMOS = ['L1', 'L2', 'L3', 'M1', 'M2', 'BUT1', 'BUT2', 'BUT3'];
@@ -29,6 +31,29 @@ export const TYPES_ETABLISSEMENT = [
 
 /** Les libellés des types sur les cartes (explore.php, $typeLabels). */
 export const LIBELLES_TYPE: Record<string, string> = { bar: 'Bar', boite: 'Boîte', resto: 'Resto', afterwork: 'Afterwork', club: 'Club', bde: 'BDE', sport: 'Sport' };
+
+/**
+ * L'icône de chaque type de lieu : le petit carré coloré des chips du hub,
+ * repris sur la carte d'événement pour qu'on relie la soirée au filtre.
+ */
+export const ICONES_TYPE: Record<string, NomIcone | undefined> = {
+  'pour-moi': 'etoile-fine',
+  bar: 'verre',
+  boite: 'musique',
+  resto: 'billet',
+  afterwork: 'verre',
+  club: 'club',
+  bde: 'personnes',
+  sport: 'balle',
+};
+
+/** L'icône de chaque catégorie Culture (chips de l'espace Culture, cartes). */
+export const ICONES_CULTURE: Record<string, NomIcone> = {
+  expo: 'image', concert: 'micro', spectacle: 'ticket', patrimoine: 'musee', festival: 'musique',
+  cinema: 'appareil', atelier: 'crayon', conference: 'micro', autre: 'etoile-fine',
+};
+/** Le carré d'une catégorie Culture sans couleur attitrée. */
+export const COULEUR_CULTURE_REPLI = '#8B5CF6';
 
 /**
  * Les sports, recopiés de catalogueSports() (includes/sports.php) : si l'un
