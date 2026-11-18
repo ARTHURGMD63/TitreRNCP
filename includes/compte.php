@@ -118,18 +118,25 @@ function codeReinitialisationCreer(PDO $pdo, string $email): ?string
  */
 function codeReinitialisationVerifier(PDO $pdo, string $email, string $code): bool
 {
-    $stmt = $pdo->prepare(
-        'SELECT code_hash, essais, (expires_at > NOW()) AS valide FROM password_reset_codes WHERE email = ?'
+    // L'essai est consommé AVANT la comparaison, par une seule écriture
+    // conditionnelle. Lire le compteur, comparer, puis l'incrémenter laissait
+    // N requêtes simultanées lire toutes « 0 essai » : des centaines d'essais
+    // par code au lieu de cinq.
+    $essai = $pdo->prepare(
+        'UPDATE password_reset_codes SET essais = essais + 1
+          WHERE email = ? AND essais < ? AND expires_at > NOW()'
     );
-    $stmt->execute([$email]);
-    $ligne = $stmt->fetch();
-
-    if (!$ligne) {
+    $essai->execute([$email, CODE_REINIT_ESSAIS_MAX]);
+    if ($essai->rowCount() !== 1) {
+        // Code absent, expiré ou épuisé : il est détruit.
+        $pdo->prepare('DELETE FROM password_reset_codes WHERE email = ?')->execute([$email]);
         return false;
     }
 
-    if (!$ligne['valide'] || (int) $ligne['essais'] >= CODE_REINIT_ESSAIS_MAX) {
-        $pdo->prepare('DELETE FROM password_reset_codes WHERE email = ?')->execute([$email]);
+    $stmt = $pdo->prepare('SELECT code_hash, essais FROM password_reset_codes WHERE email = ?');
+    $stmt->execute([$email]);
+    $ligne = $stmt->fetch();
+    if (!$ligne) {
         return false;
     }
 
@@ -137,8 +144,7 @@ function codeReinitialisationVerifier(PDO $pdo, string $email, string $code): bo
         return true;
     }
 
-    $pdo->prepare('UPDATE password_reset_codes SET essais = essais + 1 WHERE email = ?')->execute([$email]);
-    if ((int) $ligne['essais'] + 1 >= CODE_REINIT_ESSAIS_MAX) {
+    if ((int) $ligne['essais'] >= CODE_REINIT_ESSAIS_MAX) {
         $pdo->prepare('DELETE FROM password_reset_codes WHERE email = ?')->execute([$email]);
     }
 
@@ -273,16 +279,40 @@ function compteSupprimerEtudiant(PDO $pdo, int $uid): array
             'DELETE FROM user_badges WHERE user_id = ?',
             'DELETE FROM user_interets WHERE user_id = ?',
             'DELETE FROM user_settings WHERE user_id = ?',
+            'DELETE FROM appareils_push WHERE user_id = ?',
+            'DELETE FROM preferences_push WHERE user_id = ?',
+            'DELETE FROM push_envois WHERE user_id = ?',
             'DELETE FROM notifications_lues WHERE user_id = ?',
             'DELETE FROM economies WHERE user_id = ?',
             'DELETE FROM avis WHERE user_id = ?',
             'DELETE FROM squad_membres WHERE user_id = ?',
             'DELETE FROM squads WHERE createur_id = ?',
             'UPDATE liste_attente SET parrain_id = NULL WHERE parrain_id = ?',
+            // Oubliés jusqu'ici : la ligne users n'étant jamais supprimée,
+            // aucune cascade ne joue pour eux (voir le test RGPD).
+            'DELETE FROM changements_email WHERE user_id = ?',
+            'DELETE FROM totp_comptes WHERE user_id = ?',
+            'DELETE FROM culture_inscriptions WHERE user_id = ?',
         ];
         foreach ($parUtilisateur as $sql) {
             $pdo->prepare($sql)->execute([$uid]);
         }
+
+        // Les terrains : ceux qu'il a réservés pour l'avenir redeviennent
+        // libres (ses invités compris), et il quitte les parties à venir.
+        // Les parties passées gardent leur créneau, sans organisateur.
+        $maintenant = date('Y-m-d H:i:s');
+        $pdo->prepare(
+            'DELETE j FROM creneau_joueurs j JOIN creneaux c ON c.id = j.creneau_id
+              WHERE c.organisateur_id = ? AND c.debut > ?'
+        )->execute([$uid, $maintenant]);
+        $pdo->prepare(
+            "UPDATE creneaux SET statut = 'libre', organisateur_id = NULL, ouvert = 0, niveau = 'tous', reserve_le = NULL
+              WHERE organisateur_id = ? AND debut > ?"
+        )->execute([$uid, $maintenant]);
+        $pdo->prepare('UPDATE creneaux SET organisateur_id = NULL WHERE organisateur_id = ?')->execute([$uid]);
+        $pdo->prepare('DELETE FROM creneau_joueurs WHERE user_id = ?')->execute([$uid]);
+        $pdo->prepare('UPDATE creneau_joueurs SET invite_par = NULL WHERE invite_par = ?')->execute([$uid]);
 
         // Les relations avec les autres : dans les deux sens.
         $deuxSens = [
@@ -399,12 +429,25 @@ function compteSupprimerPartenaire(PDO $pdo, int $uid): array
     $etab   = $stmt->fetch() ?: null;
     $client = $etab ? abonnementEtablissement($pdo, (int) $etab['id']) : null;
 
+    // 0. Les achats du mois pas encore facturés partent sur la prochaine
+    //    facture Stripe tant que le client existe : sinon la suppression les
+    //    effaçait, et ils n'étaient jamais facturés.
+    if ($etab && stripeActif() && !empty($client['stripe_customer_id'])) {
+        try {
+            stripeSynchroniserAchats($pdo, (int) $etab['id']);
+        } catch (Throwable $e) {
+            logErreur('Suppression partenaire : achats non transmis à Stripe', $e, ['etablissement' => $etab['id']]);
+        }
+    }
+
     // 1. Plus aucun prélèvement : l'abonnement s'arrête avant tout le reste.
     if (stripeAbonnementVivant($client)) {
         if (!stripeActif()) {
             throw new RuntimeException('Abonnement Stripe en cours, mais Stripe n’est pas configuré : résiliation impossible.');
         }
-        stripeRequete('DELETE', 'subscriptions/' . rawurlencode((string) $client['stripe_subscription_id']));
+        // invoice_now : les lignes en attente (achats du mois) sont facturées
+        // à la résiliation au lieu d'être abandonnées.
+        stripeRequete('DELETE', 'subscriptions/' . rawurlencode((string) $client['stripe_subscription_id']), ['invoice_now' => true]);
     }
 
     $email      = (string) $compte['email'];
@@ -449,9 +492,14 @@ function compteSupprimerPartenaire(PDO $pdo, int $uid): array
         foreach ([
             'DELETE FROM api_tokens WHERE user_id = ?',
             'DELETE FROM user_settings WHERE user_id = ?',
+            'DELETE FROM appareils_push WHERE user_id = ?',
+            'DELETE FROM preferences_push WHERE user_id = ?',
+            'DELETE FROM push_envois WHERE user_id = ?',
             'DELETE FROM notifications_lues WHERE user_id = ?',
             'DELETE FROM follows_etablissements WHERE user_id = ?',
             'DELETE FROM user_interets WHERE user_id = ?',
+            'DELETE FROM changements_email WHERE user_id = ?',
+            'DELETE FROM totp_comptes WHERE user_id = ?',
         ] as $sql) {
             $pdo->prepare($sql)->execute([$uid]);
         }
