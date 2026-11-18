@@ -12,6 +12,10 @@ on:
   pull_request:
     branches: ['**']
 
+# Lecture seule : la CI ne publie rien, ne commente rien.
+permissions:
+  contents: read
+
 jobs:
   quality:
     name: Tests & Static Analysis
@@ -24,10 +28,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup PHP ${{ matrix.php-version }}
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version: ${{ matrix.php-version }}
           extensions: pdo, pdo_sqlite, mbstring, json
@@ -38,10 +42,12 @@ jobs:
         run: composer validate --strict
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: vendor
-          key: ${{ runner.os }}-php-${{ matrix.php-version }}-${{ hashFiles('composer.json') }}
+          # Sur le lock et non sur composer.json : une mise à jour des
+          # versions figées doit invalider le cache.
+          key: ${{ runner.os }}-php-${{ matrix.php-version }}-${{ hashFiles('composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-php-${{ matrix.php-version }}-
 
@@ -66,12 +72,14 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       # Node 24 : le lanceur de tests intégré exécute le TypeScript tel quel,
-      # sans transpileur ni bibliothèque de test à installer.
+      # sans transpileur ni bibliothèque de test à installer. Même version
+      # que la construction de l'application (mobile.yml) : les tests
+      # valident ce qui est construit.
       - name: Setup Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '24'
           cache: npm
@@ -111,10 +119,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version: '8.3'
           extensions: pdo, pdo_mysql, mbstring, json

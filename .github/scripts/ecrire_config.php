@@ -51,9 +51,26 @@ if ($manquants !== []) {
 
 $config['port'] = getenv('DB_PORT') ?: '3306';
 
+// Facultatifs : environnement et adresse publique. Sans app_env, le site se
+// croit hors production (traces d'erreur, codes de test) ; sans url_publique,
+// les liens des e-mails se construisent depuis l'en-tête Host du client. Ils
+// viennent des variables du dépôt, jamais d'une valeur écrite ici.
+$facultatifs = [
+    'app_env'      => 'APP_ENV',
+    'url_publique' => 'URL_PUBLIQUE',
+];
+foreach ($facultatifs as $cle => $variable) {
+    $valeur = getenv($variable);
+    if ($valeur === false || $valeur === '') {
+        fwrite(STDERR, "::warning::Variable $variable absente : '$cle' n'est pas écrit dans la configuration.\n");
+        continue;
+    }
+    $config[$cle] = $valeur;
+}
+
 $contenu = "<?php\n"
     . "// Fichier généré par le workflow de déploiement.\n"
-    . "// Ne pas modifier à la main : il est réécrit à chaque push.\n"
+    . "// Ne pas modifier à la main : il est réécrit à chaque déploiement.\n"
     . 'return ' . var_export($config, true) . ";\n";
 
 $dossier = dirname($destination);

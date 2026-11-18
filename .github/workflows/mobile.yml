@@ -34,6 +34,9 @@ on:
   push:
     tags: ['mobile-v*']
 
+permissions:
+  contents: read
+
 env:
   EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
   # Clé Google Maps Android (onglet « Secrets ») : sans elle, l'écran Carte
@@ -47,7 +50,7 @@ jobs:
       run:
         working-directory: mobile
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Vérifier l'adresse du serveur
         run: |
@@ -56,13 +59,14 @@ jobs:
             *) echo "::error::Renseigner la variable EXPO_PUBLIC_API_URL (https://…) dans Settings → Variables."; exit 1 ;;
           esac
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: 22
+          # Même version que la CI (ci.yml), où passent les tests.
+          node-version: '24'
           cache: npm
           cache-dependency-path: mobile/package-lock.json
 
-      - uses: actions/setup-java@v6
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6
         with:
           distribution: temurin
           java-version: 17
@@ -90,7 +94,7 @@ jobs:
 
       - run: cp android/app/build/outputs/apk/release/app-release.apk Outsee.apk
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: outsee-android
           path: mobile/Outsee.apk
@@ -101,7 +105,7 @@ jobs:
       run:
         working-directory: mobile
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Vérifier l'adresse du serveur
         run: |
@@ -110,9 +114,10 @@ jobs:
             *) echo "::error::Renseigner la variable EXPO_PUBLIC_API_URL (https://…) dans Settings → Variables."; exit 1 ;;
           esac
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: 22
+          # Même version que la CI (ci.yml), où passent les tests.
+          node-version: '24'
           cache: npm
           cache-dependency-path: mobile/package-lock.json
 
@@ -160,7 +165,7 @@ jobs:
           cp -R build/Outsee.xcarchive/Products/Applications/*.app Payload/
           zip -qr Outsee.ipa Payload
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: outsee-ios
           path: mobile/Outsee.ipa
