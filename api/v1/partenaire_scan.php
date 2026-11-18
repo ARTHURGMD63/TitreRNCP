@@ -37,6 +37,16 @@ if (($qrCode === '' && !$inscriptionId) || !$eventId) {
     apiErreur('Données manquantes', 422, 'donnees_manquantes');
 }
 
+// Un pass est 64 caractères hexadécimaux (bin2hex(random_bytes(32)), voir
+// api/inscrire.php). Tout autre QR code — un menu, un site, un code abîmé —
+// est refusé avant toute requête, avec un message qui dit ce qui se passe.
+if (!$inscriptionId) {
+    $qrCode = strtolower(trim($qrCode));
+    if (strlen($qrCode) !== 64 || !ctype_xdigit($qrCode)) {
+        apiErreur("Ce QR code n'est pas un pass Outsee.", 422, 'qr_invalide');
+    }
+}
+
 $stmt = $pdo->prepare(
     'SELECT e.id FROM evenements e
      JOIN etablissements et ON et.id = e.etablissement_id
@@ -65,6 +75,24 @@ if ($inscriptionId) {
 $inscription = $stmt->fetch();
 
 if (!$inscription) {
+    // Le pass existe peut-être pour un autre événement du même partenaire
+    // (deux soirées le même week-end) : on le dit, plutôt qu'un « invalide »
+    // qui laisse croire à une fraude. Un pass d'un autre partenaire reste
+    // « invalide » : son événement ne nous regarde pas.
+    if (!$inscriptionId) {
+        $autre = $pdo->prepare(
+            'SELECT e.titre FROM inscriptions i
+               JOIN evenements e ON e.id = i.evenement_id
+               JOIN etablissements et ON et.id = e.etablissement_id
+              WHERE i.qr_code = ? AND et.user_id = ?
+              LIMIT 1'
+        );
+        $autre->execute([$qrCode, $uid]);
+        $titre = $autre->fetchColumn();
+        if ($titre !== false) {
+            apiErreur('Ce pass est pour « ' . $titre . ' », pas pour cet événement', 409, 'autre_evenement');
+        }
+    }
     apiErreur('Pass invalide pour cet événement', 404, 'pass_invalide');
 }
 if ($inscription['statut'] === 'checkin') {

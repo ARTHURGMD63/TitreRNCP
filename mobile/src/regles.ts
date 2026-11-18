@@ -67,10 +67,36 @@ export function retirerInvite<T extends { inscription_id: number }>(liste: reado
   return (liste ?? []).filter((i) => i.inscription_id !== inscriptionId);
 }
 
-/** Le message sur fond d'écran du scanner après un QR code refusé. */
-export function messageEchecScan(erreur: { message: string } | null): string {
-  return erreur ? erreur.message : 'Erreur de connexion';
+/** Les préfixes qu'un pass a portés au fil des noms de l'application. */
+const PREFIXES_PASS = ['outsee:', 'linkee:', 'studentlink:'];
+
+/**
+ * Le code d'un pass lu dans un QR code, ou null si ce n'en est pas un.
+ *
+ * Un pass encode « outsee:<64 caractères hexadécimaux> » (api/inscrire.php :
+ * bin2hex(random_bytes(32))). Les anciens préfixes restent acceptés, comme par
+ * le serveur (api/v1/partenaire_scan.php). Tout le reste — l'adresse d'un
+ * site, le QR d'un menu, un code abîmé — est écarté sur place : inutile
+ * d'interroger le serveur, et le message dit pourquoi.
+ */
+export function lireCodePass(brut: string | null | undefined): string | null {
+  let code = (brut ?? '').trim();
+  const prefixe = PREFIXES_PASS.find((p) => code.toLowerCase().startsWith(p));
+  if (prefixe) code = code.slice(prefixe.length).trim();
+  return /^[0-9a-f]{64}$/i.test(code) ? code.toLowerCase() : null;
 }
+
+/** Le message sur fond d'écran du scanner après un QR code refusé. */
+export function messageEchecScan(erreur: { message: string; code?: string } | null): string {
+  if (!erreur) return 'Erreur de connexion';
+  if (erreur.code === 'reseau' || erreur.code === 'delai') {
+    return 'Pas de connexion : pass non validé. Réessaie, ou valide à la main.';
+  }
+  return erreur.message;
+}
+
+/** Le refus d'un QR code qui n'est pas un pass Outsee. */
+export const MESSAGE_QR_ETRANGER = "Ce QR code n'est pas un pass Outsee.";
 
 /**
  * Combien de temps le résultat d'un scan reste affiché avant de réarmer la

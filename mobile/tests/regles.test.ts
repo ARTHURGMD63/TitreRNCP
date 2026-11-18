@@ -9,7 +9,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ajouterCheckin, connexionComplete, delaiResultatScan, libelleApresEchecInscription,
-  libelleInscription, libelleInscrits, libellesAffluence, messageConnexion, messageEchecScan,
+  libelleInscription, libelleInscrits, libellesAffluence, lireCodePass, messageConnexion, messageEchecScan,
   palierAffluence, retirerInvite,
 } from '../src/regles.ts';
 
@@ -155,6 +155,15 @@ test('formatEuros : entier sans décimales, sinon deux décimales à virgule', (
   assert.equal(formatEuros(48 / 4), '12 €');
 });
 
+test('formatEuros : les économies étudiantes (Pass, Moi) au même format', () => {
+  // Une économie de 25 % sur 50 € : « -12,50 € » sur la carte, « 12,50 € » en tuile.
+  assert.equal('-' + formatEuros((50 * 25) / 100), '-12,50 €');
+  assert.equal(formatEuros(12.499), '12,50 €');
+  assert.equal(formatEuros(0.1 + 0.2), '0,30 €');
+  assert.equal(formatEuros(0), '0 €');
+  assert.equal(formatEuros(13.001), '13 €');
+});
+
 test('prixParJoueur : la part de chacun, payée au club', () => {
   assert.equal(prixParJoueur(48, 4), '12 € / joueur sur place');
   assert.equal(prixParJoueur(50, 4), '12,50 € / joueur sur place');
@@ -201,4 +210,28 @@ test('debutsCreneaux : créneaux entiers dans la plage, pour chaque jour', () =>
   assert.equal(debutsCreneaux(['2026-11-15', '2026-11-22'], '18:00', '21:00', 60).length, 6);
   assert.deepEqual(debutsCreneaux(['2026-11-15'], '14:00', '10:00', 60), []);
   assert.deepEqual(debutsCreneaux(['2026-11-15'], '25:00', '26:00', 60), []);
+});
+
+test('messageEchecScan : une panne réseau le dit, et propose la validation manuelle', () => {
+  assert.match(messageEchecScan({ message: 'Erreur réseau', code: 'reseau' }), /Pas de connexion/);
+  assert.match(messageEchecScan({ message: 'Trop long', code: 'delai' }), /Pas de connexion/);
+  assert.equal(messageEchecScan({ message: 'Ce pass a déjà été scanné', code: 'deja_scanne' }), 'Ce pass a déjà été scanné');
+});
+
+test('lireCodePass : un pass Outsee, avec ou sans ancien préfixe', () => {
+  const code = 'a'.repeat(32) + '0123456789abcdef'.repeat(2);
+  assert.equal(lireCodePass(`outsee:${code}`), code);
+  assert.equal(lireCodePass(`LINKEE:${code.toUpperCase()}`), code);
+  assert.equal(lireCodePass(`studentlink:${code}`), code);
+  assert.equal(lireCodePass(`  ${code}
+`), code);
+});
+
+test('lireCodePass : tout autre QR code est écarté sans appel au serveur', () => {
+  assert.equal(lireCodePass('https://exemple.fr/menu'), null);
+  assert.equal(lireCodePass('outsee:'), null);
+  assert.equal(lireCodePass('outsee:' + 'a'.repeat(63)), null);
+  assert.equal(lireCodePass('outsee:' + 'g'.repeat(64)), null);
+  assert.equal(lireCodePass(''), null);
+  assert.equal(lireCodePass(null), null);
 });

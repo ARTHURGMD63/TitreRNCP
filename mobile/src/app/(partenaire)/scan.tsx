@@ -19,7 +19,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Linking, Pressable, Text, TextInput, View } from 'react-native';
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -31,7 +31,7 @@ import { Avatar } from '../../composants/Elements';
 import { Feuille } from '../../composants/Feuille';
 import { Icone } from '../../composants/Icone';
 import { Display, T } from '../../composants/Texte';
-import { ajouterCheckin, delaiResultatScan, messageEchecScan, retirerInvite } from '../../regles';
+import { ajouterCheckin, delaiResultatScan, lireCodePass, MESSAGE_QR_ETRANGER, messageEchecScan, retirerInvite } from '../../regles';
 import { useToast } from '../../composants/Toast';
 import { useJeton } from '../../session';
 import { fixe, fs, lh, rayon, sans } from '../../theme';
@@ -55,6 +55,10 @@ export default function ScanPass() {
   const [checkins, setCheckins] = useState<PersonneCheckin[]>([]);
   const [listeOuverte, setListeOuverte] = useState(false);
   const enTraitement = useRef(false);
+  // La reprise après un résultat : annulée si l'écran se ferme avant, pour ne
+  // pas modifier l'état d'un écran démonté.
+  const reprise = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (reprise.current) clearTimeout(reprise.current); }, []);
 
   // ── Validation manuelle : quand le scan ne fonctionne pas ──
   const [manuelOuvert, setManuelOuvert] = useState(false);
@@ -97,15 +101,23 @@ export default function ScanPass() {
     enTraitement.current = true;
 
     let succes = false;
+    // Un QR code qui n'est pas un pass (menu, site, code abîmé) est écarté
+    // ici, sans appel : le refus est immédiat, même sans réseau.
+    const code = lireCodePass(resultat.data);
+    if (!code) {
+      setMessageEchec(MESSAGE_QR_ETRANGER);
+      reprise.current = setTimeout(() => { enTraitement.current = false; setMessageEchec(null); }, delaiResultatScan(false));
+      return;
+    }
     try {
-      const rep = await api.partenaireScan(jeton, { qr_code: resultat.data, event_id: Number(evenementId) });
+      const rep = await api.partenaireScan(jeton, { qr_code: `outsee:${code}`, event_id: Number(evenementId) });
       succes = true;
       setPersonneValidee(rep.personne);
       setCheckins((liste) => ajouterCheckin(liste, { ...rep.personne, checkin_le: new Date().toISOString() }));
     } catch (e) {
       setMessageEchec(messageEchecScan(e instanceof ErreurApi ? e : null));
     } finally {
-      setTimeout(() => {
+      reprise.current = setTimeout(() => {
         enTraitement.current = false;
         setPersonneValidee(null);
         setMessageEchec(null);
@@ -127,7 +139,14 @@ export default function ScanPass() {
         <T taille={fs[4]} couleur={fixe.craie} interligne={lh.normal} style={{ textAlign: 'center', marginBottom: 24, opacity: 0.8 }}>
           Pour scanner les pass à l&apos;entrée, autorise Outsee à utiliser la caméra.
         </T>
-        <Bouton libelle="Autoriser la caméra" plein onPress={() => void demanderPermission()} style={{ marginBottom: 12 }} />
+        {/* Refusée pour de bon : le système ne repose plus la question, seuls
+            les réglages du téléphone peuvent la rendre. */}
+        <Bouton
+          libelle={permission.canAskAgain ? 'Autoriser la caméra' : 'Ouvrir les réglages'}
+          plein
+          onPress={() => void (permission.canAskAgain ? demanderPermission() : Linking.openSettings().catch(() => {}))}
+          style={{ marginBottom: 12 }}
+        />
         <Bouton libelle="Retour" variante="contour" plein onPress={() => router.back()}
           styleTexte={{ color: fixe.craie }} style={{ borderColor: fixe.craie }} />
       </View>
@@ -169,6 +188,7 @@ export default function ScanPass() {
         accessibilityRole="button"
         accessibilityLabel="Valider une présence manuellement"
         testID="scan-manuel"
+        hitSlop={{ top: 1, bottom: 1 }}
         style={{ position: 'absolute', bottom: bottom + 100, left: 24, right: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 42, paddingHorizontal: 12, borderRadius: rayon.bouton, backgroundColor: 'rgba(17,17,22,0.6)' }}
       >
         <Icone nom="outil" taille={16} couleur={fixe.craie} />
@@ -254,7 +274,7 @@ export default function ScanPass() {
                 <Text style={{ fontFamily: sans(400), fontSize: fs[4], color: c.gris }}>{invite.ecole ?? '—'}{invite.promo ? ' · ' + invite.promo : ''}</Text>
               </View>
               <Bouton
-                libelle={validationEnCours === invite.inscription_id ? '...' : 'Valider'}
+                libelle="Valider"
                 onPress={() => void validerManuellement(invite)}
                 chargement={validationEnCours === invite.inscription_id}
                 variante="primaire"
