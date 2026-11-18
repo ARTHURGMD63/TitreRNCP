@@ -1,9 +1,10 @@
 /**
- * Les filtres de l'onglet Sport : le niveau (parties à compléter), et depuis
+ * Les filtres de l'onglet Sport : le niveau (parties à compléter et
+ * événements d'étudiants), et depuis
  * le 2026-11-16 la distance autour d'un point posé sur la carte.
  *
  * On touche la carte pour placer l'épingle (ou « Ma position »), on choisit
- * 5, 10, 15 ou 20 km : le cercle montre la zone retenue. Le serveur garde
+ * 1, 2, 5, 10, 15 ou 20 km : le cercle montre la zone retenue. Le serveur garde
  * alors les parties, terrains et événements dont le club est dans le rayon
  * (api/v1/sport.php, sqlDansRayon()). Les événements d'étudiants n'ont qu'un
  * lieu en texte libre : ils ne sont pas filtrés, et le panneau le dit.
@@ -28,7 +29,7 @@ import { useTheme } from '../useTheme';
 export type FiltreDistance = { lat: number; lng: number; rayon: number };
 
 /** Les rayons acceptés par le serveur (SPORT_RAYONS_KM). */
-export const RAYONS_KM = [5, 10, 15, 20] as const;
+export const RAYONS_KM = [1, 2, 5, 10, 15, 20] as const;
 
 /** Clermont-Ferrand : là où l'épingle tombe si l'on n'a encore rien choisi. */
 const CENTRE_DEFAUT = { latitude: 45.7772, longitude: 3.087 };
@@ -180,6 +181,9 @@ export function FiltresSport<K extends string>({ visible, onClose, niveaux, nive
       </T>
 
       <Section>Niveau</Section>
+      <T taille={fs[3]} couleur={c.gris} style={{ marginTop: -6, marginBottom: 12 }}>
+        Trie les parties à compléter et les événements de tes abonnements. Une partie « tous niveaux » reste toujours visible.
+      </T>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
         {niveaux.map((o) => <Chip key={o.code} libelle={o.libelle} actif={brouillonNiveau === o.code} onPress={() => setBrouillonNiveau(o.code)} />)}
       </View>

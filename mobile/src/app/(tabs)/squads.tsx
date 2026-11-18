@@ -3,22 +3,24 @@
  *
  * « Ne fais pas / de sport tout seul. », puis :
  *   - les filtres par sport (Tout, Padel, Tennis…), et le panneau Filtres :
- *     niveau, et distance (5 à 20 km) autour d'un point posé sur la carte ;
+ *     niveau, et distance (1 à 20 km) autour d'un point posé sur la carte ;
  *   - « Mes parties » quand j'en ai, en tête : c'est ce qui me concerne ;
  *   - quatre rubriques :
  *       Parties à compléter : des étudiants ont réservé un terrain et ouvert
- *         les places restantes aux inconnus, filtrables par niveau ;
+ *         les places restantes aux inconnus ;
  *       Terrains libres : les créneaux que les clubs ont mis en ligne ;
  *       Clubs : les événements des clubs (tournois, stages…) ;
  *       Mes abonnements : les événements d'étudiants que je peux voir —
  *         ceux des personnes qui m'ont accepté, et ceux des associations.
+ *   Le niveau trie les parties et les événements d'étudiants ; les
+ *   compteurs des tuiles comptent ce que la liste montre vraiment.
  *
  * Tout vient d'un seul appel (api/v1/sport.php). Créer un événement est
  * gratuit et le réserve à mes abonnés (sport_squad.php).
  */
 
-import React, { useCallback, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import React, { useCallback, useRef, useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 
 import { actions, api, ErreurApi, type ReponseSport, type Squad } from '../../api';
@@ -28,6 +30,7 @@ import { Bouton } from '../../composants/Bouton';
 import { AvatarsEmpiles, EnTeteApp, Pastille, rangeeChips, Tuile, useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Pilule, Separateur } from '../../composants/Elements';
+import { RangeeDefilante } from '../../composants/RangeeDefilante';
 import { Feuille } from '../../composants/Feuille';
 import { FiltresSport, type FiltreDistance } from '../../composants/FiltresSport';
 import { Case, Champ, ChampDate, isoDateHeure, Selecteur } from '../../composants/Formulaire';
@@ -180,21 +183,29 @@ export default function Sport() {
   const [panneau, setPanneau] = useState(false);
   const accent = useRubrique('sport');
 
+  // Le numéro de la dernière requête : en touchant Padel puis Tennis d'affilée,
+  // la réponse Padel arrivée en retard n'écrase plus la liste Tennis.
+  const derniere = useRef(0);
   const charger = useCallback(async () => {
+    const numero = ++derniere.current;
     try {
       setErreur(null);
-      setDonnees(await api.sport(jeton, sport || undefined, distance ?? undefined));
+      const r = await api.sport(jeton, sport || undefined, distance ?? undefined);
+      if (numero === derniere.current) setDonnees(r);
     } catch (e) {
-      setErreur(e instanceof Error ? e.message : 'Chargement impossible.');
+      if (numero === derniere.current) setErreur(e instanceof Error ? e.message : 'Chargement impossible.');
     } finally {
-      setRafraichit(false);
+      if (numero === derniere.current) setRafraichit(false);
     }
   }, [jeton, sport, distance]);
 
   useFocusEffect(useCallback(() => { void charger(); }, [charger]));
 
   const sports = [{ code: '', libelle: 'Tout' }, ...(donnees?.sports ?? Object.entries(SPORTS).map(([code, libelle]) => ({ code, libelle })))];
+  // Le niveau trie les parties et les événements d'étudiants (les deux en
+  // ont un) ; les terrains libres et les événements de club n'en ont pas.
   const parties = (donnees?.parties ?? []).filter((p) => niveauCompatible(p.niveau, niveau));
+  const squads = (donnees?.squads ?? []).filter((s) => niveauCompatible(s.niveau, niveau));
   const nbFiltres = (niveau !== 'tous' ? 1 : 0) + (distance ? 1 : 0);
   const resumeFiltres = [
     niveau !== 'tous' ? `niveau : ${NIVEAUX.find((n) => n.code === niveau)?.libelle}` : null,
@@ -204,10 +215,10 @@ export default function Sport() {
   const horsZone = distance ? ` à moins de ${distance.rayon} km` : '';
 
   const nombre: Record<Rubrique, number> = {
-    parties: donnees?.parties.length ?? 0,
+    parties: parties.length,
     terrains: donnees?.libres.length ?? 0,
     clubs: donnees?.evenements.length ?? 0,
-    abonnements: donnees?.squads.length ?? 0,
+    abonnements: squads.length,
   };
 
   return (
@@ -245,7 +256,7 @@ export default function Sport() {
       </EnTete>
 
       <Apparition index={2}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 20 }} contentContainerStyle={rangeeChips}>
+        <RangeeDefilante style={{ marginBottom: 20 }} contentContainerStyle={rangeeChips}>
           {/* Le niveau (parties à compléter seulement) et la distance sont
               dans le panneau Filtres. */}
           <Pilule
@@ -275,12 +286,12 @@ export default function Sport() {
               carre={s.code ? couleurSport(s.code) : undefined}
             />
           ))}
-        </ScrollView>
+        </RangeeDefilante>
       </Apparition>
 
       <Apparition index={3}>
         {/* Les rubriques en tuiles ; la quatrième déborde et invite à défiler. */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 20 }} contentContainerStyle={{ gap: 10, paddingHorizontal: gutter }}>
+        <RangeeDefilante style={{ marginBottom: 20 }} contentContainerStyle={{ gap: 10, paddingHorizontal: gutter }}>
           {RUBRIQUES.map((r) => (
             <Tuile
               key={r.code}
@@ -293,7 +304,7 @@ export default function Sport() {
               style={{ width: 112 }}
             />
           ))}
-        </ScrollView>
+        </RangeeDefilante>
       </Apparition>
 
       <Contenu>
@@ -313,7 +324,7 @@ export default function Sport() {
               <>
                 {parties.map((p) => <CarteCreneau key={p.id} cr={p} action="Compléter" onPress={() => ouvrirCreneau(p.id)} />)}
                 {parties.length === 0 ? (
-                  <VideSport titre={`Aucune partie à compléter${horsZone}.`} texte="Réserve un terrain libre et ouvre les places restantes : d'autres viendront compléter." />
+                  <VideSport titre={`Aucune partie à compléter${niveau !== 'tous' ? ' à ce niveau' : ''}${horsZone}.`} texte="Réserve un terrain libre et ouvre les places restantes : d'autres viendront compléter." />
                 ) : null}
               </>
             ) : null}
@@ -336,9 +347,12 @@ export default function Sport() {
 
             {rubrique === 'abonnements' ? (
               <>
-                {donnees.squads.map((s) => <CarteSquad key={s.id} s={s} onGerer={() => setGestion(s.id)} />)}
-                {donnees.squads.length === 0 ? (
-                  <VideSport titre="Rien chez tes abonnements." texte="Tu vois ici les événements des personnes qui ont accepté que tu les suives." />
+                {squads.map((s) => <CarteSquad key={s.id} s={s} onGerer={() => setGestion(s.id)} />)}
+                {squads.length === 0 ? (
+                  <VideSport
+                    titre={niveau !== 'tous' && donnees.squads.length > 0 ? 'Rien à ce niveau chez tes abonnements.' : 'Rien chez tes abonnements.'}
+                    texte="Tu vois ici les événements des personnes qui ont accepté que tu les suives."
+                  />
                 ) : null}
               </>
             ) : null}
