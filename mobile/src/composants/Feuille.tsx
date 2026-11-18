@@ -29,7 +29,10 @@ type Props = {
 };
 
 // Refonte 2026-11 : montée en 300 ms ease-out, voile rgba(17,17,22,.45).
+// La descente accélère (ease-in) et dure moins : un panneau qu'on renvoie
+// doit partir, pas freiner en bas de l'écran.
 const courbe = Easing.out(Easing.cubic);
+const courbeSortie = Easing.in(Easing.cubic);
 
 export function Feuille({ visible, onClose, children }: Props) {
   const { c } = useTheme();
@@ -68,8 +71,8 @@ export function Feuille({ visible, onClose, children }: Props) {
       ]).start();
     } else {
       Animated.parallel([
-        Animated.timing(voile, { toValue: 0, duration: reduit ? 0 : 220, useNativeDriver: true }),
-        Animated.timing(glisse, { toValue: height, duration: reduit ? 0 : 260, easing: courbe, useNativeDriver: true }),
+        Animated.timing(voile, { toValue: 0, duration: reduit ? 0 : 200, useNativeDriver: true }),
+        Animated.timing(glisse, { toValue: height, duration: reduit ? 0 : 220, easing: courbeSortie, useNativeDriver: true }),
       ]).start(({ finished }) => {
         if (finished) setMonte(false);
       });
