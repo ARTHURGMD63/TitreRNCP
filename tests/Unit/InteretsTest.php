@@ -199,6 +199,36 @@ final class InteretsTest extends TestCase
         $this->assertTrue(true, 'aucune exception ne doit remonter');
     }
 
+    public function testLaTransactionDeLAppelantSurvit(): void
+    {
+        // L'inscription (api/v1/inscription.php) appelle cette fonction dans
+        // sa propre transaction : le compte créé juste avant doit être validé.
+        $pdo = $this->baseEnMemoire();
+        $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, email TEXT)');
+
+        $pdo->beginTransaction();
+        $pdo->exec("INSERT INTO users (id, email) VALUES (1, 'a@b.fr')");
+        synchroniserInterets($pdo, 1, ['Running']);
+        $this->assertTrue($pdo->inTransaction(), 'la transaction de l’appelant doit rester ouverte');
+        $pdo->commit();
+
+        $this->assertSame('1', (string) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn());
+        $this->assertSame(['Running'], $pdo->query('SELECT interet FROM user_interets')->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    public function testUneTableAbsenteNAnnulePasLaTransactionDeLAppelant(): void
+    {
+        $pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+        $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, email TEXT)');
+
+        $pdo->beginTransaction();
+        $pdo->exec("INSERT INTO users (id, email) VALUES (1, 'a@b.fr')");
+        synchroniserInterets($pdo, 1, ['Running']);
+        $pdo->commit();
+
+        $this->assertSame('1', (string) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn());
+    }
+
     private function baseEnMemoire(): PDO
     {
         $pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);

@@ -92,12 +92,19 @@ function synchroniserInterets(PDO $pdo, int $userId, array $interets): void
 {
     $interets = array_values(array_unique(array_filter(array_map('trim', $interets))));
 
+    // Appelée dans la transaction de l'inscription, elle ne doit pas en ouvrir
+    // une seconde : PDO le refuse, et le rollBack() du catch annulait alors la
+    // transaction de l'appelant — le compte avec. Chaque inscription échouait.
+    $proprietaire = !$pdo->inTransaction();
+
     try {
         // Effacer puis réécrire, plutôt que calculer la différence : une
         // liste de vingt-quatre entrées au maximum ne justifie pas la
         // complexité, et la transaction garantit qu'aucun visiteur ne voit
         // l'état intermédiaire — un profil momentanément sans aucun goût.
-        $pdo->beginTransaction();
+        if ($proprietaire) {
+            $pdo->beginTransaction();
+        }
         $pdo->prepare('DELETE FROM user_interets WHERE user_id = ?')->execute([$userId]);
 
         if ($interets) {
@@ -111,9 +118,12 @@ function synchroniserInterets(PDO $pdo, int $userId, array $interets): void
                 ->execute($valeurs);
         }
 
-        $pdo->commit();
+        if ($proprietaire) {
+            $pdo->commit();
+        }
     } catch (PDOException $e) {
-        if ($pdo->inTransaction()) {
+        // Seulement notre propre transaction : celle de l'appelant lui appartient.
+        if ($proprietaire && $pdo->inTransaction()) {
             $pdo->rollBack();
         }
         logErreur('Synchronisation des intérêts impossible', $e, ['user' => $userId]);
