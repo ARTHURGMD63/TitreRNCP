@@ -25,7 +25,7 @@ import { Encart } from '../../composants/Elements';
 import { T, TitreEcran } from '../../composants/Texte';
 import { UsageMois } from '../../composants/UsageMois';
 import { useJeton } from '../../session';
-import { fs, halo, rayon, sans } from '../../theme';
+import { espace, fs, halo, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 export default function AbonnementPartenaire() {
@@ -77,7 +77,7 @@ export default function AbonnementPartenaire() {
         ) : null}
 
         {client ? (
-          <View style={[{ backgroundColor: bleu.accent, borderRadius: rayon.carte, padding: 14, gap: 4, marginBottom: 20 }, halo(bleu.accent)]}>
+          <View style={[{ backgroundColor: bleu.accent, borderRadius: rayon.carte, padding: espace.carte, gap: 4, marginBottom: espace.entreCartes }, halo(bleu.accent)]}>
             <Text style={{ fontFamily: sans(600), fontSize: 12, letterSpacing: 0.06 * 12, textTransform: 'uppercase', color: bleu.surAccent2 }}>Formule en cours</Text>
             <Text style={{ fontFamily: sans(700), fontSize: 19, letterSpacing: -0.03 * 19, color: '#FFFFFF' }}>{client.offre_libelle}</Text>
             {client.essai_jusquau ? (
@@ -96,7 +96,7 @@ export default function AbonnementPartenaire() {
           <UsageMois usage={donnees.usage} offreLibelle={client.offre_libelle} essaiJusquau={client.essai_jusquau} club={donnees.est_club} />
         ) : null}
 
-        <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', backgroundColor: bleu.doux, borderRadius: rayon.carte, padding: 18, marginTop: 4, marginBottom: 20 }}>
+        <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', backgroundColor: bleu.doux, borderRadius: rayon.carte, padding: espace.carte, marginTop: 4, marginBottom: espace.entreCartes }}>
           <CarreIcone icone="check" fond={bleu.accent} encre="#FFFFFF" taille={36} />
           <View style={{ flex: 1 }}>
             <T taille={fs[4]} poids={700} couleur={bleu.texteDoux} style={{ marginBottom: 6 }}>Dans toutes les formules</T>

@@ -25,7 +25,7 @@ import { Icone } from '../../composants/Icone';
 import { CarteSuggestion, LARGEUR_SUGGESTION, LignePersonne } from '../../composants/Social';
 import { T, TitreEcran, TitreSection } from '../../composants/Texte';
 import { useJeton } from '../../session';
-import { fs, gutter, lh, rayon } from '../../theme';
+import { espace, fs, gutter, lh, rayon } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 export default function Personnes() {
@@ -232,7 +232,7 @@ function EtatVidePersonnes({ filtre }: { filtre: boolean }) {
   const { c } = useTheme();
   const bleu = useRubrique('bleu');
   return (
-    <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, paddingVertical: 28, paddingHorizontal: 22, alignItems: 'center' }}>
+    <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, ...espace.vide, alignItems: 'center' }}>
       <View accessible={false} style={{ width: 170, height: 110, marginBottom: 18 }}>
         <View style={{ position: 'absolute', left: 0, top: 22, width: 64, height: 64, borderRadius: 32, backgroundColor: '#CDBBF7' }} />
         <View style={{ position: 'absolute', right: 0, top: 22, width: 64, height: 64, borderRadius: 32, backgroundColor: '#F9C6D3' }} />
