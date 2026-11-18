@@ -18,6 +18,7 @@ require_once __DIR__ . '/../../includes/comptes.php';
 require_once __DIR__ . '/../../includes/sponsoring.php';
 require_once __DIR__ . '/../../includes/evenements_temps.php';
 require_once __DIR__ . '/../../includes/capacites.php';
+require_once __DIR__ . '/../../includes/collaborations.php';
 
 $u   = apiPartenaire($pdo);
 $uid = (int) $u['id'];
@@ -61,12 +62,14 @@ $stmt = $pdo->prepare(
 );
 $stmt->execute([(int) $etab['id']]);
 $evenements = $stmt->fetchAll();
+// L'établissement invité à co-organiser chaque événement (v39), et sa réponse.
+$collaborations = collaborationsDe($pdo, array_map(static fn (array $e): int => (int) $e['id'], $evenements), false);
 
 apiReponse([
     'success'     => true,
     'usage'       => usagePartenaireMois($pdo, (int) $etab['id'], capacitesEtablissement($pdo, (int) $etab['id'])),
     'evenements'  => array_map(
-        static function (array $e): array {
+        static function (array $e) use ($collaborations): array {
             $quota    = (int) ($e['quota'] ?? 0);
             $inscrits = (int) $e['nb_inscrits'];
             // Passée = terminée, pas seulement commencée : une soirée en cours
@@ -95,6 +98,7 @@ apiReponse([
                 'supplement_tarif' => (float) ($e['supplement_tarif'] ?? 0),
                 'sponsor_tarif'  => (float) ($e['sponsor_tarif'] ?? 0),
                 'statut'         => $passe ? 'passe' : ($complet ? 'complet' : 'actif'),
+                'collaboration'  => ($collaborations[(int) $e['id']] ?? [])[0] ?? null,
             ];
         },
         $evenements

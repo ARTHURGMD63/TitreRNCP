@@ -21,6 +21,7 @@ import { BoutonAction, CarreIcone, CarteRefonte, EnTeteApp, Pastille, teinteAvat
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Avatar, Jauge } from '../../composants/Elements';
 import { Mono, T, TitreEcran, TitreSection } from '../../composants/Texte';
+import { InvitationsCollaboration } from '../../composants/InvitationsCollaboration';
 import { UsageMois } from '../../composants/UsageMois';
 import { dateFr } from '../../format';
 import { useJeton } from '../../session';
@@ -101,6 +102,8 @@ export default function TableauDeBordPartenaire() {
         <Apparition index={2}>
           <UsageMois usage={donnees.usage} offreLibelle={donnees.offre.libelle} essaiJusquau={donnees.offre.essai_jusquau} />
         </Apparition>
+        {/* Les invitations à co-organiser reçues (v39) : rien tant qu'il n'y en a pas. */}
+        <InvitationsCollaboration />
         {!evenement ? (
           <Apparition index={2}>
             <CarteRefonte style={{ alignItems: 'center', paddingVertical: 24 }}>

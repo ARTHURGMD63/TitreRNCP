@@ -20,7 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { actions, adresseServeur, api, ErreurApi, type EvenementDetail, type PhotoEvenement, type ReponsePhotosEvenement } from '../../api';
 import { Bouton } from '../../composants/Bouton';
 import { FORMATS_SPORT, LIBELLES_TYPE, SPORTS } from '../../catalogue';
-import { libelleStyle } from '../../composants/CarteEvenement';
+import { libelleStyle, nomsCollaborateurs } from '../../composants/CarteEvenement';
 import { Chargement, Ecran, Erreur } from '../../composants/Ecran';
 import { Avatar, Badge, BoutonRetour, Jauge } from '../../composants/Elements';
 import { Feuille } from '../../composants/Feuille';
@@ -238,6 +238,11 @@ export default function FicheEvenement() {
       <View accessibilityRole="header">
         <Display taille={fs[7]} interligne={lh.display} couleur={encre}>{e.titre}</Display>
         <Display taille={fs[5]} interligne={lh.display} couleur={encre} style={{ opacity: 0.85, marginTop: 4 }}>{e.etablissement.nom}</Display>
+        {e.collaborateurs?.length ? (
+          <T taille={fs[4]} couleur={encre} style={{ opacity: 0.85, marginTop: 6 }}>
+            En collaboration avec <T taille={fs[4]} poids={700} couleur={encre}>{nomsCollaborateurs(e.collaborateurs)}</T>
+          </T>
+        ) : null}
       </View>
       {prix ? (
         <T taille={fs[5]} poids={700} couleur={encre} style={{ marginTop: 14 }}>

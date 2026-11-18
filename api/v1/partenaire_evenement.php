@@ -22,6 +22,7 @@ require_once __DIR__ . '/../../includes/comptes.php';
 require_once __DIR__ . '/../../includes/musique.php';
 require_once __DIR__ . '/../../includes/temps_reel.php';
 require_once __DIR__ . '/../../includes/sports.php';
+require_once __DIR__ . '/../../includes/collaborations.php';
 
 /**
  * Refus d'un achat demandé par l'application. Elle ne vend rien (règles Apple
@@ -231,6 +232,8 @@ if ($methode === 'GET') {
             apiErreur('Cet événement n’existe plus.', 404, 'introuvable');
         }
         $evenement = apiEvenementPourEdition($pdo, $ligne);
+        // L'établissement invité à co-organiser (v39), quelle que soit sa réponse.
+        $evenement['collaboration'] = (collaborationsDe($pdo, [$eid], false)[$eid] ?? [])[0] ?? null;
     }
 
     apiReponse(['success' => true, 'evenement' => $evenement, 'lieu_defaut' => (string) ($etab['adresse'] ?? $etab['nom'])] + catalogues($pdo, (int) $etab['id'], $capacites, $estClub));
@@ -280,6 +283,9 @@ $isGratuit    = !empty($corps['is_gratuit']) ? 1 : 0;
 $lieu         = trim((string) ($corps['lieu'] ?? ''));
 $isSponsorise = !$estClub && !empty($corps['is_sponsorise']) ? 1 : 0;
 $sponsorFormule = $isSponsorise ? (string) ($corps['sponsor_formule'] ?? '') : null;
+// L'établissement invité à co-organiser (v39). Absent du corps : inchangé
+// (les anciennes versions de l'application ne l'envoient pas) ; 0 : aucun.
+$collaborateurId = array_key_exists('collaborateur_id', $corps) ? (int) $corps['collaborateur_id'] : null;
 $notifsDemandees = [];
 if ($isSponsorise && is_array($corps['sponsor_notifications'] ?? null)) {
     foreach ($corps['sponsor_notifications'] as $n) {
@@ -388,7 +394,17 @@ try {
         } elseif ($isSponsorise && sponsoringActif($evenementExistant)) {
             enregistrerNotificationsSponsor($pdo, $eid, $notifsDemandees, false);
         }
+        if ($collaborateurId !== null) {
+            $erreurCollab = collaborationRegler($pdo, $eid, (int) $etab['id'], $collaborateurId);
+            if ($erreurCollab !== null) {
+                $pdo->rollBack();
+                $refuser([$erreurCollab]);
+            }
+        }
         $pdo->commit();
+        if ($collaborateurId !== null) {
+            fluxToucher($pdo, CANAL_GLOBAL);
+        }
 
         apiReponse(['success' => true, 'message' => 'Événement mis à jour.', 'id' => $eid]);
     }
@@ -443,6 +459,13 @@ try {
     if ($sponso['nouvelle']) {
         enregistrerNotificationsSponsor($pdo, $nouvelId, $notifsDemandees, true);
     }
+    if ($collaborateurId) {
+        $erreurCollab = collaborationRegler($pdo, $nouvelId, (int) $etab['id'], $collaborateurId);
+        if ($erreurCollab !== null) {
+            $pdo->rollBack();
+            $refuser([$erreurCollab]);
+        }
+    }
     $pdo->commit();
 } catch (PDOException $e) {
     if ($pdo->inTransaction()) {
@@ -457,6 +480,6 @@ fluxToucher($pdo, CANAL_GLOBAL);
 
 apiReponse([
     'success' => true,
-    'message' => 'Événement créé.',
+    'message' => $collaborateurId ? 'Événement créé. L’invitation à collaborer est envoyée.' : 'Événement créé.',
     'id'      => $nouvelId,
 ]);
