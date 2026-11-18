@@ -46,9 +46,15 @@ if (!in_array($host, ['localhost', '127.0.0.1'], true)) {
     $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
 }
 
-try {
+/** Une connexion neuve : celle du semis, ou celle qui nettoie après un échec. */
+$connecter = static function () use ($host, $port, $name, $user, $pass, $options): PDO {
     $pdo = new PDO("mysql:host=$host;port=$port;dbname=$name;charset=utf8mb4", $user, $pass, $options);
     $pdo->exec("SET time_zone = '" . date('P') . "'");
+    return $pdo;
+};
+
+try {
+    $pdo = $connecter();
 } catch (PDOException $e) {
     fwrite(STDERR, "Connexion impossible : {$e->getMessage()}\n");
     exit(1);
@@ -150,6 +156,27 @@ $jour = static fn (int $jours, string $heure): string => $maintenant->modify(($j
 $plus = static fn (string $debut, int $minutes): string => (new DateTimeImmutable($debut))->modify("+$minutes minutes")->format('Y-m-d H:i:00');
 $qr = static fn (): string => bin2hex(random_bytes(32));
 
+/**
+ * Insère des lignes par paquets de 200, en une requête par paquet.
+ *
+ * Ligne à ligne, le semis enchaînait plus de mille allers-retours dans une
+ * seule transaction : la passerelle de TiDB Cloud coupait la connexion en
+ * route (« MySQL server has gone away »).
+ *
+ * @param list<string>             $colonnes
+ * @param list<list<mixed>>        $lignes
+ */
+$inserer = static function (string $table, array $colonnes, array $lignes) use (&$pdo): void {
+    $trous = '(' . implode(',', array_fill(0, count($colonnes), '?')) . ')';
+    foreach (array_chunk($lignes, 200) as $paquet) {
+        $pdo->prepare("INSERT INTO $table (" . implode(', ', $colonnes) . ') VALUES ' . implode(',', array_fill(0, count($paquet), $trous)))
+            ->execute(array_merge(...$paquet));
+    }
+};
+
+// Une transaction par espace (Soirées, Sport, Culture), pas une seule pour
+// tout : chacune reste courte. Si l'une échoue, ce qui a déjà été validé est
+// retiré par nettoyerDemo() : jamais de semis à moitié en base.
 $pdo->beginTransaction();
 
 try {
@@ -207,7 +234,7 @@ try {
         "INSERT INTO users (nom, prenom, email, password, ecole, promo, ville, type, date_naissance, interests, cgu_acceptees_le, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
-    $insertInteret = $pdo->prepare('INSERT INTO user_interets (user_id, interet) VALUES (?, ?)');
+    $lignesInterets = [];
     $etudiants = [];
     foreach ($personnes as $i => [$prenom, $nom, $ecole, $promo, $naissance, $interets]) {
         // Inscrits au fil des dernières semaines, pas tous le même jour.
@@ -218,10 +245,11 @@ try {
         ]);
         $id = (int) $pdo->lastInsertId();
         foreach (explode(',', $interets) as $interet) {
-            $insertInteret->execute([$id, $interet]);
+            $lignesInterets[] = [$id, $interet];
         }
         $etudiants[] = $id;
     }
+    $inserer('user_interets', ['user_id', 'interet'], $lignesInterets);
     $nbEtudiants = count($etudiants);
     /** Le k-ième participant d'une liste qui tourne, décalée par $graine. */
     $participant = static fn (int $graine, int $k): int => $etudiants[($graine * 7 + $k * 3) % $nbEtudiants];
@@ -312,9 +340,8 @@ try {
              is_sponsorise, sponsor_formule, sponsor_tarif, sponsor_debut, sponsor_jusqu_au, lieu, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
-    $insertInscription = $pdo->prepare(
-        'INSERT INTO inscriptions (user_id, evenement_id, qr_code, statut, checkin_le) VALUES (?, ?, ?, ?, ?)'
-    );
+    $colsInscription = ['user_id', 'evenement_id', 'qr_code', 'statut', 'checkin_le'];
+    $lignesInscriptions = [];
     $nbInscriptions = 0;
     foreach ($soirees as $n => [$cle, $titre, $description, $style, $debut, $duree, $quota, $reduction, $prix, $inscrits, $o]) {
         $l = $etab[$cle];
@@ -341,10 +368,17 @@ try {
             }
             $vus[$uid] = true;
             $passe = count($vus) <= $checkin;
-            $insertInscription->execute([$uid, $evId, $qr(), $passe ? 'checkin' : 'inscrit', $passe ? $dans(-1) : null]);
+            $lignesInscriptions[] = [$uid, $evId, $qr(), $passe ? 'checkin' : 'inscrit', $passe ? $dans(-1) : null];
             $nbInscriptions++;
         }
     }
+
+    $inserer('inscriptions', $colsInscription, $lignesInscriptions);
+    $lignesInscriptions = [];
+    $pdo->commit();
+    echo "  Soirées : validées
+";
+    $pdo->beginTransaction();
 
     // ══ SPORT ════════════════════════════════════════════════════════════
     $insertSportEtab = $pdo->prepare('INSERT IGNORE INTO etablissement_sports (etablissement_id, sport) VALUES (?, ?)');
@@ -392,7 +426,9 @@ try {
         'INSERT INTO creneaux (terrain_id, debut, fin, prix, joueurs, statut, organisateur_id, ouvert, niveau, reserve_le)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
-    $insertJoueur = $pdo->prepare('INSERT INTO creneau_joueurs (creneau_id, user_id, invite_par) VALUES (?, ?, ?)');
+    $colsCreneau = ['terrain_id', 'debut', 'fin', 'prix', 'joueurs', 'statut', 'organisateur_id', 'ouvert', 'niveau', 'reserve_le'];
+    $lignesLibres = [];
+    $lignesJoueurs = [];
     $heures  = ['09:00', '10:30', '12:00', '17:30', '19:00', '20:30'];
     $niveaux = ['tous', 'debutant', 'inter', 'avance'];
     $nbCreneaux = ['libre' => 0, 'ouverte' => 0, 'pleine' => 0];
@@ -415,7 +451,7 @@ try {
                 $reserve = $soir ? $hasard < 6 : $hasard < 2;
                 $fin = $plus($debut, $t['duree']);
                 if (!$reserve) {
-                    $insertCreneau->execute([$t['id'], $debut, $fin, $t['prix'], $t['joueurs'], 'libre', null, 0, 'tous', null]);
+                    $lignesLibres[] = [$t['id'], $debut, $fin, $t['prix'], $t['joueurs'], 'libre', null, 0, 'tous', null];
                     $nbCreneaux['libre']++;
                     continue;
                 }
@@ -429,19 +465,22 @@ try {
                 $creneauId = (int) $pdo->lastInsertId();
                 $places = $pleine ? $t['joueurs'] : max(1, $t['joueurs'] - 1 - ($tour % 2));
                 $dans_partie = [$orga => true];
-                $insertJoueur->execute([$creneauId, $orga, null]);
+                $lignesJoueurs[] = [$creneauId, $orga, null];
                 for ($k = 1; count($dans_partie) < $places && $k < 40; $k++) {
                     $uid = $participant($tour + 5, $k);
                     if (isset($dans_partie[$uid])) {
                         continue;
                     }
                     $dans_partie[$uid] = true;
-                    $insertJoueur->execute([$creneauId, $uid, $orga]);
+                    $lignesJoueurs[] = [$creneauId, $uid, $orga];
                 }
                 $nbCreneaux[$pleine ? 'pleine' : ($ouvert ? 'ouverte' : 'pleine')]++;
             }
         }
     }
+
+    $inserer('creneaux', $colsCreneau, $lignesLibres);
+    $inserer('creneau_joueurs', ['creneau_id', 'user_id', 'invite_par'], $lignesJoueurs);
 
     $insertEvSport = $pdo->prepare(
         "INSERT INTO evenements (etablissement_id, titre, description, type, sport, format, date_heure, date_fin,
@@ -477,7 +516,7 @@ try {
                 }
             }
             $vus[$uid] = true;
-            $insertInscription->execute([$uid, $evId, $qr(), 'inscrit', null]);
+            $lignesInscriptions[] = [$uid, $evId, $qr(), 'inscrit', null];
             $nbInscriptions++;
         }
     }
@@ -486,7 +525,8 @@ try {
         "INSERT INTO squads (createur_id, type, cree_par_association, visibilite, titre, description, niveau, date_heure, lieu, quota)
          VALUES (?, ?, 1, 'public', ?, ?, ?, ?, ?, ?)"
     );
-    $insertMembre = $pdo->prepare('INSERT INTO squad_membres (squad_id, user_id) VALUES (?, ?)');
+    $inserer('inscriptions', $colsInscription, $lignesInscriptions);
+    $lignesMembres = [];
     // sport, titre, description, niveau, jour, heure, lieu, quota, membres
     $sorties = [
         ['running', 'Footing au Puy de Dôme', "Montée par le chemin des Muletiers, 9 km et 500 m de dénivelé, à allure de conversation.", 'tous', 2, '09:00', 'Col de Ceyssat, Orcines', 15, 9],
@@ -508,9 +548,15 @@ try {
                 continue;
             }
             $vus[$uid] = true;
-            $insertMembre->execute([$squadId, $uid]);
+            $lignesMembres[] = [$squadId, $uid];
         }
     }
+
+    $inserer('squad_membres', ['squad_id', 'user_id'], $lignesMembres);
+    $pdo->commit();
+    echo "  Sport   : validé
+";
+    $pdo->beginTransaction();
 
     // ══ CULTURE ══════════════════════════════════════════════════════════
     // L'espace Culture est saisi par l'équipe : un compte « organisateur »
@@ -521,7 +567,7 @@ try {
         'INSERT INTO culture_evenements (titre, description, categorie, organisateur, lieu, ville, date_heure, date_fin, quota, prix, mis_en_avant, cree_par)
          VALUES (?,?,?,?,?,?,?,?,?,?,?,?)'
     );
-    $insertCultureInscrit = $pdo->prepare('INSERT IGNORE INTO culture_inscriptions (user_id, evenement_id) VALUES (?, ?)');
+    $lignesCulture = [];
     // titre, description, catégorie, organisateur, lieu, ville, début, fin, quota, prix, à la une, inscrits
     $culture = [
         ['Basalte, matière du volcan', "Photographies grand format des coulées de la chaîne des Puys, prises au drone et au microscope.", 'expo', 'Galerie Pierre-Noire', 'Galerie Pierre-Noire, 7 rue des Gras', 'Clermont-Ferrand', $jour(-6, '10:00'), $jour(24, '19:00'), 0, 0, 1, 0],
@@ -545,14 +591,30 @@ try {
         $evId = (int) $pdo->lastInsertId();
         $nb = $quota > 0 ? min($inscrits, $quota, $nbEtudiants) : min($inscrits, $nbEtudiants);
         for ($k = 0; $k < $nb; $k++) {
-            $insertCultureInscrit->execute([$participant($n + 120, $k), $evId]);
+            $lignesCulture[] = [$participant($n + 120, $k), $evId];
         }
     }
+    $inserer('culture_inscriptions', ['user_id', 'evenement_id'], $lignesCulture);
 
     $pdo->commit();
+    echo "  Culture : validée\n\n";
 } catch (Throwable $e) {
-    $pdo->rollBack();
-    fwrite(STDERR, "Échec, rien n'a été écrit : {$e->getMessage()} (ligne {$e->getLine()})\n");
+    fwrite(STDERR, "Échec : {$e->getMessage()} (ligne {$e->getLine()})\n");
+    // La connexion a pu tomber : on en ouvre une neuve pour retirer ce
+    // qu'une étape précédente a déjà validé.
+    try {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+    } catch (Throwable) {
+        // Connexion perdue : la transaction en cours est annulée d'office.
+    }
+    try {
+        nettoyerDemo($connecter());
+        fwrite(STDERR, "Ce qui avait déjà été écrit a été retiré : la base est comme avant. Relancer le semis.\n");
+    } catch (Throwable $e2) {
+        fwrite(STDERR, "Le retrait a échoué aussi ({$e2->getMessage()}) : lancer php outils/semer_demo.php --nettoyer\n");
+    }
     exit(1);
 }
 
