@@ -263,11 +263,14 @@ function Carte({ ev, accent, premiere, flash, onInviter }: { ev: Evenement; acce
           <Pastille petite libelle={libelleFlash(ts(ev.flash_expiry), maintenant)} icone="eclair" fond={accent ? voile : c.surface2} encre={encre} />
         ) : enCours ? <PastilleEnCours petite surAccent={accent} /> : <PastilleAVenir petite surAccent={accent} />}
         <Pastille petite libelle={dateType} fond={accent ? '#FFFFFF' : c.noir} encre={accent ? '#111116' : c.surEncre} style={{ flexShrink: 1 }} />
-        {reduction > 0 ? (
-          <Pastille petite libelle={`-${reduction}% ${ev.is_gratuit ? '· entrée gratuite' : 'sur conso'}`} fond={accent ? voile : c.succesClair} encre={accent ? '#FFFFFF' : c.succes} />
+        {/* La réduction porte sur le prix d'entrée (« Réduction étudiants »
+            du formulaire de l'établissement) : la fiche et le pass l'appliquent
+            au prix ; une entrée gratuite n'a rien à réduire. */}
+        {reduction > 0 && !ev.is_gratuit ? (
+          <Pastille petite libelle={`-${reduction}% étudiants`} fond={accent ? voile : c.succesClair} encre={accent ? '#FFFFFF' : c.succes} />
         ) : null}
         {prix ? <Pastille petite libelle={`Prix ${prix.final}`} fond={accent ? voile : c.surface2} encre={encre} /> : null}
-        {ev.is_gratuit && reduction <= 0 ? <Pastille petite libelle="Gratuit" fond={accent ? voile : c.surface2} encre={encre} /> : null}
+        {ev.is_gratuit ? <Pastille petite libelle="Gratuit" fond={accent ? voile : c.surface2} encre={encre} /> : null}
         {ev.cloture_anticipee && ev.inscriptions_jusqu_au && !inscrit ? (
           <Pastille petite icone="cadenas" libelle={`Inscriptions jusqu'au ${dateFr(ev.inscriptions_jusqu_au, 'j M · H\\hi')}`} fond={accent ? voile : c.surface2} encre={encre} />
         ) : null}
