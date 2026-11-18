@@ -453,9 +453,20 @@ function hachageDemonstration(string $hachage): bool {
     return hash_equals('$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', $hachage);
 }
 
-/** Le mot de passe est-il refusé d'office (compte de démonstration en production) ? */
+/**
+ * Le mot de passe est-il refusé d'office (compte de démonstration en production) ?
+ *
+ * COMPTES_DEMO=1 (ou 'comptes_demo' => true dans config.local.php) rouvre ces
+ * comptes en production, le temps d'une démonstration. Leur mot de passe est
+ * public (db_setup.sql) : retirer la variable les referme, sans redéployer.
+ */
 function hachageInterdit(string $hachage): bool {
-    return estEnProduction() && hachageDemonstration($hachage);
+    return estEnProduction() && hachageDemonstration($hachage) && !comptesDemoOuverts();
+}
+
+/** Les comptes de démonstration sont-ils ouverts malgré la production ? */
+function comptesDemoOuverts(): bool {
+    return reglageBooleen('COMPTES_DEMO', 'comptes_demo');
 }
 
 function hachageTemoin(): string {
