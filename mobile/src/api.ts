@@ -163,6 +163,15 @@ export type Evenement = {
   sport?: string | null;
   format?: string | null;
   date_heure: string;
+  date_fin?: string | null;
+  /** Fil seulement : la fin retenue par le serveur (date_fin, sinon la fenêtre par défaut). */
+  fin_effective?: string;
+  /** Fin des inscriptions : la clôture de l'établissement, sinon le début. */
+  inscriptions_jusqu_au?: string;
+  /** Vrai quand l'établissement a fermé les inscriptions avant le début. */
+  cloture_anticipee?: boolean;
+  /** Fiche seulement : peut-on encore s'inscrire ? */
+  inscriptions_ouvertes?: boolean;
   lieu: string;
   etablissement: { id: number; nom: string; type: string; ville: string; note: number | null; nb_avis: number; suivi: boolean; latitude: number | null; longitude: number | null };
   places: { quota: number; inscrits: number; restantes: number | null; complet: boolean };
@@ -565,6 +574,8 @@ export type EvenementFormulairePartenaire = {
   format: string | null;
   date_heure: string;
   date_fin: string | null;
+  /** Clôture anticipée des inscriptions (v38) ; null : jusqu'au début. */
+  inscriptions_jusqu_au?: string | null;
   quota: number;
   reduction: number;
   prix_normal: number;

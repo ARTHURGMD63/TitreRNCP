@@ -14,7 +14,7 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 
 import { api, ErreurApi, type ReponseFormulaireEvenementPartenaire } from '../../api';
@@ -59,6 +59,7 @@ export default function FormulaireEvenementPartenaire() {
   const [format, setFormat] = useState('tournoi');
   const [date, setDate] = useState<Date | null>(null);
   const [dateFin, setDateFin] = useState<Date | null>(null);
+  const [clotureInscriptions, setClotureInscriptions] = useState<Date | null>(null);
   const [lieu, setLieu] = useState('');
   const [quota, setQuota] = useState('100');
   const [prixNormal, setPrixNormal] = useState('0');
@@ -90,6 +91,7 @@ export default function FormulaireEvenementPartenaire() {
         if (e.format) setFormat(e.format);
         setDate(new Date(e.date_heure.replace(' ', 'T')));
         setDateFin(e.date_fin ? new Date(e.date_fin.replace(' ', 'T')) : null);
+        setClotureInscriptions(e.inscriptions_jusqu_au ? new Date(e.inscriptions_jusqu_au.replace(' ', 'T')) : null);
         setLieu(e.lieu);
         setQuota(String(e.quota));
         setPrixNormal(String(e.prix_normal));
@@ -126,6 +128,8 @@ export default function FormulaireEvenementPartenaire() {
         format: donnees?.est_club ? format : undefined,
         date_heure: date ? isoDateHeure(date) : '',
         date_fin: dateFin ? isoDateHeure(dateFin) : undefined,
+        // Chaîne vide : pas de clôture anticipée (on retire celle d'avant).
+        inscriptions_jusqu_au: clotureInscriptions ? isoDateHeure(clotureInscriptions) : '',
         lieu, quota: Number(quota), prix_normal: Number(prixNormal), reduction: Number(reduction),
         is_gratuit: isGratuit, is_flash: !donnees?.est_club && isFlash,
         flash_expiry: !donnees?.est_club && isFlash && flashExpiry ? isoDateHeure(flashExpiry) : undefined,
@@ -227,6 +231,21 @@ export default function FormulaireEvenementPartenaire() {
         )}
         <ChampDate etiquette="Début *" mode="datetime" valeur={date} onChange={setDate} min={new Date()} />
         <ChampDate etiquette="Fin" mode="datetime" valeur={dateFin} onChange={setDateFin} min={date ?? new Date()} />
+        <ChampDate
+          etiquette="Clôture des inscriptions"
+          mode="datetime"
+          valeur={clotureInscriptions}
+          onChange={setClotureInscriptions}
+          min={new Date()}
+          max={date ?? undefined}
+          marge={clotureInscriptions ? 4 : 16}
+          aide="Facultatif. Sans date, on peut s'inscrire jusqu'au début."
+        />
+        {clotureInscriptions ? (
+          <Pressable onPress={() => setClotureInscriptions(null)} accessibilityRole="button" style={{ alignSelf: 'flex-start', marginBottom: 16, paddingVertical: 4 }}>
+            <T taille={fs[3]} poids={600} couleur={c.gris}>Retirer la clôture</T>
+          </Pressable>
+        ) : null}
         <Champ etiquette="Description" value={description} onChangeText={setDescription} multiligne numberOfLines={3}
           placeholder={club ? 'Tableau, niveau attendu, lots, matériel...' : 'Ambiance, animations, dress code...'} />
         <Champ etiquette={club ? 'Lieu / Terrains' : 'Lieu / Salle'} value={lieu} onChangeText={setLieu} marge={0} />

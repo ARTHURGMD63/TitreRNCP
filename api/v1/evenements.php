@@ -70,6 +70,12 @@ function apiEvenement(array $e, array $amis, array $etabsSuivis): array
         'type'        => (string) ($e['type'] ?? ''),
         'style_musique' => $e['style_musique'] !== null ? (string) $e['style_musique'] : null,
         'date_heure'  => (string) $e['date_heure'],
+        'date_fin'    => !empty($e['date_fin']) ? (string) $e['date_fin'] : null,
+        // La fin retenue par le serveur (date_fin, sinon la fenêtre par
+        // défaut) : l'application bascule « En cours » sans refaire la règle.
+        'fin_effective' => date('Y-m-d H:i:s', (int) evenementFinEffective((string) $e['date_heure'], $e['date_fin'] ?? null)),
+        'inscriptions_jusqu_au' => evenementClotureInscriptions((string) $e['date_heure'], $e['inscriptions_jusqu_au'] ?? null),
+        'cloture_anticipee'     => evenementClotureInscriptions((string) $e['date_heure'], $e['inscriptions_jusqu_au'] ?? null) !== (string) $e['date_heure'],
         'lieu'        => (string) ($e['lieu'] ?? ''),
 
         'etablissement' => [

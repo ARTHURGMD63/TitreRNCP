@@ -124,6 +124,7 @@ function apiEvenementPourEdition(PDO $pdo, array $e): array
         'format' => isset($e['format']) && $e['format'] !== null ? (string) $e['format'] : null,
         'date_heure' => (string) $e['date_heure'],
         'date_fin' => $e['date_fin'] !== null ? (string) $e['date_fin'] : null,
+        'inscriptions_jusqu_au' => !empty($e['inscriptions_jusqu_au']) ? (string) $e['inscriptions_jusqu_au'] : null,
         'quota' => (int) $e['quota'],
         'reduction' => (int) ($e['reduction'] ?? 0),
         'prix_normal' => (float) ($e['prix_normal'] ?? 0),
@@ -266,7 +267,9 @@ if ($estClub) {
 }
 $dateHeure    = trim((string) ($corps['date_heure'] ?? ''));
 $dateFin      = trim((string) ($corps['date_fin'] ?? '')) ?: null;
-$quota        = (int) ($corps['quota'] ?? 100);
+// Clôture anticipée des inscriptions (v38). Vide : on s'inscrit jusqu'au début.
+$inscriptionsJusquAu = trim((string) ($corps['inscriptions_jusqu_au'] ?? '')) ?: null;
+$quota       = (int) ($corps['quota'] ?? 100);
 $reduction    = (int) ($corps['reduction'] ?? 0);
 $prixNormal   = (float) ($corps['prix_normal'] ?? 0);
 // L'offre flash et la mise en avant visent le fil des soirées : un club n'y
@@ -297,6 +300,10 @@ if ($estClub && !formatSportValide($format)) $erreurs[] = 'Choisis un format.';
 if ($musique !== '' && !styleMusiqueValide($musique)) $erreurs[] = 'Style de musique invalide.';
 if ($dateHeure === '') $erreurs[] = 'La date est obligatoire.';
 if ($dateFin && strtotime($dateFin) <= strtotime($dateHeure)) $erreurs[] = 'La fin doit être après le début.';
+if ($inscriptionsJusquAu !== null && strtotime($inscriptionsJusquAu) === false) $erreurs[] = 'Date de clôture des inscriptions invalide.';
+if ($inscriptionsJusquAu !== null && $dateHeure !== '' && strtotime($inscriptionsJusquAu) > strtotime($dateHeure)) {
+    $erreurs[] = 'La clôture des inscriptions doit tomber avant le début.';
+}
 if ($quota < 1) $erreurs[] = 'Le quota doit être au moins 1.';
 if ($isFlash && $flashExpiry === '') $erreurs[] = "Date d'expiration flash requise.";
 // Une soirée se publie pour l'avenir : un événement déjà fini n'est ni
@@ -359,13 +366,13 @@ try {
 
         $pdo->prepare(
             'UPDATE evenements SET
-                titre=?, description=?, type=?, style_musique=?, sport=?, format=?, date_heure=?, date_fin=?,
+                titre=?, description=?, type=?, style_musique=?, sport=?, format=?, date_heure=?, date_fin=?, inscriptions_jusqu_au=?,
                 quota=?, reduction=?, prix_normal=?,
                 is_flash=?, flash_expiry=?, is_gratuit=?, lieu=?,
                 is_sponsorise=?, sponsor_formule=?, sponsor_tarif=?, sponsor_jusqu_au=?, sponsor_debut=COALESCE(?, sponsor_debut)
               WHERE id=? AND etablissement_id=?'
         )->execute([
-            $titre, $description, $type, $musique ?: null, $sport ?: null, $format ?: null, $dateHeure, $dateFin,
+            $titre, $description, $type, $musique ?: null, $sport ?: null, $format ?: null, $dateHeure, $dateFin, $inscriptionsJusquAu,
             $quota, $reduction, $prixNormal,
             $isFlash, $flashExpiry ?: null, $isGratuit, $lieu,
             $isSponsorise, $sponsorFormule, $sponsorTarif, $sponsorFin, !empty($sponso['nouvelle']) ? date('Y-m-d H:i:s') : null,
@@ -417,11 +424,11 @@ try {
 
     $pdo->prepare(
         'INSERT INTO evenements
-            (etablissement_id, titre, description, type, style_musique, sport, format, date_heure, date_fin, quota, reduction, prix_normal, is_flash, flash_expiry, is_gratuit, lieu,
+            (etablissement_id, titre, description, type, style_musique, sport, format, date_heure, date_fin, inscriptions_jusqu_au, quota, reduction, prix_normal, is_flash, flash_expiry, is_gratuit, lieu,
              is_sponsorise, sponsor_formule, sponsor_tarif, sponsor_jusqu_au, sponsor_debut, supplement_tarif)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
     )->execute([
-        (int) $etab['id'], $titre, $description, $type, $musique ?: null, $sport ?: null, $format ?: null, $dateHeure, $dateFin,
+        (int) $etab['id'], $titre, $description, $type, $musique ?: null, $sport ?: null, $format ?: null, $dateHeure, $dateFin, $inscriptionsJusquAu,
         $quota, $reduction, $prixNormal, $isFlash,
         $flashExpiry ?: null, $isGratuit, $lieu,
         $isSponsorise, $sponsorFormule, $sponsorTarif, $sponsorFin, !empty($sponso['nouvelle']) ? date('Y-m-d H:i:s') : null, $supplementTarif,
