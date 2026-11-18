@@ -13,6 +13,7 @@ require_once __DIR__ . '/../../includes/uploads.php';
 require_once __DIR__ . '/../../includes/agregats.php';
 require_once __DIR__ . '/../../includes/sponsoring.php';
 require_once __DIR__ . '/../../includes/evenements_temps.php';
+require_once __DIR__ . '/../../includes/collaborations.php';
 
 apiExigerMethode('GET');
 
@@ -104,6 +105,9 @@ apiReponse([
             'latitude'  => $e['etab_latitude'] !== null ? (float) $e['etab_latitude'] : null,
             'longitude' => $e['etab_longitude'] !== null ? (float) $e['etab_longitude'] : null,
         ],
+
+        // Les établissements qui co-organisent (v39), une fois l'invitation acceptée.
+        'collaborateurs' => collaborationsPourApi(collaborationsDe($pdo, [(int) $e['id']]), (int) $e['id']),
 
         'places' => [
             'quota'       => $quota,

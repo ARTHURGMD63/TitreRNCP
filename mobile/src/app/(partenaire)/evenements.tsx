@@ -111,6 +111,15 @@ function CarteEvenementPartenaire({ ev, onSupprime }: { ev: EvenementPartenaire;
       <View style={{ gap: 6 }}>
         <Text style={{ fontFamily: sans(700), fontSize: taille.titreCarteSport, lineHeight: taille.titreCarteSport * 1.15, letterSpacing: -0.03 * taille.titreCarteSport, color: c.noir }}>{ev.titre}</Text>
         <T taille={fs[4]} couleur={c.gris}>{dateFr(ev.date_heure, 'l j F · H\\hi')}</T>
+        {ev.collaboration ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Icone nom="personnes" taille={14} couleur={c.gris} />
+            <T taille={fs[4]} couleur={c.gris} style={{ flexShrink: 1 }} numberOfLines={1}>
+              Avec <T taille={fs[4]} poids={700}>{ev.collaboration.nom}</T>
+              {ev.collaboration.statut === 'acceptee' ? '' : ev.collaboration.statut === 'refusee' ? ' · invitation refusée' : ' · en attente de réponse'}
+            </T>
+          </View>
+        ) : null}
       </View>
 
       <View style={{ gap: 8 }}>

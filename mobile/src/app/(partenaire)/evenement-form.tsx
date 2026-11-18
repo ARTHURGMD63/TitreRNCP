@@ -19,6 +19,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 
 import { api, ErreurApi, type ReponseFormulaireEvenementPartenaire } from '../../api';
 import { Bouton } from '../../composants/Bouton';
+import { ChampCollaboration, type CollaborateurChoisi } from '../../composants/ChampCollaboration';
 import { ChronoMiseEnAvant } from '../../composants/ChronoMiseEnAvant';
 import { useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
@@ -75,6 +76,10 @@ export default function FormulaireEvenementPartenaire() {
   // L'instant d'ouverture de l'écran : base de la fenêtre annoncée (pas d'horloge dans le rendu).
   const [maintenant] = useState(() => Date.now());
   const [sponsorTermine, setSponsorTermine] = useState<string | null>(null);
+  // L'établissement invité à co-organiser (v39), et celui chargé à l'ouverture :
+  // en modification, on n'envoie le champ que s'il a changé.
+  const [collaborateur, setCollaborateur] = useState<CollaborateurChoisi | null>(null);
+  const [collaborateurInitial, setCollaborateurInitial] = useState<number | null>(null);
 
   const charger = useCallback(async () => {
     try {
@@ -105,6 +110,8 @@ export default function FormulaireEvenementPartenaire() {
           ? { formule: e.sponsor_formule, jusquau: e.sponsor_jusqu_au, debut: e.sponsor_debut, restantS: e.sponsor_restant_s, envoyees: e.sponsor_notifications_envoyees } : null);
         setSponsorTermine(e.sponsor_termine ? e.sponsor_jusqu_au : null);
         setSponsorNotifs(e.sponsor_notifications.map((h) => new Date(h.replace(' ', 'T'))));
+        setCollaborateur(e.collaboration ?? null);
+        setCollaborateurInitial(e.collaboration?.id ?? null);
       } else {
         setLieu(rep.lieu_defaut);
         setSponsorFormule(rep.formules_sponsoring.find((f) => f.offrable)?.code ?? '');
@@ -119,6 +126,7 @@ export default function FormulaireEvenementPartenaire() {
   async function enregistrer() {
     setEnregistrement(true);
     setErreurEnregistrement(null);
+    const collaborateurId = collaborateur?.id ?? null;
     try {
       const rep = await api.partenaireEnregistrerEvenement(jeton, {
         id: evenementId ?? undefined,
@@ -137,6 +145,9 @@ export default function FormulaireEvenementPartenaire() {
         sponsor_formule: !donnees?.est_club && isSponsorise ? sponsorFormule : undefined,
         sponsor_notifications: !donnees?.est_club && isSponsorise
           ? sponsorNotifs.filter((d): d is Date => d !== null).map(isoDateHeure) : undefined,
+        // Création : seulement s'il y en a un. Modification : seulement s'il
+        // a changé (0 retire la collaboration).
+        collaborateur_id: collaborateurId !== collaborateurInitial ? collaborateurId ?? 0 : undefined,
         // L'application ne vend rien : aucun supplément payant ne s'accepte ici.
         accepte_supplement: false,
       });
@@ -356,6 +367,14 @@ export default function FormulaireEvenementPartenaire() {
           </View>
         ) : null}
         </View>)}
+
+        <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 14, marginBottom: 16 }}>
+        <TitreSection style={{ marginBottom: 6 }}>Collaboration</TitreSection>
+        <T taille={fs[4]} couleur={c.gris} style={{ marginBottom: 14 }}>
+          Facultatif. Invite un autre établissement ou un BDE à co-organiser : son nom s&apos;affichera sur l&apos;événement dès qu&apos;il aura accepté.
+        </T>
+        <ChampCollaboration valeur={collaborateur} onChange={setCollaborateur} />
+        </View>
 
         <Bouton libelle={evenementId ? 'Enregistrer les modifications' : "Publier l'événement"} plein
           desactive={!publiable || (sponsoNouveau && dejaTermine)}

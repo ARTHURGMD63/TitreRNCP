@@ -153,6 +153,9 @@ export type Profil = {
   compte_prive: boolean;
 };
 
+/** Un établissement qui co-organise un événement (v39), une fois l'invitation acceptée. */
+export type Collaborateur = { id: number; nom: string; type: string };
+
 export type Evenement = {
   id: number;
   titre: string;
@@ -184,6 +187,8 @@ export type Evenement = {
   deja_inscrit: boolean;
   en_cours: boolean;
   amis: { prenoms: string[]; nb: number };
+  /** Les établissements qui co-organisent (absent d'un serveur d'avant la v39). */
+  collaborateurs?: Collaborateur[];
 };
 
 export type EvenementDetail = Omit<Evenement, 'amis' | 'etablissement' | 'places'> & {
@@ -560,6 +565,22 @@ export type EvenementPartenaire = {
   supplement_tarif: number;
   sponsor_tarif: number;
   statut: 'passe' | 'complet' | 'actif';
+  /** L'établissement invité à co-organiser, et sa réponse. */
+  collaboration?: CollaborationEnvoyee | null;
+};
+
+export type StatutCollaboration = 'en_attente' | 'acceptee' | 'refusee';
+/** L'invitation à co-organiser qu'un hôte a envoyée pour son événement. */
+export type CollaborationEnvoyee = Collaborateur & { statut: StatutCollaboration };
+/** Un établissement qu'on peut inviter à co-organiser. */
+export type EtablissementInvitable = Collaborateur & { ville: string };
+/** Une invitation reçue : en attente, ou une collaboration acceptée à venir. */
+export type InvitationCollaboration = {
+  id: number;
+  statut: 'en_attente' | 'acceptee';
+  invite_le: string;
+  evenement: { id: number; titre: string; date_heure: string; date_fin: string | null; lieu: string };
+  hote: Collaborateur;
 };
 
 export type FormulePartenaire = { code: string; nom: string; tarif: number; resume: string; heures: number; notifications: number; offrable?: boolean };
@@ -594,6 +615,8 @@ export type EvenementFormulairePartenaire = {
   sponsor_debut: string | null;
   sponsor_restant_s: number | null;
   supplement_tarif: number;
+  /** L'établissement invité à co-organiser (v39), et sa réponse. */
+  collaboration?: CollaborationEnvoyee | null;
 };
 
 export type ReponseFormulaireEvenementPartenaire = {
@@ -843,6 +866,12 @@ export const api = {
     appelApi<{ success: true } & ReponseFormulaireEvenementPartenaire>('partenaire_evenement.php', { jeton, params: { id } }),
   partenaireEnregistrerEvenement: (jeton: string, corps: Record<string, unknown>) =>
     appelApi<Ok & { id: number }>('partenaire_evenement.php', { methode: 'POST', jeton, corps }),
+  partenaireRechercherCollaborateurs: (jeton: string, q: string) =>
+    appelApi<{ etablissements: EtablissementInvitable[] }>('partenaire_collaborations.php', { jeton, params: { q } }),
+  partenaireInvitationsCollaboration: (jeton: string) =>
+    appelApi<{ invitations: InvitationCollaboration[] }>('partenaire_collaborations.php', { jeton, params: { invitations: 1 } }),
+  partenaireRepondreCollaboration: (jeton: string, id: number, action: 'accepter' | 'refuser' | 'quitter') =>
+    appelApi<Ok>('partenaire_collaborations.php', { methode: 'POST', jeton, corps: { action, id } }),
   partenaireScan: (jeton: string, corps: { qr_code?: string; inscription_id?: number; event_id: number }) =>
     appelApi<Ok & { personne: { id: number; prenom: string; nom: string; ecole: string | null; promo: string | null; photo_url: string | null } }>(
       'partenaire_scan.php', { methode: 'POST', jeton, corps }

@@ -225,6 +225,7 @@ export const STYLE_CARTE = { padding: 14, gap: 8, borderRadius: 20 } as const;
  *  - réduction, gratuité, sponsorisé, s'il y a lieu ;
  *  - le surtitre (style de musique, sinon type de lieu), le titre ;
  *  - le lieu, ses places et sa note, avec « + Suivre » ;
+ *  - « avec … » : les établissements qui co-organisent (v39) ;
  *  - le compte à rebours de la première offre flash, comme avant ;
  *  - « qui y va », si des amis y vont ;
  *  - « Inviter » et l'action principale.
@@ -287,6 +288,14 @@ function Carte({ ev, accent, premiere, flash, onInviter }: { ev: Evenement; acce
           <T taille={fs[3]} couleur={secondaire} numberOfLines={1}>
             {ev.etablissement.nom} · {ev.places.inscrits}/{ev.places.quota} places
           </T>
+          {ev.collaborateurs?.length ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }} accessible accessibilityLabel={`En collaboration avec ${nomsCollaborateurs(ev.collaborateurs)}`}>
+              <Icone nom="personnes" taille={12} couleur={secondaire} />
+              <T taille={fs[2]} couleur={secondaire} numberOfLines={1} style={{ flexShrink: 1 }}>
+                en collab avec <T taille={fs[2]} poids={700} couleur={encre}>{nomsCollaborateurs(ev.collaborateurs)}</T>
+              </T>
+            </View>
+          ) : null}
           {ev.etablissement.nb_avis > 0 ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 2 }}>
               <Icone nom="etoile" taille={12} couleur={accent ? '#FFFFFF' : c.surOrangeClair} />
@@ -337,6 +346,12 @@ export function enregistrerStyles(liste: { code: string; libelle: string }[]) {
 }
 export function libelleStyle(code: string) {
   return STYLES[code] ?? code;
+}
+
+/** « BDE Info », « BDE Info et Le Comptoir » : les co-organisateurs d'un événement. */
+export function nomsCollaborateurs(liste: { nom: string }[]) {
+  const noms = liste.map((c) => c.nom);
+  return noms.length > 1 ? `${noms.slice(0, -1).join(', ')} et ${noms[noms.length - 1]}` : noms[0] ?? '';
 }
 
 /** La note telle que PHP l'imprime : « 4.5 », « 4 ». */
