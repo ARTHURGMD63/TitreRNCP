@@ -176,5 +176,26 @@ $stmt = $pdo->prepare(
 );
 $stmt->execute([DB_NAME]);
 
-printf("\nTerminé : %d instruction(s), %d table(s).\n", $faites, (int) $stmt->fetchColumn());
+$nbTablesFin = (int) $stmt->fetchColumn();
+
+// ── Comptes de démonstration ────────────────────────────────────────────────
+//
+// db_setup.sql crée des comptes de démonstration au mot de passe public
+// « password ». En production, ils deviennent inutilisables aussitôt : un
+// hachage d'un secret jeté remplace le leur. (La connexion les refuse de toute
+// façon en production, voir hachageInterdit() dans includes/security.php.)
+if (estEnProduction()) {
+    require_once __DIR__ . '/../includes/security.php';
+    $neutraliser = $pdo->prepare('UPDATE users SET password = ? WHERE id = ?');
+    $neutres     = 0;
+    foreach ($pdo->query('SELECT id, password FROM users')->fetchAll() as $compte) {
+        if (hachageDemonstration((string) $compte['password'])) {
+            $neutraliser->execute([password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT), (int) $compte['id']]);
+            $neutres++;
+        }
+    }
+    printf("\nProduction : %d compte(s) de démonstration rendu(s) inutilisable(s).\n", $neutres);
+}
+
+printf("\nTerminé : %d instruction(s), %d table(s).\n", $faites, $nbTablesFin);
 echo "Vérifier avec : php outils/migrer.php --etat\n";

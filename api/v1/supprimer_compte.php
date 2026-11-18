@@ -31,7 +31,7 @@ $uid = (int) $u['id'];
 // Même garde que la connexion : ce point vérifie un mot de passe, il ne doit
 // pas permettre d'en tester à volonté depuis un jeton volé.
 $ip = ipClient();
-if (isRateLimited($pdo, $ip, 5, 900)) {
+if (limiteAtteinte($pdo, 'suppression', $ip, 20, 900, (string) $uid, 5)) {
     apiErreur('Trop de tentatives. Réessaie dans quinze minutes.', 429, 'trop_de_tentatives');
 }
 
@@ -45,7 +45,7 @@ $stmt->execute([$uid]);
 $hash = (string) $stmt->fetchColumn();
 
 if ($pass === '' || $hash === '' || !password_verify($pass, $hash)) {
-    recordLoginAttempt($pdo, $ip, (string) $u['email']);
+    enregistrerTentative($pdo, 'suppression', $ip, (string) $uid);
     apiErreur('Mot de passe incorrect.', 403, 'mot_de_passe');
 }
 

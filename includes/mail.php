@@ -59,7 +59,13 @@ function configurationMail(): array
     // tournait ailleurs, et c'est précisément ce que SPF sanctionne.
     // Le domaine vient d'APP_URL quand elle est réglée : l'en-tête Host est
     // écrit par le client.
-    $hoteWeb = (string) (parse_url(urlPublique(), PHP_URL_HOST) ?: 'localhost');
+    try {
+        $hoteWeb = (string) (parse_url(urlPublique(), PHP_URL_HOST) ?: 'localhost');
+    } catch (RuntimeException) {
+        // APP_URL manquant (déjà journalisé) : l'expéditeur réglé par
+        // MAIL_FROM reste utilisable, le message part quand même.
+        $hoteWeb = 'localhost';
+    }
     $domaine = preg_replace('/:\d+$/', '', $hoteWeb) ?: 'localhost';
 
     $expediteur = reglage('MAIL_FROM', 'mail_from', 'noreply@' . $domaine);

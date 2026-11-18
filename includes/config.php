@@ -110,6 +110,15 @@ function estEnDeveloppement(): bool
     if (PHP_SAPI === 'cli') {
         return true;
     }
+    // Sans APP_ENV, seule une requête de la machine elle-même ET servie par
+    // un serveur de poste de travail (`php -S`, WAMP sous Windows) compte.
+    // Sur un hébergement Linux sans APP_ENV, un proxy local (nginx devant
+    // PHP-FPM, Apache derrière un répartiteur) présente lui aussi 127.0.0.1 :
+    // toute la clientèle serait passée en mode développement, code de
+    // réinitialisation affiché compris.
+    if (PHP_SAPI !== 'cli-server' && PHP_OS_FAMILY !== 'Windows') {
+        return false;
+    }
     $distante = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
 
     return in_array($distante, ['127.0.0.1', '::1'], true);
@@ -126,6 +135,13 @@ function estEnDeveloppement(): bool
 function urlPublique(string $chemin = ''): string
 {
     $base = rtrim(reglage('APP_URL', 'url_publique'), '/');
+    if ($base === '' && !estEnDeveloppement()) {
+        // Hors poste de développement, l'hôte demandé n'est jamais une
+        // source : n'importe qui l'écrit, et un lien de réinitialisation
+        // pointerait vers son site. Mieux vaut un échec visible au journal.
+        error_log('[Outsee] APP_URL (ou url_publique) manquant : lien public impossible à construire.');
+        throw new RuntimeException('APP_URL manquant');
+    }
     if ($base === '') {
         require_once __DIR__ . '/urls.php';
         $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')

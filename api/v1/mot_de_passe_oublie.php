@@ -24,19 +24,21 @@ apiExigerMethode('POST');
 // Sans cette garde, un tiers connaissant l'adresse d'une victime pouvait la
 // bombarder de mails de réinitialisation à volonté — nuisance directe, et
 // risque de faire flaguer le domaine d'envoi comme source de spam.
+// Compteur propre aux demandes de code : il ne bloque plus la connexion du
+// compte visé (dix demandes suffisaient à l'empêcher de se connecter).
 $ip = ipClient();
-if (isRateLimited($pdo, $ip, 5, 900)) {
-    apiErreur('Trop de tentatives. Réessaie dans quinze minutes.', 429, 'trop_de_tentatives');
-}
-
 $corps = apiCorps();
 $email = trim(is_string($corps['email'] ?? null) ? $corps['email'] : '');
+
+if (limiteAtteinte($pdo, 'oubli', $ip, 10, 900, $email, 5)) {
+    apiErreur('Trop de tentatives. Réessaie dans quinze minutes.', 429, 'trop_de_tentatives');
+}
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     apiErreur('Adresse email invalide.', 422, 'email');
 }
 
-recordLoginAttempt($pdo, $ip, $email);
+enregistrerTentative($pdo, 'oubli', $ip, $email);
 
 $codeDev = null;
 $code    = codeReinitialisationCreer($pdo, $email);
