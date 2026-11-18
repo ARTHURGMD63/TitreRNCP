@@ -13,6 +13,7 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/places.php';
 require_once __DIR__ . '/../includes/temps_reel.php';
 require_once __DIR__ . '/../includes/culture.php';
+require_once __DIR__ . '/../includes/evenements_temps.php';
 header('Content-Type: application/json');
 
 // Ecriture : POST obligatoire, jeton CSRF et origine verifies.
@@ -43,8 +44,10 @@ function cibleValide(PDO $pdo, string $type, int $id): ?array
                     (SELECT COUNT(*) FROM inscriptions i
                       WHERE i.evenement_id = e.id AND i.statut != 'annule') AS nb
                FROM evenements e
-              WHERE e.id = ? AND e.date_heure >= NOW()"
+              WHERE e.id = ? AND " . sqlClotureInscriptions('e') . " > '" . date('Y-m-d H:i:s') . "'"
         );
+        // Inscriptions closes (clôture de l'établissement ou début, v38) :
+        // une invitation n'ouvre pas de porte dérobée.
     } elseif ($type === 'culture') {
         // Une exposition commencée reste une invitation valable jusqu'à sa
         // fermeture : on compare à la fin, pas au début.

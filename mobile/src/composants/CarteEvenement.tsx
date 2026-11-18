@@ -16,7 +16,7 @@ import { router } from 'expo-router';
 
 import { actions, ErreurApi, type Evenement } from '../api';
 import { LIBELLES_TYPE } from '../catalogue';
-import { dateFr, ts } from '../format';
+import { dateFr, heure, ts } from '../format';
 import { prixEvenement } from '../regles';
 import { useJeton } from '../session';
 import { fixe, fs, rayon, sans } from '../theme';
@@ -29,13 +29,22 @@ import { useToast } from './Toast';
 
 // ─── Comptes à rebours ──────────────────────────────────────────────────────
 
-function useMaintenant(actif = true) {
+/**
+ * L'heure, rafraîchie chaque seconde tant que `actif`. `jusqua` (ms) arrête
+ * l'horloge une fois cet instant passé : le décompte avant le début d'une
+ * soirée n'a plus rien à compter ensuite.
+ */
+function useMaintenant(actif = true, jusqua?: number) {
   const [maintenant, setMaintenant] = useState(() => Date.now());
   useEffect(() => {
     if (!actif) return;
-    const id = setInterval(() => setMaintenant(Date.now()), 1000);
+    const id = setInterval(() => {
+      const t = Date.now();
+      setMaintenant(t);
+      if (jusqua !== undefined && t >= jusqua) clearInterval(id);
+    }, 1000);
     return () => clearInterval(id);
-  }, [actif]);
+  }, [actif, jusqua]);
   return maintenant;
 }
 
@@ -226,9 +235,15 @@ export const STYLE_CARTE = { padding: 14, gap: 8, borderRadius: 20 } as const;
 function Carte({ ev, accent, premiere, flash, onInviter }: { ev: Evenement; accent: boolean; premiere: boolean; flash: boolean; onInviter: () => void }) {
   const { c } = useTheme();
   const bleu = useRubrique('bleu');
-  const maintenant = useMaintenant(flash);
   const { etat, libelleErreur, inscrire, fete } = useInscription(ev);
   const inscrit = etat === 'inscrit' || etat === 'vient';
+  // Inscrit à une soirée pas encore commencée : l'horloge tourne pour le
+  // compte à rebours, et la carte passe d'elle-même à « En cours » au début.
+  // L'offre flash décompte jusqu'à son échéance, sans arrêt ici.
+  const debut = ts(ev.date_heure);
+  const maintenant = useMaintenant(flash || (inscrit && !ev.en_cours), flash ? undefined : debut * 1000);
+  const fin = ts(ev.fin_effective ?? ev.date_fin ?? null);
+  const enCours = ev.en_cours || (maintenant >= debut * 1000 && (!fin || maintenant <= fin * 1000));
   const ouvrir = () => router.push({ pathname: '/evenement/[id]', params: { id: String(ev.id) } });
   const reduction = ev.reduction ?? 0;
   const prix = prixEvenement(ev);
@@ -236,7 +251,8 @@ function Carte({ ev, accent, premiere, flash, onInviter }: { ev: Evenement; acce
   const encre = accent ? '#FFFFFF' : c.noir;
   const secondaire = accent ? bleu.surAccent2 : c.gris;
   const voile = 'rgba(255,255,255,0.18)';
-  const dateType = `${dateFr(ev.date_heure, 'D j M')} · ${LIBELLES_TYPE[ev.type] ?? ev.type}`;
+  const plage = `${heure(ev.date_heure)}${ev.date_fin ? ` – ${heure(ev.date_fin)}` : ''}`;
+  const dateType = `${dateFr(ev.date_heure, 'D j M')} · ${plage} · ${LIBELLES_TYPE[ev.type] ?? ev.type}`;
   const surtitre = ev.style_musique ? libelleStyle(ev.style_musique) : LIBELLES_TYPE[ev.type] ?? ev.type;
 
   return (
@@ -245,13 +261,16 @@ function Carte({ ev, accent, premiere, flash, onInviter }: { ev: Evenement; acce
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
         {flash && ev.flash_expiry ? (
           <Pastille petite libelle={libelleFlash(ts(ev.flash_expiry), maintenant)} icone="eclair" fond={accent ? voile : c.surface2} encre={encre} />
-        ) : ev.en_cours ? <PastilleEnCours petite surAccent={accent} /> : <PastilleAVenir petite surAccent={accent} />}
+        ) : enCours ? <PastilleEnCours petite surAccent={accent} /> : <PastilleAVenir petite surAccent={accent} />}
         <Pastille petite libelle={dateType} fond={accent ? '#FFFFFF' : c.noir} encre={accent ? '#111116' : c.surEncre} style={{ flexShrink: 1 }} />
         {reduction > 0 ? (
           <Pastille petite libelle={`-${reduction}% ${ev.is_gratuit ? '· entrée gratuite' : 'sur conso'}`} fond={accent ? voile : c.succesClair} encre={accent ? '#FFFFFF' : c.succes} />
         ) : null}
         {prix ? <Pastille petite libelle={`Prix ${prix.final}`} fond={accent ? voile : c.surface2} encre={encre} /> : null}
         {ev.is_gratuit && reduction <= 0 ? <Pastille petite libelle="Gratuit" fond={accent ? voile : c.surface2} encre={encre} /> : null}
+        {ev.cloture_anticipee && ev.inscriptions_jusqu_au && !inscrit ? (
+          <Pastille petite icone="cadenas" libelle={`Inscriptions jusqu'au ${dateFr(ev.inscriptions_jusqu_au, 'j M · H\\hi')}`} fond={accent ? voile : c.surface2} encre={encre} />
+        ) : null}
         {ev.sponsorise ? <Pastille petite libelle="Sponsorisé" fond={accent ? voile : c.surface2} encre={accent ? '#FFFFFF' : c.grisFonce} /> : null}
       </View>
 
@@ -276,7 +295,7 @@ function Carte({ ev, accent, premiere, flash, onInviter }: { ev: Evenement; acce
         <BoutonSuivreLieu etabId={ev.etablissement.id} suivi={ev.etablissement.suivi} media={accent} />
       </View>
 
-      {flash && premiere ? (
+      {(flash && premiere) || (inscrit && !enCours) ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Icone nom="horloge" taille={14} couleur={secondaire} />
           <T taille={fs[3]} couleur={secondaire}>Commence</T>

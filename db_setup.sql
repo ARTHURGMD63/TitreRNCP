@@ -115,6 +115,7 @@ CREATE TABLE IF NOT EXISTS evenements (
     sponsor_tarif DECIMAL(8,2) NOT NULL DEFAULT 0,
     sponsor_jusqu_au DATETIME DEFAULT NULL,
     sponsor_debut DATETIME DEFAULT NULL,
+    inscriptions_jusqu_au DATETIME DEFAULT NULL,
     -- Prix d'un événement publié au-delà du quota mensuel (migration v30).
     supplement_tarif DECIMAL(8,2) NOT NULL DEFAULT 0,
     lieu VARCHAR(255),
@@ -1201,4 +1202,4 @@ CREATE TABLE IF NOT EXISTS totp_comptes (
 
 INSERT IGNORE INTO schema_migrations (version) VALUES
 ('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
-('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27'), ('v28'), ('v29'), ('v30'), ('v31'), ('v32'), ('v33'), ('v34'), ('v35'), ('v36'), ('v37');
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27'), ('v28'), ('v29'), ('v30'), ('v31'), ('v32'), ('v33'), ('v34'), ('v35'), ('v36'), ('v37'), ('v38');

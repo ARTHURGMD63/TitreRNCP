@@ -40,7 +40,7 @@ try {
     // une soirée en cours et pas encore complète doit rester rejoignable.
     $finEff = sqlFinEffectiveEvenement();
     $stmt = $pdo->prepare(
-        "SELECT e.quota, e.prix_normal, e.reduction
+        "SELECT e.quota, e.prix_normal, e.reduction, e.date_heure, e.inscriptions_jusqu_au
            FROM evenements e
           WHERE e.id = ? AND $finEff >= NOW()
           FOR UPDATE"
@@ -51,6 +51,13 @@ try {
     if (!$event) {
         $pdo->rollBack();
         echo json_encode(['success' => false, 'message' => 'Événement introuvable ou terminé']);
+        exit;
+    }
+
+    // Clôture fixée par l'établissement, sinon le début de la soirée (v38).
+    if (!evenementInscriptionsOuvertes((string) $event['date_heure'], $event['inscriptions_jusqu_au'] ?? null)) {
+        $pdo->rollBack();
+        echo json_encode(['success' => false, 'message' => 'Les inscriptions sont closes']);
         exit;
     }
 

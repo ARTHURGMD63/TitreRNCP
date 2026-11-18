@@ -196,6 +196,9 @@ export default function FicheEvenement() {
   const pct = e.places.pourcentage ?? 0;
   const style = e.style_musique ? ' · ' + majuscules(libelleStyle(e.style_musique)) : '';
   const inscrit = e.deja_inscrit || inscription === 'vient';
+  // Clôture des inscriptions (v38) : celle de l'établissement, sinon le début.
+  const cloture = e.inscriptions_jusqu_au ?? e.date_heure;
+  const closes = e.inscriptions_ouvertes === false || ts(cloture) <= instant;
 
   async function partager() {
     try {
@@ -410,7 +413,7 @@ export default function FicheEvenement() {
               <Mono>Date &amp; heure</Mono>
             </View>
             <T taille={fs[4]} poids={700}>{dateFr(e.date_heure, 'j M Y')}</T>
-            <Text style={{ fontFamily: mono(400), fontSize: fs[4], color: c.grisFonce }}>{heure(e.date_heure)}</Text>
+            <Text style={{ fontFamily: mono(400), fontSize: fs[4], color: c.grisFonce }}>{heure(e.date_heure)}{e.date_fin ? ` – ${heure(e.date_fin)}` : ''}</Text>
           </View>
           <View style={{ flex: 1, backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.md, padding: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 8 }}>
@@ -422,14 +425,25 @@ export default function FicheEvenement() {
           </View>
         </View>
 
+        {!inscrit ? (
+          <View testID="evenement-cloture" style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12, backgroundColor: closes ? c.surface2 : c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.md, padding: 14 }}>
+            <Icone nom={closes ? 'cadenas' : 'horloge'} taille={16} couleur={closes ? c.grisFonce : c.gris} />
+            <T taille={fs[4]} poids={600} couleur={closes ? c.grisFonce : c.noir} style={{ flex: 1 }}>
+              {closes
+                ? (e.cloture_anticipee ? `Inscriptions closes depuis le ${dateFr(cloture, 'j M à H\\hi')}` : 'Inscriptions closes : la soirée a commencé')
+                : `Inscriptions ouvertes jusqu'au ${dateFr(cloture, 'D j M à H\\hi')}`}
+            </T>
+          </View>
+        ) : null}
+
         <View style={{ marginTop: 40, marginBottom: 60 }}>
           <Bouton
             plein
             testID="evenement-rejoindre"
             variante={inscription === 'vient' ? 'contour' : 'primaire'}
-            libelle={libelleInscription(inscription, !!e.deja_inscrit, libelleErreur, e.places.complet)}
+            libelle={libelleInscription(inscription, !!e.deja_inscrit, libelleErreur, e.places.complet, closes)}
             icone={inscrit ? 'check' : undefined}
-            desactive={inscrit || e.places.complet}
+            desactive={inscrit || e.places.complet || closes}
             chargement={inscription === 'attente'}
             onPress={rejoindre}
             style={{ paddingVertical: 14 }}

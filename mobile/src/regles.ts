@@ -36,9 +36,10 @@ export type EtatInscription = 'libre' | 'attente' | 'vient';
  * Le texte du bouton de la fiche d'une soirée. Une soirée déjà complète le
  * dit d'emblée, sans attendre le refus du serveur.
  */
-export function libelleInscription(etat: EtatInscription, dejaInscrit: boolean, libelleErreur: string | null, complet = false): string {
+export function libelleInscription(etat: EtatInscription, dejaInscrit: boolean, libelleErreur: string | null, complet = false, closes = false): string {
   if (etat === 'vient') return 'Inscrit';
   if (dejaInscrit) return 'Tu es inscrit·e';
+  if (closes) return 'Inscriptions closes';
   if (complet) return 'Complet';
   return libelleErreur ?? "Rejoindre l'événement";
 }
