@@ -19,19 +19,19 @@ $inscription_id = (int) ($input['inscription_id'] ?? 0);
 $event_id = $input['event_id'] ?? 0;
 
 /*
- * Le pass est encodé « linkee:<code> » : le préfixe identifie
+ * Le pass est encodé « outsee:<code> » : le préfixe identifie
  * l'application quand un lecteur généraliste tombe sur le code. La
  * recherche, elle, se fait sur le code seul — c'est ce que contient la
  * colonne qr_code. Sans ce retrait, la comparaison portait sur
- * « linkee:abc… » face à « abc… » : aucun scan ne pouvait aboutir,
+ * « outsee:abc… » face à « abc… » : aucun scan ne pouvait aboutir,
  * tous les pass valides étaient refusés.
  * Le préfixe reste optionnel pour accepter un code saisi à la main.
  *
- * « studentlink: » est l'ancien préfixe, d'avant le changement de nom : un
+ * « linkee: » et « studentlink: » sont les anciens préfixes, d'avant le changement de nom : un
  * pass affiché par une version en cache de l'application, ou photographié
  * avant la mise à jour, le porte encore. Il reste accepté.
  */
-foreach (['linkee:', 'studentlink:'] as $prefixe) {
+foreach (['outsee:', 'linkee:', 'studentlink:'] as $prefixe) {
     if (stripos($qr_code, $prefixe) === 0) {
         $qr_code = substr($qr_code, strlen($prefixe));
         break;

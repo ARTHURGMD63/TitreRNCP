@@ -30,7 +30,7 @@ docs
 *.docx
 *.mp4
 *.pdf
-Linkee.bat
+Outsee.bat
 
 # Secrets et réglages locaux : ils se fournissent par l'environnement
 .env

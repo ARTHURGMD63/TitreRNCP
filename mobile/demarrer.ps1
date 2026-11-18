@@ -1,7 +1,7 @@
 # ============================================================
-#  Linkee — lanceur de l'environnement de developpement
+#  Outsee — lanceur de l'environnement de developpement
 #
-#  Double-cliquer sur « Linkee.bat » (racine du projet) ou sur le
+#  Double-cliquer sur « Outsee.bat » (racine du projet) ou sur le
 #  raccourci du Bureau. Sinon, depuis PowerShell :
 #
 #      cd C:\wamp64\www\TitreRNCP\mobile; .\demarrer.ps1
@@ -37,7 +37,7 @@ function Titre($texte) {
 }
 
 Write-Host ""
-Write-Host "  Linkee " -NoNewline -ForegroundColor White
+Write-Host "  Outsee " -NoNewline -ForegroundColor White
 Write-Host "/ environnement de developpement" -ForegroundColor Red
 
 # ─── 1. Les services WAMP ───────────────────────────────────────────────────
@@ -81,7 +81,7 @@ if ($web) {
     $port = if (Get-NetTCPConnection -State Listen -LocalPort 3307 -ErrorAction SilentlyContinue) { '3307' } else { '3306' }
     $env:MYSQLHOST = '127.0.0.1'
     $env:MYSQLPORT = $port
-    if (-not $env:MYSQLDATABASE) { $env:MYSQLDATABASE = 'linkee' }
+    if (-not $env:MYSQLDATABASE) { $env:MYSQLDATABASE = 'outsee' }
     $racine = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
     Start-Process -FilePath $php.FullName -WindowStyle Minimized -WorkingDirectory $racine `
         -ArgumentList '-d', 'zlib.output_compression=On', '-S', '0.0.0.0:8080', '-t', $racine, 'TitreRNCP\outils\serveur_local.php'

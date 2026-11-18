@@ -213,12 +213,12 @@ $photos = $stmt->fetchAll();
     margin-top: 24px;
   }
 </style>
-<?php pageDebut('Linkee — Photos de l\'établissement', ['univers' => 'pro', 'tete' => ob_get_clean()]); ?>
+<?php pageDebut('Outsee — Photos de l\'établissement', ['univers' => 'pro', 'tete' => ob_get_clean()]); ?>
 <div class="partner-shell">
 
   <aside class="partner-sidebar">
     <div class="sidebar-brand">
-      <?= marqueLinkee('pro') ?>
+      <?= marqueOutsee('pro') ?>
     </div>
     <nav class="sidebar-nav">
       <a href="<?= baseUrl('/partenaire/dashboard.php') ?>" class="sidebar-link">

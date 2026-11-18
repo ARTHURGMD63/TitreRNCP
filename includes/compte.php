@@ -184,14 +184,14 @@ function codeReinitialisationEnvoyer(string $email, string $code): bool
 
     return envoyerEmail(
         $email,
-        'Linkee — Ton code de réinitialisation',
+        'Outsee — Ton code de réinitialisation',
         "Bonjour,\n\n"
         . "Voici ton code pour choisir un nouveau mot de passe :\n\n"
         . "    $code\n\n"
-        . 'Il est valable ' . CODE_REINIT_VALIDITE_MIN . " minutes. Saisis-le dans l'application Linkee.\n\n"
+        . 'Il est valable ' . CODE_REINIT_VALIDITE_MIN . " minutes. Saisis-le dans l'application Outsee.\n\n"
         . "Si tu n'as pas fait cette demande, ignore cet e-mail : ton mot de passe reste inchangé "
         . "et personne ne peut le modifier sans ce code.\n\n"
-        . "L'équipe Linkee"
+        . "L'équipe Outsee"
     );
 }
 
@@ -204,7 +204,7 @@ const COMPTE_SUPPRIME_NOM    = 'supprimé';
 /** L'adresse factice d'un compte supprimé : unique, et d'un domaine qui ne peut pas exister. */
 function compteAdresseSupprimee(int $userId): string
 {
-    return 'supprime-' . $userId . '@linkee.invalid';
+    return 'supprime-' . $userId . '@outsee.invalid';
 }
 
 /**

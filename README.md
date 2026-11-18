@@ -1,4 +1,4 @@
-# Linkee
+# Outsee
 
 > Plateforme événementielle & sociale pour les étudiants de Clermont-Ferrand.
 >
@@ -14,7 +14,7 @@
 
 ## Présentation
 
-Linkee connecte les étudiants aux établissements (bars, boîtes, restos) de leur ville via un système de **pass numériques** avec réductions exclusives.
+Outsee connecte les étudiants aux établissements (bars, boîtes, restos) de leur ville via un système de **pass numériques** avec réductions exclusives.
 
 | Rôle | Fonctionnalités |
 |------|----------------|
@@ -40,7 +40,7 @@ Linkee connecte les étudiants aux établissements (bars, boîtes, restos) de le
 | Backend | PHP 8.3, PDO / MySQL |
 | Frontend | HTML5, CSS3 (custom properties), JS vanilla |
 | Charts | Chart.js 4 |
-| Styles | Charte Linkee : Unbounded, Instrument Sans, JetBrains Mono (hébergées dans `assets/fonts`) |
+| Styles | Charte Outsee : Unbounded, Instrument Sans, JetBrains Mono (hébergées dans `assets/fonts`) |
 | Tests | PHPUnit 10, PHPStan niveau 6 |
 | CI/CD | GitHub Actions (PHP 8.1 / 8.2 / 8.3) |
 | Déploiement | Docker (Apache + mod_php + OPcache) ou hébergement mutualisé |

@@ -1,0 +1,19 @@
+# Un mauvais mot de passe est refusé sans dire lequel des deux est faux,
+# et l'étudiant reste sur l'écran de connexion.
+appId: fr.outsee.app
+tags:
+  - critique
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../sous-flows/connexion.yaml
+    env:
+      EMAIL: arthur@uca.fr
+      MOT_DE_PASSE: pas-le-bon
+- extendedWaitUntil:
+    visible: Email ou mot de passe incorrect.
+    timeout: 15000
+- assertVisible:
+    id: connexion-valider
+- assertNotVisible: Explorer

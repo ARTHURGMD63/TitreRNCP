@@ -166,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profil'])) {
     cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   }
 </style>
-<?php pageDebut('Linkee — Moi', ['pwa' => true, 'tete' => ob_get_clean()]); ?>
+<?php pageDebut('Outsee — Moi', ['pwa' => true, 'tete' => ob_get_clean()]); ?>
 <a href="#main-content" class="skip-nav">Aller au contenu principal</a>
 <div class="app-shell">
 
@@ -437,7 +437,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profil'])) {
 
 <!-- Bottom Nav -->
 <nav class="bottom-nav" aria-label="Navigation principale">
-  <span class="nav-marque" aria-hidden="true"><?= marqueLinkee() ?></span>
+  <span class="nav-marque" aria-hidden="true"><?= marqueOutsee() ?></span>
   <a href="<?= baseUrl('/explore.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
     <span>Explorer</span>

@@ -1,5 +1,5 @@
 -- ============================================================
---  Linkee — migration v24
+--  Outsee — migration v24
 --  Ville étudiant, horaires de fin d'événement, catégorie Culture,
 --  squads d'association.
 --

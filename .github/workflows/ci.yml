@@ -100,7 +100,7 @@ jobs:
         image: mariadb:11.4
         env:
           MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: 'yes'
-          MARIADB_DATABASE: linkee_test
+          MARIADB_DATABASE: outsee_test
         ports:
           - 3306:3306
         options: >-
@@ -124,16 +124,16 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
-      # db_setup.sql crée et sélectionne sa propre base `linkee` : on retire ces
+      # db_setup.sql crée et sélectionne sa propre base `outsee` : on retire ces
       # deux lignes pour qu'il s'exécute dans la base de test.
       - name: Installer le schéma
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq mariadb-client
-          grep -v '^CREATE DATABASE IF NOT EXISTS linkee' db_setup.sql | grep -v '^USE linkee;' > /tmp/setup.sql
-          mariadb --protocol=tcp -h 127.0.0.1 -u root linkee_test < /tmp/setup.sql
+          grep -v '^CREATE DATABASE IF NOT EXISTS outsee' db_setup.sql | grep -v '^USE outsee;' > /tmp/setup.sql
+          mariadb --protocol=tcp -h 127.0.0.1 -u root outsee_test < /tmp/setup.sql
 
       - name: Tests d'intégration MariaDB
         env:
-          TEST_MYSQL_DSN: mysql:host=127.0.0.1;port=3306;dbname=linkee_test;charset=utf8mb4
+          TEST_MYSQL_DSN: mysql:host=127.0.0.1;port=3306;dbname=outsee_test;charset=utf8mb4
           TEST_MYSQL_USER: root
         run: vendor/bin/phpunit --testsuite Integration --testdox

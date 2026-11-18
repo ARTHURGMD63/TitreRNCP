@@ -13,6 +13,7 @@
 
 require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/crm.php';
+require_once __DIR__ . '/../../includes/evenements_temps.php';
 
 apiExigerMethode('GET');
 
@@ -27,8 +28,15 @@ if (!abonnementChoisi(abonnementEtablissement($pdo, (int) $etab['id']))) {
     apiErreur('Choisis une formule d’abonnement pour continuer.', 403, 'abonnement_requis');
 }
 
-$stmt = $pdo->prepare('SELECT * FROM evenements WHERE etablissement_id=? AND date_heure >= NOW() ORDER BY date_heure ASC LIMIT 1');
-$stmt->execute([(int) $etab['id']]);
+// La soirée en cours d'abord, sinon la prochaine : c'est pendant la soirée
+// que le partenaire suit ses entrées. L'heure vient de PHP (Europe/Paris,
+// comme date_heure) et non de NOW(), à l'heure UTC de la base en ligne.
+$stmt = $pdo->prepare(
+    'SELECT * FROM evenements WHERE etablissement_id=? AND '
+    . sqlFinEffectiveEvenement('date_heure', 'date_fin')
+    . ' >= ? ORDER BY date_heure ASC LIMIT 1'
+);
+$stmt->execute([(int) $etab['id'], date('Y-m-d H:i:s')]);
 $event = $stmt->fetch();
 
 $nbInscrits  = 0;

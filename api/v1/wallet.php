@@ -7,7 +7,7 @@
  *
  * LE CODE DU PASS N'EST PAS UNE IMAGE.
  *
- * L'API renvoie `code_qr`, la chaine a encoder — « linkee:<code> » —, pas
+ * L'API renvoie `code_qr`, la chaine a encoder — « outsee:<code> » —, pas
  * un QR code dessine. Trois raisons : un PNG en base64 pese dix fois le texte
  * qu'il represente ; une image rendue cote serveur ne s'adapte ni a la densite
  * de l'ecran ni au mode sombre ; et surtout, l'application iOS devra de toute
@@ -123,7 +123,7 @@ function apiPass(array $p, bool $avecCode): array
         // code a presenter, et l'envoyer quand meme serait donner un secret
         // qui ne sert plus a rien.
         'code_qr' => $avecCode && !empty($p['qr_code'])
-            ? 'linkee:' . (string) $p['qr_code']
+            ? 'outsee:' . (string) $p['qr_code']
             : null,
     ];
 }

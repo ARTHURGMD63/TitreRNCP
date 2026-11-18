@@ -1,5 +1,5 @@
 -- ============================================================
---  Linkee — migration v16
+--  Outsee — migration v16
 --  Jetons d'authentification pour l'application mobile
 --
 --  Le site web s'authentifie par cookie de session : le navigateur le

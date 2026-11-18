@@ -1,25 +1,52 @@
 /**
- * Le logo Linkee : deux anneaux entrelacés et le logotype « linkee ».
+ * Le logo Outsee : deux anneaux entrelacés, l'un basalte, l'autre craie, sur
+ * une tuile bleue aux coins arrondis, et le logotype « outsee » à côté. Le
+ * bleu est la Pantone 2728 C (`fixe.logo`), sur la tuile comme sur le « ee ».
  *
- * Le dessin de marqueLinkee() (includes/marque.php), point pour point :
- * l'anneau de gauche et le double « ee » en lave, l'autre anneau et « link »
- * à l'encre du thème, l'arc lave repris par-dessus au croisement du bas.
- * La charte interdit de le recomposer : il ne se dessine qu'ici.
+ * Le dessin reprend Logo.png (512 px) cote pour cote. L'entrelacement est
+ * l'essentiel : au croisement du haut l'anneau craie passe devant le noir, à
+ * celui du bas le noir repasse devant — d'où l'arc basse du noir redessiné
+ * par-dessus. La charte interdit de recomposer ce logo : il ne se dessine
+ * qu'ici.
  */
 
 import React from 'react';
 import { Text, View } from 'react-native';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { ClipPath, Circle, Defs, Rect } from 'react-native-svg';
 
-import { fs, police } from '../theme';
+import { fixe, fs, police } from '../theme';
 import { useTheme } from '../useTheme';
 
-export function Anneaux({ hauteur, encre, lave = '#FF5424' }: { hauteur: number; encre: string; lave?: string }) {
+function Entrelacs() {
   return (
-    <Svg width={hauteur * 1.62} height={hauteur} viewBox="0 0 52 32" fill="none">
-      <Circle cx={16} cy={16} r={12.5} stroke={lave} strokeWidth={5} />
-      <Circle cx={36} cy={16} r={12.5} stroke={encre} strokeWidth={5} />
-      <Path d="M 28.45 14.91 A 12.5 12.5 0 0 1 24.03 25.58" stroke={lave} strokeWidth={5} />
+    <>
+      <Defs>
+        <ClipPath id="moitieBasse">
+          <Rect x={0} y={255.5} width={512} height={256.5} />
+        </ClipPath>
+      </Defs>
+      <Circle cx={196.5} cy={255.5} r={88.5} stroke={fixe.basalte} strokeWidth={43} />
+      <Circle cx={314.5} cy={255.5} r={88.5} stroke={fixe.craie} strokeWidth={43} />
+      <Circle cx={196.5} cy={255.5} r={88.5} stroke={fixe.basalte} strokeWidth={43} clipPath="url(#moitieBasse)" />
+    </>
+  );
+}
+
+/** Le logo complet : tuile bleue carrée, anneaux au centre. */
+export function Anneaux({ hauteur }: { hauteur: number }) {
+  return (
+    <Svg width={hauteur} height={hauteur} viewBox="0 0 512 512" fill="none">
+      <Rect x={0} y={0} width={512} height={512} rx={112} fill={fixe.logo} />
+      <Entrelacs />
+    </Svg>
+  );
+}
+
+/** Les anneaux seuls, pour les aplats colorés qui leur servent déjà de fond. */
+export function AnneauxSeuls({ largeur }: { largeur: number }) {
+  return (
+    <Svg width={largeur} height={(largeur * 232) / 352} viewBox="80 140 352 232" fill="none">
+      <Entrelacs />
     </Svg>
   );
 }
@@ -29,29 +56,29 @@ type Props = {
   taille?: number;
   suffixe?: string;
   /**
-   * Remplace le lave par une autre teinte — dérogation à la charte
-   * (includes/marque.php interdit toute variante côté site) réservée aux
-   * en-têtes propres à l'application mobile : le dôme en tête de l'onglet
-   * Sport, par exemple. Le lave reste la couleur par défaut partout ailleurs.
+   * Remplace le bleu du « ee » par une autre teinte — dérogation à la charte.
+   * Plus aucun écran ne s'en sert : l'onglet Sport passait le « ee » au dôme,
+   * mais à côté de la tuile en Pantone 2728 C cela faisait deux bleus voisins
+   * dans un même logo. La Pantone reste la couleur du logo partout.
    */
   accent?: string;
 };
 
 export function Marque({ taille = fs[6], suffixe, accent }: Props) {
   const { c } = useTheme();
-  const teinte = accent ?? c.rouge;
+  const teinte = accent ?? fixe.logo;
   const mot = { fontFamily: police.display, fontSize: taille, letterSpacing: -0.045 * taille, lineHeight: taille * 1.15 };
 
   return (
     <View
       accessible
       accessibilityRole="image"
-      accessibilityLabel={'Linkee' + (suffixe ? ' ' + suffixe : '')}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 0.42 * taille }}
+      accessibilityLabel={'Outsee' + (suffixe ? ' ' + suffixe : '')}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 0.4 * taille }}
     >
-      <Anneaux hauteur={taille} encre={c.noir} lave={teinte} />
+      <Anneaux hauteur={taille * 1.6} />
       <Text style={[mot, { color: c.noir }]}>
-        link<Text style={{ color: teinte }}>ee</Text>
+        outs<Text style={{ color: teinte }}>ee</Text>
         {suffixe ? (
           <Text style={{ fontFamily: police.displayRegular, letterSpacing: -0.03 * taille, color: c.gris }}>
             {' ' + suffixe}

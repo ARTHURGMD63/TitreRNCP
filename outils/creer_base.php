@@ -15,7 +15,7 @@ if (PHP_SAPI !== 'cli') {
 
 $hote = (string) getenv('MYSQLHOST');
 $port = (string) (getenv('MYSQLPORT') ?: '3306');
-$base = (string) (getenv('MYSQLDATABASE') ?: 'linkee');
+$base = (string) (getenv('MYSQLDATABASE') ?: 'outsee');
 $ca   = (string) getenv('MYSQL_SSL_CA');
 
 if (!preg_match('/^[A-Za-z0-9_]+$/', $base)) {

@@ -42,14 +42,14 @@ function adminHeader(PDO $pdo, string $page, string $titre, string $surtitre = '
     // pas seulement depuis la sienne : un signalement non traité est une
     // obligation de délai, pas une notification parmi d'autres.
     $nbSignalements = crmSignalementsEnAttente($pdo);
-    pageDebut('Linkee — ' . $titre, ['univers' => 'pro']);
+    pageDebut('Outsee — ' . $titre, ['univers' => 'pro']);
     ?>
 <a href="#contenu" class="skip-nav">Aller au contenu</a>
 <div class="partner-shell">
 
   <aside class="partner-sidebar">
     <div class="sidebar-brand">
-      <?= marqueLinkee('interne') ?>
+      <?= marqueOutsee('interne') ?>
     </div>
     <nav class="sidebar-nav" aria-label="Navigation du back-office">
       <?php foreach ($entrees as $code => [$libelle, $fichier, $trace]): ?>

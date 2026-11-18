@@ -131,7 +131,7 @@ export default function Inscription() {
           onChange={setNaissance}
           min={bornePlancher}
           max={borneMajeur}
-          aide="Linkee donne accès à des soirées en bar et en discothèque : l’inscription est réservée aux personnes majeures."
+          aide="Outsee donne accès à des soirées en bar et en discothèque : l’inscription est réservée aux personnes majeures."
         />
 
         {type === 'etudiant' ? (

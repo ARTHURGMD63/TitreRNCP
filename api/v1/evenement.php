@@ -79,6 +79,9 @@ apiReponse([
         'description'   => (string) ($e['description'] ?? ''),
         'type'          => (string) ($e['type'] ?? ''),
         'style_musique' => $e['style_musique'] !== null ? (string) $e['style_musique'] : null,
+        // Événement d'un club (type 'sport', v28) : discipline et format.
+        'sport'         => isset($e['sport']) && $e['sport'] !== null ? (string) $e['sport'] : null,
+        'format'        => isset($e['format']) && $e['format'] !== null ? (string) $e['format'] : null,
         'date_heure'    => (string) $e['date_heure'],
         'lieu'          => (string) ($e['lieu'] ?? ''),
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * Routeur du serveur PHP intégré, pour ouvrir Linkee aux téléphones du
+ * Routeur du serveur PHP intégré, pour ouvrir Outsee aux téléphones du
  * réseau local sans Apache :
  *
  *   cd C:/wamp64/www

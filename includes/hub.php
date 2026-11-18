@@ -474,7 +474,10 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
     // par défaut après le début).
     $ouE     = " FROM evenements e
                  JOIN etablissements et ON et.id = e.etablissement_id
-                 WHERE $finEff >= NOW()";
+                 WHERE $finEff >= NOW()
+                   AND e.type <> 'sport'";
+    // Les événements des clubs (type 'sport', v28) vivent dans l'onglet
+    // Sport : le fil des soirées ne les montre pas, la carte non plus.
     $paramsE = [];
 
     if ($filter === 'pour-moi') {

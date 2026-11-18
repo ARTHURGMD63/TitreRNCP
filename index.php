@@ -199,7 +199,7 @@ ob_start();
   }
   .ba-pilule__point { width: 8px; height: 8px; border-radius: 50%; background: var(--rouge); flex-shrink: 0; }
   @media (prefers-reduced-motion: no-preference) { .ba-pilule__point { animation: ba-pulse 1.7s ease-in-out infinite; } }
-  @keyframes ba-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,84,36,.6); } 70% { box-shadow: 0 0 0 9px rgba(255,84,36,0); } }
+  @keyframes ba-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(142,107,255,.6); } 70% { box-shadow: 0 0 0 9px rgba(142,107,255,0); } }
 
   /* ── Hero ── */
   .ba-hero {
@@ -384,7 +384,7 @@ ob_start();
   .ba-carte__titre { margin: 0; font-family: var(--font-display); font-weight: var(--fw-semibold); font-size: 22px; line-height: 1.15; }
   .ba-carte__texte { margin: 0; font-size: 15px; line-height: 1.55; color: var(--gris-fonce); }
   .ba-carte--secrete { border: 1.5px dashed var(--rouge); position: relative; overflow: hidden; }
-  .ba-carte--secrete:hover { box-shadow: 0 18px 40px rgba(255,84,36,.22); }
+  .ba-carte--secrete:hover { box-shadow: 0 18px 40px rgba(142,107,255,.22); }
   .ba-flou { filter: blur(6px); user-select: none; }
   .ba-carte__verrou { margin-top: auto; align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border-radius: var(--radius-pill); background: var(--rouge); color: var(--sur-lave); font-weight: var(--fw-bold); font-size: 13px; }
   .ba-carte__verrou svg { width: 15px; height: 15px; }
@@ -393,7 +393,7 @@ ob_start();
   .ba-bande-teasing { overflow: hidden; padding: 26px 0; margin: clamp(24px,5vw,56px) 0; }
   .ba-bande-teasing__ruban {
     background: var(--rouge); color: var(--sur-lave); transform: rotate(-2deg); margin: 0 -40px;
-    padding: 20px 0; overflow: hidden; box-shadow: 0 20px 60px rgba(255,84,36,.22);
+    padding: 20px 0; overflow: hidden; box-shadow: 0 20px 60px rgba(142,107,255,.22);
   }
   .ba-bande-teasing__groupe { display: flex; align-items: center; gap: 32px; padding-right: 32px; }
   .ba-bande-teasing__item { font-family: var(--font-display); font-weight: var(--fw-black); font-size: clamp(24px, 3.6vw, 42px); letter-spacing: -.03em; white-space: nowrap; flex: none; }
@@ -527,7 +527,7 @@ ob_start();
 <?php
 $styles = ob_get_clean();
 
-pageDebut('Linkee — Bientôt à Clermont-Ferrand', [
+pageDebut('Outsee — Bientôt à Clermont-Ferrand', [
     'pwa'         => true,
     'description' => 'Une nouvelle app arrive pour les étudiants de Clermont-Ferrand : soirées, réductions exclusives dans les bars et boîtes de la ville, squads sportives. Réserve ta place avant l\'ouverture.',
     'scripts'     => ['/assets/js/app.js'],
@@ -536,7 +536,7 @@ pageDebut('Linkee — Bientôt à Clermont-Ferrand', [
 ?>
 <nav class="ba-entete">
   <div class="ba-entete__rangee">
-    <?= marqueLinkee('', baseUrl('/')) ?>
+    <?= marqueOutsee('', baseUrl('/')) ?>
     <div class="ba-entete__nav">
       <a class="ba-entete__lien" href="#fonctionnement">Fonctionnalités</a>
       <a class="ba-entete__lien" href="#etudiants">Étudiants</a>
@@ -701,7 +701,7 @@ pageDebut('Linkee — Bientôt à Clermont-Ferrand', [
           <span class="ba-surtitre">Pour les établissements &amp; associations</span>
           <h2 class="ba-titre">Touchez les étudiants là où ils décident de sortir.</h2>
         </div>
-        <p class="ba-etablissements__texte">Bars, boîtes, restaurants, BDE et associations étudiantes&nbsp;: Linkee pro vous donne les outils pour publier, accueillir et mesurer.</p>
+        <p class="ba-etablissements__texte">Bars, boîtes, restaurants, BDE et associations étudiantes&nbsp;: Outsee pro vous donne les outils pour publier, accueillir et mesurer.</p>
       </div>
 
       <div class="ba-grille-partenaires">
@@ -727,8 +727,8 @@ pageDebut('Linkee — Bientôt à Clermont-Ferrand', [
           <h3>Vous êtes une asso ou un BDE&nbsp;?</h3>
           <p>Publiez vos soirées, afterworks et tournois comme un établissement, et vendez vos places aux étudiants de toutes les écoles de Clermont.</p>
           <div class="ba-vitrine-pro__actions">
-            <a class="ba-btn ba-btn--pleine" href="mailto:contact@linkee.fr?subject=Devenir%20partenaire%20Linkee">Devenir partenaire</a>
-            <a class="ba-btn ba-btn--contour" href="mailto:contact@linkee.fr?subject=Demande%20de%20d%C3%A9mo%20Linkee">Demander une démo</a>
+            <a class="ba-btn ba-btn--pleine" href="mailto:contact@outsee.fr?subject=Devenir%20partenaire%20Outsee">Devenir partenaire</a>
+            <a class="ba-btn ba-btn--contour" href="mailto:contact@outsee.fr?subject=Demande%20de%20d%C3%A9mo%20Outsee">Demander une démo</a>
           </div>
         </div>
       </div>
@@ -778,7 +778,7 @@ pageDebut('Linkee — Bientôt à Clermont-Ferrand', [
 <footer class="ba-pied">
   <div class="ba-pied__grille">
     <div>
-      <?= marqueLinkee() ?>
+      <?= marqueOutsee() ?>
       <p class="ba-pied__texte">La plateforme sociale et événementielle des étudiants de Clermont-Ferrand.</p>
     </div>
     <div>
@@ -787,15 +787,15 @@ pageDebut('Linkee — Bientôt à Clermont-Ferrand', [
     </div>
     <div>
       <p class="ba-pied__titre">Partenaires</p>
-      <ul class="ba-pied__liste"><li><a href="#partenaires">Établissements</a></li><li><a href="mailto:contact@linkee.fr">Associations &amp; BDE</a></li></ul>
+      <ul class="ba-pied__liste"><li><a href="#partenaires">Établissements</a></li><li><a href="mailto:contact@outsee.fr">Associations &amp; BDE</a></li></ul>
     </div>
     <div>
       <p class="ba-pied__titre">Contact</p>
-      <ul class="ba-pied__liste"><li><a href="mailto:contact@linkee.fr">contact@linkee.fr</a></li></ul>
+      <ul class="ba-pied__liste"><li><a href="mailto:contact@outsee.fr">contact@outsee.fr</a></li></ul>
     </div>
   </div>
   <div class="ba-pied__bas">
-    <span>© <?= date('Y') ?> Linkee · Clermont-Ferrand</span>
+    <span>© <?= date('Y') ?> Outsee · Clermont-Ferrand</span>
     <span><a href="<?= baseUrl('/mentions-legales.php') ?>">Mentions légales</a> · <a href="<?= baseUrl('/confidentialite.php') ?>">Confidentialité</a></span>
   </div>
 </footer>
@@ -855,13 +855,13 @@ pageDebut('Linkee — Bientôt à Clermont-Ferrand', [
       };
     });
 
-    try { localStorage.setItem('linkee_liste_attente_code', donnees.code); } catch (e) {}
+    try { localStorage.setItem('outsee_liste_attente_code', donnees.code); } catch (e) {}
   }
 
   // Visiteur qui revient : son code est en mémoire, on retrouve son rang
   // (mis à jour, si des filleuls ont rejoint depuis) sans le réinscrire.
   try {
-    var codeStocke = localStorage.getItem('linkee_liste_attente_code');
+    var codeStocke = localStorage.getItem('outsee_liste_attente_code') || localStorage.getItem('linkee_liste_attente_code');
     if (codeStocke) {
       fetch(BASE + '/api/liste_attente_statut.php?code=' + encodeURIComponent(codeStocke))
         .then(function (r) { return r.json(); })

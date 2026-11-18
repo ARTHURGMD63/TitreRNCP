@@ -40,7 +40,7 @@ $ecole      = $texte('ecole');
 $promo      = $texte('promo');
 $etudiantVille = $texte('ville_etudiant') !== '' ? $texte('ville_etudiant') : null;
 $etablNom   = $texte('etablissement_nom');
-$etablType  = in_array($corps['etablissement_type'] ?? '', ['bar', 'boite', 'resto', 'afterwork'], true)
+$etablType  = in_array($corps['etablissement_type'] ?? '', ['bar', 'boite', 'resto', 'afterwork', 'club'], true)
     ? (string) $corps['etablissement_type'] : 'bar';
 $etablVille = $texte('ville') !== '' ? $texte('ville') : 'Clermont-Ferrand';
 $naissance  = $texte('date_naissance');
@@ -64,7 +64,7 @@ if (!$prenom || !$nom || !$email || !$pass) {
 } elseif ($age === null) {
     apiErreur('Merci d’indiquer une date de naissance valide.', 422, 'naissance');
 } elseif ($age < 18) {
-    apiErreur('Linkee est réservée aux personnes majeures : l’inscription n’est pas possible avant 18 ans.', 422, 'mineur');
+    apiErreur('Outsee est réservée aux personnes majeures : l’inscription n’est pas possible avant 18 ans.', 422, 'mineur');
 } elseif ($age > 120) {
     apiErreur('Cette date de naissance ne semble pas correcte.', 422, 'naissance');
 } elseif (!$cgu) {

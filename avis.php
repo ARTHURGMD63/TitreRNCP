@@ -90,7 +90,7 @@ $existing = $stmt->fetch();
     text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--gris);
   }
 </style>
-<?php pageDebut('Linkee — Laisser un avis', ['tete' => ob_get_clean()]); ?>
+<?php pageDebut('Outsee — Laisser un avis', ['tete' => ob_get_clean()]); ?>
 <div class="rate-page">
   <a href="<?= baseUrl('/wallet.php') ?>" style="color:var(--gris);font-size:var(--fs-4);text-decoration:none;">← Retour au pass</a>
 
@@ -185,7 +185,7 @@ $existing = $stmt->fetch();
   });
 </script>
 <nav class="bottom-nav nav-ordinateur" aria-label="Navigation principale">
-  <span class="nav-marque" aria-hidden="true"><?= marqueLinkee() ?></span>
+  <span class="nav-marque" aria-hidden="true"><?= marqueOutsee() ?></span>
   <a href="<?= baseUrl('/explore.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
     <span>Explorer</span>

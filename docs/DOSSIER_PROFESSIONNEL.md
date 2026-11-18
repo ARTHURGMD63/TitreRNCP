@@ -1,4 +1,4 @@
-# Dossier Professionnel — Linkee
+# Dossier Professionnel — Outsee
 
 **Auteur** : Arthur Gramond
 **Formation** : Concepteur Développeur d'Applications — 2ème année, Hesias
@@ -10,7 +10,7 @@
 
 ## 1.1 Origine du projet
 
-Linkee est né d'une observation simple, tirée de mon quotidien d'étudiant.
+Outsee est né d'une observation simple, tirée de mon quotidien d'étudiant.
 
 Comme la plupart de mes camarades, je sors régulièrement — bars, soirées, afterworks, sessions sport. Et à chaque fois, c'est le même schéma : un groupe WhatsApp qui s'agite, quelqu'un qui cherche sur Instagram, un autre qui demande si "c'est payant", un troisième qui veut savoir si "c'est cher" — et au final, certains restent chez eux parce que l'info est arrivée trop tard ou parce que le prix les a refroidis.
 
@@ -20,7 +20,7 @@ On veut se retrouver. On veut faire des trucs ensemble. Mais on veut aussi payer
 
 ## 1.2 Contexte local
 
-Clermont-Ferrand compte **42 500 étudiants** répartis entre l'UCA, SIGMA Clermont, l'INP Ingénieurs, l'IFSI, Hesias et d'autres établissements. À l'échelle nationale, la France recense **3 012 800 étudiants** — un marché considérable, dont Linkee adresse en premier lieu le bassin clermontois avant toute logique de déploiement national. C'est une ville étudiante à part entière, avec une vie nocturne et sportive réelle — mais sans outil numérique dédié à cette communauté.
+Clermont-Ferrand compte **42 500 étudiants** répartis entre l'UCA, SIGMA Clermont, l'INP Ingénieurs, l'IFSI, Hesias et d'autres établissements. À l'échelle nationale, la France recense **3 012 800 étudiants** — un marché considérable, dont Outsee adresse en premier lieu le bassin clermontois avant toute logique de déploiement national. C'est une ville étudiante à part entière, avec une vie nocturne et sportive réelle — mais sans outil numérique dédié à cette communauté.
 
 Les établissements (bars, boîtes, restos, afterworks) communiquent avec des flyers, Instagram et des groupes Facebook qui tombent dans l'oubli. Ils organisent des soirées sans savoir combien de personnes vont venir. Ils n'ont aucune donnée sur leur audience. Et les étudiants, de leur côté, passent à côté d'offres qui leur seraient pourtant destinées.
 
@@ -30,15 +30,15 @@ C'est ce décalage — entre une offre qui existe et une audience qui ne la trou
 
 > **Comment permettre aux étudiants de se retrouver facilement, de profiter d'offres exclusives dans les établissements locaux, et de s'organiser entre eux — le tout depuis une seule application pensée pour eux ?**
 
-## 1.4 Solution : Linkee
+## 1.4 Solution : Outsee
 
-J'ai conçu et développé **Linkee**, une plateforme web mobile-first qui s'adresse aux deux côtés du problème :
+J'ai conçu et développé **Outsee**, une plateforme web mobile-first qui s'adresse aux deux côtés du problème :
 
 - Pour les **étudiants** : découvrir les événements du moment, obtenir des réductions exclusives via un pass numérique QR code, rejoindre des groupes sportifs (squads), suivre ses amis et être récompensé pour son engagement (système XP, niveaux, badges).
 
 - Pour les **établissements partenaires** : créer des événements en quelques clics, suivre les inscriptions en temps réel, valider les entrées par scan QR code et analyser leur audience via un tableau de bord avec graphiques.
 
-L'idée centrale est simple : **les étudiants veulent se retrouver et payer moins cher. Les établissements veulent remplir leurs salles et connaître leur public. Linkee connecte les deux.**
+L'idée centrale est simple : **les étudiants veulent se retrouver et payer moins cher. Les établissements veulent remplir leurs salles et connaître leur public. Outsee connecte les deux.**
 
 ## 1.5 Périmètre du projet
 
@@ -86,7 +86,7 @@ Arthur sort régulièrement — au moins deux fois par semaine. Il est souvent c
 > *"On est tous dans la même situation — on veut sortir, se retrouver, faire des trucs. Mais on veut pas non plus claquer 30€ à chaque soirée. Y'a clairement un truc qui manque."*
 
 **Scénario d'usage**
-Arthur ouvre Linkee en sortant de cours le jeudi après-midi. Il voit un Flash Event — "Happy Hour jusqu'à minuit, cocktails à -50%" — qui expire dans 44 minutes. Il s'inscrit directement, reçoit son QR code dans son wallet, envoie une invitation à deux amis via l'app. Ils arrivent ensemble au bar, présentent leur QR code, entrent sans queue. À la fin de la soirée, Arthur laisse un avis 4/5 depuis son wallet et débloque le badge "Critique".
+Arthur ouvre Outsee en sortant de cours le jeudi après-midi. Il voit un Flash Event — "Happy Hour jusqu'à minuit, cocktails à -50%" — qui expire dans 44 minutes. Il s'inscrit directement, reçoit son QR code dans son wallet, envoie une invitation à deux amis via l'app. Ils arrivent ensemble au bar, présentent leur QR code, entrent sans queue. À la fin de la soirée, Arthur laisse un avis 4/5 depuis son wallet et débloque le badge "Critique".
 
 ---
 
@@ -289,12 +289,12 @@ Jean organise des soirées thématiques deux fois par mois. Il communique via sa
 Jean, gérant du Bec qui Pique, se retrouve un jeudi soir à 21h avec un bar à moitié vide. Il veut déclencher une affluence rapidement, sans dépenser en communication.
 
 **Côté partenaire**
-1. Jean ouvre son dashboard Linkee
+1. Jean ouvre son dashboard Outsee
 2. Il crée un **Flash Event** : "Happy Hour jusqu'à minuit — cocktails à -50%", quota 80 personnes, expiration dans 45 minutes
 3. L'événement apparaît immédiatement dans l'app avec un badge FLASH et un compte à rebours orange
 
 **Côté étudiant**
-1. Arthur ouvre Linkee en sortant de cours
+1. Arthur ouvre Outsee en sortant de cours
 2. Le Flash Event est en tête de liste — "44:23 restantes"
 3. Il s'inscrit en un clic, reçoit son QR code dans son wallet
 4. Il partage l'event à deux amis via la fonction Inviter
@@ -325,14 +325,14 @@ Lucas est arrivé à Clermont en septembre. Il aimerait faire du running mais ne
 - La squad se reforme 2 semaines plus tard
 
 **Ce que ça illustre**
-Linkee n'est pas uniquement une app de sorties nocturnes. C'est un outil de lien social au quotidien, y compris pour des étudiants qui ne savent pas encore comment s'intégrer dans leur nouvelle ville.
+Outsee n'est pas uniquement une app de sorties nocturnes. C'est un outil de lien social au quotidien, y compris pour des étudiants qui ne savent pas encore comment s'intégrer dans leur nouvelle ville.
 
 ---
 
 ## Étude de cas 3 — L'Analytics : comprendre son audience pour mieux cibler
 
 **Contexte**
-Marie, gérante du Baromètre, organise des soirées depuis 6 mois sur Linkee. Elle sent que certaines soirées fonctionnent mieux que d'autres mais ne comprend pas pourquoi.
+Marie, gérante du Baromètre, organise des soirées depuis 6 mois sur Outsee. Elle sent que certaines soirées fonctionnent mieux que d'autres mais ne comprend pas pourquoi.
 
 **Ce qu'elle découvre dans le dashboard**
 - Le graphique **Inscriptions par jour** montre un pic systématique le mercredi et jeudi
@@ -381,7 +381,7 @@ L'application est mobile-first, les interactions sont majoritairement des calls 
 
 ## Sessions PHP plutôt que JWT
 
-Linkee est une web app avec rendu serveur, pas une API REST publique. Les sessions PHP avec `session_regenerate_id()` sont parfaitement adaptées à ce modèle, plus simples à sécuriser dans ce contexte, et éliminent le risque de fuite de token côté client inhérent aux JWT.
+Outsee est une web app avec rendu serveur, pas une API REST publique. Les sessions PHP avec `session_regenerate_id()` sont parfaitement adaptées à ce modèle, plus simples à sécuriser dans ce contexte, et éliminent le risque de fuite de token côté client inhérent aux JWT.
 
 ---
 
@@ -414,4 +414,4 @@ La page principale agrégeait plusieurs données corrélées (note moyenne, insc
 
 ## Conclusion
 
-Linkee prouve qu'un besoin simple — se retrouver entre étudiants et payer moins cher — peut donner naissance à une plateforme technique complète, sécurisée et documentée. Ce projet est pour moi la concrétisation de deux années de formation : pas une app fictive, mais une réponse réelle à un problème que je vis moi-même chaque semaine.
+Outsee prouve qu'un besoin simple — se retrouver entre étudiants et payer moins cher — peut donner naissance à une plateforme technique complète, sécurisée et documentée. Ce projet est pour moi la concrétisation de deux années de formation : pas une app fictive, mais une réponse réelle à un problème que je vis moi-même chaque semaine.

@@ -15,6 +15,7 @@ require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/places.php';
 require_once __DIR__ . '/../../includes/crm.php';
 require_once __DIR__ . '/../../includes/sponsoring.php';
+require_once __DIR__ . '/../../includes/evenements_temps.php';
 
 $u   = apiPartenaire($pdo);
 $uid = (int) $u['id'];
@@ -67,13 +68,17 @@ apiReponse([
         static function (array $e): array {
             $quota    = (int) ($e['quota'] ?? 0);
             $inscrits = (int) $e['nb_inscrits'];
-            $passe    = strtotime((string) $e['date_heure']) < time();
+            // Passée = terminée, pas seulement commencée : une soirée en cours
+            // doit garder son bouton « Scanner ».
+            $passe    = evenementTermine((string) $e['date_heure'], $e['date_fin'] ?? null);
             $complet  = remplissage($quota, $inscrits)['complet'];
 
             return [
                 'id'             => (int) $e['id'],
                 'titre'          => (string) $e['titre'],
                 'type'           => (string) $e['type'],
+                'sport'          => isset($e['sport']) && $e['sport'] !== null ? (string) $e['sport'] : null,
+                'format'         => isset($e['format']) && $e['format'] !== null ? (string) $e['format'] : null,
                 'date_heure'     => (string) $e['date_heure'],
                 'quota'          => $quota,
                 'inscrits'       => $inscrits,

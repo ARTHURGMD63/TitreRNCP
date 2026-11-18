@@ -1,12 +1,12 @@
-# Manuel utilisateur — Linkee
+# Manuel utilisateur — Outsee
 
-> Guide complet pour les étudiants utilisant Linkee.
+> Guide complet pour les étudiants utilisant Outsee.
 
 ---
 
 ## 1. Créer un compte
 
-1. Accède à **linkee.app** (ou `http://localhost/TitreRNCP` en local)
+1. Accède à **outsee.app** (ou `http://localhost/TitreRNCP` en local)
 2. Clique sur **"Créer un compte"**
 3. Sélectionne le profil **Étudiant·e**
 4. Renseigne : prénom, nom, email, mot de passe (min. 8 caractères), école, promotion
@@ -162,7 +162,7 @@ Le niveau est calculé automatiquement à partir de tes XP :
 ## 9. Mes économies
 
 Dans ton wallet, la section **Économies** affiche :
-- Le montant total économisé grâce aux réductions Linkee
+- Le montant total économisé grâce aux réductions Outsee
 - L'historique des économies par événement
 
 ---
@@ -176,7 +176,7 @@ Vérifie que ton statut est bien "Inscrit" (pas "Annulé"). Si le problème pers
 Non, les events complets n'acceptent plus d'inscriptions. Si des annulations surviennent, des places peuvent se libérer.
 
 **Comment supprimer mon compte ?**  
-Conformément au RGPD, tu peux demander la suppression de tes données en contactant linkee@app.fr. Tes données seront supprimées sous 30 jours.
+Conformément au RGPD, tu peux demander la suppression de tes données en contactant outsee@app.fr. Tes données seront supprimées sous 30 jours.
 
 **Mes données sont-elles partagées ?**  
 Non. Consulte notre [Politique de confidentialité](/confidentialite.php) pour les détails.

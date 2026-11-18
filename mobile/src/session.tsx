@@ -18,9 +18,9 @@ import { Platform } from 'react-native';
 
 import { api, ErreurApi, type Profil } from './api';
 
-const CLE_JETON = 'linkee.jeton';
-/** Clé d'avant le changement de nom : relue une fois, puis effacée. */
-const ANCIENNE_CLE_JETON = 'studentlink.jeton';
+const CLE_JETON = 'outsee.jeton';
+/** Clés d'avant les changements de nom : relues une fois, puis effacées. */
+const ANCIENNES_CLES_JETON = ['linkee.jeton', 'studentlink.jeton'];
 
 type EtatSession = {
   /** null = deconnecte ; undefined = on ne sait pas encore. */
@@ -48,14 +48,16 @@ async function lireJeton(): Promise<string | null> {
   try {
     const jeton = await SecureStore.getItemAsync(CLE_JETON);
     if (jeton) return jeton;
-    // Une installation d'avant Linkee garde son jeton sous l'ancien nom :
+    // Une installation d'avant Outsee garde son jeton sous l'ancien nom :
     // on le reprend plutôt que de déconnecter tout le monde à la mise à jour.
-    const ancien = await SecureStore.getItemAsync(ANCIENNE_CLE_JETON);
-    if (ancien) {
+    for (const cle of ANCIENNES_CLES_JETON) {
+      const ancien = await SecureStore.getItemAsync(cle);
+      if (!ancien) continue;
       await SecureStore.setItemAsync(CLE_JETON, ancien);
-      await SecureStore.deleteItemAsync(ANCIENNE_CLE_JETON);
+      await SecureStore.deleteItemAsync(cle);
+      return ancien;
     }
-    return ancien;
+    return null;
   } catch {
     // Le trousseau peut etre indisponible — appareil verrouille juste apres
     // le demarrage, ou execution sur le web ou SecureStore n'existe pas. On

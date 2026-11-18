@@ -40,7 +40,7 @@ if ($methode === 'POST') {
 
     $erreurs = [];
     if ($nom === '') $erreurs[] = "Le nom de l'établissement est obligatoire.";
-    if (!in_array($type, ['bar', 'boite', 'resto', 'afterwork'], true)) $erreurs[] = 'Type invalide.';
+    if (!in_array($type, ['bar', 'boite', 'resto', 'afterwork', 'club'], true)) $erreurs[] = 'Type invalide.';
     if ($ville === '') $erreurs[] = 'La ville est obligatoire.';
 
     if ($erreurs) {

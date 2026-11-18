@@ -1,5 +1,5 @@
 -- ============================================================
---  Linkee — migration v12
+--  Outsee — migration v12
 --  Back-office fondateurs : CRM commercial et registre financier
 --
 --  Trois tables, et une raison pour chacune.

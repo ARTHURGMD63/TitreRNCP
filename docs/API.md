@@ -1,4 +1,4 @@
-# Référence API — Linkee
+# Référence API — Outsee
 
 Tous les endpoints JSON se trouvent dans `/api/`. Ils nécessitent une **session PHP active** (utilisateur connecté).
 
@@ -316,7 +316,7 @@ Supprime son compte. Le mot de passe est redemandé.
 | Type de compte | Effet | Réponse |
 |---|---|---|
 | étudiant | Effacement immédiat des données personnelles ; la ligne `users` est **anonymisée** (type `supprime`, école et promotion conservées) ainsi que les présences passées, pour les statistiques des partenaires. Pass à venir annulés, places libérées. | `{ "success": true, "supprime": true }` |
-| partenaire | Demande transmise à contact@linkee.fr (abonnement, soirées à venir) ; le compte reste ouvert | `{ "success": true, "supprime": false, "demande": true }` |
+| partenaire | Demande transmise à contact@outsee.fr (abonnement, soirées à venir) ; le compte reste ouvert | `{ "success": true, "supprime": false, "demande": true }` |
 | admin | Refusé | `403 type_non_supprimable` |
 
 Mot de passe faux → `403 mot_de_passe` (compte intact). Détail de ce qui est effacé : `includes/compte.php`.

@@ -72,7 +72,7 @@ foreach ($aRappeler as $r) {
         . "\nTon pass est dans l'application, onglet Wallet. Présente-le à l'entrée.\n\n"
         . "Tu ne peux plus venir ? Annule ton pass depuis le Wallet : ta place sera "
         . "rendue à quelqu'un d'autre.\n\n"
-        . "À demain,\nL'équipe Linkee",
+        . "À demain,\nL'équipe Outsee",
         $r['prenom'],
         $r['titre'],
         $heure,

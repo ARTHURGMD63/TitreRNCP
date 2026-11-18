@@ -1,5 +1,5 @@
 -- ============================================================
---  Linkee — installation sur hébergement mutualisé
+--  Outsee — installation sur hébergement mutualisé
 --  (InfinityFree, o2switch, OVH mutualisé…)
 --
 --  Import UNIQUE, sur une base DÉJÀ CRÉÉE par l'hébergeur.
@@ -8,7 +8,7 @@
 --  Différences avec db_setup.sql, et pourquoi :
 --
 --   • Pas de CREATE DATABASE ni de USE : sur un mutualisé le nom de la
---     base est imposé (« if0_xxxxxxx_linkee ») et le compte n'a pas
+--     base est imposé (« if0_xxxxxxx_outsee ») et le compte n'a pas
 --     le droit d'en créer. Ces deux lignes feraient échouer l'import.
 --
 --   • SET default_storage_engine=InnoDB : seules 3 des 19 tables de
@@ -30,7 +30,7 @@ SET NAMES utf8mb4;
 SET default_storage_engine=InnoDB;
 
 -- ============================================================
---  Linkee — Installation complète de la base de données
+--  Outsee — Installation complète de la base de données
 --  Import UNIQUE : crée la base, les 16 tables et un jeu de
 --  données de démonstration (événements toujours à venir).
 --
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS etablissements (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     nom VARCHAR(200) NOT NULL,
-    type ENUM('bar', 'boite', 'resto', 'afterwork') NOT NULL,
+    type ENUM('bar', 'boite', 'resto', 'afterwork', 'club') NOT NULL,
     adresse VARCHAR(255),
     ville VARCHAR(100) DEFAULT 'Clermont-Ferrand',
     latitude DECIMAL(10,7) DEFAULT NULL,
@@ -91,11 +91,15 @@ CREATE TABLE IF NOT EXISTS evenements (
     etablissement_id INT NOT NULL,
     titre VARCHAR(255) NOT NULL,
     description TEXT,
-    type ENUM('bar', 'boite', 'resto', 'afterwork') NOT NULL,
+    type ENUM('bar', 'boite', 'resto', 'afterwork', 'sport') NOT NULL,
     -- Style de musique annonce (catalogue PHP : includes/musique.php).
     -- VARCHAR et non ENUM : les styles suivent les modes, en ajouter un
     -- ne doit pas demander une migration de schema.
     style_musique VARCHAR(20) NULL DEFAULT NULL,
+    -- Événement d'un club (type 'sport', migration v28) : discipline et
+    -- format (tournoi, stage…), catalogue includes/sports.php.
+    sport VARCHAR(20) NULL DEFAULT NULL,
+    format VARCHAR(20) NULL DEFAULT NULL,
     date_heure DATETIME NOT NULL,
     -- Fin declaree de l'evenement (migration v24).
     date_fin DATETIME NULL DEFAULT NULL,
@@ -136,8 +140,12 @@ CREATE TABLE IF NOT EXISTS inscriptions (
 CREATE TABLE IF NOT EXISTS squads (
     id INT PRIMARY KEY AUTO_INCREMENT,
     createur_id INT NOT NULL,
-    type ENUM('running', 'velo', 'muscu', 'culture', 'autre') NOT NULL,
+    -- VARCHAR depuis v28 : catalogue des sports dans includes/sports.php.
+    type VARCHAR(20) NOT NULL,
     cree_par_association TINYINT(1) NOT NULL DEFAULT 0,
+    -- Un événement d'étudiant n'est visible que de ses abonnés (v28), sauf
+    -- celui d'une association.
+    visibilite ENUM('public','abonnes') NOT NULL DEFAULT 'abonnes',
     titre VARCHAR(255) NOT NULL,
     description TEXT,
     niveau ENUM('tous', 'debutant', 'inter', 'avance') DEFAULT 'tous',
@@ -309,7 +317,7 @@ CREATE TABLE IF NOT EXISTS invitations (
     id           INT AUTO_INCREMENT PRIMARY KEY,
     from_user_id INT NOT NULL,
     to_user_id   INT NOT NULL,
-    type         ENUM('event','squad') NOT NULL,
+    type         ENUM('event','squad','culture') NOT NULL,
     target_id    INT NOT NULL,
     statut       ENUM('pending','accepted','declined') NOT NULL DEFAULT 'pending',
     created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -363,10 +371,10 @@ INSERT INTO etablissements (user_id, nom, type, adresse, ville) VALUES
 
 -- Événements toujours à venir grâce à NOW() + INTERVAL
 INSERT INTO evenements (etablissement_id, titre, description, type, style_musique, date_heure, quota, reduction, prix_normal, is_flash, flash_expiry, is_gratuit, lieu) VALUES
-(1, 'Happy Hour jusqu\'à minuit', 'Happy Hour prolongé exclusivement pour les membres Linkee. Cocktails à moitié prix toute la soirée !', 'bar', 'generaliste',       NOW() + INTERVAL 2 HOUR,  80,  50, 10.00, 1, NOW() + INTERVAL 3 HOUR,  0, 'Place de Jaude, Clermont-Ferrand'),
+(1, 'Happy Hour jusqu\'à minuit', 'Happy Hour prolongé exclusivement pour les membres Outsee. Cocktails à moitié prix toute la soirée !', 'bar', 'generaliste',       NOW() + INTERVAL 2 HOUR,  80,  50, 10.00, 1, NOW() + INTERVAL 3 HOUR,  0, 'Place de Jaude, Clermont-Ferrand'),
 (1, 'Beer Pong Tournament',      'Tournoi de beer pong par équipes de 2. Entrée gratuite, 50€ de conso pour les gagnants.',                    'afterwork', 'generaliste', NOW() + INTERVAL 5 HOUR,  40,  0,  0.00,  1, NOW() + INTERVAL 4 HOUR,  1, 'Place de Jaude, Clermont-Ferrand'),
 (1, 'Mojito Night',              '-60% sur tous les cocktails tiki entre 19h et 22h. Ambiance tropicale, DJ set live.',                          'bar', 'house',       NOW() + INTERVAL 27 HOUR, 80,  60, 10.00, 1, NOW() + INTERVAL 24 HOUR, 0, 'Place de Jaude, Clermont-Ferrand'),
-(2, 'Soirée Étudiante',          'Entrée gratuite avant 1h avec ton pass Linkee. DJ set toute la nuit.',                                   'boite', 'generaliste',     NOW() + INTERVAL 26 HOUR, 150, 100, 10.00, 0, NULL, 1, 'Montferrand, Clermont-Ferrand'),
+(2, 'Soirée Étudiante',          'Entrée gratuite avant 1h avec ton pass Outsee. DJ set toute la nuit.',                                   'boite', 'generaliste',     NOW() + INTERVAL 26 HOUR, 150, 100, 10.00, 0, NULL, 1, 'Montferrand, Clermont-Ferrand'),
 (1, 'After-work Jeudi',          'Bières à 2€, pintes à 3€ pour les étudiants munis de leur pass.',                                             'afterwork', 'pop', NOW() + INTERVAL 50 HOUR, 60,  30, 5.00,  0, NULL, 0, 'Place de Jaude, Clermont-Ferrand'),
 (1, 'Blind Test Géant',          'Blind test par équipes, lots à gagner, shooters offerts pour les gagnants.',                                 'bar', 'pop',       NOW() + INTERVAL 4 DAY,   60,  20, 12.00, 0, NULL, 0, 'Place de Jaude, Clermont-Ferrand'),
 (2, 'Latino Fever',              'Initiation salsa offerte à 22h30 puis reggaeton/latino jusqu\'au bout. Tequila à 4€.',                        'boite', 'latino',     NOW() + INTERVAL 5 DAY,   150, 30, 12.00, 0, NULL, 0, 'Montferrand, Clermont-Ferrand'),
@@ -422,7 +430,7 @@ INSERT INTO invitations (from_user_id, to_user_id, type, target_id, statut) VALU
 -- ═══════════ migration v5 ═══════════
 
 -- ============================================================
---  Linkee — migration v5
+--  Outsee — migration v5
 --  Photo de profil étudiant
 --
 --  Les établissements pouvaient déjà téléverser des photos ; les
@@ -446,7 +454,7 @@ PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 -- ═══════════ migration v6 ═══════════
 
 -- ============================================================
---  Linkee — migration v6
+--  Outsee — migration v6
 --  Rôle d'administration et traitement des signalements
 --
 --  Les signalements (table user_reports, migration v4) s'empilaient
@@ -477,7 +485,7 @@ PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
 -- ═══════════ migration v8 ═══════════
 
 -- ============================================================
---  Linkee — migration v8
+--  Outsee — migration v8
 --  Les badges cessent de stocker des emoji et l'ancienne palette
 --
 --  La colonne « icon » contenait des emoji (fête, flamme, personnes…) : dessinés par
@@ -513,7 +521,7 @@ UPDATE badges SET icon = 'etoile' WHERE icon IS NULL OR icon = '' OR icon NOT RE
 -- ═══════════ migration v9 ═══════════
 
 -- ============================================================
---  Linkee — migration v9
+--  Outsee — migration v9
 --  Trace des rappels envoyés
 --
 --  Sans elle, un rappel serait renvoyé à chaque passage de la tâche
@@ -537,7 +545,7 @@ CREATE TABLE IF NOT EXISTS rappels_envoyes (
 -- ═══════════ migration v10 ═══════════
 
 -- ============================================================
---  Linkee — migration v10
+--  Outsee — migration v10
 --  Date de naissance et acceptation des CGU
 --
 --  Les CGU annoncent une application « réservée aux étudiants
@@ -570,7 +578,7 @@ PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
 -- ═══════════ migration v11 ═══════════
 
 -- ============================================================
---  Linkee — migration v11
+--  Outsee — migration v11
 --  Posts sponsorisés & invitations non dupliquées
 --
 --  1. Sponsoring d'événement
@@ -644,7 +652,7 @@ PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
 -- ═══════════ migration v12 ═══════════
 
 -- ============================================================
---  Linkee — migration v12
+--  Outsee — migration v12
 --  Back-office fondateurs : CRM commercial et registre financier
 --
 --  Trois tables, et une raison pour chacune.
@@ -681,7 +689,7 @@ CREATE TABLE IF NOT EXISTS crm_clients (
     -- NULL tant que le partenaire n'a pas créé son compte dans l'app.
     etablissement_id INT NULL,
     nom              VARCHAR(191) NOT NULL,
-    categorie        ENUM('bar','boite','resto','afterwork','bde','autre') NOT NULL DEFAULT 'bar',
+    categorie        ENUM('bar','boite','resto','afterwork','club','bde','autre') NOT NULL DEFAULT 'bar',
     ville            VARCHAR(100) NOT NULL DEFAULT 'Clermont-Ferrand',
     adresse          VARCHAR(255) NULL,
     contact_nom      VARCHAR(191) NULL,
@@ -693,7 +701,7 @@ CREATE TABLE IF NOT EXISTS crm_clients (
     statut           ENUM('prospect','contacte','rdv','essai','actif','pause','perdu')
                      NOT NULL DEFAULT 'prospect',
     -- La grille de SL-03. `aucune` = pas encore d'abonnement.
-    offre            ENUM('aucune','fondateur','essentiel','premium','bde')
+    offre            ENUM('aucune','fondateur','essentiel','premium','bde','club')
                      NOT NULL DEFAULT 'aucune',
     -- Montant mensuel HT réellement facturé. Recopié depuis la grille à
     -- la signature, puis figé : le tarif fondateur est gelé (SL-03), une
@@ -788,7 +796,7 @@ SELECT e.id, e.nom, e.type, e.ville, e.adresse, 'essai', 'aucune', 0
 -- ═══════════ migration v13 ═══════════
 
 -- ============================================================
---  Linkee — migration v13
+--  Outsee — migration v13
 --  Style de musique d'un événement
 --
 --  « Où sortir ce soir » se décide autant sur la musique que sur le
@@ -839,7 +847,7 @@ PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
 
 
 -- ============================================================
---  Linkee — migration v14
+--  Outsee — migration v14
 --  Montée en charge : index manquants et flux de révisions
 --
 --  Cette migration ne change aucune fonctionnalité. Elle prépare la
@@ -976,7 +984,7 @@ ON DUPLICATE KEY UPDATE canal = canal;
 
 
 -- ============================================================
---  Linkee — migration v15
+--  Outsee — migration v15
 --  Les centres d'intérêt deviennent indexables
 --
 --  Le problème, en une phrase : `users.interests` est une chaîne
@@ -1172,6 +1180,108 @@ CREATE TABLE IF NOT EXISTS evenement_photo_signalements (
     FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ─── Sport : clubs, terrains, créneaux (v28) ────────────────────────────────
+-- Voir db_migrations_v28.sql pour le détail des choix.
+
+CREATE TABLE IF NOT EXISTS etablissement_sports (
+    etablissement_id INT NOT NULL,
+    sport VARCHAR(20) NOT NULL,
+    PRIMARY KEY (etablissement_id, sport),
+    KEY k_sport (sport),
+    FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS terrains (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    etablissement_id INT NOT NULL,
+    nom VARCHAR(100) NOT NULL,
+    sport VARCHAR(20) NOT NULL,
+    joueurs TINYINT UNSIGNED NOT NULL DEFAULT 4,
+    duree_min SMALLINT UNSIGNED NOT NULL DEFAULT 90,
+    prix DECIMAL(8,2) NOT NULL DEFAULT 0,
+    actif TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY k_etab (etablissement_id, actif),
+    FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS creneaux (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    terrain_id INT NOT NULL,
+    debut DATETIME NOT NULL,
+    fin DATETIME NOT NULL,
+    prix DECIMAL(8,2) NOT NULL DEFAULT 0,
+    joueurs TINYINT UNSIGNED NOT NULL DEFAULT 4,
+    statut ENUM('libre','reserve','annule') NOT NULL DEFAULT 'libre',
+    organisateur_id INT NULL DEFAULT NULL,
+    ouvert TINYINT(1) NOT NULL DEFAULT 0,
+    niveau ENUM('tous','debutant','inter','avance') NOT NULL DEFAULT 'tous',
+    reserve_le DATETIME NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_terrain_debut (terrain_id, debut),
+    KEY k_statut_debut (statut, debut),
+    KEY k_organisateur (organisateur_id),
+    FOREIGN KEY (terrain_id) REFERENCES terrains(id) ON DELETE CASCADE,
+    FOREIGN KEY (organisateur_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS creneau_joueurs (
+    creneau_id INT NOT NULL,
+    user_id INT NOT NULL,
+    invite_par INT NULL DEFAULT NULL,
+    rejoint_le TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (creneau_id, user_id),
+    KEY k_user (user_id),
+    FOREIGN KEY (creneau_id) REFERENCES creneaux(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (invite_par) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Espace Culture (migration v29) : les événements mis en avant par la ville.
+CREATE TABLE IF NOT EXISTS culture_evenements (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    titre VARCHAR(255) NOT NULL,
+    description TEXT,
+    -- Catalogue PHP : includes/culture.php (CULTURE_CATEGORIES).
+    categorie ENUM('expo','concert','spectacle','festival','patrimoine','cinema','atelier','conference','autre') NOT NULL DEFAULT 'autre',
+    -- Qui porte l'événement : la ville, un musée municipal, l'office de
+    -- tourisme. Affiché sur la carte, à la place de l'établissement.
+    organisateur VARCHAR(150) NOT NULL DEFAULT 'Ville de Clermont-Ferrand',
+    lieu VARCHAR(255) NOT NULL,
+    ville VARCHAR(100) NOT NULL DEFAULT 'Clermont-Ferrand',
+    date_heure DATETIME NOT NULL,
+    -- Fin annoncée. Indispensable pour une exposition, qui reste « en cours »
+    -- jusqu'à sa fermeture ; NULL pour un concert, qui se termine trois
+    -- heures après son début (cultureSqlFin()).
+    date_fin DATETIME NULL DEFAULT NULL,
+    -- 0 = entrée libre, sans limite de places (même règle que remplissage()).
+    quota INT NOT NULL DEFAULT 0,
+    prix DECIMAL(8,2) NOT NULL DEFAULT 0,
+    -- Page officielle de l'événement, quand la ville en publie une.
+    lien VARCHAR(500) NULL DEFAULT NULL,
+    -- « À la une » : passe en tête de l'espace Culture.
+    mis_en_avant TINYINT(1) NOT NULL DEFAULT 0,
+    cree_par INT NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_culture_date (date_heure),
+    INDEX idx_culture_categorie (categorie, date_heure),
+    FOREIGN KEY (cree_par) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Pas de QR ni de statut « checkin » : personne ne scanne l'entrée d'une
+-- exposition municipale. S'inscrire dit « j'y vais » à ses amis et réserve
+-- une place quand il y a un quota ; se désinscrire supprime la ligne.
+CREATE TABLE IF NOT EXISTS culture_inscriptions (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    evenement_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_culture_inscription (user_id, evenement_id),
+    KEY k_culture_evenement (evenement_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (evenement_id) REFERENCES culture_evenements(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS schema_migrations (
     version     VARCHAR(20) NOT NULL,
     applique_le DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -1180,4 +1290,4 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 
 INSERT IGNORE INTO schema_migrations (version) VALUES
 ('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
-('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27');
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27'), ('v28'), ('v29');

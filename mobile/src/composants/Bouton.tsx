@@ -1,7 +1,7 @@
 /**
  * Les boutons de la charte (.btn et ses variantes).
  *
- *  - primaire  : pilule lave, texte basalte — une seule par écran ;
+ *  - primaire  : pilule d’accent, texte craie — une seule par écran ;
  *  - contour   : filet d'encre, fond transparent (secondaire) ;
  *  - basalte   : la pilule basalte posée sur un aplat lave (« Je fonce ») ;
  *  - texte     : un lien d'action en lave (tertiaire) ;
@@ -36,11 +36,13 @@ type Props = {
   styleTexte?: StyleProp<TextStyle>;
   taillePolice?: number;
   accessibilityLabel?: string;
+  /** Repère des tests de bout en bout (Maestro) ; sans effet à l'écran. */
+  testID?: string;
 };
 
 export function Bouton({
   libelle, onPress, variante = 'primaire', plein, desactive, chargement, icone, iconeADroite,
-  style, styleTexte, taillePolice = fs[5], accessibilityLabel,
+  style, styleTexte, taillePolice = fs[5], accessibilityLabel, testID,
 }: Props) {
   const { c } = useTheme();
   const inactif = desactive || chargement;
@@ -50,7 +52,7 @@ export function Bouton({
   let filet = 'transparent';
 
   switch (variante) {
-    case 'primaire': fond = c.rouge; encre = fixe.surLave; break;
+    case 'primaire': fond = c.rouge; encre = fixe.surAccent; break;
     case 'bleu': fond = c.bleu; encre = fixe.surLave; break;
     case 'alerte': fond = c.alerteVif; encre = fixe.surLave; break;
     case 'contour': fond = 'transparent'; encre = c.noir; filet = c.noir; break;
@@ -62,7 +64,7 @@ export function Bouton({
     if (variante === 'primaire' || variante === 'bleu' || variante === 'alerte') {
       fond = c.surface2; encre = c.grisFonce; filet = c.grisClair;
     } else if (variante === 'basalte') {
-      fond = 'rgba(17,16,19,0.14)'; encre = fixe.surLave; filet = 'transparent';
+      fond = 'rgba(17,16,19,0.14)'; encre = fixe.surAccent; filet = 'transparent';
     }
   }
 
@@ -72,6 +74,7 @@ export function Bouton({
     <Pressable
       onPress={onPress}
       disabled={inactif}
+      testID={testID}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? libelle}
       accessibilityState={{ disabled: !!inactif, busy: !!chargement }}

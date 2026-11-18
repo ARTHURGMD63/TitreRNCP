@@ -13,7 +13,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { api, type ReponseAbonnements } from '../../api';
 import { Bouton } from '../../composants/Bouton';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
-import { Segments } from '../../composants/Elements';
+import { BoutonRetour, Segments } from '../../composants/Elements';
 import { Icone } from '../../composants/Icone';
 import { LignePersonne } from '../../composants/Social';
 import { Mono, T, TitreEcran } from '../../composants/Texte';
@@ -63,10 +63,7 @@ export default function Abonnements() {
   return (
     <Ecran rafraichit={rafraichit} onRafraichir={() => { setRafraichit(true); void charger(); }}>
       <EnTete style={{ paddingBottom: 10 }}>
-        <Pressable onPress={() => router.navigate('/moi')} accessibilityRole="link" hitSlop={14} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14, alignSelf: 'flex-start' }}>
-          <Icone nom="chevron-g" taille={14} couleur={c.gris} />
-          <T taille={fs[4]} poids={600} couleur={c.gris}>Mon profil</T>
-        </Pressable>
+        <BoutonRetour vers="/moi" libelle="Retour à mon profil" style={{ marginBottom: 18 }} />
 
         <Segments
           style={{ marginBottom: 20 }}

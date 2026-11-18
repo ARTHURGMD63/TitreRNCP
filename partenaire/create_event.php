@@ -221,12 +221,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
   .form-errors li { margin: 4px 0; color: var(--danger); font-weight: var(--fw-semibold); }
 </style>
-<?php pageDebut('Linkee — Créer un événement', ['univers' => 'pro', 'tete' => ob_get_clean()]); ?>
+<?php pageDebut('Outsee — Créer un événement', ['univers' => 'pro', 'tete' => ob_get_clean()]); ?>
 <div class="partner-shell">
 
   <aside class="partner-sidebar">
     <div class="sidebar-brand">
-      <?= marqueLinkee('pro') ?>
+      <?= marqueOutsee('pro') ?>
     </div>
     <nav class="sidebar-nav">
       <a href="<?= baseUrl('/partenaire/dashboard.php') ?>" class="sidebar-link">

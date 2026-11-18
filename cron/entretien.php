@@ -30,7 +30,7 @@ require_once __DIR__ . '/../includes/temps_reel.php';
 
 $simulation = in_array('--simulation', $argv ?? [], true);
 
-printf("Entretien Linkee — %s%s\n\n", date('d/m/Y H:i'), $simulation ? ' (simulation)' : '');
+printf("Entretien Outsee — %s%s\n\n", date('d/m/Y H:i'), $simulation ? ' (simulation)' : '');
 
 // ─── 1. Fichiers de cache périmés ───────────────────────────────────────────
 //

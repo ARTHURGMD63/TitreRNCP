@@ -30,6 +30,7 @@ import { Avatar } from '../../composants/Elements';
 import { Feuille } from '../../composants/Feuille';
 import { Icone } from '../../composants/Icone';
 import { Display, T } from '../../composants/Texte';
+import { ajouterCheckin, delaiResultatScan, messageEchecScan, retirerInvite } from '../../regles';
 import { useToast } from '../../composants/Toast';
 import { useJeton } from '../../session';
 import { fixe, fs, lh, rayon, sans } from '../../theme';
@@ -68,8 +69,8 @@ export default function ScanPass() {
     setValidationEnCours(invite.inscription_id);
     try {
       const rep = await api.partenaireScan(jeton, { inscription_id: invite.inscription_id, event_id: Number(evenementId) });
-      setCheckins((liste) => [{ ...rep.personne, checkin_le: new Date().toISOString() }, ...liste]);
-      setInvitesManuels((liste) => (liste ?? []).filter((i) => i.inscription_id !== invite.inscription_id));
+      setCheckins((liste) => ajouterCheckin(liste, { ...rep.personne, checkin_le: new Date().toISOString() }));
+      setInvitesManuels((liste) => retirerInvite(liste, invite.inscription_id));
       toast(`${rep.personne.prenom} ${rep.personne.nom} validé·e`, 'success');
     } catch (e) {
       toast(e instanceof ErreurApi ? e.message : 'Erreur réseau', 'error');
@@ -95,15 +96,15 @@ export default function ScanPass() {
       const rep = await api.partenaireScan(jeton, { qr_code: resultat.data, event_id: Number(evenementId) });
       succes = true;
       setPersonneValidee(rep.personne);
-      setCheckins((liste) => [{ ...rep.personne, checkin_le: new Date().toISOString() }, ...liste]);
+      setCheckins((liste) => ajouterCheckin(liste, { ...rep.personne, checkin_le: new Date().toISOString() }));
     } catch (e) {
-      setMessageEchec(e instanceof ErreurApi ? e.message : 'Erreur de connexion');
+      setMessageEchec(messageEchecScan(e instanceof ErreurApi ? e : null));
     } finally {
       setTimeout(() => {
         enTraitement.current = false;
         setPersonneValidee(null);
         setMessageEchec(null);
-      }, succes ? 2200 : 2000);
+      }, delaiResultatScan(succes));
     }
   }, [jeton, evenementId]);
 
@@ -119,7 +120,7 @@ export default function ScanPass() {
           Accès à la caméra nécessaire
         </Display>
         <T taille={fs[4]} couleur={fixe.craie} interligne={lh.normal} style={{ textAlign: 'center', marginBottom: 24, opacity: 0.8 }}>
-          Pour scanner les pass à l&apos;entrée, autorise Linkee à utiliser la caméra.
+          Pour scanner les pass à l&apos;entrée, autorise Outsee à utiliser la caméra.
         </T>
         <Bouton libelle="Autoriser la caméra" plein onPress={() => void demanderPermission()} style={{ marginBottom: 12 }} />
         <Bouton libelle="Retour" variante="contour" plein onPress={() => router.back()}
@@ -128,7 +129,7 @@ export default function ScanPass() {
     );
   }
 
-  const cadre = personneValidee ? '#C8F547' : messageEchec ? '#FF5424' : fixe.craie;
+  const cadre = personneValidee ? '#C8F547' : messageEchec ? '#FF4D6A' : fixe.craie;
 
   return (
     <View style={{ flex: 1, backgroundColor: fixe.basalte }}>
@@ -162,6 +163,7 @@ export default function ScanPass() {
         onPress={() => { setManuelOuvert(true); setRechercheManuelle(''); void chercherInvites(''); }}
         accessibilityRole="button"
         accessibilityLabel="Valider une présence manuellement"
+        testID="scan-manuel"
         style={{ position: 'absolute', bottom: bottom + 100, left: 24, right: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 44, borderRadius: 22, backgroundColor: 'rgba(17,16,19,0.6)' }}
       >
         <Icone nom="outil" taille={16} couleur={fixe.craie} />
@@ -192,7 +194,7 @@ export default function ScanPass() {
         </View>
       ) : messageEchec ? (
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: bottom + 40, alignItems: 'center', paddingHorizontal: 24 }}>
-          <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: '#FF5424', textAlign: 'center' }}>{messageEchec}</Text>
+          <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: '#FF4D6A', textAlign: 'center' }}>{messageEchec}</Text>
         </View>
       ) : (
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: bottom + 40, alignItems: 'center', paddingHorizontal: 24 }}>
@@ -228,6 +230,7 @@ export default function ScanPass() {
           value={rechercheManuelle}
           onChangeText={(v) => { setRechercheManuelle(v); void chercherInvites(v); }}
           placeholder="Prénom ou nom..."
+          testID="scan-manuel-recherche"
           placeholderTextColor="#8A858F"
           autoFocus
           style={{ paddingVertical: 12, paddingHorizontal: 16, borderWidth: 1, borderColor: '#E8E2D6', borderRadius: rayon.pill, fontFamily: sans(400), fontSize: fs[4], color: fixe.basalte, marginBottom: 16 }}
@@ -249,6 +252,7 @@ export default function ScanPass() {
                 onPress={() => void validerManuellement(invite)}
                 chargement={validationEnCours === invite.inscription_id}
                 variante="bleu"
+                testID={`scan-manuel-valider-${invite.inscription_id}`}
               />
             </View>
           ))

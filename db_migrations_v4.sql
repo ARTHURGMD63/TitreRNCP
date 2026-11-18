@@ -1,5 +1,5 @@
 -- ============================================================
---  Linkee — migration v4
+--  Outsee — migration v4
 --  « Abonnement sur demande » + modération
 --
 --  Avant : suivre quelqu'un était instantané et unilatéral, et ne

@@ -13,7 +13,7 @@ $doc = textesLegaux()['mentions-legales']; ?>
   .legal-page p, .legal-page li { color:var(--gris-fonce); }
   .legal-page strong { color:var(--noir); }
 </style>
-<?php pageDebut('Linkee — Mentions légales', ['tete' => ob_get_clean()]); ?>
+<?php pageDebut('Outsee — Mentions légales', ['tete' => ob_get_clean()]); ?>
 <div class="legal-page">
   <a href="javascript:history.back()" class="back">← Retour</a>
   <h1><?= htmlspecialchars($doc['titre'], ENT_QUOTES, 'UTF-8') ?></h1>

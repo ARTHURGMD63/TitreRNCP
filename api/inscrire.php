@@ -40,9 +40,9 @@ try {
     // une soirée en cours et pas encore complète doit rester rejoignable.
     $finEff = sqlFinEffectiveEvenement();
     $stmt = $pdo->prepare(
-        "SELECT quota, prix_normal, reduction
-           FROM evenements
-          WHERE id = ? AND $finEff >= NOW()
+        "SELECT e.quota, e.prix_normal, e.reduction
+           FROM evenements e
+          WHERE e.id = ? AND $finEff >= NOW()
           FOR UPDATE"
     );
     $stmt->execute([$evenement_id]);

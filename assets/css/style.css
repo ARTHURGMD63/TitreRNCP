@@ -1,5 +1,5 @@
 /* ============================================================
-   Linkee — Design System (charte graphique v1.0)
+   Outsee — Design System (charte graphique v1.0)
    Basalte, lave, craie. Garde le vocabulaire de classes existant
    (--noir, --rouge, .card, .btn, .pill, .event-card…) : seules les
    valeurs changent, pour que les styles en ligne des pages suivent.
@@ -56,8 +56,8 @@
      Volt : XP, badges, validé. Moutarde : restos, food.
      Les anciens noms (--bleu, --lime, --orange) portent désormais ces
      couleurs fonctionnelles.                                            */
-  --rouge:       #FF5424;   /* lave */
-  --rouge-deep:  #B8350D;   /* lave lisible sur craie — 5.2:1 */
+  --rouge:       #8E6BFF;   /* lave */
+  --rouge-deep:  #5B3BD6;   /* lave lisible sur craie — 5.2:1 */
   --bleu:        #5B8CFF;   /* dôme */
   --bleu-deep:   #2A56C0;
   --lime:        #C8F547;   /* volt */
@@ -84,7 +84,7 @@
   --sur-orange-clair: var(--orange-deep);
 
   /* Teintes (fonds doux) */
-  --rouge-clair: #FFE3D9;
+  --rouge-clair: #ECE6FF;
   --bleu-clair:  #E3EBFF;
   --lime-clair:  #EEF9CF;
   --orange-clair:#FFF1D1;
@@ -152,7 +152,7 @@
   --shadow-sm: 0 1px 2px rgba(17,16,19,.04);
   --shadow:    0 1px 2px rgba(17,16,19,.04), 0 6px 18px rgba(17,16,19,.05);
   --shadow-lg: 0 2px 6px rgba(17,16,19,.06), 0 16px 40px rgba(17,16,19,.10);
-  --halo-lave: 0 0 0 1px rgba(255,84,36,.25), 0 18px 60px -12px rgba(255,84,36,.55);
+  --halo-lave: 0 0 0 1px rgba(142,107,255,.25), 0 18px 60px -12px rgba(142,107,255,.55);
 
   /* Compat : ancienne variable bordure */
   --border: 1px solid var(--gris-clair);
@@ -188,7 +188,7 @@
   --gris: #8A858F;        /* pierre — 5.3:1 sur basalte */
   --gris-clair: #2A272E;  /* ligne */
   --line-2: #36323B;
-  --rouge-clair: #3A1B12;
+  --rouge-clair: #231B3F;
   --bleu-clair: #18223D;
   --lime-clair: #273011;
   --orange-clair: #33280F;
@@ -199,7 +199,7 @@
   --danger-clair:  #3A151D;
   --alerte:        #FFC23D;
   --alerte-clair:  #33280F;
-  --sur-rouge-clair:  #FF5424;
+  --sur-rouge-clair:  #8E6BFF;
   --sur-bleu-clair:   #5B8CFF;
   --sur-lime-clair:   #C8F547;
   --sur-orange-clair: #FFC23D;
@@ -854,7 +854,7 @@ button, input[type="submit"], input[type="button"] {
 .auth-link { text-align: center; margin-top: 20px; font-size: var(--fs-4); color: var(--gris); }
 .auth-link a { color: var(--noir); font-weight: var(--fw-bold); text-decoration: none; }
 
-/* ─── Espace partenaire (« linkee pro ») ───
+/* ─── Espace partenaire (« outsee pro ») ───
    Charte : le jour pour les pros. Fond craie, barre latérale en surface
    claire, tableaux et graphiques en basalte ; la lave ne sert qu'aux actions. */
 .partner-shell { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
@@ -1667,8 +1667,8 @@ h1.titre-page.partner-headline {
 a.interest-pill:hover { background: var(--rouge); color: var(--sur-lave); }
 
 /* ─── Logo ───
-   Deux anneaux entrelacés (l'étudiant et le lieu) et le logotype « linkee »,
-   dont le double « ee » est en lave. Rendu par marqueLinkee() (includes/
+   Deux anneaux entrelacés (l'étudiant et le lieu) et le logotype « outsee »,
+   dont le double « ee » est en lave. Rendu par marqueOutsee() (includes/
    marque.php) : ne jamais le recomposer dans une autre police.        */
 :root { --logo-accent: var(--rouge); }
 .marque {

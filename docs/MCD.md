@@ -1,4 +1,4 @@
-# Modèle Conceptuel de Données — Linkee
+# Modèle Conceptuel de Données — Outsee
 
 ## Diagramme Entité-Relation (Mermaid)
 

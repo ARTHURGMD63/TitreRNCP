@@ -1,0 +1,20 @@
+# Un étudiant se connecte et arrive sur l'accueil.
+appId: fr.outsee.app
+tags:
+  - critique
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../sous-flows/connexion.yaml
+    env:
+      EMAIL: arthur@uca.fr
+      MOT_DE_PASSE: password
+# La barre d'onglets n'existe qu'une fois connecté.
+- extendedWaitUntil:
+    visible: Explorer
+    timeout: 20000
+- assertVisible: Pass
+- assertVisible: Moi
+- assertNotVisible:
+    id: connexion-valider

@@ -49,6 +49,12 @@ function canalSquad(int $id): string
     return 'squad:' . $id;
 }
 
+/** Nom de canal pour un événement de l'espace Culture (identifiants distincts des soirées). */
+function canalCulture(int $id): string
+{
+    return 'culture:' . $id;
+}
+
 /** Le canal que tout le monde observe : création d'événements, annonces. */
 const CANAL_GLOBAL = 'global';
 

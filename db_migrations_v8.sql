@@ -1,5 +1,5 @@
 -- ============================================================
---  Linkee — migration v8
+--  Outsee — migration v8
 --  Les badges cessent de stocker des emoji et l'ancienne palette
 --
 --  La colonne « icon » contenait des emoji (fête, flamme, personnes…) : dessinés par

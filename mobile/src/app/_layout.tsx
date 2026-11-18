@@ -84,6 +84,8 @@ function Navigation() {
         <Stack.Protected guard={etudiant && !nouveau}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="evenement/[id]" />
+          <Stack.Screen name="creneau/[id]" />
+          <Stack.Screen name="culture/[id]" />
           <Stack.Screen name="etudiant/[id]" />
           <Stack.Screen name="avis/[id]" />
         </Stack.Protected>

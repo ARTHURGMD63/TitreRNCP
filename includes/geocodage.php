@@ -35,7 +35,7 @@ function geocoderAdresse(string $adresse, string $ville): ?array
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER     => ['User-Agent: Linkee/1.0 (contact@linkee.fr)'],
+            CURLOPT_HTTPHEADER     => ['User-Agent: Outsee/1.0 (contact@outsee.fr)'],
             CURLOPT_TIMEOUT        => 4,
             CURLOPT_FOLLOWLOCATION => true,
         ]);
@@ -49,7 +49,7 @@ function geocoderAdresse(string $adresse, string $ville): ?array
             'http' => [
                 'method'  => 'GET',
                 // Nominatim refuse les requêtes sans User-Agent identifiable.
-                'header'  => "User-Agent: Linkee/1.0 (contact@linkee.fr)\r\n",
+                'header'  => "User-Agent: Outsee/1.0 (contact@outsee.fr)\r\n",
                 'timeout' => 4,
             ],
         ]);

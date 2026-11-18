@@ -31,6 +31,7 @@ function grilleCapacites(): array
         'essentiel' => ['flash_par_mois' => 4,    'mises_en_avant_offertes' => 0],
         'bde'       => ['flash_par_mois' => 4,    'mises_en_avant_offertes' => 0],
         'premium'   => ['flash_par_mois' => null, 'mises_en_avant_offertes' => 1],
+        'club'      => ['flash_par_mois' => 4,    'mises_en_avant_offertes' => 0],
     ];
 }
 

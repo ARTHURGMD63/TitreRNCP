@@ -14,7 +14,7 @@ import * as SecureStore from 'expo-secure-store';
 
 import { couleurs, ombre, type Couleurs, type Mode } from './theme';
 
-const CLE = 'linkee.theme';
+const CLE = 'outsee.theme';
 
 export type Preference = 'systeme' | Mode;
 
@@ -37,7 +37,9 @@ export function FournisseurTheme({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let annule = false;
+    // Le réglage d'avant le changement de nom est repris tel quel.
     SecureStore.getItemAsync(CLE)
+      .then((v) => v ?? SecureStore.getItemAsync('linkee.theme'))
       .then((v) => {
         if (!annule && (v === 'clair' || v === 'sombre' || v === 'systeme')) setPreference(v);
       })

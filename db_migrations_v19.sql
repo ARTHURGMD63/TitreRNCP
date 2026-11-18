@@ -1,5 +1,5 @@
 -- ============================================================
---  Linkee — migration v19
+--  Outsee — migration v19
 --  Liste d'attente du lancement (page d'accueil « bientôt disponible »)
 --
 --  Avant l'ouverture publique, index.php n'affiche plus qu'un compte à

@@ -4,7 +4,7 @@
  * check-in à l'entrée.
  *
  * Reprend partenaire/api_scan.php à l'identique : retrait du préfixe
- * linkee:/studentlink: (optionnel, pour accepter aussi une saisie
+ * outsee:/linkee:/studentlink: (optionnel, pour accepter aussi une saisie
  * manuelle), vérification que la soirée appartient bien à cet
  * établissement, puis la même machine à états sur inscriptions.statut.
  *
@@ -26,7 +26,7 @@ $qrCode        = trim((string) ($corps['qr_code'] ?? ''));
 $inscriptionId = (int) ($corps['inscription_id'] ?? 0);
 $eventId       = (int) ($corps['event_id'] ?? 0);
 
-foreach (['linkee:', 'studentlink:'] as $prefixe) {
+foreach (['outsee:', 'linkee:', 'studentlink:'] as $prefixe) {
     if (stripos($qrCode, $prefixe) === 0) {
         $qrCode = substr($qrCode, strlen($prefixe));
         break;

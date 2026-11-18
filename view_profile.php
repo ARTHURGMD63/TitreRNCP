@@ -140,7 +140,7 @@ $upcomingEvents = $stmtEv->fetchAll();
   .event-strip:last-child { border-bottom: none; }
   .event-strip__barre { width: 4px; height: 30px; border-radius: 2px; background: var(--rouge); flex-shrink: 0; }
 </style>
-<?php pageDebut($u['prenom'] . ' — Linkee', ['pwa' => true, 'tete' => ob_get_clean()]); ?>
+<?php pageDebut($u['prenom'] . ' — Outsee', ['pwa' => true, 'tete' => ob_get_clean()]); ?>
 <div class="app-shell">
 
   <main id="main-content" class="page-content">
@@ -277,7 +277,7 @@ $upcomingEvents = $stmtEv->fetchAll();
 </div>
 
 <nav class="bottom-nav nav-ordinateur" aria-label="Navigation principale">
-  <span class="nav-marque" aria-hidden="true"><?= marqueLinkee() ?></span>
+  <span class="nav-marque" aria-hidden="true"><?= marqueOutsee() ?></span>
   <a href="<?= baseUrl('/explore.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
     <span>Explorer</span>

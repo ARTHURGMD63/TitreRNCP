@@ -1,0 +1,18 @@
+# Se connecter. Paramètres : EMAIL, MOT_DE_PASSE.
+# Part d'une application fraîchement lancée, sans session.
+appId: fr.outsee.app
+---
+# L'intro animée passe devant l'écran de connexion quelques secondes.
+- extendedWaitUntil:
+    visible:
+      id: connexion-email
+    timeout: 30000
+- tapOn:
+    id: connexion-email
+- inputText: ${EMAIL}
+- tapOn:
+    id: connexion-mot-de-passe
+- inputText: ${MOT_DE_PASSE}
+- hideKeyboard
+- tapOn:
+    id: connexion-valider

@@ -28,7 +28,7 @@ final class RedirectionTest extends TestCase
         if (!function_exists('urlInterneOuDefaut')) {
             require_once __DIR__ . '/../../includes/security.php';
         }
-        $_SERVER['HTTP_HOST'] = 'linkee.example';
+        $_SERVER['HTTP_HOST'] = 'outsee.example';
         unset($_SERVER['HTTP_ORIGIN'], $_SERVER['HTTP_REFERER']);
     }
 
@@ -58,7 +58,7 @@ final class RedirectionTest extends TestCase
     {
         $this->assertSame(
             '/profil.php',
-            urlInterneOuDefaut('https://linkee.example/profil.php')
+            urlInterneOuDefaut('https://outsee.example/profil.php')
         );
     }
 
@@ -69,14 +69,14 @@ final class RedirectionTest extends TestCase
 
     public function testUnHoteQuiCommencePareilEstRefuse(): void
     {
-        // « linkee.example.evil.tld » contient le nom du site : une
+        // « outsee.example.evil.tld » contient le nom du site : une
         // comparaison par préfixe ou par str_contains() l'aurait laissé passer.
-        $this->assertSame('/', urlInterneOuDefaut('https://linkee.example.evil.tld/x'));
+        $this->assertSame('/', urlInterneOuDefaut('https://outsee.example.evil.tld/x'));
     }
 
     public function testUnPortDifferentEstRefuse(): void
     {
-        $this->assertSame('/', urlInterneOuDefaut('https://linkee.example:8443/x'));
+        $this->assertSame('/', urlInterneOuDefaut('https://outsee.example:8443/x'));
     }
 
     public function testUneUrlProtocoleRelatifEstRefusee(): void
@@ -103,7 +103,7 @@ final class RedirectionTest extends TestCase
 
     public function testUneOrigineIdentiqueEstAcceptee(): void
     {
-        $_SERVER['HTTP_ORIGIN'] = 'https://linkee.example';
+        $_SERVER['HTTP_ORIGIN'] = 'https://outsee.example';
         $this->assertTrue(origineFiable());
     }
 
@@ -117,13 +117,13 @@ final class RedirectionTest extends TestCase
     {
         // Origin est le signal fiable ; Referer ne sert que de repli.
         $_SERVER['HTTP_ORIGIN']  = 'https://evil.example';
-        $_SERVER['HTTP_REFERER'] = 'https://linkee.example/explore.php';
+        $_SERVER['HTTP_REFERER'] = 'https://outsee.example/explore.php';
         $this->assertFalse(origineFiable());
     }
 
     public function testLeRefererSertDeRepliQuandOriginManque(): void
     {
-        $_SERVER['HTTP_REFERER'] = 'https://linkee.example/explore.php';
+        $_SERVER['HTTP_REFERER'] = 'https://outsee.example/explore.php';
         $this->assertTrue(origineFiable());
 
         $_SERVER['HTTP_REFERER'] = 'https://evil.example/piege';

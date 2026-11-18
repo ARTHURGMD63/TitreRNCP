@@ -1,5 +1,5 @@
 -- ============================================================
---  Linkee — migration v14
+--  Outsee — migration v14
 --  Montée en charge : index manquants et flux de révisions
 --
 --  Cette migration ne change aucune fonctionnalité. Elle prépare la

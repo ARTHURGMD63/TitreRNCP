@@ -1,5 +1,5 @@
 /**
- * Client de l'API Linkee.
+ * Client de l'API Outsee.
  *
  * Point de passage unique vers le serveur : aucun écran n'appelle fetch()
  * directement. Tout ce qui est commun à chaque requête vit ici : l'adresse du
@@ -159,6 +159,9 @@ export type Evenement = {
   description: string;
   type: string;
   style_musique: string | null;
+  /** Événement d'un club (type 'sport') : discipline et format. */
+  sport?: string | null;
+  format?: string | null;
   date_heure: string;
   lieu: string;
   etablissement: { id: number; nom: string; type: string; ville: string; note: number | null; nb_avis: number; suivi: boolean; latitude: number | null; longitude: number | null };
@@ -186,6 +189,45 @@ export type ReponseEvenements = {
   pagination: { page: number; a_suivre: boolean };
   filtres: { type: string; musique: string; styles_musique: { code: string; libelle: string }[] };
 };
+
+/** Un événement de l'espace Culture (api/v1/culture.php) : mis en avant par la ville. */
+export type EvenementCulture = {
+  id: number;
+  titre: string;
+  description: string;
+  categorie: string;
+  organisateur: string;
+  lieu: string;
+  ville: string;
+  date_heure: string;
+  date_fin: string | null;
+  /** quota 0 : entrée libre, sans limite — restantes vaut alors null. */
+  places: { quota: number; inscrits: number; restantes: number | null; complet: boolean };
+  prix: number;
+  is_gratuit: boolean;
+  lien: string | null;
+  mis_en_avant: boolean;
+  en_cours: boolean;
+  deja_inscrit: boolean;
+  amis: { prenoms: string[]; nb: number };
+};
+
+export type EvenementCultureDetail = EvenementCulture & { termine: boolean; amis_detail: Personne[] };
+
+export type CategorieCulture = { code: string; libelle: string };
+
+export type ReponseCulture = {
+  evenements: EvenementCulture[];
+  pagination: { page: number; a_suivre: boolean };
+  filtres: { categorie: string; categories: CategorieCulture[] };
+};
+
+export type EvenementCultureAdmin = Omit<EvenementCulture, 'amis' | 'deja_inscrit'> & { termine: boolean };
+
+export type ReponseCultureAdmin = { a_venir: EvenementCultureAdmin[]; termines: EvenementCultureAdmin[]; categories: CategorieCulture[] };
+
+/** Ce que l'invitation sait viser : une soirée, une squad, un événement culturel. */
+export type CibleInvitation = 'event' | 'squad' | 'culture';
 
 export type Pass = {
   id: number;
@@ -228,7 +270,76 @@ export type Squad = {
   je_suis_abonne_au_createur: boolean;
   cree_par_association: boolean;
   membres: { id: number; prenom: string; photo_url: string | null }[];
+  /** 'abonnes' : visible des seuls abonnés du créateur (v28). */
+  visibilite?: 'public' | 'abonnes';
 };
+
+// ─── Sport ──────────────────────────────────────────────────────────────────
+
+export type NiveauSport = 'tous' | 'debutant' | 'inter' | 'avance';
+
+export type JoueurCreneau = { id: number; prenom: string; nom: string; photo_url: string | null; invite_par: number | null };
+
+/** Un créneau de terrain : libre, ou partie réservée (ouverte ou non). */
+export type Creneau = {
+  id: number;
+  debut: string;
+  fin: string;
+  sport: string;
+  terrain: { id: number; nom: string };
+  club: { id: number; nom: string; ville: string; adresse: string };
+  /** Prix du terrain pour le créneau, réglé au club. */
+  prix: number;
+  statut: 'libre' | 'reserve' | 'annule';
+  ouvert: boolean;
+  niveau: NiveauSport;
+  places: { total: number; prises: number; restantes: number };
+  organisateur: { id: number; prenom: string; nom: string; photo_url: string | null } | null;
+  joueurs: JoueurCreneau[];
+  je_joue: boolean;
+  je_organise: boolean;
+};
+
+export type CreneauDetail = Creneau & { peut_reserver: boolean; peut_rejoindre: boolean; peut_quitter: boolean };
+
+export type EvenementSport = {
+  id: number;
+  titre: string;
+  sport: string;
+  format: string;
+  date_heure: string;
+  date_fin: string | null;
+  lieu: string;
+  club: { id: number; nom: string; ville: string };
+  places: { quota: number; inscrits: number; restantes: number | null; complet: boolean };
+  prix_normal: number;
+  reduction: number;
+  is_gratuit: boolean;
+  deja_inscrit: boolean;
+};
+
+export type ReponseSport = {
+  sports: { code: string; libelle: string }[];
+  parties: Creneau[];
+  libres: Creneau[];
+  mes_parties: Creneau[];
+  evenements: EvenementSport[];
+  squads: Squad[];
+};
+
+export type TerrainClub = {
+  id: number;
+  nom: string;
+  sport: string;
+  joueurs: number;
+  duree_min: number;
+  prix: number;
+  actif: boolean;
+  creneaux_libres: number;
+  creneaux_reserves: number;
+};
+
+export type ReponseTerrainsClub = { terrains: TerrainClub[]; sports_club: string[]; sports: { code: string; libelle: string }[] };
 
 export type Notification = {
   type: 'demande' | 'invitation' | 'ami' | 'lieu';
@@ -238,7 +349,7 @@ export type Notification = {
   nouvelle: boolean;
   section: string;
   acteur?: Personne;
-  invitation?: { id: number; cible_type: 'event' | 'squad'; cible_nom: string | null; de: Personne };
+  invitation?: { id: number; cible_type: CibleInvitation; cible_nom: string | null; de: Personne };
   activite?: { cible_type: 'event' | 'squad'; cible_id: number; cible_nom: string; lieu: string; acteur: Personne };
   evenement?: { id: number; titre: string; lieu: string; date: string };
 };
@@ -373,6 +484,8 @@ export type EvenementPartenaire = {
   id: number;
   titre: string;
   type: string;
+  sport: string | null;
+  format: string | null;
   date_heure: string;
   quota: number;
   inscrits: number;
@@ -393,6 +506,8 @@ export type EvenementFormulairePartenaire = {
   description: string;
   type: string;
   style_musique: string | null;
+  sport: string | null;
+  format: string | null;
   date_heure: string;
   date_fin: string | null;
   quota: number;
@@ -408,6 +523,10 @@ export type EvenementFormulairePartenaire = {
 
 export type ReponseFormulaireEvenementPartenaire = {
   evenement: EvenementFormulairePartenaire | null;
+  /** Un club ne publie que des événements sportifs (type 'sport'). */
+  est_club: boolean;
+  sports: { code: string; libelle: string }[];
+  formats: { code: string; libelle: string }[];
   lieu_defaut: string;
   styles_musique: { code: string; libelle: string }[];
   formules_sponsoring: FormulePartenaire[];
@@ -435,6 +554,7 @@ export type ClientPartenaireAbonnement = {
 export type ReponseAbonnementPartenaire = {
   client: ClientPartenaireAbonnement | null;
   formules: FormulePartenaireAbonnement[];
+  est_club: boolean;
 };
 
 export type PhotoEtablissement = { id: number; url: string | null; legende: string | null; position: number };
@@ -619,6 +739,49 @@ export const api = {
     appelApi<Ok>('evenement_photo_supprimer.php', { methode: 'POST', jeton, corps: { photo_id: photoId } }),
   signalerPhotoEvenement: (jeton: string, corps: { photo_id: number; motif: string; details?: string }) =>
     appelApi<Ok>('evenement_photo_signaler.php', { methode: 'POST', jeton, corps }),
+
+  // ─── Sport ────────────────────────────────────────────────────────────────
+  sport: (jeton: string, sport?: string) => appelApi<{ success: true } & ReponseSport>('sport.php', { jeton, params: { sport } }),
+  creneau: (jeton: string, id: number) => appelApi<{ creneau: CreneauDetail }>('sport_creneau.php', { jeton, params: { id } }),
+  reserverCreneau: (jeton: string, id: number, choix: { amis: number[]; ouvert: boolean; niveau: NiveauSport }) =>
+    appelApi<Ok & { creneau: CreneauDetail }>('sport_creneau.php', { methode: 'POST', jeton, corps: { action: 'reserver', id, ...choix } }),
+  rejoindreCreneau: (jeton: string, id: number) =>
+    appelApi<Ok & { creneau: CreneauDetail }>('sport_creneau.php', { methode: 'POST', jeton, corps: { action: 'rejoindre', id } }),
+  quitterCreneau: (jeton: string, id: number) =>
+    appelApi<Ok & { creneau: CreneauDetail }>('sport_creneau.php', { methode: 'POST', jeton, corps: { action: 'quitter', id } }),
+  modifierPartie: (jeton: string, id: number, ouvert: boolean, niveau: NiveauSport) =>
+    appelApi<Ok & { creneau: CreneauDetail }>('sport_creneau.php', { methode: 'POST', jeton, corps: { action: 'modifier', id, ouvert, niveau } }),
+  /** Événement d'étudiant : gratuit, visible de ses abonnés (public pour une association). */
+  creerEvenementSport: (jeton: string, corps: { titre: string; type: string; niveau: string; date_heure: string; quota: number; lieu: string; description: string; cree_par_association: boolean }) =>
+    appelApi<Ok & { id: number }>('sport_squad.php', { methode: 'POST', jeton, corps }),
+
+  // ─── Club ─────────────────────────────────────────────────────────────────
+  clubTerrains: (jeton: string) => appelApi<{ success: true } & ReponseTerrainsClub>('club_terrains.php', { jeton }),
+  clubEnregistrerTerrain: (jeton: string, terrain: { id?: number; nom: string; sport: string; joueurs: number; duree_min: number; prix: number; actif: boolean }) =>
+    appelApi<Ok & ReponseTerrainsClub>('club_terrains.php', { methode: 'POST', jeton, corps: { action: 'enregistrer', ...terrain } }),
+  clubSupprimerTerrain: (jeton: string, id: number) =>
+    appelApi<Ok & ReponseTerrainsClub>('club_terrains.php', { methode: 'POST', jeton, corps: { action: 'supprimer', id } }),
+  clubCreneaux: (jeton: string, du: string, jours = 7) =>
+    appelApi<{ success: true; du: string; jours: number; creneaux: Creneau[] }>('club_creneaux.php', { jeton, params: { du, jours } }),
+  clubPublierCreneaux: (jeton: string, terrainId: number, debuts: string[]) =>
+    appelApi<Ok & { crees: number; ignores: number }>('club_creneaux.php', { methode: 'POST', jeton, corps: { action: 'publier', terrain_id: terrainId, debuts } }),
+  clubSupprimerCreneau: (jeton: string, id: number) =>
+    appelApi<Ok>('club_creneaux.php', { methode: 'POST', jeton, corps: { action: 'supprimer', id } }),
+  // ── Espace Culture ──
+  culture: (jeton: string, params?: { categorie?: string; pe?: number }) =>
+    appelApi<ReponseCulture>('culture.php', { jeton, params }),
+  cultureEvenement: (jeton: string, id: number) =>
+    appelApi<{ evenement: EvenementCultureDetail }>('culture_evenement.php', { jeton, params: { id } }),
+  /** S'inscrire, ou se désinscrire avec annuler = true. Un refus (complet, terminé) arrive en ErreurApi 409. */
+  cultureInscription: (jeton: string, evenementId: number, annuler = false) =>
+    appelApi<Ok & { inscrit: boolean; inscrits: number }>('culture_inscription.php', {
+      methode: 'POST', jeton, corps: { evenement_id: evenementId, action: annuler ? 'annuler' : 'inscrire' },
+    }),
+  adminCulture: (jeton: string) => appelApi<{ success: true } & ReponseCultureAdmin>('admin_culture.php', { jeton }),
+  adminEnregistrerCulture: (jeton: string, corps: Record<string, unknown>) =>
+    appelApi<Ok & { id: number }>('admin_culture.php', { methode: 'POST', jeton, corps: { ...corps, action: 'enregistrer' } }),
+  adminSupprimerCulture: (jeton: string, id: number) =>
+    appelApi<Ok>('admin_culture.php', { methode: 'POST', jeton, corps: { action: 'supprimer', id } }),
 };
 
 // ─── Écritures partagées avec le site ────────────────────────────────────────
@@ -641,7 +804,7 @@ export const actions = {
     // etat est null pour accept/decline : l'action porte sur la demande d'un
     // tiers, pas sur « mon » état de suivi envers cible (voir api/follow.php).
     action<Ok & { etat: EtatSuivi | null; count: number }>('follow.php', jeton, { action: act, type, target_id: cible }),
-  inviter: (jeton: string, destinataire: number, type: 'event' | 'squad', cible: number) =>
+  inviter: (jeton: string, destinataire: number, type: CibleInvitation, cible: number) =>
     action<Ok>('inviter.php', jeton, { action: 'send', to_user_id: destinataire, type, target_id: cible }),
   repondreInvitation: (jeton: string, invitationId: number, accepter: boolean) =>
     action<Ok>('inviter.php', jeton, { action: accepter ? 'accept' : 'decline', invite_id: invitationId }),

@@ -61,10 +61,8 @@ export default function Classement() {
   return (
     <Ecran rafraichit={rafraichit} onRafraichir={() => { setRafraichit(true); void charger(); }}>
       <EnTete>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 22 }}>
-          <BoutonRetour vers="/moi" libelle="Retour à mon profil" />
-          <Display taille={fs[8]} interligne={lh.tight} accessibilityRole="header">Classement</Display>
-        </View>
+        <BoutonRetour vers="/moi" libelle="Retour à mon profil" style={{ marginBottom: 18 }} />
+        <Display taille={fs[8]} interligne={lh.tight} accessibilityRole="header" style={{ marginBottom: 22 }}>Classement</Display>
         <Segments
           options={[{ code: 'amis', libelle: 'Amis' }, { code: 'ecole', libelle: 'Mon école' }, { code: 'ville', libelle: 'Clermont' }]}
           valeur={portee}
@@ -139,10 +137,10 @@ function Ligne({ l, onPress }: { l: LigneClassement; onPress: () => void }) {
       accessibilityRole="link"
       style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, borderRadius: rayon.md, borderWidth: 1, backgroundColor: moi ? c.rouge : c.blanc, borderColor: moi ? c.rouge : c.grisClair }}
     >
-      <Text style={{ fontFamily: mono(400), fontSize: fs[3], color: moi ? fixe.surLave : c.gris, minWidth: 16 }}>{l.rang}</Text>
+      <Text style={{ fontFamily: mono(400), fontSize: fs[3], color: moi ? fixe.surAccent : c.gris, minWidth: 16 }}>{l.rang}</Text>
       <Avatar photo={l.photo_url} prenom={l.prenom} taille={34} fond={moi ? '#F5F1E8' : c.bleu} />
-      <Text numberOfLines={1} style={{ flex: 1, fontFamily: sans(700), fontSize: fs[4], color: moi ? fixe.surLave : c.noir }}>{moi ? 'Toi' : court(l.prenom, l.nom)}</Text>
-      <Text style={{ fontFamily: mono(400), fontSize: fs[3], color: moi ? fixe.surLave : c.grisFonce }}>{nombre(l.xp)}</Text>
+      <Text numberOfLines={1} style={{ flex: 1, fontFamily: sans(700), fontSize: fs[4], color: moi ? fixe.surAccent : c.noir }}>{moi ? 'Toi' : court(l.prenom, l.nom)}</Text>
+      <Text style={{ fontFamily: mono(400), fontSize: fs[3], color: moi ? fixe.surAccent : c.grisFonce }}>{nombre(l.xp)}</Text>
     </Pressable>
   );
 }

@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { actions, adresseServeur, api, ErreurApi, type EvenementDetail, type PhotoEvenement, type ReponsePhotosEvenement } from '../../api';
 import { Bouton } from '../../composants/Bouton';
+import { FORMATS_SPORT, LIBELLES_TYPE, SPORTS } from '../../catalogue';
 import { libelleStyle } from '../../composants/CarteEvenement';
 import { Chargement, Ecran, Erreur } from '../../composants/Ecran';
 import { Avatar, Badge, BoutonRetour, Jauge } from '../../composants/Elements';
@@ -28,9 +29,10 @@ import { Icone, type NomIcone } from '../../composants/Icone';
 import { Display, Mono, T } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
+import { libelleApresEchecInscription, libelleInscription } from '../../regles';
 import { dateFr, heure, majuscules, ts } from '../../format';
 import { useJeton } from '../../session';
-import { fixe, fs, gutter, lh, lsEm, mono, rayon, sans } from '../../theme';
+import { couleurs, fixe, fs, gutter, lh, lsEm, mono, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 const MOTIFS_PHOTO = [
@@ -184,8 +186,8 @@ export default function FicheEvenement() {
 
   const flash = e.is_flash && ts(e.flash_expiry) > instant;
   const photo = e.photos[0]?.url ?? null;
-  const encre = photo ? fixe.craie : flash ? fixe.surLave : c.noir;
-  const accent = photo ? '#FF5424' : flash ? fixe.surLave : c.surRougeClair;
+  const encre = photo ? fixe.craie : flash ? fixe.surAccent : c.noir;
+  const accent = photo ? couleurs.sombre.surRougeClair : flash ? fixe.surAccent : c.surRougeClair;
   const pct = e.places.pourcentage ?? 0;
   const style = e.style_musique ? ' · ' + majuscules(libelleStyle(e.style_musique)) : '';
   const inscrit = e.deja_inscrit || inscription === 'vient';
@@ -209,7 +211,7 @@ export default function FicheEvenement() {
       toast('Tu es inscrit ! Rendez-vous ce soir.', 'success');
     } catch (err) {
       const msg = err instanceof ErreurApi ? err.message : 'Erreur réseau';
-      setLibelleErreur(err instanceof ErreurApi && err.statut !== 0 ? msg : '→ je rejoins');
+      setLibelleErreur(libelleApresEchecInscription(err instanceof ErreurApi ? err.statut : null, msg));
       setInscription('libre');
       toast(msg, 'error');
     }
@@ -219,10 +221,10 @@ export default function FicheEvenement() {
   const contenuHero = (
     <View style={{ paddingTop: 100 + top, paddingHorizontal: 20, paddingBottom: 32 }}>
       <Text style={{ fontFamily: mono(500), fontSize: fs[2], letterSpacing: lsEm.label * fs[2], textTransform: 'uppercase', color: accent, marginBottom: 10 }}>
-        {majuscules(e.etablissement.type)} · {dateFr(e.date_heure, 'D j M')}{style}
+        {majuscules(e.sport ? `${SPORTS[e.sport] ?? e.sport}${e.format ? ` · ${FORMATS_SPORT[e.format] ?? e.format}` : ''}` : (LIBELLES_TYPE[e.etablissement.type] ?? e.etablissement.type))} · {dateFr(e.date_heure, 'D j M')}{style}
       </Text>
       {e.sponsorise ? (
-        <Badge libelle="Sponsorisé" fond="rgba(17,16,19,0.1)" encre={fixe.surLave} filet="rgba(17,16,19,0.3)" style={{ alignSelf: 'flex-start', marginBottom: 10 }} />
+        <Badge libelle="Sponsorisé" fond="rgba(17,16,19,0.1)" encre={encre} filet="rgba(17,16,19,0.3)" style={{ alignSelf: 'flex-start', marginBottom: 10 }} />
       ) : null}
       <View accessibilityRole="header">
         <Display taille={fs[9]} interligne={lh.display} couleur={encre}>{e.titre}</Display>
@@ -230,7 +232,7 @@ export default function FicheEvenement() {
       </View>
       {(e.reduction ?? 0) > 0 || e.is_gratuit ? (
         <View style={{ alignSelf: 'flex-start', marginTop: 18, backgroundColor: flash && !photo ? fixe.basalte : c.rouge, borderRadius: rayon.pill, paddingVertical: 8, paddingHorizontal: 20 }}>
-          <Display taille={fs[7]} interligne={1.2} couleur={flash && !photo ? fixe.craie : fixe.surLave}>
+          <Display taille={fs[7]} interligne={1.2} couleur={flash && !photo ? fixe.craie : fixe.surAccent}>
             {(e.reduction ?? 0) > 0 ? `-${e.reduction}%` : 'Gratuit'}
           </Display>
         </View>
@@ -412,10 +414,11 @@ export default function FicheEvenement() {
         <View style={{ marginTop: 40, marginBottom: 60 }}>
           <Bouton
             plein
+            testID="evenement-rejoindre"
             variante={inscription === 'vient' ? 'contour' : 'primaire'}
-            libelle={inscription === 'vient' ? 'Inscrit' : inscrit ? 'Tu es inscrit·e' : libelleErreur ?? "Rejoindre l'événement"}
+            libelle={libelleInscription(inscription, !!e.deja_inscrit, libelleErreur, e.places.complet)}
             icone={inscrit ? 'check' : undefined}
-            desactive={inscrit}
+            desactive={inscrit || e.places.complet}
             chargement={inscription === 'attente'}
             onPress={rejoindre}
             style={{ paddingVertical: 18 }}

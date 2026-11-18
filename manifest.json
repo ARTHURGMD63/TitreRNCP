@@ -1,6 +1,6 @@
 {
-  "name": "Linkee",
-  "short_name": "Linkee",
+  "name": "Outsee",
+  "short_name": "Outsee",
   "start_url": "explore.php",
   "scope": "./",
   "display": "standalone",
@@ -8,7 +8,7 @@
   "theme_color": "#111013",
   "icons": [
     {
-      "src": "Logo.png?v=linkee",
+      "src": "Logo.png?v=outsee",
       "sizes": "512x512",
       "type": "image/png"
     }

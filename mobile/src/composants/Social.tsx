@@ -16,7 +16,7 @@ import { Pressable, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 
-import { actions, api, ErreurApi, type EtatSuivi, type Notification, type Personne } from '../api';
+import { actions, api, ErreurApi, type CibleInvitation, type EtatSuivi, type Notification, type Personne } from '../api';
 import { court } from '../format';
 import { useJeton } from '../session';
 import { fixe, fs, lh, police, rayon, sans } from '../theme';
@@ -61,7 +61,7 @@ export function useSuivi(cible: number, initial: EtatSuivi) {
 export function couleursSuivi(etat: EtatSuivi, c: ReturnType<typeof useTheme>['c']) {
   if (etat === 'accepted') return { fond: c.surface2, encre: c.noir };
   if (etat === 'pending') return { fond: c.surface2, encre: c.grisFonce };
-  return { fond: c.rouge, encre: fixe.surLave };
+  return { fond: c.rouge, encre: fixe.surAccent };
 }
 
 export function BoutonSuivre({ cible, etatInitial, largeur }: { cible: number; etatInitial: EtatSuivi; largeur?: 'pleine' }) {
@@ -213,7 +213,7 @@ export function ElementNotification({ n, onTraitee }: { n: Notification; onTrait
   const actionsOuiNon = (onOui: () => void, onNon: () => void) => (
     <View style={{ flexDirection: 'row', gap: 8 }}>
       <Pressable onPress={onOui} disabled={!!attente} accessibilityRole="button" style={{ flex: 1, minHeight: 40, paddingHorizontal: 12, borderRadius: rayon.pill, backgroundColor: c.rouge, borderWidth: 1, borderColor: c.rouge, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontFamily: sans(700), fontSize: fs[3], color: fixe.surLave }}>{attente === 'oui' ? '…' : 'Accepter'}</Text>
+        <Text style={{ fontFamily: sans(700), fontSize: fs[3], color: fixe.surAccent }}>{attente === 'oui' ? '…' : 'Accepter'}</Text>
       </Pressable>
       <Pressable onPress={onNon} disabled={!!attente} accessibilityRole="button" style={{ flex: 1, minHeight: 40, paddingHorizontal: 12, borderRadius: rayon.pill, borderWidth: 1, borderColor: c.line2, alignItems: 'center', justifyContent: 'center' }}>
         <Text style={{ fontFamily: sans(700), fontSize: fs[3], color: c.noir }}>{attente === 'non' ? '…' : 'Refuser'}</Text>
@@ -242,7 +242,7 @@ export function ElementNotification({ n, onTraitee }: { n: Notification; onTrait
     return (
       <View style={carte}>
         <View style={ligne}>
-          <Avatar photo={inv.de.photo_url} prenom={inv.de.prenom} taille={38} fond={inv.cible_type === 'event' ? c.rouge : c.bleu} />
+          <Avatar photo={inv.de.photo_url} prenom={inv.de.prenom} taille={38} fond={inv.cible_type === 'squad' ? c.bleu : c.rouge} />
           <View style={{ flex: 1, gap: 2 }}>
             <Texte><Gras>{court(inv.de.prenom, inv.de.nom)}</Gras> t&apos;invite à <Italique>{inv.cible_nom ?? 'une sortie'}</Italique></Texte>
             <Date_>{n.depuis}</Date_>
@@ -318,7 +318,7 @@ export function FermerFeuille({ onPress }: { onPress: () => void }) {
 
 // ─── « Inviter un ami » ─────────────────────────────────────────────────────
 
-export function FeuilleInvitation({ cible, onClose }: { cible: { type: 'event' | 'squad'; id: number; nom: string } | null; onClose: () => void }) {
+export function FeuilleInvitation({ cible, onClose }: { cible: { type: CibleInvitation; id: number; nom: string } | null; onClose: () => void }) {
   const { c } = useTheme();
   const jeton = useJeton();
   const toast = useToast();

@@ -24,7 +24,7 @@ import { Marque } from '../../composants/Marque';
 import { Display, Mono, T, TitreEcran } from '../../composants/Texte';
 import { nombre } from '../../format';
 import { useJeton, useSession } from '../../session';
-import { couleurCss, fixe, fs, lh, mono, police, rayon, sans } from '../../theme';
+import { couleurCss, encreSur, fixe, fs, lh, mono, police, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 function CarteProfil({ children, style }: { children: React.ReactNode; style?: object }) {
@@ -56,7 +56,7 @@ function PastilleBadge({ b, verrouille, largeur }: { b: Badge; verrouille?: bool
         </View>
       ) : (
         <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: couleurCss(b.couleur, c, c.lime), alignItems: 'center', justifyContent: 'center' }}>
-          {estIcone(b.icon) ? <Icone nom={b.icon} taille={22} couleur={fixe.surLave} /> : null}
+          {estIcone(b.icon) ? <Icone nom={b.icon} taille={22} couleur={encreSur(couleurCss(b.couleur, c, c.lime))} /> : null}
         </View>
       )}
       <T taille={fs[2]} interligne={lh.snug} couleur={verrouille ? c.gris : c.grisFonce} style={{ textAlign: 'center' }}>{b.nom}</T>
@@ -327,7 +327,7 @@ export default function Moi() {
             <Pressable key={slug} onPress={() => router.push(`/legal/${slug}` as never)} accessibilityRole="link"
               style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 20, borderBottomWidth: i < 2 ? 1 : 0, borderBottomColor: c.grisClair }}>
               <T taille={fs[4]} poids={600}>{l}</T>
-              <T taille={fs[4]} poids={600} couleur={c.gris}>→</T>
+              <Icone nom="chevron-d" taille={18} couleur={c.gris} />
             </Pressable>
           ))}
         </CarteProfil>
@@ -342,7 +342,7 @@ export default function Moi() {
             <Mono>Depuis</Mono>
             <T taille={fs[2]} poids={600}>{moi.depuis}</T>
           </View>
-          <Pressable onPress={deconnexion} accessibilityRole="button" style={{ paddingVertical: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <Pressable onPress={deconnexion} accessibilityRole="button" testID="deconnexion" style={{ paddingVertical: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             <Icone nom="deconnexion" taille={16} couleur={c.surRougeClair} />
             <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: c.surRougeClair }}>Se déconnecter</Text>
           </Pressable>

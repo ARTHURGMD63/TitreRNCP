@@ -17,16 +17,16 @@
  * `db_setup.sql` commence par deux lignes qui lui sont indispensables en
  * local, et qui le rendent inutilisable ailleurs :
  *
- *     CREATE DATABASE IF NOT EXISTS linkee …;
- *     USE linkee;
+ *     CREATE DATABASE IF NOT EXISTS outsee …;
+ *     USE outsee;
  *
  * Sur un hébergeur, le nom de la base est imposé — « railway », ou
- * « c1234_linkee » sur un mutualisé — et le compte n'a en général pas le
+ * « c1234_outsee » sur un mutualisé — et le compte n'a en général pas le
  * droit d'en créer une. Le fichier bascule alors sur une base qui n'existe
  * pas, ou pire : sur une AUTRE base du même serveur qui, elle, existe.
  *
  * Ce n'est pas théorique. Diriger `mysql` vers une base de test ne suffit pas :
- * le script bascule à la ligne 16 et s'exécute sur `linkee`, quoi qu'on
+ * le script bascule à la ligne 16 et s'exécute sur `outsee`, quoi qu'on
  * ait demandé sur la ligne de commande. Le fichier ne contient ni DROP ni
  * DELETE, donc l'accident reste sans dégât — mais il écrit bien dans la
  * mauvaise base, sans que rien ne le signale.

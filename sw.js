@@ -1,4 +1,4 @@
-/* Linkee — service worker
+/* Outsee — service worker
  *
  * Deux objectifs :
  *  1. rendre l'application réellement installable (un manifeste seul ne suffit pas) ;
@@ -11,11 +11,12 @@
  *    une page hors-ligne. Jamais de contenu périmé servi silencieusement.
  */
 
-// v2 : refonte Linkee — le logo change sans changer d'URL, l'ancien cache
+// v2 : refonte Outsee — le logo change sans changer d'URL, l'ancien cache
 // doit donc être purgé. v3 : polices hébergées, ajoutées à la coquille.
-const VERSION = 'v3';
-const CACHE_COQUILLE = 'linkee-coquille-' + VERSION;
-const CACHE_PAGES = 'linkee-pages-' + VERSION;
+// v4 : renommage en Outsee, les caches « linkee-… » sont purgés.
+const VERSION = 'v4';
+const CACHE_COQUILLE = 'outsee-coquille-' + VERSION;
+const CACHE_PAGES = 'outsee-pages-' + VERSION;
 
 // Résolu à l'installation : le service worker est servi depuis la racine du projet.
 const RACINE = new URL('./', self.location).pathname;
@@ -44,10 +45,11 @@ self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
       .then(noms => Promise.all(
-        // Les caches « studentlink-… » datent d'avant le changement de nom :
-        // tous périmés, quelle que soit leur version.
+        // Les caches « studentlink-… » et « linkee-… » datent d'avant un
+        // changement de nom : tous périmés, quelle que soit leur version.
         noms.filter(n => n.startsWith('studentlink-')
-                      || (n.startsWith('linkee-') && !n.endsWith(VERSION)))
+                      || n.startsWith('linkee-')
+                      || (n.startsWith('outsee-') && !n.endsWith(VERSION)))
             .map(n => caches.delete(n))
       ))
       .then(() => self.clients.claim())

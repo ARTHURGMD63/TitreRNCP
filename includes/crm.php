@@ -65,6 +65,7 @@ function crmOffres(): array
         'essentiel' => ['libelle' => 'Essentiel',  'tarif' => 79,  'note' => 'Bars et restaurants'],
         'premium'   => ['libelle' => 'Premium',    'tarif' => 149, 'note' => 'Discothèques, groupes, multi-établissements'],
         'bde'       => ['libelle' => 'BDE',        'tarif' => 0,   'note' => 'Gratuit, définitivement'],
+        'club'      => ['libelle' => 'Club',       'tarif' => 49,  'note' => 'Clubs et établissements sportifs : événements et créneaux de terrain illimités'],
     ];
 }
 
@@ -83,6 +84,7 @@ function crmCategoriesClient(): array
         'boite'     => 'Boîte de nuit',
         'resto'     => 'Restaurant',
         'afterwork' => 'Afterwork',
+        'club'      => 'Club sportif',
         'bde'       => 'BDE / association',
         'autre'     => 'Autre',
     ];
@@ -304,12 +306,22 @@ function offreFondateurOuverte(PDO $pdo, ?int $maintenant = null): bool
  * (SL-03), elle passe donc par un fondateur. La laisser en libre-service
  * reviendrait à offrir l'abonnement à qui coche la bonne case.
  *
+ * Un club sportif (v28) n'a qu'une formule, Club : la grille des soirées
+ * (flash, sponsoring, places fondateur) ne le concerne pas. Les autres
+ * établissements ne voient pas la formule Club. Sans type connu — les pages
+ * du site, qui ne connaissent pas les clubs — c'est la grille des soirées.
+ *
  * @return array<string, array{libelle: string, tarif: int, note: string}>
  */
-function formulesSouscriptibles(PDO $pdo): array
+function formulesSouscriptibles(PDO $pdo, ?string $typeEtablissement = null): array
 {
     $offres = crmOffres();
     unset($offres['aucune'], $offres['bde']);
+
+    if ($typeEtablissement === 'club') {
+        return ['club' => $offres['club']];
+    }
+    unset($offres['club']);
 
     if (!offreFondateurOuverte($pdo)) {
         unset($offres['fondateur']);

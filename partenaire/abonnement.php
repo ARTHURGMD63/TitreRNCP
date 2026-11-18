@@ -150,13 +150,13 @@ $formules  = formulesSouscriptibles($pdo);
 $restantes = placesFondateurRestantes($pdo);
 $actuelle  = abonnementChoisi($client) ? $client['offre'] : null;
 ?>
-<?php pageDebut('Linkee — Abonnement', ['univers' => 'pro']); ?>
+<?php pageDebut('Outsee — Abonnement', ['univers' => 'pro']); ?>
 <a href="#contenu" class="skip-nav">Aller au contenu</a>
 
 <div class="abo-page">
   <div class="abo-entete">
     <div style="margin-bottom:22px;">
-      <?= marqueLinkee('pro') ?>
+      <?= marqueOutsee('pro') ?>
     </div>
     <h1 class="titre-page">
       <span class="display" style="font-size:var(--fs-9);">Choisis ta</span><br>
@@ -264,7 +264,7 @@ $actuelle  = abonnementChoisi($client) ? $client['offre'] : null;
       </label>
 
       <p class="abo-paiement">
-        Aucune donnée bancaire n'est demandée ici. L'équipe Linkee te contacte pour la mise
+        Aucune donnée bancaire n'est demandée ici. L'équipe Outsee te contacte pour la mise
         en place du prélèvement avant la première échéance.
       </p>
 
@@ -274,8 +274,8 @@ $actuelle  = abonnementChoisi($client) ? $client['offre'] : null;
     </form>
 
     <p class="abo-bde">
-      Tu représentes un <strong>BDE ou une association étudiante</strong> ? Linkee est gratuit,
-      définitivement. Écris-nous à <a href="mailto:contact@linkee.fr">contact@linkee.fr</a>
+      Tu représentes un <strong>BDE ou une association étudiante</strong> ? Outsee est gratuit,
+      définitivement. Écris-nous à <a href="mailto:contact@outsee.fr">contact@outsee.fr</a>
       et nous ouvrons l'accès sans formule payante.
     </p>
   </main>

@@ -8,7 +8,7 @@ import React from 'react';
 import { Image, Pressable, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { router } from 'expo-router';
 
-import { fixe, fs, lsEm, mono, police, rayon, sans, toucheMin } from '../theme';
+import { encreSur, fixe, fs, lsEm, mono, police, rayon, sans, toucheMin } from '../theme';
 import { useTheme } from '../useTheme';
 import { Icone, type NomIcone } from './Icone';
 import { T } from './Texte';
@@ -30,7 +30,7 @@ export function Pilule({ libelle, actif, onPress, icone, accent, musique, style,
 }) {
   const { c } = useTheme();
   const plein = accent ?? c.rouge;
-  const encre = actif ? fixe.surLave : couleurTexte ?? c.noir;
+  const encre = actif ? encreSur(plein) : couleurTexte ?? c.noir;
   return (
     <Pressable
       onPress={onPress}
@@ -105,7 +105,7 @@ export function Avatar({ photo, prenom, taille = 48, fond, anneau }: {
   const corps = Math.max(11, Math.round(taille * 0.4));
   return (
     <View accessible={false} style={[cadre, { backgroundColor: fond ?? c.bleu, alignItems: 'center', justifyContent: 'center' }]}>
-      <Text style={{ fontFamily: police.display, fontSize: corps, lineHeight: corps * 1.2, color: fixe.surLave }}>
+      <Text style={{ fontFamily: police.display, fontSize: corps, lineHeight: corps * 1.2, color: encreSur(fond ?? c.bleu) }}>
         {(prenom || '?').charAt(0).toUpperCase()}
       </Text>
     </View>

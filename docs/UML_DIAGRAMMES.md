@@ -1,4 +1,4 @@
-# Diagrammes UML — Linkee
+# Diagrammes UML — Outsee
 
 ---
 

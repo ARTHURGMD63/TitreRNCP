@@ -53,10 +53,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-<?php pageDebut('Linkee — Connexion'); ?>
+<?php pageDebut('Outsee — Connexion'); ?>
 <div class="auth-page">
   <div class="auth-logo">
-    <?= marqueLinkee() ?>
+    <?= marqueOutsee() ?>
   </div>
 
   <h1 class="auth-headline titre-page">

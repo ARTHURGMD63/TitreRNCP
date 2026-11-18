@@ -265,12 +265,12 @@ $flashLocal = $event['flash_expiry'] ? date('Y-m-d\TH:i', strtotime($event['flas
   .stats-bar-value { font-family: var(--font-display); font-size: var(--fs-7); font-weight: var(--fw-black); letter-spacing: var(--ls-display); }
   .stats-bar-label { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--gris); text-transform: uppercase; letter-spacing: var(--ls-label); font-weight: var(--fw-medium); }
 </style>
-<?php pageDebut('Linkee — Modifier l\'événement', ['univers' => 'pro', 'tete' => ob_get_clean()]); ?>
+<?php pageDebut('Outsee — Modifier l\'événement', ['univers' => 'pro', 'tete' => ob_get_clean()]); ?>
 <div class="partner-shell">
 
   <aside class="partner-sidebar">
     <div class="sidebar-brand">
-      <?= marqueLinkee('pro') ?>
+      <?= marqueOutsee('pro') ?>
     </div>
     <nav class="sidebar-nav">
       <a href="<?= baseUrl('/partenaire/dashboard.php') ?>" class="sidebar-link">

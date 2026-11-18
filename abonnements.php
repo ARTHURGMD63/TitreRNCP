@@ -80,7 +80,7 @@ if ($encore) {
 $totalVue = $vue === 'abonnes' ? $nbAbonnes : $nbAbonnements;
 $titre    = $vue === 'abonnes' ? 'Abonnés' : 'Abonnements';
 ?>
-<?php pageDebut('Linkee — ' . $titre, ['pwa' => true]); ?>
+<?php pageDebut('Outsee — ' . $titre, ['pwa' => true]); ?>
 <a href="#main-content" class="skip-nav">Aller au contenu principal</a>
 <div class="app-shell">
 
@@ -182,7 +182,7 @@ $titre    = $vue === 'abonnes' ? 'Abonnés' : 'Abonnements';
 </div>
 
 <nav class="bottom-nav" aria-label="Navigation principale">
-  <span class="nav-marque" aria-hidden="true"><?= marqueLinkee() ?></span>
+  <span class="nav-marque" aria-hidden="true"><?= marqueOutsee() ?></span>
   <a href="<?= baseUrl('/explore.php') ?>" class="nav-item">
     <span class="nav-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
     <span>Explorer</span>

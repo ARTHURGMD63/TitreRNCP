@@ -17,7 +17,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 
-import { api, type Evenement, type Notification } from '../../api';
+import { api, type CibleInvitation, type Evenement, type Notification } from '../../api';
 import { Bouton } from '../../composants/Bouton';
 import { CarteEvenement, enregistrerStyles } from '../../composants/CarteEvenement';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
@@ -62,7 +62,7 @@ export default function Hub() {
   // ── Cloche ──
   const [notifs, setNotifs] = useState<{ a_traiter: number; items: Notification[] } | null>(null);
   const [cloche, setCloche] = useState(false);
-  const [invitation, setInvitation] = useState<{ type: 'event' | 'squad'; id: number; nom: string } | null>(null);
+  const [invitation, setInvitation] = useState<{ type: CibleInvitation; id: number; nom: string } | null>(null);
 
   const chargerNotifs = useCallback(async () => {
     try { setNotifs(await api.notifications(jeton)); } catch { /* la cloche reste telle quelle */ }
@@ -175,7 +175,7 @@ export default function Hub() {
               <Icone nom="cloche" taille={22} couleur={c.noir} />
               {notifs?.a_traiter ? (
                 <View style={{ position: 'absolute', top: -3, right: -3, minWidth: 19, height: 19, paddingHorizontal: 5, borderRadius: rayon.pill, backgroundColor: c.rouge, borderWidth: 2, borderColor: c.bg, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontFamily: mono(600), fontSize: fs[1], lineHeight: fs[1] + 1, color: fixe.surLave }}>{notifs.a_traiter}</Text>
+                  <Text style={{ fontFamily: mono(600), fontSize: fs[1], lineHeight: fs[1] + 1, color: fixe.surAccent }}>{notifs.a_traiter}</Text>
                 </View>
               ) : null}
             </Pressable>
@@ -218,7 +218,11 @@ export default function Hub() {
                 />
                 {/* Juste après « Pour moi », avant les types de lieu : une
                     action (ouvrir la carte), pas un filtre de plus. */}
-                {pourMoi ? <Pilule libelle="Carte" icone="epingle" actif={false} onPress={() => router.push('/carte')} /> : null}
+                {pourMoi ? (
+                  <>
+                    <Pilule libelle="Carte" icone="epingle" actif={false} onPress={() => router.push('/carte')} />
+                  </>
+                ) : null}
               </React.Fragment>
             );
           })}

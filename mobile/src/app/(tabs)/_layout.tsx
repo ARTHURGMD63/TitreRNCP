@@ -37,6 +37,8 @@ export default function Onglets() {
       {/* lazy: true à part des autres — une MapView native est trop lourde
           pour se monter au lancement chez qui n'ouvre jamais la carte. */}
       <Tabs.Screen name="carte" options={{ href: null, lazy: true }} />
+      {/* Onglet Culture : indépendant d'Explorer et de Sport. */}
+      <Tabs.Screen name="culture" options={{ title: 'Culture' }} />
     </Tabs>
   );
 }

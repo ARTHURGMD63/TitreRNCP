@@ -206,7 +206,7 @@ function isLoggedIn(): bool {
  * d'une application sombre. Elle est posée ici parce que cette fonction est
  * déjà le point unique inclus par les 21 pages.
  *
- * Charte Linkee : l'app étudiant est « la nuit » — basalte par défaut, le
+ * Charte Outsee : l'app étudiant est « la nuit » — basalte par défaut, le
  * choix enregistré dans « Moi » restant respecté. L'espace partenaire et le
  * back-office sont « le jour » : $fixe = 'light' les tient en craie quel que
  * soit le thème stocké par le navigateur, et data-theme-fixe le signale à

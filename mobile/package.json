@@ -1,5 +1,5 @@
 {
-  "name": "linkee-mobile",
+  "name": "outsee-mobile",
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
@@ -45,7 +45,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test": "node --no-warnings --test \"tests/*.test.ts\""
+    "test": "node --no-warnings --test \"tests/*.test.ts\"",
+    "e2e": "maestro test .maestro"
   },
   "private": true
 }

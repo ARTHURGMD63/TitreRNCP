@@ -136,11 +136,11 @@ final class DepotTest extends TestCase
         $suivis = array_flip($this->fichiersSuivis());
 
         foreach ([
-            'docs/Affiches_Rue_Linkee.html',
-            'docs/Flyer_Bars_Linkee.html',
-            'docs/Plaquette_Etudiants_Linkee.html',
-            'docs/Plaquette_Partenaires_Linkee.html',
-            'Script_Oral_Linkee.docx',
+            'docs/Affiches_Rue_Outsee.html',
+            'docs/Flyer_Bars_Outsee.html',
+            'docs/Plaquette_Etudiants_Outsee.html',
+            'docs/Plaquette_Partenaires_Outsee.html',
+            'Script_Oral_Outsee.docx',
         ] as $source) {
             $this->assertArrayHasKey(
                 $source,

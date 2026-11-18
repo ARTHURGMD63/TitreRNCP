@@ -122,11 +122,12 @@ function notificationsEtudiant(PDO $pdo, int $uid, int $limite = 25): array
     $stmt = $pdo->prepare("
         SELECT inv.id, inv.type AS cible_type, inv.target_id, inv.created_at AS ts,
                u.id AS from_id, u.prenom AS from_prenom, u.nom AS from_nom, u.photo AS from_photo,
-               CASE WHEN inv.type = 'event' THEN e.titre ELSE s.titre END AS cible_nom
+               CASE inv.type WHEN 'event' THEN e.titre WHEN 'culture' THEN ce.titre ELSE s.titre END AS cible_nom
         FROM invitations inv
         JOIN users u ON u.id = inv.from_user_id
         LEFT JOIN evenements e ON inv.type = 'event' AND e.id = inv.target_id
         LEFT JOIN squads s     ON inv.type = 'squad' AND s.id = inv.target_id
+        LEFT JOIN culture_evenements ce ON inv.type = 'culture' AND ce.id = inv.target_id
         WHERE inv.to_user_id = ? AND inv.statut = 'pending'
         ORDER BY inv.created_at DESC
         LIMIT 25
@@ -168,6 +169,14 @@ function notificationsEtudiant(PDO $pdo, int $uid, int $limite = 25): array
         JOIN users u ON u.id = fu.followed_id
         WHERE fu.follower_id = ? AND fu.statut = 'accepted'
           AND sm.joined_at >= NOW() - INTERVAL " . NOTIF_FENETRE_HEURES . " HOUR
+          -- Un squad réservé aux abonnés de son créateur (v28) ne se révèle
+          -- pas par l'activité d'un ami : seulement si je le vois moi-même.
+          AND (s.visibilite = 'public'
+               OR s.createur_id = fu.follower_id
+               OR EXISTS (SELECT 1 FROM squad_membres smv WHERE smv.squad_id = s.id AND smv.user_id = fu.follower_id)
+               OR EXISTS (SELECT 1 FROM follows_users fv
+                           WHERE fv.follower_id = fu.follower_id AND fv.followed_id = s.createur_id
+                             AND fv.statut = 'accepted'))
 
         ORDER BY ts DESC
         LIMIT 25

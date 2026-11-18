@@ -28,11 +28,11 @@ if (!$etab) {
 /**
  * @return list<array<string, mixed>>
  */
-function partenaireAbonnementFormules(PDO $pdo): array
+function partenaireAbonnementFormules(PDO $pdo, string $typeEtablissement): array
 {
     $restantes = placesFondateurRestantes($pdo);
     $formules  = [];
-    foreach (formulesSouscriptibles($pdo) as $code => $f) {
+    foreach (formulesSouscriptibles($pdo, $typeEtablissement) as $code => $f) {
         $formules[] = [
             'code'                => $code,
             'libelle'             => $f['libelle'],
@@ -69,7 +69,9 @@ if ($methode === 'POST') {
     $corps = apiCorps();
     $offre = (string) ($corps['offre'] ?? '');
 
-    $formulesDispo = formulesSouscriptibles($pdo);
+    // Un club ne souscrit que la formule Club, un bar jamais : la liste est
+    // revérifiée contre le type de l'établissement, pas contre l'écran.
+    $formulesDispo = formulesSouscriptibles($pdo, (string) $etab['type']);
     if (!array_key_exists($offre, $formulesDispo)) {
         apiErreur("Cette formule n'est pas disponible.", 422, 'offre_invalide');
     }
@@ -164,5 +166,6 @@ $client = abonnementEtablissement($pdo, (int) $etab['id']);
 apiReponse([
     'success'  => true,
     'client'   => partenaireAbonnementClient($client),
-    'formules' => partenaireAbonnementFormules($pdo),
+    'formules' => partenaireAbonnementFormules($pdo, (string) $etab['type']),
+    'est_club' => ($etab['type'] ?? '') === 'club',
 ]);

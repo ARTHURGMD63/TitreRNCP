@@ -1,5 +1,5 @@
 -- ============================================================
---  Linkee — migration v27
+--  Outsee — migration v27
 --  Suppression de compte : le type « supprime ».
 --
 --  Supprimer un compte étudiant efface ses données personnelles mais garde la

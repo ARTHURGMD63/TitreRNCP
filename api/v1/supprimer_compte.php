@@ -56,8 +56,8 @@ if ($u['type'] === 'etudiant') {
 if ($u['type'] === 'partenaire') {
     $nom = trim((string) ($u['prenom'] ?? '') . ' ' . (string) ($u['nom'] ?? ''));
     envoyerEmail(
-        'contact@linkee.fr',
-        'Linkee — Demande de suppression de compte partenaire',
+        'contact@outsee.fr',
+        'Outsee — Demande de suppression de compte partenaire',
         "Un établissement demande la suppression de son compte depuis l'application.\n\n"
         . "Compte  : #$uid — $nom\n"
         . 'Adresse : ' . (string) $u['email'] . "\n\n"

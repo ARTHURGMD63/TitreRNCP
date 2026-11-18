@@ -42,7 +42,7 @@ final class CompteTest extends TestCase
 
     public function testLAdresseDUnCompteSupprimeEstUniqueEtInjoignable(): void
     {
-        $this->assertSame('supprime-12@linkee.invalid', compteAdresseSupprimee(12));
+        $this->assertSame('supprime-12@outsee.invalid', compteAdresseSupprimee(12));
         $this->assertNotSame(compteAdresseSupprimee(12), compteAdresseSupprimee(13));
         // « .invalid » est réservé par la RFC 2606 : aucun serveur ne peut y répondre.
         $this->assertStringEndsWith('.invalid', compteAdresseSupprimee(1));

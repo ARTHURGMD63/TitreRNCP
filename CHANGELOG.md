@@ -1,13 +1,50 @@
 # Changelog
 
-Toutes les modifications notables de Linkee sont documentées dans ce fichier.
+Toutes les modifications notables d'Outsee sont documentées dans ce fichier.
 
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/),
 et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- **Ultraviolet.** L'accent passe du orange lave `#FF5424` au violet `#8E6BFF` (texte lisible `#5B3BD6` sur craie, teintes claires `#ECE6FF` / `#231B3F`) : site, mobile, icônes, `Logo.png`, supports `docs/`. Les jetons gardent leurs noms (`--rouge`, `lave`).
+- **Outsee.** Linkee devient Outsee : nom, logotype, textes légaux, e-mails,
+  `marqueOutsee()`, application mobile (`fr.outsee.app`, schéma `outsee`),
+  base par défaut `outsee`, QR codes `outsee:`. Les pass `linkee:` et
+  `studentlink:` déjà émis restent acceptés au scan ; le jeton de session, le
+  thème et le cache du service worker de l'ancien nom sont repris ou purgés.
+- **Logo en Pantone 2728 C.** Dans l'application mobile, la tuile des anneaux
+  et le « ee » du logotype passent au bleu `#0047BB` (`fixe.logo`), icônes,
+  écran de lancement et favicon compris. Le reste de l'interface garde ses
+  accents. Teinte exacte même sur basalte, par choix de marque.
+- **Accent mobile au bleu du logo.** Dans l'application, l'accent (`rouge`,
+  ex-lave) passe du violet `#8E6BFF` au Pantone 2728 C `#0047BB`, dans les deux
+  thèmes. Le texte posé dessus passe du basalte à la craie (`fixe.surAccent`,
+  7,1:1) ; le texte d'accent devient `#00368F` sur craie et `#7FA5FF` sur
+  basalte, où le 2728 C serait illisible. `encreSur()` choisit l'encre des
+  pastilles et avatars dont la couleur varie. Le site, figé, garde le violet.
+
+### Fixed
+- **Soirée en cours côté partenaire.** La liste ne la marque plus « Passé » et
+  garde son bouton « Scanner » ; le tableau de bord l'affiche au lieu de la
+  suivante. Les deux s'appuient sur la fin effective de la soirée, à l'heure
+  de Paris plutôt qu'à celle de la base.
+- **Revue de design mobile.** Une soirée complète affiche « Complet » d'emblée ;
+  le compte à rebours flash passe en heures (« 2H55 » et non « 175MIN 59S ») ;
+  les pastilles de la carte prennent une encre lisible sur le volt ; la fiche
+  écrit « BOÎTE » ; le wallet remplace le caractère « ✓ » par l'icône.
+
 ### Added
+- **Tests mobile des écrans critiques.** Les règles de la connexion, de
+  l'inscription à une soirée et du scan des pass (`mobile/src/regles.ts`) sont
+  sorties des composants et couvertes par 26 tests unitaires
+  (`tests/regles.test.ts`), dans le même lanceur Node que le reste. Six
+  parcours Maestro (`mobile/.maestro/`, `npm run e2e`) rejouent connexion,
+  refus, champs vides, inscription à une soirée, validation manuelle d'une
+  présence par le partenaire et déconnexion ; mode d'emploi dans
+  `mobile/.maestro/LISEZMOI.md`. Des `testID` repèrent les éléments clés. Un
+  même invité n'apparaît plus deux fois dans la liste des check-in du scanner.
 - **Mot de passe oublié sans page web.** Un code à six chiffres part par e-mail
   et se saisit dans l'application (`mot_de_passe_oublie.php`, puis
   `mot_de_passe_reinitialiser.php`). Le code est stocké haché, valable quinze
@@ -71,6 +108,8 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 - **Base par défaut** : `linkee` (au lieu de `studentlink`).
 
 ### Fixed
+- **Logotype « outsee » sur mobile.** L'en-tête et l'animation d'ouverture
+  écrivaient encore « link » + « ee », soit « linkee », après le renommage.
 - **Emoji et caractères hors latin1 refusés** par une base créée avant
   `utf8mb4` : 17 tables étaient restées en latin1, et un titre de squad, un
   avis ou un nom contenant un emoji ou un « Ł » échouait (« Incorrect string

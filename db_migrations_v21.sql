@@ -1,5 +1,5 @@
 -- ============================================================
---  Linkee — migration v21
+--  Outsee — migration v21
 --  Photos d'événement + comptes publics/privés
 --
 --  Pendant une soirée, les participants check-in peuvent poster des photos,

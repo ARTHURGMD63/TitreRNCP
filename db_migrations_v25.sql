@@ -1,5 +1,5 @@
 -- ============================================================
---  Linkee — migration v25
+--  Outsee — migration v25
 --  Carte interactive des soirées : coordonnées de l'établissement.
 --
 --  latitude/longitude vivent sur etablissements (le lieu ne change pas
