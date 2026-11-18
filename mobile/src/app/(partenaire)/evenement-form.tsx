@@ -29,7 +29,7 @@ import { T, TitreEcran, TitreSection } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
 import { dateFr } from '../../format';
 import { useJeton } from '../../session';
-import { fs, rayon } from '../../theme';
+import { espace, fs, rayon } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 const TYPES = [
@@ -208,7 +208,7 @@ export default function FormulaireEvenementPartenaire() {
 
         {!evenementId ? (
           quotaAtteint ? (
-            <View style={{ backgroundColor: c.alerteClair, borderRadius: rayon.carte, padding: 16, gap: 10, marginBottom: 16 }}>
+            <View style={{ backgroundColor: c.alerteClair, borderRadius: rayon.carte, padding: espace.carte, gap: 10, marginBottom: espace.entreCartes }}>
               <T taille={fs[4]} poids={700} couleur={c.alerte}>Quota du mois atteint</T>
               <T taille={fs[4]} couleur={c.alerte}>
                 Tu as publié {donnees.usage.evenements.publies} événements sur les {donnees.usage.evenements.quota} compris dans ta formule ce mois-ci.

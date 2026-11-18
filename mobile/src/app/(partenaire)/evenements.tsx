@@ -29,7 +29,7 @@ import { euros, UsageMois } from '../../composants/UsageMois';
 import { confirmer } from '../../confirmer';
 import { dateFr } from '../../format';
 import { useJeton } from '../../session';
-import { fs, rayon, sans, taille } from '../../theme';
+import { espace, fs, rayon, sans, taille } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 const LIBELLES_TYPE: Record<string, string> = { bar: 'Bar', boite: 'Boîte', resto: 'Resto', afterwork: 'Afterwork', sport: 'Sport' };
@@ -87,8 +87,10 @@ function CarteEvenementPartenaire({ ev, onSupprime }: { ev: EvenementPartenaire;
       ? { fond: c.dangerClair, encre: c.danger, point: undefined }
       : { fond: c.surface2, encre: c.gris, point: undefined };
 
+  // Passé : la carte recule (fond transparent, simple filet) au lieu de
+  // pâlir — une opacité de 75 % faisait tomber le texte gris sous 4,5:1.
   return (
-    <CarteRefonte style={{ opacity: ev.statut === 'passe' ? 0.75 : 1 }}>
+    <CarteRefonte style={ev.statut === 'passe' ? { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: c.line2 } : undefined}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, flexShrink: 1 }}>
           <Pastille libelle={ev.sport ? (SPORTS[ev.sport] ?? ev.sport) : (LIBELLES_TYPE[ev.type] ?? ev.type)} fond={c.surface2} encre={c.noir} />
@@ -194,7 +196,7 @@ export default function EvenementsPartenaire() {
           <Bouton libelle="Créer un événement" icone="plus" plein onPress={() => router.push({ pathname: '/evenement-form' })} style={{ marginBottom: 16 }} />
         </Apparition>
         {evenements.length === 0 ? (
-          <CarteRefonte style={{ alignItems: 'center', paddingVertical: 24 }}>
+          <CarteRefonte style={{ alignItems: 'center', ...espace.vide }}>
             <CarreIcone icone="calendrier" fond={bleu.doux} encre={bleu.texteDoux} />
             <T taille={17} poids={700} style={{ textAlign: 'center' }}>Aucun événement pour l&apos;instant</T>
             <T taille={fs[4]} couleur={c.gris} style={{ textAlign: 'center' }}>Publie ta première soirée : elle apparaîtra dans le fil des étudiants.</T>

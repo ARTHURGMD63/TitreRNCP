@@ -23,7 +23,7 @@ import { Icone, type NomIcone } from '../../composants/Icone';
 import { FeuilleInvitation } from '../../composants/Social';
 import { Display, T, TitreEcran } from '../../composants/Texte';
 import { useJeton } from '../../session';
-import { couleursCategorie, fs, lh, rayon } from '../../theme';
+import { couleursCategorie, espace, fs, lh, rayon } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 /** L'icône du petit carré de chaque catégorie. */
@@ -104,7 +104,7 @@ export default function EspaceCulture() {
         {erreur ? <Erreur message={erreur} onReessayer={charger} /> : evenements === null ? <Chargement /> : (
           <>
             {evenements.length === 0 ? (
-              <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, paddingVertical: 36, paddingHorizontal: 26, alignItems: 'center', marginBottom: 16 }}>
+              <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, ...espace.vide, alignItems: 'center', marginBottom: espace.entreCartes }}>
                 <View style={{ marginBottom: 14 }}><Icone nom="musee" taille={24} couleur={c.gris} /></View>
                 <Display taille={fs[5]} interligne={lh.tight} style={{ marginBottom: 6, textAlign: 'center' }}>
                   {categorie ? 'Rien dans cette catégorie' : 'Rien de prévu pour le moment'}

@@ -23,7 +23,7 @@ import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
 import { dateFr } from '../../format';
 import { useJeton } from '../../session';
-import { fs } from '../../theme';
+import { espace, fs } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 const ETATS = {
@@ -150,7 +150,7 @@ export default function ValidationBde() {
       </EnTete>
       <Contenu style={{ paddingTop: 0 }}>
         {comptes.length === 0 ? (
-          <CarteRefonte style={{ alignItems: 'center', paddingVertical: 24 }}>
+          <CarteRefonte style={{ alignItems: 'center', ...espace.vide }}>
             <T taille={17} poids={700} style={{ textAlign: 'center' }}>Aucun BDE inscrit</T>
             <T taille={fs[4]} couleur={c.gris} style={{ textAlign: 'center' }}>Les nouvelles inscriptions apparaîtront ici.</T>
           </CarteRefonte>

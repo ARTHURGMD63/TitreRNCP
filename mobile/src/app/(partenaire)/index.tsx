@@ -25,7 +25,7 @@ import { InvitationsCollaboration } from '../../composants/InvitationsCollaborat
 import { UsageMois } from '../../composants/UsageMois';
 import { dateFr } from '../../format';
 import { useJeton } from '../../session';
-import { fs, halo, rayon, sans, taille } from '../../theme';
+import { espace, fs, halo, rayon, sans, taille } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 /** Une couleur par école dans « Qui vient ce soir ? ». */
@@ -106,7 +106,7 @@ export default function TableauDeBordPartenaire() {
         <InvitationsCollaboration />
         {!evenement ? (
           <Apparition index={2}>
-            <CarteRefonte style={{ alignItems: 'center', paddingVertical: 24 }}>
+            <CarteRefonte style={{ alignItems: 'center', ...espace.vide }}>
               <CarreIcone icone="calendrier" fond={bleu.doux} encre={bleu.texteDoux} />
               <T taille={17} poids={700} style={{ textAlign: 'center' }}>Aucune soirée à venir</T>
               <T taille={fs[4]} couleur={c.gris} style={{ textAlign: 'center' }}>Crée un événement pour voir ses statistiques ici.</T>

@@ -34,7 +34,7 @@ import { ElementNotification, FeuilleInvitation, FermerFeuille, NotificationsVid
 import { Display, T, TitreEcran } from '../../composants/Texte';
 import { ts } from '../../format';
 import { useJeton } from '../../session';
-import { couleursCategorie, fs, gutter, lh, rayon, sans } from '../../theme';
+import { couleursCategorie, espace, fs, gutter, lh, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 /** L'icône du petit carré coloré de chaque chip (« Tout » n'en a pas). */
@@ -259,7 +259,7 @@ export default function Hub() {
           {erreur ? <Erreur message={erreur} onReessayer={charger} /> : evenements === null ? <Chargement /> : (
             <>
               {evenements.length === 0 ? (
-                <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, paddingVertical: 36, paddingHorizontal: 26, alignItems: 'center', marginBottom: 16 }}>
+                <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, ...espace.vide, alignItems: 'center', marginBottom: espace.entreCartes }}>
                   <View style={{ marginBottom: 14 }}><Icone nom={filtreActif ? 'loupe' : 'vide'} taille={24} couleur={c.gris} /></View>
                   <Display taille={fs[6]} interligne={lh.tight} style={{ marginBottom: 6, textAlign: 'center', letterSpacing: -0.02 * fs[6] }}>
                     {filtreActif ? 'Aucun résultat' : 'Rien de prévu pour le moment'}
