@@ -51,6 +51,15 @@ if ($caTls !== '') {
     ];
 }
 
+// Une seule heure dans toute l'application : celle de Paris, côté PHP comme
+// côté base. Avant, PHP comptait en heure de Paris pendant que la base en
+// ligne (TiDB) comptait en UTC : une soirée visible dans le fil (date()) était
+// refusée à l'inscription (NOW()), un jeton était valide d'un côté et pas de
+// l'autre. Le décalage est calculé à la connexion (+01:00 l'hiver, +02:00
+// l'été) : il ne dépend pas des tables de fuseaux du serveur de base, que
+// TiDB et beaucoup d'hébergeurs ne chargent pas.
+date_default_timezone_set('Europe/Paris');
+
 try {
     $pdo = new PDO(
         "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4",
@@ -64,6 +73,7 @@ try {
             // et non émulées : la valeur ne peut plus être interprétée comme
             // de la syntaxe SQL, quelle qu'elle soit.
             PDO::ATTR_EMULATE_PREPARES   => false,
+            PDO::MYSQL_ATTR_INIT_COMMAND => "SET time_zone = '" . date('P') . "'",
 
             /*
              * Connexions persistantes, sur demande seulement.
