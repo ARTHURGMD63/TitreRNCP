@@ -310,7 +310,20 @@ if ($inscriptionsJusquAu !== null && strtotime($inscriptionsJusquAu) === false) 
 if ($inscriptionsJusquAu !== null && $dateHeure !== '' && strtotime($inscriptionsJusquAu) > strtotime($dateHeure)) {
     $erreurs[] = 'La clôture des inscriptions doit tomber avant le début.';
 }
-if ($quota < 1) $erreurs[] = 'Le quota doit être au moins 1.';
+if ($quota < 1 || $quota > 10000) $erreurs[] = 'Le nombre de places doit être compris entre 1 et 10 000.';
+// Mêmes bornes que le formulaire du site (includes/evenement_pro.php).
+if ($reduction < 0 || $reduction > 100) $erreurs[] = 'La réduction doit être comprise entre 0 et 100 %.';
+if ($prixNormal < 0 || $prixNormal > 10000) $erreurs[] = 'Prix habituel invalide.';
+if (mb_strlen($titre) > 255) $erreurs[] = 'Le titre est trop long.';
+if ($dateHeure !== '' && strtotime($dateHeure) === false) $erreurs[] = 'Date invalide.';
+if ($dateFin && strtotime($dateFin) === false) $erreurs[] = 'Date de fin invalide.';
+if ($evenementExistant) {
+    // On ne retire pas des places déjà prises : les inscrits ont leur pass.
+    $pris = $pdo->prepare("SELECT COUNT(*) FROM inscriptions WHERE evenement_id = ? AND statut <> 'annule'");
+    $pris->execute([(int) $evenementExistant['id']]);
+    $nbPris = (int) $pris->fetchColumn();
+    if ($quota < $nbPris) $erreurs[] = "Il y a déjà $nbPris inscrits : le nombre de places ne peut pas descendre en dessous.";
+}
 if ($isFlash && $flashExpiry === '') $erreurs[] = "Date d'expiration flash requise.";
 // Une soirée se publie pour l'avenir : un événement déjà fini n'est ni
 // visible dans le fil, ni digne d'un quota ou d'une mise en avant payée.

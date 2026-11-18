@@ -2,12 +2,15 @@
 /**
  * Supprime un compte étudiant ou partenaire — réservé à l'administrateur.
  *
- * Toutes les tables qui référencent users.id le font en ON DELETE CASCADE
- * (ou SET NULL pour les journaux d'admin) : supprimer la ligne suffit à
- * effacer aussi ses inscriptions, squads, abonnements, jetons, etc.
+ * Même chemin que la suppression demandée par la personne elle-même
+ * (includes/compte.php) : abonnement Stripe résilié d'abord, données
+ * personnelles effacées, pièces comptables et statistiques conservées sans
+ * identité. Un DELETE FROM users laissait courir le prélèvement d'un
+ * établissement supprimé et effaçait ses registres financiers en cascade.
  */
 require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/compte.php';
 header('Content-Type: application/json');
 
 // Ecriture : POST obligatoire, jeton CSRF et origine verifies.
@@ -48,10 +51,19 @@ if ($cible['type'] === 'admin') {
     exit;
 }
 
+if (!in_array($cible['type'], ['etudiant', 'partenaire'], true)) {
+    echo json_encode(['success' => false, 'message' => 'Compte déjà supprimé']);
+    exit;
+}
+
 try {
-    $pdo->prepare("DELETE FROM users WHERE id = ?")->execute([$cibleId]);
+    if ($cible['type'] === 'etudiant') {
+        compteNettoyerApres($pdo, compteSupprimerEtudiant($pdo, $cibleId));
+    } else {
+        compteNettoyerApresPartenaire($pdo, compteSupprimerPartenaire($pdo, $cibleId));
+    }
     echo json_encode(['success' => true, 'message' => 'Compte supprimé']);
-} catch (PDOException $e) {
+} catch (Throwable $e) {
     logErreur('Suppression de compte impossible', $e, ['cible' => $cibleId, 'admin' => $_SESSION['user_id']]);
     echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
 }
