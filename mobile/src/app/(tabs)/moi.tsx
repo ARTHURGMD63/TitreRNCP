@@ -270,6 +270,11 @@ export default function Moi() {
             <T taille={fs[4]} poids={500}>Aide et contact</T>
             <Icone nom="chevron-d" taille={18} couleur={c.gris} />
           </Pressable>
+          <Pressable onPress={() => router.push('/bloques' as never)} accessibilityRole="button" testID="personnes-bloquees"
+            style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 46, paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: c.grisClair }}>
+            <T taille={fs[4]} poids={500}>Personnes bloquées</T>
+            <Icone nom="chevron-d" taille={18} couleur={c.gris} />
+          </Pressable>
           <Pressable onPress={deconnexion} accessibilityRole="button" testID="deconnexion" style={{ paddingVertical: 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             <Icone nom="deconnexion" taille={16} couleur={c.surRougeClair} />
             <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: c.surRougeClair }}>Se déconnecter</Text>
