@@ -25,9 +25,9 @@ final class GrilleTarifaireTest extends TestCase
 
         $attendu = [
             // code => [prix, événements/mois, flash/mois, mises en avant offertes]
-            'bde'       => [25,    4,  0, 0],
+            'bde'       => [25.99, 4,  0, 0],
             'fondateur' => [39,    6,  1, 0],
-            'club'      => [49,    12, 0, 0],
+            'club'      => [49.99, 12, 0, 0],
             'essentiel' => [49.99, 6,  0, 0],
             'premium'   => [69.99, 15, 1, 1],
         ];
