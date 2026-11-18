@@ -69,8 +69,6 @@ export function ecolesProposees(liste: string[], actuelle: string | null | undef
 
 export const PROMOS = ['L1', 'L2', 'L3', 'M1', 'M2', 'BUT1', 'BUT2', 'BUT3'];
 
-export const VILLES = ['Clermont-Ferrand', 'Lyon', 'Paris', 'Toulouse', 'Bordeaux', 'Autre'];
-
 export const INTERETS = [
   'Sorties', 'Soirées', 'Bars', 'Boîtes', 'Techno', 'Musique', 'Mixologie',
   'Running', 'Muscu', 'Vélo', 'Foot', 'Tennis', 'Yoga',

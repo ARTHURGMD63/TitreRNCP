@@ -10,7 +10,7 @@ import * as catalogue from '../src/catalogue.ts';
 const listes = Object.entries(catalogue).filter(([, v]) => Array.isArray(v)) as [string, unknown[]][];
 
 test('le catalogue expose bien des listes', () => {
-  assert.ok(listes.length >= 4, 'ECOLES, PROMOS, VILLES, INTERETS au moins');
+  assert.ok(listes.length >= 3, 'ECOLES, PROMOS, INTERETS au moins');
 });
 
 for (const [nom, valeurs] of listes) {
@@ -22,9 +22,8 @@ for (const [nom, valeurs] of listes) {
   });
 }
 
-test('le choix « Autre » ferme les listes d’écoles et de villes', () => {
+test('le choix « Autre » ferme la liste des écoles', () => {
   assert.equal(catalogue.ECOLES.at(-1), 'Autre');
-  assert.equal(catalogue.VILLES.at(-1), 'Autre');
 });
 
 test('les écoles déjà portées par des comptes restent dans la liste', () => {

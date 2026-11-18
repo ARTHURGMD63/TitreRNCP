@@ -46,7 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $naissance = $v('date_naissance');
     $etabNom   = $v('etablissement_nom');
     $etabType  = typeEtablissementValide($_POST['etablissement_type'] ?? null) ? (string) $_POST['etablissement_type'] : '';
-    $ville     = $v('ville', 'Clermont-Ferrand') ?: 'Clermont-Ferrand';
+    // Seule ville ouverte pour l'instant : plus de champ, enregistrée d'office.
+    $ville     = 'Clermont-Ferrand';
     $cgu       = !empty($_POST['cgu']);
     $age       = ageEnAnnees($naissance);
     $min       = longueurMinimaleMotDePasse('partenaire');
@@ -132,20 +133,14 @@ siteDebut('Créer mon espace pro — Outsee', ['description' => "Créez l'espace
           <label for="etablissement_nom">Nom de l'établissement</label>
           <input type="text" id="etablissement_nom" name="etablissement_nom" required maxlength="120" value="<?= htmlspecialchars($v('etablissement_nom')) ?>" placeholder="Le Comptoir de Jaude">
         </div>
-        <div class="formulaire__ligne">
-          <div class="champ">
-            <label for="etablissement_type">Type</label>
-            <select id="etablissement_type" name="etablissement_type" required>
-              <option value="">Choisir</option>
-              <?php foreach ($types as $code => $t): ?>
-                <option value="<?= htmlspecialchars($code) ?>"<?= $v('etablissement_type') === $code ? ' selected' : '' ?>><?= htmlspecialchars($t['libelle']) ?></option>
-              <?php endforeach; ?>
-            </select>
-          </div>
-          <div class="champ">
-            <label for="ville">Ville</label>
-            <input type="text" id="ville" name="ville" required maxlength="80" value="<?= htmlspecialchars($v('ville', 'Clermont-Ferrand')) ?>">
-          </div>
+        <div class="champ">
+          <label for="etablissement_type">Type</label>
+          <select id="etablissement_type" name="etablissement_type" required>
+            <option value="">Choisir</option>
+            <?php foreach ($types as $code => $t): ?>
+              <option value="<?= htmlspecialchars($code) ?>"<?= $v('etablissement_type') === $code ? ' selected' : '' ?>><?= htmlspecialchars($t['libelle']) ?></option>
+            <?php endforeach; ?>
+          </select>
         </div>
 
         <div class="formulaire__ligne">
