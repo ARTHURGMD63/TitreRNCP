@@ -12,11 +12,13 @@
  * il se range comme un mot de passe.
  */
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 
-import { api, ErreurApi, type Profil } from './api';
+import { api, ErreurApi, surDeconnexion, type Profil } from './api';
+import { effacerCopies } from './horsLigne';
+import { retirerAppareil, synchroniserAppareil } from './notifications';
 
 const CLE_JETON = 'outsee.jeton';
 /** Clés d'avant les changements de nom : relues une fois, puis effacées. */
@@ -81,6 +83,33 @@ export function FournisseurSession({ children }: { children: React.ReactNode }) 
   const [jeton, setJeton] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
   const [nouveau, setNouveau] = useState(false);
+  // Le jeton courant, lisible depuis les rappels sans les recréer.
+  const jetonCourant = useRef<string | null>(null);
+  useEffect(() => { jetonCourant.current = jeton; }, [jeton]);
+
+  // Un jeton refusé en cours de route (expiré, révoqué depuis un autre
+  // appareil) : déconnexion locale, sans appel au serveur — il ne reconnaît
+  // déjà plus ce jeton. Seulement si c'est toujours le nôtre : la réponse
+  // tardive d'une ancienne session ne déconnecte pas la nouvelle.
+  useEffect(() => surDeconnexion((refuse) => {
+    if (refuse !== jetonCourant.current) return;
+    jetonCourant.current = null;
+    setJeton(null);
+    setProfil(null);
+    setNouveau(false);
+    effacerCopies();
+    void ecrireJeton(null);
+  }), []);
+
+  // Le jeton push peut changer : il est rattaché à nouveau à chaque retour
+  // au premier plan (seulement si la permission est déjà donnée).
+  useEffect(() => {
+    if (!jeton) return;
+    const abonnement = AppState.addEventListener('change', (etat) => {
+      if (etat === 'active') void synchroniserAppareil(jeton);
+    });
+    return () => abonnement.remove();
+  }, [jeton]);
 
   // Au lancement : un jeton range ne prouve pas que la session vit encore. Il
   // a pu expirer, ou etre revoque depuis un autre appareil. On le verifie
@@ -100,14 +129,18 @@ export function FournisseurSession({ children }: { children: React.ReactNode }) 
         if (annule) return;
         setJeton(range);
         setProfil(utilisateur);
+        void synchroniserAppareil(range);
       } catch (e) {
         if (annule) return;
         // 401 : le jeton ne vaut plus rien, on s'en debarrasse. Toute autre
         // panne — serveur injoignable — n'est PAS une raison de l'effacer :
         // l'etudiant serait deconnecte parce que son train est passe dans un
         // tunnel.
+        // Hors connexion, api.moi() relit le profil mis de côté (horsLigne.ts) :
+        // on n'arrive ici que sans copie, au tout premier lancement.
         if (e instanceof ErreurApi && e.estDeconnecte) {
           await ecrireJeton(null);
+          effacerCopies();
         }
         setProfil(null);
       }
@@ -129,9 +162,12 @@ export function FournisseurSession({ children }: { children: React.ReactNode }) 
         setEnCours(true);
         try {
           const rep = await api.connexion(email.trim(), motDePasse, nomAppareil(), codeTotp);
+          // Un autre compte a pu se servir de l'appareil : ses copies partent.
+          effacerCopies();
           await ecrireJeton(rep.token);
           setJeton(rep.token);
           setProfil(rep.utilisateur);
+          void synchroniserAppareil(rep.token);
         } finally {
           setEnCours(false);
         }
@@ -141,10 +177,12 @@ export function FournisseurSession({ children }: { children: React.ReactNode }) 
         setEnCours(true);
         try {
           const rep = await api.inscription({ ...champs, appareil: nomAppareil() });
+          effacerCopies();
           await ecrireJeton(rep.token);
           setNouveau(rep.utilisateur.type === 'etudiant');
           setJeton(rep.token);
           setProfil(rep.utilisateur);
+          void synchroniserAppareil(rep.token);
         } finally {
           setEnCours(false);
         }
@@ -166,7 +204,12 @@ export function FournisseurSession({ children }: { children: React.ReactNode }) 
         setJeton(null);
         setProfil(null);
         await ecrireJeton(null);
+        effacerCopies();
         if (actuel) {
+          // Le téléphone est retiré du compte AVANT la révocation : après,
+          // le serveur ne reconnaîtrait plus le jeton qui le prouve, et le
+          // prochain compte connecté ici recevrait les messages de celui-ci.
+          await retirerAppareil(actuel);
           try {
             await api.deconnexion(actuel);
           } catch {
