@@ -9,9 +9,9 @@
  * les changements d'état instantanés.
  *
  *  - Apparition : l'arrivée en cascade des blocs d'un écran (opacité 0 → 1,
- *    montée de 28 px, 550 ms, décalage de 70 ms par bloc), rejouée à chaque
- *    affichage de l'écran, jamais à un simple re-render ;
- *  - PressableAnime : l'effet d'appui (0,95 pendant ~120 ms) ;
+ *    montée de 14 px, 380 ms, décalage de 45 ms par bloc plafonné au 6ᵉ),
+ *    rejouée à chaque affichage de l'écran, jamais à un simple re-render ;
+ *  - PressableAnime : l'effet d'appui (0,97 en 90 ms, retour en ressort) ;
  *  - Confettis : l'explosion qui suit une inscription réussie ;
  *  - Compteur : un chiffre qui défile de 0 à sa valeur, au premier affichage ;
  *  - Pulsation : un battement unique à l'apparition.
@@ -21,7 +21,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, Pressable, Text, View, type PressableProps, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
-import { couleursConfettis } from '../theme';
+import { couleursConfettis, duree } from '../theme';
 
 const sortieCubique = Easing.out(Easing.cubic);
 
@@ -57,9 +57,14 @@ export function useMouvementReduit(): boolean {
 // ─── Apparition en cascade ──────────────────────────────────────────────────
 
 /**
- * Enveloppe un bloc d'écran. `index` fixe son rang dans la cascade (70 ms de
+ * Enveloppe un bloc d'écran. `index` fixe son rang dans la cascade (45 ms de
  * décalage par rang). L'animation se rejoue quand l'écran reprend le focus
  * — les onglets restent montés, c'est le seul « affichage » qui compte.
+ *
+ * Affinée le 2026-11-18 : la montée de 28 px en 550 ms faisait attendre la
+ * dixième carte d'une liste plus d'une seconde. Le décalage s'arrête au
+ * 6ᵉ rang : ce qui est plus bas arrive avec lui, hors de l'écran de toute
+ * façon.
  */
 export function Apparition({ index = 0, children, style }: { index?: number; children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
   const reduit = useMouvementReduit();
@@ -74,7 +79,8 @@ export function Apparition({ index = 0, children, style }: { index?: number; chi
         return;
       }
       progres.setValue(0);
-      const anim = Animated.timing(progres, { toValue: 1, duration: 550, delay: index * 70, easing: sortieCubique, useNativeDriver: true });
+      const rang = Math.min(Math.max(index, 0), duree.cascadeMax);
+      const anim = Animated.timing(progres, { toValue: 1, duration: duree.apparition, delay: rang * duree.cascade, easing: sortieCubique, useNativeDriver: true });
       anim.start();
       return () => anim.stop();
     }, [index, progres]),
@@ -86,7 +92,7 @@ export function Apparition({ index = 0, children, style }: { index?: number; chi
         style,
         {
           opacity: progres,
-          transform: [{ translateY: progres.interpolate({ inputRange: [0, 1], outputRange: [28, 0] }) }],
+          transform: [{ translateY: progres.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }],
         },
       ]}
     >
@@ -100,24 +106,31 @@ export function Apparition({ index = 0, children, style }: { index?: number; chi
 const PressableAnimable = Animated.createAnimatedComponent(Pressable);
 
 /**
- * Un Pressable qui se réduit à 0,95 quand on l'appuie, puis revient. Le
- * style n'accepte pas de fonction ({ pressed }) : c'est l'échelle qui dit
- * l'appui.
+ * Un Pressable qui se réduit à 0,97 quand on l'appuie, puis revient en
+ * ressort léger. Le style n'accepte pas de fonction ({ pressed }) : c'est
+ * l'échelle qui dit l'appui. Un bouton désactivé ne bouge pas.
+ *
+ * 0,95 (avant le 2026-11-18) écrasait visiblement les boutons pleine
+ * largeur ; 0,97 se lit encore sur une chip de 40 px.
  */
 export function PressableAnime({ style, onPressIn, onPressOut, disabled, children, ...reste }:
   Omit<PressableProps, 'style' | 'children'> & { style?: StyleProp<ViewStyle>; children?: React.ReactNode }) {
   const reduit = useMouvementReduit();
   const [echelle] = useState(() => new Animated.Value(1));
-  const vers = (v: number) => {
+  const enfoncer = () => {
     if (reduit) return;
-    Animated.timing(echelle, { toValue: v, duration: 120, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
+    Animated.timing(echelle, { toValue: 0.97, duration: duree.appui, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
+  };
+  const relacher = () => {
+    if (reduit) { echelle.setValue(1); return; }
+    Animated.spring(echelle, { toValue: 1, speed: 28, bounciness: 6, useNativeDriver: true }).start();
   };
   return (
     <PressableAnimable
       {...reste}
       disabled={disabled}
-      onPressIn={(e) => { if (!disabled) vers(0.95); onPressIn?.(e); }}
-      onPressOut={(e) => { vers(1); onPressOut?.(e); }}
+      onPressIn={(e) => { if (!disabled) enfoncer(); onPressIn?.(e); }}
+      onPressOut={(e) => { relacher(); onPressOut?.(e); }}
       style={[style, { transform: [{ scale: echelle }] }]}
     >
       {children}

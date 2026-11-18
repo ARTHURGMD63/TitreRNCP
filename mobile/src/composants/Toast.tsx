@@ -42,7 +42,8 @@ export function FournisseurToast({ children }: { children: React.ReactNode }) {
     if (minuteur.current) clearTimeout(minuteur.current);
     Animated.timing(apparition, { toValue: 1, duration: 280, easing: courbe, useNativeDriver: true }).start();
     minuteur.current = setTimeout(() => {
-      Animated.timing(apparition, { toValue: 0, duration: 280, easing: courbe, useNativeDriver: true }).start();
+      // La sortie, plus courte et en ease-in, ne retient pas l'œil.
+      Animated.timing(apparition, { toValue: 0, duration: 200, easing: Easing.in(Easing.quad), useNativeDriver: true }).start();
     }, 2800);
   }, [apparition]);
 
