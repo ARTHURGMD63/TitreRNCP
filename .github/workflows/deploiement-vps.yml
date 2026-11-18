@@ -2,11 +2,18 @@
 #  Déploiement sur le VPS OVH (site, espace pro, API de l'application).
 #
 #  Se lance à la main (onglet Actions → « Déploiement VPS » → Run
-#  workflow), sur la branche choisie. Ne fait rien tant que la variable
-#  VPS_HOST n'est pas réglée : le dépôt peut être poussé sans risque avant
-#  que le serveur existe.
+#  workflow), et seulement depuis main : lancé sur une autre branche, le
+#  job de déploiement est sauté. Ne fait rien tant que la variable VPS_HOST
+#  n'est pas réglée : le dépôt peut être poussé sans risque avant que le
+#  serveur existe.
 #
-#  À régler une fois (Settings → Secrets and variables → Actions) :
+#  Le déploiement attend la vérification (syntaxe PHP, tests unitaires) et
+#  passe par l'environnement GitHub « production » : y ajouter une
+#  approbation obligatoire (Settings → Environments → production →
+#  Required reviewers) et y ranger les secrets ci-dessous.
+#
+#  À régler une fois (Settings → Secrets and variables → Actions, ou
+#  l'environnement « production ») :
 #    Variables :  VPS_HOST         adresse IP ou nom du VPS
 #                 VPS_PORT         port SSH (22 par défaut)
 #    Secrets :    VPS_SSH_KEY      clé privée ed25519 du compte « deploy »
@@ -21,28 +28,62 @@ name: Déploiement VPS
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: deploiement-vps
   cancel-in-progress: false
 
 jobs:
-  deployer:
-    if: ${{ vars.VPS_HOST != '' }}
+  verifier:
+    name: Vérification avant déploiement
+    if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
       - name: Récupérer le dépôt
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Installer PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version: '8.3'
+          extensions: pdo, pdo_sqlite, mbstring, json
           coverage: none
+          tools: composer:v2
 
       - name: Vérifier la syntaxe PHP
         run: find . -name '*.php' -not -path './vendor/*' -not -path './mobile/*' -print0 | xargs -0 -n1 php -l > /dev/null
+
+      - name: Cache Composer
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-8.3-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-8.3-
+
+      - name: Installer les dépendances de test
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      # Les mêmes tests unitaires que la CI (ci.yml). Les tests d'intégration
+      # MariaDB restent dans la CI : ils demandent un service de base.
+      - name: Tests unitaires
+        run: vendor/bin/phpunit --testsuite Unit
+
+  deployer:
+    name: Déploiement
+    needs: verifier
+    if: ${{ github.ref == 'refs/heads/main' && vars.VPS_HOST != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Préparer la connexion SSH
         env:
@@ -62,7 +103,9 @@ jobs:
           VERSION="$(date -u +%Y%m%d%H%M%S)-${GITHUB_SHA::8}"
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           # Fichiers au compte deploy, lisibles par PHP (groupe www-data),
-          # jamais modifiables par lui.
+          # jamais modifiables par lui. Aucun n'est exécuté par root : la
+          # sauvegarde et la configuration système sont installées à part
+          # (deploy/appliquer_config.sh, lancé à la main en root).
           rsync -rlptz --delete --exclude-from=deploy/exclusions.txt \
             --chown=deploy:www-data --chmod=D2750,F640 \
             -e "ssh -i ~/.ssh/outsee -p $PORT" \

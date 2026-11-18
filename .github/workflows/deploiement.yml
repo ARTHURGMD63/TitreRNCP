@@ -1,8 +1,14 @@
 # ============================================================
-#  Déploiement automatique sur l'hébergement mutualisé (FTP).
+#  ANCIEN déploiement, vers l'hébergement mutualisé (FTP).
 #
-#  Se déclenche à chaque push sur main, et à la demande depuis
-#  l'onglet Actions. Remplace l'envoi manuel par FileZilla.
+#  Gardé seulement tant que le VPS OVH n'est pas installé ; il sera
+#  supprimé à la bascule vers le VPS (.github/workflows/deploiement-vps.yml),
+#  avec les secrets FTP_* et DB_*.
+#
+#  Il ne part plus tout seul : plus de déclenchement sur push vers main
+#  (la prochaine fusion aurait envoyé des dizaines de commits vers l'ancien
+#  hébergeur). Lancement à la main uniquement : onglet Actions →
+#  « Déploiement (FTP, ancien) » → Run workflow.
 #
 #  Secrets à renseigner dans Settings → Secrets and variables →
 #  Actions → New repository secret :
@@ -15,17 +21,24 @@
 #    DB_USER        if0_00000000
 #    DB_PASSWORD    (mot de passe de la base)
 #
+#  Et dans l'onglet « Variables » (facultatives, mais sans elles le site
+#  se croit hors production) :
+#
+#    FTP_APP_ENV        production
+#    FTP_URL_PUBLIQUE   adresse publique du site, en https, sans barre finale
+#
 #  Le dépôt est public : ces valeurs ne doivent jamais aller dans
 #  le code. Les secrets d'Actions ne sont pas exposés aux pull
 #  requests venant d'un fork, et GitHub les masque dans les logs.
 # ============================================================
 
-name: Déploiement
+name: Déploiement (FTP, ancien)
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
   # Deux déploiements simultanés sur le même compte FTP se marchent
@@ -39,10 +52,10 @@ jobs:
 
     steps:
       - name: Récupérer le dépôt
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Installer PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version: '8.3'
 
@@ -63,6 +76,8 @@ jobs:
             --exclude '.github' \
             --exclude 'dist' \
             --exclude 'docs' \
+            --exclude 'mobile' \
+            --exclude 'deploy' \
             --exclude 'tests' \
             --exclude 'outils' \
             --exclude 'vendor' \
@@ -85,6 +100,7 @@ jobs:
             --exclude '*.mp4' \
             --exclude '*.pptx' \
             --exclude '*.docx' \
+            --exclude '*.xlsx' \
             --exclude '*.pdf'
           echo "Fichiers prêts : $(find dist -type f | wc -l)"
 
@@ -97,12 +113,16 @@ jobs:
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          APP_ENV: ${{ vars.FTP_APP_ENV }}
+          URL_PUBLIQUE: ${{ vars.FTP_URL_PUBLIQUE }}
         run: |
           php .github/scripts/ecrire_config.php dist/includes/config.local.php
           php -l dist/includes/config.local.php
 
       - name: Envoyer par FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        # Épinglée par empreinte : cette action reçoit le mot de passe FTP,
+        # une étiquette déplacée ne doit pas pouvoir changer son code.
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
