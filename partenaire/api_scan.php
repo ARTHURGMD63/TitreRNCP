@@ -91,13 +91,22 @@ if ($inscription['statut'] === 'annule') {
     exit;
 }
 
-// Update status to checkin
-$stmt = $pdo->prepare("UPDATE inscriptions SET statut = 'checkin' WHERE id = ?");
-if ($stmt->execute([$inscription['id']])) {
-    echo json_encode([
-        'success' => true, 
-        'message' => 'Check-in validé pour ' . htmlspecialchars($inscription['prenom'] . ' ' . $inscription['nom'])
-    ]);
-} else {
-    echo json_encode(['success' => false, 'message' => 'Erreur lors de la mise à jour']);
+// Même règle que api/v1/partenaire_scan.php : la condition est dans
+// l'UPDATE, sinon deux scans simultanés du même pass validaient tous deux.
+// checkin_le n'était pas renseigné ici : l'heure d'entrée manquait aux
+// statistiques de présence pour tout scan fait depuis le navigateur.
+$stmt = $pdo->prepare(
+    "UPDATE inscriptions SET statut = 'checkin', checkin_le = NOW()
+      WHERE id = ? AND statut NOT IN ('checkin', 'annule')"
+);
+$stmt->execute([$inscription['id']]);
+if ($stmt->rowCount() === 0) {
+    echo json_encode(['success' => false, 'message' => 'Ce pass a déjà été scanné']);
+    exit;
 }
+// Texte brut : c'est le client qui l'insère (textContent), l'échapper ici
+// afficherait « &amp; » à l'écran.
+echo json_encode([
+    'success' => true,
+    'message' => 'Entrée validée pour ' . $inscription['prenom'] . ' ' . $inscription['nom'],
+]);

@@ -1,102 +1,192 @@
 <?php
-// La session est demarree par auth_check.php, qui pose d'abord les
-// drapeaux du cookie : la demarrer ici la ferait naitre sans eux.
-require_once __DIR__ . '/../includes/auth_check.php';
-require_once __DIR__ . '/../includes/page.php';
+/**
+ * Connexion à l'espace établissement.
+ *
+ * Le site ne sert plus d'interface aux étudiants : un compte étudiant qui
+ * saisit ses identifiants n'ouvre pas de session web, il est renvoyé vers
+ * l'application (application.php). Le contrôle se fait APRÈS la vérification
+ * du mot de passe : annoncer « c'est un compte étudiant » à qui n'a pas le
+ * bon mot de passe dirait quelles adresses existent.
+ *
+ * Les comptes administrateurs passent toujours par ici (back-office).
+ */
+require_once __DIR__ . '/../includes/site.php';
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/totp.php';
+
 if (!empty($_SESSION['user_id'])) {
     header('Location: ' . accueilSelonType($_SESSION['user_type'] ?? null));
     exit;
 }
-$error = '';
 
-// Message pose par expirerSessionInactive() : une deconnexion silencieuse
-// se lit comme un bug, et on recommence a taper son mot de passe sans
-// comprendre pourquoi.
+$erreur = '';
+
+// Message posé par expirerSessionInactive() : une déconnexion silencieuse se
+// lit comme un bug.
 $expiree = !empty($_SESSION['session_expiree']);
 unset($_SESSION['session_expiree']);
 
-$ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-$ip = trim(explode(',', $ip)[0]); // Prend la première IP si proxy
+$ip = ipClient();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// Double authentification des administrateurs (includes/totp.php) : le mot de
+// passe a été accepté, il reste à saisir le code. L'identité attend dans la
+// session, cinq minutes au plus — jamais dans la page.
+$enAttente = $_SESSION['totp_attente'] ?? null;
+if (is_array($enAttente) && time() - (int) ($enAttente['a'] ?? 0) > 300) {
+    unset($_SESSION['totp_attente']);
+    $enAttente = null;
+}
+$etapeCode = false;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && is_array($enAttente) && isset($_POST['code_totp'])) {
     csrfVerify();
+    $etapeCode = true;
+    $cleLimite = 'totp:' . (int) $enAttente['id'];
 
-    $email = trim($_POST['email'] ?? '');
-    $pass  = $_POST['password'] ?? '';
+    if (isRateLimited($pdo, $ip, 5, 900, $cleLimite)) {
+        $erreur = 'Trop de tentatives. Réessaie dans quinze minutes.';
+    } elseif (!totpAccepterConnexion($pdo, (int) $enAttente['id'], (string) $_POST['code_totp'])) {
+        recordLoginAttempt($pdo, $ip, $cleLimite);
+        $erreur = 'Code de vérification incorrect.';
+    } else {
+        clearLoginAttempts($pdo, $ip, $cleLimite);
+        $stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
+        $stmt->execute([(int) $enAttente['id']]);
+        $user = $stmt->fetch();
+        unset($_SESSION['totp_attente']);
 
-    // Rate limiting
-    if (isRateLimited($pdo, $ip)) {
-        $error = 'Trop de tentatives. Réessaye dans 15 minutes.';
-    } elseif ($email && $pass) {
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
+        if ($user && $user['type'] === 'admin') {
+            ouvrirSessionWeb($user);
+        }
+        $etapeCode = false;
+    }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrfVerify();
+    unset($_SESSION['totp_attente']);
+
+    $email = trim((string) ($_POST['email'] ?? ''));
+    $pass  = (string) ($_POST['password'] ?? '');
+
+    if (isRateLimited($pdo, $ip, 5, 900, $email)) {
+        $erreur = 'Trop de tentatives. Réessaie dans quinze minutes.';
+    } elseif ($email === '' || $pass === '') {
+        $erreur = 'Merci de renseigner ton e-mail et ton mot de passe.';
+    } else {
+        $stmt = $pdo->prepare('SELECT * FROM users WHERE email = ?');
         $stmt->execute([$email]);
         $user = $stmt->fetch();
 
-        if ($user && password_verify($pass, $user['password'])) {
-            clearLoginAttempts($pdo, $ip);
-            session_regenerate_id(true);
-            $_SESSION['user_id']     = $user['id'];
-            $_SESSION['user_prenom'] = $user['prenom'];
-            $_SESSION['user_nom']    = $user['nom'];
-            $_SESSION['user_type']   = $user['type'];
-            $_SESSION['user_ecole']  = $user['ecole'];
+        // Hachage témoin quand le compte n'existe pas : même durée de réponse
+        // dans les deux cas (voir api/v1/login.php).
+        $hachage = $user ? (string) $user['password'] : '$2y$12$0000000000000000000000000000000000000000000000000000';
+        $valide  = password_verify($pass, $hachage) && $user;
 
-            header('Location: ' . accueilSelonType($user['type']));
-            exit;
-        } else {
+        if (!$valide || ($user['type'] ?? '') === 'supprime') {
             recordLoginAttempt($pdo, $ip, $email);
-            $error = 'Email ou mot de passe incorrect.';
+            $erreur = 'E-mail ou mot de passe incorrect.';
+        } else {
+            clearLoginAttempts($pdo, $ip, $email);
+
+            if ($user['type'] === 'etudiant') {
+                // Aucun accès web pour un compte étudiant : l'application.
+                header('Location: ' . baseUrl('/application.php?compte=etudiant'));
+                exit;
+            }
+
+            if ($user['type'] === 'admin' && totpActif($pdo, (int) $user['id'])) {
+                $_SESSION['totp_attente'] = ['id' => (int) $user['id'], 'a' => time()];
+                $etapeCode = true;
+            } else {
+                ouvrirSessionWeb($user);
+            }
         }
-    } else {
-        $error = 'Merci de remplir tous les champs.';
     }
 }
+
+siteDebut('Connexion — Outsee pro', ['description' => "Connectez-vous à l'espace établissement Outsee : événements, scan des pass, statistiques et formule."]);
 ?>
-<?php pageDebut('Outsee — Connexion'); ?>
-<div class="auth-page">
-  <div class="auth-logo">
-    <?= marqueOutsee() ?>
+<div class="auth">
+  <div class="auth__formulaire">
+    <div class="auth__haut">
+      <?= marqueSite('pro', baseUrl('/')) ?>
+      <a class="bouton bouton--texte" href="<?= htmlspecialchars(baseUrl('/'), ENT_QUOTES) ?>"><?= iconeSite('fleche-g', 'icon-sm') ?> Retour au site</a>
+    </div>
+
+    <main class="auth__corps" id="contenu">
+      <p class="surtitre" style="color:var(--bleu);">Espace établissement</p>
+      <h1 class="auth__titre" style="margin-top:10px;">Content de vous <em>revoir.</em></h1>
+      <p class="auth__sous">Gérez vos événements, scannez les pass et suivez votre mois.</p>
+
+      <form class="auth__form" method="post" novalidate>
+        <?= csrfField() ?>
+
+        <?php if ($expiree && $erreur === ''): ?>
+          <div class="message message--alerte" role="status"><?= iconeSite('horloge') ?><span>Session expirée après une période d'inactivité. Reconnectez-vous pour continuer.</span></div>
+        <?php endif; ?>
+        <?php if ($erreur !== ''): ?>
+          <div class="message message--erreur" role="alert"><?= iconeSite('alerte') ?><span><?= htmlspecialchars($erreur) ?></span></div>
+        <?php endif; ?>
+
+        <?php if ($etapeCode): ?>
+        <div class="champ">
+          <label for="code_totp">Code de vérification</label>
+          <input type="text" id="code_totp" name="code_totp" inputmode="numeric" autocomplete="one-time-code" required autofocus
+                 placeholder="123456">
+          <span class="champ__aide">Le code à six chiffres de votre application d'authentification, ou un code de secours.</span>
+        </div>
+        <button type="submit" class="bouton bouton--plein bouton--grand bouton--bloc">Valider</button>
+        <?php else: ?>
+        <div class="champ">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" name="email" autocomplete="username" required autofocus
+                 value="<?= htmlspecialchars((string) ($_POST['email'] ?? '')) ?>" placeholder="contact@votre-bar.fr">
+        </div>
+        <div class="champ">
+          <div class="champ__ligne">
+            <label for="password">Mot de passe</label>
+            <a href="<?= htmlspecialchars(baseUrl('/auth/forgot.php'), ENT_QUOTES) ?>">Mot de passe oublié ?</a>
+          </div>
+          <input type="password" id="password" name="password" autocomplete="current-password" required>
+        </div>
+
+        <button type="submit" class="bouton bouton--plein bouton--grand bouton--bloc">Se connecter</button>
+        <?php endif; ?>
+      </form>
+
+      <p class="auth__bas">Pas encore de compte ? <a href="<?= htmlspecialchars(baseUrl('/auth/register.php'), ENT_QUOTES) ?>">Créer mon espace pro</a></p>
+      <p class="auth__bas" style="margin-top:8px;">Vous êtes étudiant ? <a href="<?= htmlspecialchars(baseUrl('/application.php'), ENT_QUOTES) ?>">Tout se passe dans l'application</a></p>
+    </main>
   </div>
 
-  <h1 class="auth-headline titre-page">
-    <div class="display" style="font-size:var(--fs-9);">Content de te</div>
-    <div class="display-italic" style="font-size:var(--fs-9);">revoir.</div>
-  </h1>
-
-  <?php if ($expiree && !$error): ?>
-    <div class="form-error" role="status" aria-live="polite"
-         style="background:var(--alerte-clair);color:var(--alerte);border-color:var(--alerte);">
-      Session expirée après une période d'inactivité. Reconnecte-toi pour continuer.
-    </div>
-  <?php endif; ?>
-  <?php if ($error): ?>
-    <div class="form-error" role="alert" aria-live="assertive"><?= htmlspecialchars($error) ?></div>
-  <?php endif; ?>
-
-  <form method="POST">
-    <?= csrfField() ?>
-    <div class="form-group">
-      <label for="email">Email</label>
-      <input type="email" id="email" name="email" autocomplete="username"
-             value="<?= htmlspecialchars($_POST['email'] ?? '') ?>"
-             placeholder="arthur@uca.fr" required autofocus>
-    </div>
-    <div class="form-group">
-      <label for="password">Mot de passe</label>
-      <input type="password" id="password" name="password" autocomplete="current-password" placeholder="••••••••" required>
-    </div>
-    <div class="auth-oubli">
-      <a href="<?= baseUrl('/auth/forgot.php') ?>">Mot de passe oublié ?</a>
-    </div>
-    <button type="submit" class="btn btn-primary btn-full">
-      Se connecter
-    </button>
-  </form>
-
-  <div class="auth-link">
-    Pas encore de compte ? <a href="<?= baseUrl('/auth/register.php') ?>">Créer un compte</a>
-  </div>
+  <aside class="auth__visuel" aria-hidden="true">
+    <p class="surtitre" style="color:var(--bleu-clair);margin-bottom:16px;">Outsee pro</p>
+    <h2>Les étudiants de la ville, <em>chez vous ce soir.</em></h2>
+    <ul class="auth__points">
+      <li><?= iconeSite('check') ?> Publiez une soirée en deux minutes</li>
+      <li><?= iconeSite('check') ?> Suivez les inscriptions en direct</li>
+      <li><?= iconeSite('check') ?> Scannez les pass à l'entrée</li>
+    </ul>
+  </aside>
 </div>
-</body>
-</html>
+<?php siteFin(); ?>
+<?php
+/**
+ * Ouvre la session web d'un établissement ou d'un administrateur, puis le
+ * renvoie vers son espace. Définie ici, après le flux : l'ordre du fichier
+ * montre que le renvoi des étudiants vers l'application précède toute
+ * ouverture de session (voir AccueilTest).
+ *
+ * @param array<string, mixed> $user
+ */
+function ouvrirSessionWeb(array $user): never
+{
+    session_regenerate_id(true);
+    $_SESSION['user_id']     = (int) $user['id'];
+    $_SESSION['user_prenom'] = $user['prenom'];
+    $_SESSION['user_nom']    = $user['nom'];
+    $_SESSION['user_type']   = $user['type'];
+    $_SESSION['user_ecole']  = $user['ecole'];
+
+    header('Location: ' . accueilSelonType($user['type']));
+    exit;
+}

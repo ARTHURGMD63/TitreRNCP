@@ -38,7 +38,7 @@ const MOTIFS = [
 
 function CarteSection({ children }: { children: React.ReactNode }) {
   const { c } = useTheme();
-  return <View style={{ backgroundColor: c.blanc, borderRadius: rayon.base, borderWidth: 1, borderColor: c.grisClair, padding: 20, marginBottom: 20 }}>{children}</View>;
+  return <View style={{ backgroundColor: c.blanc, borderRadius: rayon.base, borderWidth: 1, borderColor: c.grisClair, padding: 14, marginBottom: 20 }}>{children}</View>;
 }
 
 function GrandBoutonSuivre({ u }: { u: Etudiant }) {
@@ -51,7 +51,7 @@ function GrandBoutonSuivre({ u }: { u: Etudiant }) {
       onPress={basculer}
       accessibilityRole="button"
       style={({ pressed }) => ({
-        minHeight: 52, padding: 16, borderRadius: rayon.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+        minHeight: 46, padding: 16, borderRadius: rayon.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
         backgroundColor: fond, borderWidth: 1.5, borderColor: etat === 'pending' && u.etat_suivi === 'pending' ? c.line2 : 'transparent',
         transform: pressed ? [{ translateY: 1 }, { scale: 0.99 }] : [],
       })}
@@ -143,7 +143,7 @@ export default function ProfilEtudiant() {
       avecBarre={false}
       horsDefilement={
         <Feuille visible={signalement} onClose={() => setSignalement(false)}>
-          <Display taille={fs[7]} interligne={lh.tight} style={{ marginBottom: 6, letterSpacing: lsEm.tight * fs[7] }}>Signaler ce profil</Display>
+          <Display taille={fs[6]} interligne={lh.tight} style={{ marginBottom: 6, letterSpacing: lsEm.tight * fs[7] }}>Signaler ce profil</Display>
           <T taille={fs[3]} poids={500} couleur={c.grisFonce} interligne={lh.snug} style={{ marginBottom: 20 }}>
             Ton signalement est envoyé à l&apos;équipe de modération. Il reste anonyme pour {u.prenom}.
           </T>
@@ -156,7 +156,7 @@ export default function ProfilEtudiant() {
       }
     >
       <Contenu>
-        <View style={{ paddingTop: 36, alignItems: 'flex-start', gap: 22 }}>
+        <View style={{ paddingTop: 36, alignItems: 'flex-start', gap: 16 }}>
           <BoutonRetour />
           <Avatar photo={u.photo_url} prenom={u.prenom} taille={100} fond={c.bleu} />
         </View>
@@ -169,7 +169,7 @@ export default function ProfilEtudiant() {
             {[{ n: u.nb_abonnes, l: 'Abonnés' }, { n: u.nb_abonnements, l: 'Abonnements' }].map((x) => (
               <View key={x.l} style={{ flex: 1, backgroundColor: c.blanc, borderRadius: rayon.md, borderWidth: 1, borderColor: c.grisClair, padding: 14 }}>
                 {/* Pas d'interligne imposé sur le site : « normal », soit ~1,24 pour Unbounded. */}
-                <Display taille={fs[7]} interligne={1.24}>{x.n}</Display>
+                <Display taille={fs[6]} interligne={1.24}>{x.n}</Display>
                 <Mono>{x.l}</Mono>
               </View>
             ))}
@@ -177,7 +177,7 @@ export default function ProfilEtudiant() {
         </View>
 
         <GrandBoutonSuivre u={u} />
-        <View style={{ marginTop: 10, marginBottom: 24, flexDirection: 'row', gap: 16, justifyContent: 'center' }}>
+        <View style={{ marginTop: 10, marginBottom: 24, flexDirection: 'row', gap: 10, justifyContent: 'center' }}>
           <Text onPress={() => setSignalement(true)} accessibilityRole="button" style={lienDiscret}>Signaler</Text>
           <Text onPress={blocage ? undefined : basculerBlocage} accessibilityRole="button" style={lienDiscret}>{bloque ? 'Débloquer' : 'Bloquer'}</Text>
         </View>

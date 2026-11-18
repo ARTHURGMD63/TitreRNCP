@@ -83,7 +83,7 @@ function CartePersonne({ c, initiale, fond, nom, meta, tags }: { c: Couleurs; in
 
 function GrandeIcone({ children }: { children: React.ReactNode }) {
   return (
-    <View style={{ width: 96, height: 96, borderRadius: 48, backgroundColor: 'rgba(17,16,19,0.1)', borderWidth: 1, borderColor: 'rgba(17,16,19,0.25)', alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: 96, height: 96, borderRadius: 48, backgroundColor: 'rgba(17,17,22,0.1)', borderWidth: 1, borderColor: 'rgba(17,17,22,0.25)', alignItems: 'center', justifyContent: 'center' }}>
       {children}
     </View>
   );
@@ -156,7 +156,7 @@ const DIAPOS: Diapo[] = [
         <View style={{ width: 210, backgroundColor: c.rouge, borderRadius: rayon.base, paddingVertical: 14, paddingHorizontal: 16 }}>
           <Mono couleur={fixe.surAccent} style={{ marginBottom: 4 }}>outsee pass</Mono>
           <Display taille={fs[5]} couleur={fixe.surAccent} style={{ marginBottom: 6 }}>{prenom}</Display>
-          <T taille={fs[1]} poids={600} couleur="rgba(17,16,19,0.75)">Happy Hour · Ce soir</T>
+          <T taille={fs[1]} poids={600} couleur="rgba(17,17,22,0.75)">Happy Hour · Ce soir</T>
           <View style={{ marginTop: 10, backgroundColor: '#FFFFFF', height: 48, width: 48, borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
             <Icone nom="qr" taille={32} couleur={fixe.basalte} trait={1.5} />
           </View>
@@ -215,7 +215,7 @@ export default function Accueil() {
       <Pressable
         onPress={terminerAccueil}
         accessibilityRole="button"
-        style={{ position: 'absolute', top: top + 16, right: 20, backgroundColor: 'rgba(17,16,19,0.6)', borderRadius: rayon.pill, paddingVertical: 8, paddingHorizontal: 14 }}
+        style={{ position: 'absolute', top: top + 16, right: 20, backgroundColor: 'rgba(17,17,22,0.6)', borderRadius: rayon.pill, paddingVertical: 8, paddingHorizontal: 14 }}
       >
         <Text style={{ fontFamily: mono(500), fontSize: fs[1], letterSpacing: lsEm.label * fs[1], textTransform: 'uppercase', color: fixe.craie }}>Passer</Text>
       </Pressable>

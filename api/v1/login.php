@@ -14,6 +14,7 @@
 
 require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/security.php';
+require_once __DIR__ . '/../../includes/totp.php';
 
 apiExigerMethode('POST');
 
@@ -29,8 +30,8 @@ if ($email === '' || $mdp === '') {
 // sinon l'API deviendrait le chemin non protege pour essayer des mots de
 // passe en rafale, pendant que le site compte consciencieusement ses cinq
 // tentatives.
-$ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
-if (isRateLimited($pdo, $ip)) {
+$ip = ipClient();
+if (isRateLimited($pdo, $ip, 5, 900, $email)) {
     apiErreur('Trop de tentatives. Reessaie dans quinze minutes.', 429, 'trop_de_tentatives');
 }
 
@@ -53,7 +54,27 @@ if (!$valide) {
     apiErreur('Identifiants incorrects', 401, 'identifiants');
 }
 
-clearLoginAttempts($pdo, $ip);
+// Double authentification des administrateurs (includes/totp.php). Le code est
+// vérifié AVANT d'effacer les tentatives : sinon un mot de passe volé
+// permettrait d'essayer des codes sans limite. Un compte sans secret enregistré
+// se connecte comme avant.
+if (($u['type'] ?? '') === 'admin' && totpActif($pdo, (int) $u['id'])) {
+    $codeTotp = trim((string) ($corps['code_totp'] ?? ''));
+    if ($codeTotp === '') {
+        apiErreur('Code de vérification requis', 401, 'totp_requis');
+    }
+    $cleLimite = 'totp:' . (int) $u['id'];
+    if (isRateLimited($pdo, $ip, 5, 900, $cleLimite)) {
+        apiErreur('Trop de tentatives. Reessaie dans quinze minutes.', 429, 'trop_de_tentatives');
+    }
+    if (!totpAccepterConnexion($pdo, (int) $u['id'], $codeTotp)) {
+        recordLoginAttempt($pdo, $ip, $cleLimite);
+        apiErreur('Code de vérification incorrect', 401, 'totp_invalide');
+    }
+    clearLoginAttempts($pdo, $ip, $cleLimite);
+}
+
+clearLoginAttempts($pdo, $ip, $email);
 
 $jeton = apiCreerJeton($pdo, (int) $u['id'], isset($corps['appareil']) ? (string) $corps['appareil'] : null);
 

@@ -57,7 +57,9 @@ function configurationMail(): array
     // domaine dont on soit sûr qu'il désigne bien cette application. Un
     // « noreply@outsee.app » écrit en dur mentait dès que le site
     // tournait ailleurs, et c'est précisément ce que SPF sanctionne.
-    $hoteWeb = (string) ($_SERVER['HTTP_HOST'] ?? 'localhost');
+    // Le domaine vient d'APP_URL quand elle est réglée : l'en-tête Host est
+    // écrit par le client.
+    $hoteWeb = (string) (parse_url(urlPublique(), PHP_URL_HOST) ?: 'localhost');
     $domaine = preg_replace('/:\d+$/', '', $hoteWeb) ?: 'localhost';
 
     $expediteur = reglage('MAIL_FROM', 'mail_from', 'noreply@' . $domaine);
@@ -79,15 +81,14 @@ function configurationMail(): array
     ];
 }
 
-/** Vrai lorsque l'application tourne sur un poste de développement. */
+/**
+ * Vrai lorsque l'application tourne sur un poste de développement : rien
+ * n'est envoyé, le lien ou le code s'affiche à l'écran. Voir
+ * estEnDeveloppement() (config.php) : l'en-tête Host n'entre plus en compte.
+ */
 function estEnLocal(): bool
 {
-    if (PHP_SAPI === 'cli') {
-        return !estEnProduction();
-    }
-    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-
-    return str_contains($host, 'localhost') || str_contains($host, '127.0.0.1');
+    return estEnDeveloppement();
 }
 
 /**

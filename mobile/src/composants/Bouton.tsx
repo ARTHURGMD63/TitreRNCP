@@ -1,26 +1,29 @@
 /**
- * Les boutons de la charte (.btn et ses variantes).
+ * Les boutons de la charte (docs/CHARTE_GRAPHIQUE_OUTSEE.md, § 6.1). Tous
+ * ont un rayon de 16 (rayon.bouton), pas de forme en pilule.
  *
- *  - primaire  : pilule d’accent, texte craie — une seule par écran ;
+ *  - primaire  : aplat de la couleur de la rubrique, texte blanc — une seule
+ *                action principale par écran ;
  *  - contour   : filet d'encre, fond transparent (secondaire) ;
- *  - basalte   : la pilule basalte posée sur un aplat lave (« Je fonce ») ;
- *  - texte     : un lien d'action en lave (tertiaire) ;
- *  - bleu      : l'action principale de l'univers sport (squads) ;
+ *  - basalte   : aplat basalte posé sur un aplat vif (« Je fonce ») ;
+ *  - texte     : un lien d'action à la couleur de l'accent (tertiaire) ;
+ *  - sport     : l'action principale de l'univers sport (squads, terrains), rouge Sport ;
  *  - alerte    : « Supprimer définitivement », en alerte vive.
  *
  * Désactivé, un bouton plein sort de la couleur (« Inscrit », « Complet ») :
- * la lave à demi effacée donnait un brun sans contraste — même règle que le
- * site.
+ * une couleur vive à demi effacée donne un aplat sale, sans contraste — même
+ * règle que le site.
  */
 
 import React from 'react';
-import { ActivityIndicator, Pressable, Text, View, type StyleProp, type ViewStyle, type TextStyle } from 'react-native';
+import { ActivityIndicator, Text, View, type StyleProp, type ViewStyle, type TextStyle } from 'react-native';
 
 import { fixe, fs, rayon, sans, toucheMin } from '../theme';
 import { useTheme } from '../useTheme';
+import { PressableAnime } from './Animations';
 import { Icone, type NomIcone } from './Icone';
 
-export type Variante = 'primaire' | 'contour' | 'basalte' | 'texte' | 'bleu' | 'alerte';
+export type Variante = 'primaire' | 'contour' | 'basalte' | 'texte' | 'sport' | 'alerte' | 'encre';
 
 type Props = {
   libelle: string;
@@ -36,13 +39,15 @@ type Props = {
   styleTexte?: StyleProp<TextStyle>;
   taillePolice?: number;
   accessibilityLabel?: string;
+  /** Couleur de l'aplat « primaire » : l'accent de la rubrique (bleu par défaut). */
+  accent?: string;
   /** Repère des tests de bout en bout (Maestro) ; sans effet à l'écran. */
   testID?: string;
 };
 
 export function Bouton({
   libelle, onPress, variante = 'primaire', plein, desactive, chargement, icone, iconeADroite,
-  style, styleTexte, taillePolice = fs[5], accessibilityLabel, testID,
+  style, styleTexte, taillePolice = fs[4] + 1, accessibilityLabel, accent, testID,
 }: Props) {
   const { c } = useTheme();
   const inactif = desactive || chargement;
@@ -52,41 +57,42 @@ export function Bouton({
   let filet = 'transparent';
 
   switch (variante) {
-    case 'primaire': fond = c.rouge; encre = fixe.surAccent; break;
-    case 'bleu': fond = c.bleu; encre = fixe.surLave; break;
+    case 'primaire': fond = accent ?? c.rouge; encre = fixe.surAccent; filet = fond; break;
+    // « sport » : l'action principale de l'univers sport, au rouge de la rubrique.
+    case 'sport': fond = '#E02D24'; encre = fixe.surAccent; filet = fond; break;
+    case 'encre': fond = c.noir; encre = c.surEncre; filet = c.noir; break;
     case 'alerte': fond = c.alerteVif; encre = fixe.surLave; break;
-    case 'contour': fond = 'transparent'; encre = c.noir; filet = c.noir; break;
+    case 'contour': fond = 'transparent'; encre = c.noir; filet = c.line2; break;
     case 'basalte': fond = fixe.basalte; encre = fixe.craie; filet = fixe.basalte; break;
     case 'texte': fond = 'transparent'; encre = c.surRougeClair; break;
   }
 
   if (desactive && !chargement) {
-    if (variante === 'primaire' || variante === 'bleu' || variante === 'alerte') {
+    if (variante === 'primaire' || variante === 'sport' || variante === 'alerte' || variante === 'encre') {
       fond = c.surface2; encre = c.grisFonce; filet = c.grisClair;
     } else if (variante === 'basalte') {
-      fond = 'rgba(17,16,19,0.14)'; encre = fixe.surAccent; filet = 'transparent';
+      fond = 'rgba(17,17,22,0.14)'; encre = fixe.surAccent; filet = 'transparent';
     }
   }
 
   const opaciteDesactive = desactive && (variante === 'contour' || variante === 'texte') ? 0.5 : 1;
 
   return (
-    <Pressable
+    <PressableAnime
       onPress={onPress}
       disabled={inactif}
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? libelle}
       accessibilityState={{ disabled: !!inactif, busy: !!chargement }}
-      style={({ pressed }) => [
+      style={[
         {
           flexDirection: iconeADroite ? 'row-reverse' : 'row',
           alignItems: 'center', justifyContent: 'center', gap: 8,
-          paddingVertical: 13, paddingHorizontal: variante === 'texte' ? 4 : 24,
-          minHeight: plein ? 52 : toucheMin,
-          borderRadius: rayon.pill, borderWidth: 1.5, borderColor: filet, backgroundColor: fond,
+          paddingVertical: 10, paddingHorizontal: variante === 'texte' ? 4 : 18,
+          minHeight: plein ? 46 : toucheMin,
+          borderRadius: rayon.md, borderWidth: 1.5, borderColor: filet, backgroundColor: fond,
           opacity: opaciteDesactive,
-          transform: pressed && !inactif ? [{ translateY: 1 }, { scale: 0.99 }] : [],
         },
         plein ? { alignSelf: 'stretch' } : { alignSelf: 'flex-start' },
         style,
@@ -96,13 +102,13 @@ export function Bouton({
         <ActivityIndicator size="small" color={encre} />
       ) : (
         <>
-          {icone ? <Icone nom={icone} taille={17} couleur={encre} /> : null}
+          {icone ? <Icone nom={icone} taille={16} couleur={encre} /> : null}
           <Text numberOfLines={1} style={[{ fontFamily: sans(700), fontSize: taillePolice, color: encre }, styleTexte]}>
             {libelle}
           </Text>
         </>
       )}
-    </Pressable>
+    </PressableAnime>
   );
 }
 

@@ -9,9 +9,11 @@
  *                 (des présences sans nom, pour les statistiques des
  *                 partenaires), demande le mot de passe, puis une dernière
  *                 confirmation.
- *  - partenaire : un compte établissement porte un abonnement et des soirées
- *                 auxquelles d'autres étudiants sont inscrits. La demande est
- *                 transmise à l'équipe ; le compte reste ouvert d'ici là.
+ *  - partenaire : effacement immédiat aussi (Apple 5.1.1(v)). L'écran dit
+ *                 ce qui part — abonnement résilié, établissement et soirées
+ *                 retirés — et ce que l'entreprise garde (factures, sans
+ *                 coordonnées). Une réponse « demande » (ancien serveur) reste
+ *                 comprise.
  */
 
 import React, { useState } from 'react';
@@ -28,6 +30,13 @@ import { confirmer } from '../confirmer';
 import { useJeton, useSession } from '../session';
 import { fs, lh } from '../theme';
 import { useTheme } from '../useTheme';
+
+const EFFACE_PARTENAIRE = [
+  'Ton abonnement, résilié tout de suite : plus aucun prélèvement',
+  'Ton établissement, ses photos, ses terrains et ses créneaux',
+  'Toutes tes soirées, y compris celles à venir : les pass des étudiants inscrits sont annulés',
+  'Ton nom, ton email et ta photo',
+];
 
 const EFFACE = [
   'Ton nom, ton email, ta photo, ta ville et ta date de naissance',
@@ -52,7 +61,6 @@ function Liste({ titre, items }: { titre: string; items: string[] }) {
 }
 
 export default function SupprimerCompte() {
-  const { c } = useTheme();
   const jeton = useJeton();
   const { profil, deconnexion } = useSession();
   const partenaire = profil?.type === 'partenaire';
@@ -68,7 +76,7 @@ export default function SupprimerCompte() {
       return;
     }
     const question = partenaire
-      ? 'Envoyer la demande de suppression de ce compte établissement ?'
+      ? 'Supprimer définitivement ce compte établissement, ses soirées et son abonnement ? Cette action ne peut pas être annulée.'
       : 'Supprimer définitivement ton compte ? Cette action ne peut pas être annulée.';
     if (!(await confirmer(question))) return;
 
@@ -106,9 +114,16 @@ export default function SupprimerCompte() {
         ) : (
           <>
             {partenaire ? (
-              <T taille={fs[4]} couleur={c.grisFonce} interligne={lh.normal} style={{ marginBottom: 20 }}>
-                Un compte établissement porte un abonnement et des soirées auxquelles des étudiants sont inscrits. Pour ne rien casser, la suppression est traitée par l’équipe Outsee : ta demande lui est transmise, avec ton mot de passe comme confirmation.
-              </T>
+              <>
+                <Encart genre="alerte">
+                  Cette action est définitive. Ton compte et ton établissement ne pourront pas être récupérés.
+                </Encart>
+                <Liste titre="Ce qui est supprimé" items={EFFACE_PARTENAIRE} />
+                <Liste
+                  titre="Ce qui reste, sans tes coordonnées"
+                  items={['Tes factures et paiements passés, que la loi impose de conserver. Ils ne désignent plus ton compte.']}
+                />
+              </>
             ) : (
               <>
                 <Encart genre="alerte">
@@ -138,7 +153,7 @@ export default function SupprimerCompte() {
             />
 
             <Bouton
-              libelle={partenaire ? 'Envoyer la demande' : 'Supprimer définitivement'}
+              libelle="Supprimer définitivement"
               variante="alerte"
               plein
               onPress={supprimer}

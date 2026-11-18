@@ -1,0 +1,77 @@
+# ============================================================
+#  Déploiement sur le VPS OVH (site, espace pro, API de l'application).
+#
+#  Se lance à la main (onglet Actions → « Déploiement VPS » → Run
+#  workflow), sur la branche choisie. Ne fait rien tant que la variable
+#  VPS_HOST n'est pas réglée : le dépôt peut être poussé sans risque avant
+#  que le serveur existe.
+#
+#  À régler une fois (Settings → Secrets and variables → Actions) :
+#    Variables :  VPS_HOST         adresse IP ou nom du VPS
+#                 VPS_PORT         port SSH (22 par défaut)
+#    Secrets :    VPS_SSH_KEY      clé privée ed25519 du compte « deploy »
+#                 VPS_KNOWN_HOSTS  sortie de `ssh-keyscan -t ed25519 <VPS_HOST>`
+#
+#  Le serveur se prépare avec deploy/installer_serveur.sh, et la marche à
+#  suivre complète est dans docs/DEPLOIEMENT_VPS_OVH.md.
+# ============================================================
+
+name: Déploiement VPS
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploiement-vps
+  cancel-in-progress: false
+
+jobs:
+  deployer:
+    if: ${{ vars.VPS_HOST != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v7
+
+      - name: Installer PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - name: Vérifier la syntaxe PHP
+        run: find . -name '*.php' -not -path './vendor/*' -not -path './mobile/*' -print0 | xargs -0 -n1 php -l > /dev/null
+
+      - name: Préparer la connexion SSH
+        env:
+          CLE: ${{ secrets.VPS_SSH_KEY }}
+          HOTES: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$CLE" > ~/.ssh/outsee
+          chmod 600 ~/.ssh/outsee
+          printf '%s\n' "$HOTES" > ~/.ssh/known_hosts
+
+      - name: Copier la version
+        env:
+          HOTE: ${{ vars.VPS_HOST }}
+          PORT: ${{ vars.VPS_PORT || '22' }}
+        run: |
+          VERSION="$(date -u +%Y%m%d%H%M%S)-${GITHUB_SHA::8}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          # Fichiers au compte deploy, lisibles par PHP (groupe www-data),
+          # jamais modifiables par lui.
+          rsync -rlptz --delete --exclude-from=deploy/exclusions.txt \
+            --chown=deploy:www-data --chmod=D2750,F640 \
+            -e "ssh -i ~/.ssh/outsee -p $PORT" \
+            ./ "deploy@$HOTE:/var/www/outsee/releases/$VERSION/"
+
+      - name: Mettre en service
+        env:
+          HOTE: ${{ vars.VPS_HOST }}
+          PORT: ${{ vars.VPS_PORT || '22' }}
+        run: |
+          ssh -i ~/.ssh/outsee -p "$PORT" "deploy@$HOTE" \
+            "bash /var/www/outsee/releases/$VERSION/deploy/deployer.sh $VERSION"

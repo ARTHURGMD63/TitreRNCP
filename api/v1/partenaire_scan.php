@@ -74,8 +74,18 @@ if ($inscription['statut'] === 'annule') {
     apiErreur('Inscription annulée', 409, 'inscription_annulee');
 }
 
-$pdo->prepare("UPDATE inscriptions SET statut = 'checkin', checkin_le = NOW() WHERE id = ?")
-    ->execute([(int) $inscription['id']]);
+// La condition est dans l'UPDATE, pas seulement dans le SELECT plus haut :
+// deux téléphones qui scannent le même pass à la même seconde lisaient tous
+// deux « inscrit » et validaient tous deux. Seul celui qui modifie
+// réellement la ligne entre ; l'autre reçoit « déjà scanné ».
+$maj = $pdo->prepare(
+    "UPDATE inscriptions SET statut = 'checkin', checkin_le = NOW()
+      WHERE id = ? AND statut NOT IN ('checkin', 'annule')"
+);
+$maj->execute([(int) $inscription['id']]);
+if ($maj->rowCount() === 0) {
+    apiErreur('Ce pass a déjà été scanné', 409, 'deja_scanne');
+}
 
 apiReponse([
     'success' => true,

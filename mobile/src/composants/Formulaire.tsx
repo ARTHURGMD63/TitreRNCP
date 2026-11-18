@@ -2,9 +2,9 @@
  * Les champs de formulaire de la charte (.form-group, select, .case,
  * .filtre-annuaire, le sélecteur de centres d'intérêt).
  *
- *  - L'étiquette est une micro-étiquette mono en capitales, en gris.
+ *  - L'étiquette : Onest 500 à 14 (fs[4]), en gris, sans capitales.
  *  - Le champ : surface, filet fin, rayon 12, corps 16 (anti-zoom iOS sur le
- *    site, confort de lecture ici). Au focus, filet lave et halo lave clair
+ *    site, confort de lecture ici). Au focus, filet d'accent et halo clair
  *    de 3 px, dessiné autour sans déplacer la mise en page.
  *  - Un <select> ouvre une feuille listant les choix : le sélecteur natif
  *    d'un téléphone n'a ni la police ni les couleurs de la charte.
@@ -14,7 +14,7 @@ import React, { useState } from 'react';
 import { Platform, Pressable, Text, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 
-import { fixe, fs, lh, lsEm, mono, rayon, sans } from '../theme';
+import { fixe, fs, lh, rayon, sans } from '../theme';
 import { useTheme } from '../useTheme';
 import { Feuille } from './Feuille';
 import { Icone } from './Icone';
@@ -25,7 +25,7 @@ import { Display, T } from './Texte';
 export function Etiquette({ children, style }: { children: React.ReactNode; style?: object }) {
   const { c } = useTheme();
   return (
-    <Text style={[{ fontFamily: mono(500), fontSize: fs[1], letterSpacing: lsEm.label * fs[1], textTransform: 'uppercase', color: c.gris, marginBottom: 8 }, style]}>
+    <Text style={[{ fontFamily: sans(500), fontSize: fs[4], color: c.gris, marginBottom: 8 }, style]}>
       {children}
     </Text>
   );
@@ -38,7 +38,7 @@ export function Aide({ children, style }: { children: React.ReactNode; style?: o
 
 // ─── Cadre commun d'un champ, avec l'anneau de focus ────────────────────────
 
-function Cadre({ focus, children, style, arrondi = rayon.sm }: { focus: boolean; children: React.ReactNode; style?: StyleProp<ViewStyle>; arrondi?: number }) {
+function Cadre({ focus, children, style, arrondi = rayon.bouton }: { focus: boolean; children: React.ReactNode; style?: StyleProp<ViewStyle>; arrondi?: number }) {
   const { c } = useTheme();
   return (
     <View style={style}>
@@ -75,9 +75,12 @@ export function Champ({ etiquette, aide, multiligne, style, marge = 16, ...input
           onFocus={(e) => { setFocus(true); input.onFocus?.(e); }}
           onBlur={(e) => { setFocus(false); input.onBlur?.(e); }}
           style={{
-            paddingVertical: 15, paddingHorizontal: 18, borderWidth: 1, borderRadius: rayon.sm,
-            borderColor: focus ? c.rouge : c.grisClair, backgroundColor: c.blanc, color: c.noir,
-            fontFamily: sans(400), fontSize: fs[5], minHeight: multiligne ? 80 : undefined,
+            // Refonte 2026-11 : même champ que les menus déroulants — fond
+            // gris clair, fin contour (visible sur une carte comme sur le
+            // fond de page), rayon 16, 52 px de haut.
+            paddingVertical: 11, paddingHorizontal: 14, borderWidth: 1, borderRadius: rayon.sm,
+            borderColor: focus ? c.rouge : c.line2, backgroundColor: c.surface2, color: c.noir,
+            fontFamily: sans(400), fontSize: fs[4] + 1, minHeight: multiligne ? 88 : 46,
           }}
         />
       </Cadre>
@@ -107,15 +110,18 @@ export function Selecteur({ etiquette, valeur, options, onChange, titre, style, 
   const choisi = options.find((o) => o.valeur === valeur) ?? options[0];
 
   const filtreActif = apparence === 'filtre' && valeur !== '';
+  // Refonte 2026-11 : menus surface sans bordure, rayon 16, 52 px de haut ;
+  // un filtre choisi passe à l'encre. Le champ de formulaire est en
+  // surface secondaire.
   const bouton = apparence === 'filtre'
     ? {
-        conteneur: { paddingVertical: 11, paddingLeft: 16, paddingRight: 34, borderWidth: 1, borderRadius: rayon.pill, borderColor: filtreActif ? c.noir : c.line2, backgroundColor: filtreActif ? c.noir : 'transparent' },
-        texte: { fontFamily: sans(600), fontSize: fs[3], color: filtreActif ? c.bg : c.noir },
-        chevron: filtreActif ? c.bg : c.noir,
+        conteneur: { minHeight: 42, paddingVertical: 9, paddingLeft: 14, paddingRight: 32, borderRadius: rayon.sm, backgroundColor: filtreActif ? c.noir : c.blanc },
+        texte: { fontFamily: sans(500), fontSize: fs[4], color: filtreActif ? c.surEncre : c.noir },
+        chevron: filtreActif ? c.surEncre : c.noir,
       }
     : {
-        conteneur: { paddingVertical: 15, paddingLeft: 18, paddingRight: 40, borderWidth: 1, borderRadius: rayon.sm, borderColor: c.grisClair, backgroundColor: c.blanc },
-        texte: { fontFamily: sans(400), fontSize: fs[5], color: c.noir },
+        conteneur: { minHeight: 46, paddingVertical: 11, paddingLeft: 14, paddingRight: 36, borderRadius: rayon.sm, borderWidth: 1, borderColor: c.line2, backgroundColor: c.surface2 },
+        texte: { fontFamily: sans(500), fontSize: fs[4] + 1, color: c.noir },
         chevron: c.noir,
       };
 
@@ -131,12 +137,12 @@ export function Selecteur({ etiquette, valeur, options, onChange, titre, style, 
       >
         <Text numberOfLines={1} style={bouton.texte}>{choisi?.libelle ?? ''}</Text>
         <View pointerEvents="none" style={{ position: 'absolute', right: 14, top: 0, bottom: 0, justifyContent: 'center' }}>
-          <Icone nom="chevron-b" taille={12} couleur={bouton.chevron} trait={3} />
+          <Icone nom="chevron-b" taille={16} couleur={bouton.chevron} trait={2} />
         </View>
       </Pressable>
 
       <Feuille visible={ouvert} onClose={() => setOuvert(false)}>
-        <Display taille={fs[6]} style={{ marginBottom: 16 }}>{titre ?? etiquette ?? ''}</Display>
+        <Display taille={fs[5] + 2} style={{ marginBottom: 14 }}>{titre ?? etiquette ?? ''}</Display>
         <View style={{ gap: 8 }}>
           {options.map((o) => {
             const actif = o.valeur === valeur;
@@ -146,10 +152,10 @@ export function Selecteur({ etiquette, valeur, options, onChange, titre, style, 
                 onPress={() => { onChange(o.valeur); setOuvert(false); }}
                 accessibilityRole="button"
                 accessibilityState={{ selected: actif }}
-                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, paddingHorizontal: 16, borderRadius: rayon.md, borderWidth: 1, borderColor: actif ? c.noir : c.grisClair, backgroundColor: actif ? c.noir : c.blanc }}
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44, paddingVertical: 10, paddingHorizontal: 14, borderRadius: rayon.sm, backgroundColor: actif ? c.noir : c.surface2 }}
               >
-                <T taille={fs[4]} poids={actif ? 700 : 500} couleur={actif ? c.bg : c.noir}>{o.libelle}</T>
-                {actif ? <Icone nom="check" taille={16} couleur={c.bg} /> : null}
+                <T taille={fs[4] + 1} poids={actif ? 600 : 500} couleur={actif ? c.surEncre : c.noir}>{o.libelle}</T>
+                {actif ? <Icone nom="check" taille={16} couleur={c.surEncre} /> : null}
               </Pressable>
             );
           })}
@@ -179,7 +185,7 @@ export function Case({ coche, onChange, children, style }: {
         {coche ? <Icone nom="check" taille={13} couleur={fixe.surAccent} trait={3.2} /> : null}
       </View>
       <View style={{ flex: 1 }}>
-        {typeof children === 'string' ? <T taille={fs[2]} couleur={c.grisFonce}>{children}</T> : children}
+        {typeof children === 'string' ? <T taille={fs[4]} couleur={c.grisFonce}>{children}</T> : children}
       </View>
     </Pressable>
   );
@@ -222,9 +228,9 @@ export function SelecteurInterets({ catalogue, choisis, onChange, max = 4 }: {
       onPress={() => basculer(i)}
       accessibilityRole="checkbox"
       accessibilityState={{ checked: coche }}
-      style={{ paddingVertical: 9, paddingHorizontal: 15, borderRadius: rayon.pill, borderWidth: 1, borderColor: coche ? c.noir : c.line2, backgroundColor: coche ? c.noir : 'transparent' }}
+      style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 16, borderRadius: rayon.bouton, backgroundColor: coche ? c.noir : c.surface2 }}
     >
-      <Text style={{ fontFamily: sans(600), fontSize: fs[2], color: coche ? c.bg : c.noir }}>{i}</Text>
+      <Text style={{ fontFamily: sans(500), fontSize: fs[3], color: coche ? c.surEncre : c.noir }}>{i}</Text>
     </Pressable>
   );
 
@@ -236,9 +242,9 @@ export function SelecteurInterets({ catalogue, choisis, onChange, max = 4 }: {
           onPress={() => setDeplie(!deplie)}
           accessibilityRole="button"
           accessibilityLabel={deplie ? "Replier les centres d'intérêt" : `Afficher ${surplus} centre${surplus > 1 ? 's' : ''} d'intérêt de plus`}
-          style={{ minWidth: 46, alignItems: 'center', paddingVertical: 9, paddingHorizontal: 15, borderRadius: rayon.pill, borderWidth: 1, borderStyle: 'dashed', borderColor: c.line2 }}
+          style={{ minWidth: 46, minHeight: 44, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 15, borderRadius: rayon.bouton, borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.line2 }}
         >
-          <Text style={{ fontFamily: sans(600), fontSize: fs[2], color: c.grisFonce }}>{deplie ? '−' : '+' + surplus}</Text>
+          <Text style={{ fontFamily: sans(600), fontSize: fs[3], color: c.grisFonce }}>{deplie ? '−' : '+' + surplus}</Text>
         </Pressable>
       ) : null}
       {nonCoches.map((i) => etiquette(i, false))}
@@ -308,14 +314,14 @@ export function ChampDate({ etiquette, valeur, onChange, mode = 'date', min, max
         onPress={ouvrir}
         accessibilityRole="button"
         accessibilityLabel={etiquette}
-        style={{ paddingVertical: 15, paddingHorizontal: 18, borderWidth: 1, borderRadius: rayon.sm, borderColor: c.grisClair, backgroundColor: c.blanc }}
+        style={{ minHeight: 46, justifyContent: 'center', paddingVertical: 11, paddingHorizontal: 14, borderWidth: 1, borderRadius: rayon.sm, borderColor: c.line2, backgroundColor: c.surface2 }}
       >
-        <Text style={{ fontFamily: sans(400), fontSize: fs[5], color: valeur ? c.noir : c.gris }}>{texte}</Text>
+        <Text style={{ fontFamily: sans(400), fontSize: fs[4] + 1, color: valeur ? c.noir : c.gris }}>{texte}</Text>
       </Pressable>
       {aide ? <Aide>{aide}</Aide> : null}
 
       <Feuille visible={ouvert} onClose={() => setOuvert(false)}>
-        {etiquette ? <Display taille={fs[6]} style={{ marginBottom: 8 }}>{etiquette}</Display> : null}
+        {etiquette ? <Display taille={fs[5] + 2} style={{ marginBottom: 8 }}>{etiquette}</Display> : null}
         <DateTimePicker
           value={brouillon}
           mode={mode === 'date' ? 'date' : 'datetime'}
@@ -330,9 +336,9 @@ export function ChampDate({ etiquette, valeur, onChange, mode = 'date', min, max
         <Pressable
           onPress={() => { onChange(brouillon); setOuvert(false); }}
           accessibilityRole="button"
-          style={{ marginTop: 12, minHeight: 52, borderRadius: rayon.pill, backgroundColor: c.rouge, alignItems: 'center', justifyContent: 'center' }}
+          style={{ marginTop: 12, minHeight: 46, borderRadius: rayon.md, backgroundColor: c.rouge, alignItems: 'center', justifyContent: 'center' }}
         >
-          <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: fixe.surAccent }}>Valider</Text>
+          <Text style={{ fontFamily: sans(700), fontSize: fs[4] + 1, color: fixe.surAccent }}>Valider</Text>
         </Pressable>
       </Feuille>
     </View>

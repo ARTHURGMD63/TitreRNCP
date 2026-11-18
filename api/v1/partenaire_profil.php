@@ -14,6 +14,7 @@
 
 require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/geocodage.php';
+require_once __DIR__ . '/../../includes/comptes.php';
 
 $u   = apiPartenaire($pdo);
 $uid = (int) $u['id'];
@@ -40,19 +41,32 @@ if ($methode === 'POST') {
 
     $erreurs = [];
     if ($nom === '') $erreurs[] = "Le nom de l'établissement est obligatoire.";
-    if (!in_array($type, ['bar', 'boite', 'resto', 'afterwork', 'club'], true)) $erreurs[] = 'Type invalide.';
+    if (!typeEtablissementValide($type)) $erreurs[] = 'Type invalide.';
+    // Le type range le compte dans son monde (sortie, sport) et décide des
+    // formules qu'il peut prendre : il se fige dès qu'une formule est choisie
+    // ou qu'un achat est inscrit. Sinon un bar se déclarerait club ou BDE le
+    // temps de prendre une formule moins chère.
+    if ($type !== (string) $etab['type'] && !typeEtablissementModifiable($pdo, (int) $etab['id'])) {
+        $erreurs[] = 'Le type de ton compte est lié à ta formule et ne peut plus changer. Écris-nous si ton activité a changé.';
+    }
     if ($ville === '') $erreurs[] = 'La ville est obligatoire.';
 
     if ($erreurs) {
         apiReponse(['success' => false, 'message' => implode(' ', $erreurs), 'erreurs' => $erreurs], 422);
     }
 
+    // Un compte qui devient BDE attend la validation ; qui cesse de l'être
+    // n'en a plus besoin. Un type inchangé garde son état.
+    $verification = $type !== (string) $etab['type']
+        ? verificationInitiale($type)
+        : (string) $etab['verification'];
+
     if ($positionFournie) {
-        $pdo->prepare('UPDATE etablissements SET nom=?, type=?, ville=?, adresse=?, latitude=?, longitude=? WHERE id=? AND user_id=?')
-            ->execute([$nom, $type, $ville, $adresse ?: null, $latitude, $longitude, (int) $etab['id'], $uid]);
+        $pdo->prepare('UPDATE etablissements SET nom=?, type=?, verification=?, ville=?, adresse=?, latitude=?, longitude=? WHERE id=? AND user_id=?')
+            ->execute([$nom, $type, $verification, $ville, $adresse ?: null, $latitude, $longitude, (int) $etab['id'], $uid]);
     } else {
-        $pdo->prepare('UPDATE etablissements SET nom=?, type=?, ville=?, adresse=? WHERE id=? AND user_id=?')
-            ->execute([$nom, $type, $ville, $adresse ?: null, (int) $etab['id'], $uid]);
+        $pdo->prepare('UPDATE etablissements SET nom=?, type=?, verification=?, ville=?, adresse=? WHERE id=? AND user_id=?')
+            ->execute([$nom, $type, $verification, $ville, $adresse ?: null, (int) $etab['id'], $uid]);
 
         // Filet : si l'adresse ou la ville change et qu'aucune position n'est
         // encore connue, on tente de la déduire — mieux qu'un établissement
@@ -78,6 +92,8 @@ apiReponse([
     'etablissement' => [
         'nom'       => (string) $etab['nom'],
         'type'      => (string) $etab['type'],
+        'type_modifiable' => typeEtablissementModifiable($pdo, (int) $etab['id']),
+        'verification'    => (string) $etab['verification'],
         'ville'     => (string) ($etab['ville'] ?? ''),
         'adresse'   => (string) ($etab['adresse'] ?? ''),
         'latitude'  => $etab['latitude'] !== null ? (float) $etab['latitude'] : null,

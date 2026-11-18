@@ -20,6 +20,8 @@
  */
 
 require_once __DIR__ . '/_socle.php';
+require_once __DIR__ . '/../../includes/culture.php';
+require_once __DIR__ . '/../../includes/evenements_temps.php';
 
 apiExigerMethode('GET');
 
@@ -44,20 +46,52 @@ $economiesAnnee = (float) $stmt->fetchColumn();
 
 // ── Pass actifs ─────────────────────────────────────────────────────────────
 
+// Actif tant que l'événement n'est pas TERMINÉ, et non plus seulement avant
+// son début : un tournoi de club sur deux jours, ou une soirée en cours, garde
+// son pass en poche (même règle que api/inscrire.php).
+$finEff = sqlFinEffectiveEvenement();
+
 $stmt = $pdo->prepare("
     SELECT i.id, i.qr_code, i.statut, i.created_at,
-           e.id AS evenement_id, e.titre, e.date_heure, e.reduction, e.prix_normal, e.lieu,
+           e.id AS evenement_id, e.titre, e.date_heure, e.reduction, e.prix_normal, e.is_gratuit, e.lieu, e.type AS evenement_type,
            et.nom AS etablissement_nom, et.type AS etab_type,
            CASE WHEN e.id IS NULL THEN 1 ELSE 0 END AS evenement_supprime
       FROM inscriptions i
       LEFT JOIN evenements e     ON e.id = i.evenement_id
       LEFT JOIN etablissements et ON et.id = e.etablissement_id
      WHERE i.user_id = ? AND i.statut = 'inscrit'
-       AND (e.date_heure >= NOW() OR e.id IS NULL)
+       AND ($finEff >= NOW() OR e.id IS NULL)
      ORDER BY e.date_heure ASC
 ");
 $stmt->execute([$uid]);
 $actifs = $stmt->fetchAll();
+
+// Les inscriptions Culture : pas de QR (personne ne scanne l'entrée d'une
+// expo municipale), mais l'étudiant doit les retrouver avec ses autres pass.
+$finCulture = cultureSqlFin('c');
+$stmt = $pdo->prepare("
+    SELECT ci.id, c.id AS evenement_id, c.titre, c.date_heure, c.lieu, c.organisateur, c.prix
+      FROM culture_inscriptions ci
+      JOIN culture_evenements c ON c.id = ci.evenement_id
+     WHERE ci.user_id = ? AND $finCulture >= NOW()
+     ORDER BY c.date_heure ASC
+");
+$stmt->execute([$uid]);
+$cultures = $stmt->fetchAll();
+
+// Les parties de sport où je joue : le terrain est réglé au club, il n'y a
+// pas de code à présenter, mais c'est un rendez-vous comme un autre.
+$stmt = $pdo->prepare("
+    SELECT c.id, c.debut, t.nom AS terrain_nom, t.sport, et.nom AS etab_nom, et.adresse AS etab_adresse, et.ville AS etab_ville
+      FROM creneau_joueurs cj
+      JOIN creneaux c        ON c.id = cj.creneau_id
+      JOIN terrains t        ON t.id = c.terrain_id
+      JOIN etablissements et ON et.id = t.etablissement_id
+     WHERE cj.user_id = ? AND c.statut = 'reserve' AND c.fin > NOW()
+     ORDER BY c.debut ASC
+");
+$stmt->execute([$uid]);
+$parties = $stmt->fetchAll();
 
 // ── Historique ──────────────────────────────────────────────────────────────
 
@@ -67,12 +101,12 @@ $limite  = $parPage * $page;
 
 $stmt = $pdo->prepare("
     SELECT i.id, i.statut, i.created_at,
-           e.id AS evenement_id, e.titre, e.date_heure, e.reduction, e.prix_normal,
+           e.id AS evenement_id, e.titre, e.date_heure, e.reduction, e.prix_normal, e.is_gratuit, e.type AS evenement_type,
            et.nom AS etablissement_nom
       FROM inscriptions i
       JOIN evenements e      ON e.id = i.evenement_id
       JOIN etablissements et ON et.id = e.etablissement_id
-     WHERE i.user_id = :uid AND (i.statut != 'inscrit' OR e.date_heure < NOW())
+     WHERE i.user_id = :uid AND (i.statut != 'inscrit' OR $finEff < NOW())
      ORDER BY e.date_heure DESC LIMIT :limite
 ");
 // Une ligne de plus que la tranche, pour savoir s'il en reste sans compter
@@ -99,6 +133,10 @@ function apiPass(array $p, bool $avecCode): array
     $prix      = $p['prix_normal'] !== null ? (float) $p['prix_normal'] : null;
 
     return [
+        // Ce que ce pass représente : une soirée ou un événement de club
+        // (inscriptions, avec QR), un événement Culture ou une partie de
+        // sport (sans QR). `id` n'est unique qu'à l'intérieur d'un genre.
+        'genre'         => ($p['evenement_type'] ?? null) === 'sport' ? 'sport' : 'soiree',
         'id'            => (int) $p['id'],
         'evenement_id'  => $p['evenement_id'] !== null ? (int) $p['evenement_id'] : null,
         'titre'         => (string) ($p['titre'] ?? 'Événement supprimé'),
@@ -108,6 +146,7 @@ function apiPass(array $p, bool $avecCode): array
         'statut'        => (string) $p['statut'],
         'reduction'     => $reduction,
         'prix_normal'   => $prix,
+        'is_gratuit'    => (bool) ($p['is_gratuit'] ?? false),
         // L'economie que ce pass represente, calculee ici : l'application ne
         // doit pas avoir a connaitre la regle commerciale pour afficher un
         // montant, sinon elle finira par en afficher une autre que le web.
@@ -126,6 +165,21 @@ function apiPass(array $p, bool $avecCode): array
             ? 'outsee:' . (string) $p['qr_code']
             : null,
     ];
+}
+
+/**
+ * Les pass de tous les genres, du plus proche au plus lointain ; un pass dont
+ * l'événement a disparu (sans date) passe en dernier.
+ *
+ * @param list<array<string,mixed>> $pass
+ * @return list<array<string,mixed>>
+ */
+function passTriesParDate(array $pass): array
+{
+    usort($pass, static fn (array $a, array $b): int => [$a['date_heure'] === null, (string) $a['date_heure']]
+        <=> [$b['date_heure'] === null, (string) $b['date_heure']]);
+
+    return $pass;
 }
 
 // Les squads à venir dont l'étudiant est membre : le second carrousel de
@@ -156,10 +210,43 @@ apiReponse([
         'mois'  => round($economiesMois, 2),
         'annee' => round($economiesAnnee, 2),
     ],
-    'pass_actifs' => array_map(
-        static fn (array $p): array => apiPass($p, true),
-        $actifs
-    ),
+    'pass_actifs' => passTriesParDate(array_merge(
+        array_map(static fn (array $p): array => apiPass($p, true), $actifs),
+        array_map(static fn (array $c): array => [
+            'genre'         => 'culture',
+            'id'            => (int) $c['id'],
+            'evenement_id'  => (int) $c['evenement_id'],
+            'titre'         => (string) $c['titre'],
+            'etablissement' => (string) $c['organisateur'],
+            'lieu'          => (string) $c['lieu'],
+            'date_heure'    => (string) $c['date_heure'],
+            'statut'        => 'inscrit',
+            'reduction'     => null,
+            'prix_normal'   => (float) $c['prix'] > 0 ? (float) $c['prix'] : null,
+            'economie'      => null,
+            'evenement_supprime' => false,
+            'etab_type'     => null,
+            'code_qr'       => null,
+        ], $cultures),
+        array_map(static fn (array $c): array => [
+            'genre'         => 'partie',
+            'id'            => (int) $c['id'],
+            // Pour une partie, la cible est le créneau.
+            'evenement_id'  => (int) $c['id'],
+            'titre'         => (string) $c['terrain_nom'],
+            'etablissement' => (string) $c['etab_nom'],
+            'lieu'          => trim((string) ($c['etab_adresse'] ?? '') . ', ' . (string) ($c['etab_ville'] ?? ''), ', '),
+            'date_heure'    => (string) $c['debut'],
+            'statut'        => 'inscrit',
+            'reduction'     => null,
+            'prix_normal'   => null,
+            'economie'      => null,
+            'evenement_supprime' => false,
+            'etab_type'     => null,
+            'code_qr'       => null,
+            'sport'         => (string) $c['sport'],
+        ], $parties)
+    )),
     'historique' => array_map(
         static fn (array $p): array => apiPass($p, false),
         $historique

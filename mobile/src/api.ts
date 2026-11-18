@@ -153,6 +153,9 @@ export type Profil = {
   compte_prive: boolean;
 };
 
+/** Un établissement qui co-organise un événement (v39), une fois l'invitation acceptée. */
+export type Collaborateur = { id: number; nom: string; type: string };
+
 export type Evenement = {
   id: number;
   titre: string;
@@ -163,6 +166,15 @@ export type Evenement = {
   sport?: string | null;
   format?: string | null;
   date_heure: string;
+  date_fin?: string | null;
+  /** Fil seulement : la fin retenue par le serveur (date_fin, sinon la fenêtre par défaut). */
+  fin_effective?: string;
+  /** Fin des inscriptions : la clôture de l'établissement, sinon le début. */
+  inscriptions_jusqu_au?: string;
+  /** Vrai quand l'établissement a fermé les inscriptions avant le début. */
+  cloture_anticipee?: boolean;
+  /** Fiche seulement : peut-on encore s'inscrire ? */
+  inscriptions_ouvertes?: boolean;
   lieu: string;
   etablissement: { id: number; nom: string; type: string; ville: string; note: number | null; nb_avis: number; suivi: boolean; latitude: number | null; longitude: number | null };
   places: { quota: number; inscrits: number; restantes: number | null; complet: boolean };
@@ -175,6 +187,8 @@ export type Evenement = {
   deja_inscrit: boolean;
   en_cours: boolean;
   amis: { prenoms: string[]; nb: number };
+  /** Les établissements qui co-organisent (absent d'un serveur d'avant la v39). */
+  collaborateurs?: Collaborateur[];
 };
 
 export type EvenementDetail = Omit<Evenement, 'amis' | 'etablissement' | 'places'> & {
@@ -224,12 +238,35 @@ export type ReponseCulture = {
 
 export type EvenementCultureAdmin = Omit<EvenementCulture, 'amis' | 'deja_inscrit'> & { termine: boolean };
 
+export type CompteBdeAdmin = {
+  id: number;
+  nom: string;
+  ville: string;
+  verification: 'en_attente' | 'validee' | 'refusee' | 'non_requise';
+  note: string | null;
+  verifie_le: string | null;
+  verifie_par: string | null;
+  inscrit_le: string;
+  contact: { prenom: string; nom: string; email: string };
+  formule: string | null;
+  evenements: number;
+};
+
 export type ReponseCultureAdmin = { a_venir: EvenementCultureAdmin[]; termines: EvenementCultureAdmin[]; categories: CategorieCulture[] };
 
 /** Ce que l'invitation sait viser : une soirée, une squad, un événement culturel. */
 export type CibleInvitation = 'event' | 'squad' | 'culture';
 
+/**
+ * Ce que représente un pass : une soirée ou un événement de club (avec QR),
+ * un événement Culture ou une partie de sport (sans QR). `id` n'est unique
+ * qu'à l'intérieur d'un genre ; pour une partie, `evenement_id` est le créneau.
+ */
+export type GenrePass = 'soiree' | 'sport' | 'culture' | 'partie';
+
 export type Pass = {
+  /** Absent d'un serveur antérieur au 2026-11-16 : c'était alors une soirée. */
+  genre?: GenrePass;
   id: number;
   evenement_id: number | null;
   titre: string;
@@ -239,10 +276,14 @@ export type Pass = {
   statut: string;
   reduction: number | null;
   prix_normal: number | null;
+  /** Absent des pass Culture et des parties. */
+  is_gratuit?: boolean;
   economie: number | null;
   evenement_supprime: boolean;
   etab_type: string | null;
   code_qr: string | null;
+  /** Partie de sport : la discipline. */
+  sport?: string;
 };
 
 export type SquadAgenda = { id: number; titre: string; type: string; niveau: string; date_heure: string; lieu: string; createur_prenom: string };
@@ -341,6 +382,9 @@ export type TerrainClub = {
 
 export type ReponseTerrainsClub = { terrains: TerrainClub[]; sports_club: string[]; sports: { code: string; libelle: string }[] };
 
+/** Une catégorie de notification push (voir includes/push.php). */
+export type CategoriePush = { code: string; libelle: string; detail: string; modifiable: boolean; actif: boolean };
+
 export type Notification = {
   type: 'demande' | 'invitation' | 'ami' | 'lieu';
   ts: string;
@@ -351,7 +395,7 @@ export type Notification = {
   acteur?: Personne;
   invitation?: { id: number; cible_type: CibleInvitation; cible_nom: string | null; de: Personne };
   activite?: { cible_type: 'event' | 'squad'; cible_id: number; cible_nom: string; lieu: string; acteur: Personne };
-  evenement?: { id: number; titre: string; lieu: string; date: string };
+  evenement?: { id: number; titre: string; lieu: string; date: string; promo?: boolean };
 };
 
 export type ProfilAnnuaire = Personne & { etat_suivi: EtatSuivi; interets_communs: string[]; squads_communs: number; score: number };
@@ -466,18 +510,38 @@ export type PersonneCheckin = {
 export type ReponseDashboardPartenaire = {
   etablissement: { id: number; nom: string; ville: string };
   evenement: { id: number; titre: string; date_heure: string } | null;
+  usage: UsageMoisPartenaire;
+  offre: { code: string; libelle: string; essai_jusquau: string | null };
   stats: {
     inscrits: number;
     checkin: number;
     total: number;
-    age_moyen: number;
-    tendance: string;
-    conseil: string;
+    places: number;
+    /** Part des inscrits déjà scannés ; null tant qu'il n'y a pas d'inscrit. */
+    taux_presence: number | null;
     ecoles: { nom: string; pourcentage: number }[];
     graphe: { labels: string[]; valeurs: number[] };
     recentes: { prenom: string; nom: string; ecole: string | null; promo: string | null; photo_url: string | null; heure: string }[];
     checkins: PersonneCheckin[];
   };
+};
+
+/** Ce que l'établissement a consommé et payé en plus ce mois-ci. */
+export type UsageMoisPartenaire = {
+  mois: string;
+  evenements: {
+    publies: number;
+    quota: number;
+    restants: number;
+    supplementaires: number;
+    /** Total HT des événements supplémentaires du mois. */
+    a_payer: number;
+    prix_supplement: number;
+  };
+  flash: { utilises: number; quota: number | null; restants: number | null };
+  mises_en_avant: { offertes_droit: number; offertes_restantes: number; achetees: number; cout: number };
+  /** Supplément d'événements + posts sponsorisés payants, HT. */
+  achats_total: number;
 };
 
 export type EvenementPartenaire = {
@@ -495,10 +559,31 @@ export type EvenementPartenaire = {
   is_flash: boolean;
   is_sponsorise: boolean;
   sponsorise_actif: boolean;
+  sponsor_debut: string | null;
+  sponsor_jusqu_au: string | null;
+  sponsor_restant_s: number | null;
+  supplement_tarif: number;
+  sponsor_tarif: number;
   statut: 'passe' | 'complet' | 'actif';
+  /** L'établissement invité à co-organiser, et sa réponse. */
+  collaboration?: CollaborationEnvoyee | null;
 };
 
-export type FormulePartenaire = { code: string; nom: string; tarif: number; resume: string };
+export type StatutCollaboration = 'en_attente' | 'acceptee' | 'refusee';
+/** L'invitation à co-organiser qu'un hôte a envoyée pour son événement. */
+export type CollaborationEnvoyee = Collaborateur & { statut: StatutCollaboration };
+/** Un établissement qu'on peut inviter à co-organiser. */
+export type EtablissementInvitable = Collaborateur & { ville: string };
+/** Une invitation reçue : en attente, ou une collaboration acceptée à venir. */
+export type InvitationCollaboration = {
+  id: number;
+  statut: 'en_attente' | 'acceptee';
+  invite_le: string;
+  evenement: { id: number; titre: string; date_heure: string; date_fin: string | null; lieu: string };
+  hote: Collaborateur;
+};
+
+export type FormulePartenaire = { code: string; nom: string; tarif: number; resume: string; heures: number; notifications: number; offrable?: boolean };
 
 export type EvenementFormulairePartenaire = {
   id: number;
@@ -510,6 +595,8 @@ export type EvenementFormulairePartenaire = {
   format: string | null;
   date_heure: string;
   date_fin: string | null;
+  /** Clôture anticipée des inscriptions (v38) ; null : jusqu'au début. */
+  inscriptions_jusqu_au?: string | null;
   quota: number;
   reduction: number;
   prix_normal: number;
@@ -519,12 +606,29 @@ export type EvenementFormulairePartenaire = {
   lieu: string;
   is_sponsorise: boolean;
   sponsor_formule: string | null;
+  sponsor_notifications: string[];
+  sponsor_notifications_envoyees: string[];
+  /** La mise en avant court encore : payée jusqu'à sa fin, elle ne se change ni ne se retire. */
+  sponsor_actif: boolean;
+  sponsor_termine: boolean;
+  sponsor_jusqu_au: string | null;
+  sponsor_debut: string | null;
+  sponsor_restant_s: number | null;
+  supplement_tarif: number;
+  /** L'établissement invité à co-organiser (v39), et sa réponse. */
+  collaboration?: CollaborationEnvoyee | null;
 };
 
 export type ReponseFormulaireEvenementPartenaire = {
   evenement: EvenementFormulairePartenaire | null;
   /** Un club ne publie que des événements sportifs (type 'sport'). */
   est_club: boolean;
+  type_compte: string;
+  /** Seul un BDE choisit le type de ses événements ; les autres le tiennent de leur compte. */
+  type_libre: boolean;
+  type_evenement: string | null;
+  /** Durée retenue pour un événement sans heure de fin. */
+  duree_defaut_heures: number;
   sports: { code: string; libelle: string }[];
   formats: { code: string; libelle: string }[];
   lieu_defaut: string;
@@ -532,6 +636,9 @@ export type ReponseFormulaireEvenementPartenaire = {
   formules_sponsoring: FormulePartenaire[];
   flash_illimite: boolean;
   flash_par_mois: number | null;
+  usage: UsageMoisPartenaire;
+  /** Le prochain événement publié dépasse-t-il le quota du mois ? */
+  supplement: { prochain: boolean; tarif: number };
 };
 
 export type FormulePartenaireAbonnement = {
@@ -541,6 +648,11 @@ export type FormulePartenaireAbonnement = {
   note: string;
   places_restantes: number | null;
   mois_essai: number;
+  evenements_par_mois: number;
+  /** Quota des trois premiers mois (fondateur) ; null sinon. */
+  evenements_debut: number | null;
+  flash_par_mois: number | null;
+  mises_en_avant: number;
 };
 
 export type ClientPartenaireAbonnement = {
@@ -555,6 +667,44 @@ export type ReponseAbonnementPartenaire = {
   client: ClientPartenaireAbonnement | null;
   formules: FormulePartenaireAbonnement[];
   est_club: boolean;
+  type_compte: string;
+  /** Un BDE n'a ni formule ni publication tant que l'administrateur ne l'a pas validé. */
+  validation: { requise: boolean; statut: 'non_requise' | 'en_attente' | 'validee' | 'refusee'; valide: boolean; note: string | null };
+  /** Une formule se change au plus une fois par mois. */
+  changement: { possible: boolean; prochain: string | null };
+  inclus: {
+    evenements_par_mois: number;
+    en_periode_offerte: boolean;
+    evenements_apres_offre: number;
+    flash_par_mois: number | null;
+    mises_en_avant_offertes: number;
+  };
+  usage: UsageMoisPartenaire;
+  achats: { evenement_supplementaire: number; sponsoring: (FormulePartenaire & { heures: number; notifications: number })[] };
+};
+
+export type SuiviEvenementPartenaire = {
+  evenement: {
+    id: number; titre: string; type: string; date_heure: string; date_fin: string | null; lieu: string;
+    statut: 'passe' | 'complet' | 'actif'; is_flash: boolean; flash_expiry: string | null; is_gratuit: boolean; publie_le: string;
+  };
+  chiffres: {
+    quota: number; inscrits: number; presents: number; annules: number;
+    places_restantes: number | null; taux_remplissage: number | null; taux_presence: number | null;
+  };
+  courbe: { jour: string; inscriptions: number; cumul: number }[];
+  ecoles: { nom: string; nombre: number; pourcentage: number }[];
+  /** Les inscrits (hors annulés) avec leurs coordonnées, pour l'établissement propriétaire. */
+  participants: { id: number; prenom: string; nom: string; email: string; ecole: string | null; promo: string | null; present: boolean; inscrit_le: string }[];
+  mise_en_avant: {
+    active: boolean; en_cours: boolean; formule: string | null; libelle: string | null; offerte: boolean; jusqu_au: string | null;
+    /** Quand elle a démarré (heure de Paris), null pour une mise en avant d'avant le suivi du début. */
+    debut: string | null;
+    /** Secondes restantes, calculées par le serveur : l'application décompte à partir de là. */
+    restant_s: number | null; duree_s: number | null; ecoule_pct: number | null;
+    notifications: { envoyer_le: string; envoyee: boolean }[]; notifications_incluses: number;
+  };
+  cout: { supplement: number; sponsoring: number; total: number };
 };
 
 export type PhotoEtablissement = { id: number; url: string | null; legende: string | null; position: number };
@@ -645,8 +795,8 @@ export type ReponseFinancesAdmin = {
 // ─── Lectures ────────────────────────────────────────────────────────────────
 
 export const api = {
-  connexion: (email: string, motDePasse: string, appareil?: string) =>
-    appelApi<ReponseConnexion>('login.php', { methode: 'POST', corps: { email, password: motDePasse, appareil } }),
+  connexion: (email: string, motDePasse: string, appareil?: string, codeTotp?: string) =>
+    appelApi<ReponseConnexion>('login.php', { methode: 'POST', corps: { email, password: motDePasse, appareil, code_totp: codeTotp } }),
   inscription: (corps: Record<string, unknown>) =>
     appelApi<ReponseConnexion>('inscription.php', { methode: 'POST', corps }),
   /** Demande un code par e-mail. `code_dev` n'est rempli qu'en local, où rien ne part. */
@@ -661,9 +811,26 @@ export const api = {
    */
   supprimerCompte: (jeton: string, motDePasse: string) =>
     appelApi<{ success: true; supprime: boolean; demande?: boolean }>('supprimer_compte.php', { methode: 'POST', jeton, corps: { mot_de_passe: motDePasse } }),
+  /** Change le mot de passe ; les autres appareils sont déconnectés. */
+  changerMotDePasse: (jeton: string, motDePasse: string, nouveau: string) =>
+    appelApi<{ success: true }>('compte.php', { methode: 'POST', jeton, corps: { action: 'mot_de_passe', mot_de_passe: motDePasse, nouveau } }),
+  /** Premier temps : un code part vers la nouvelle adresse. `code_dev` n'est rempli qu'en local. */
+  changerEmail: (jeton: string, motDePasse: string, email: string) =>
+    appelApi<{ success: true; envoye: true; email: string; code_dev?: string }>('compte.php', { methode: 'POST', jeton, corps: { action: 'email', mot_de_passe: motDePasse, email } }),
+  /** Second temps : le code est juste, l'adresse change et l'ancienne en est avertie. */
+  confirmerEmail: (jeton: string, motDePasse: string, code: string) =>
+    appelApi<{ success: true; email: string }>('compte.php', { methode: 'POST', jeton, corps: { action: 'email_confirmer', mot_de_passe: motDePasse, code } }),
   /** Un texte légal, sans jeton : on le lit avant de créer un compte. */
   legal: (slug: string) => appelApi<{ success: true; page: PageLegale }>('legal.php', { params: { page: slug } }),
   deconnexion: (jeton: string) => appelApi<{ success: true }>('logout.php', { methode: 'POST', jeton }),
+  /** Les catégories de notification de ce compte et ce qui est activé. */
+  pushReglages: (jeton: string) => appelApi<{ categories: CategoriePush[] }>('push.php', { jeton }),
+  pushEnregistrer: (jeton: string, jetonExpo: string, plateforme: 'ios' | 'android', appareil?: string) =>
+    appelApi<{ success: true }>('push.php', { methode: 'POST', jeton, corps: { action: 'enregistrer', jeton: jetonExpo, plateforme, appareil } }),
+  pushRetirer: (jeton: string, jetonExpo: string) =>
+    appelApi<{ success: true }>('push.php', { methode: 'POST', jeton, corps: { action: 'retirer', jeton: jetonExpo } }),
+  pushPreference: (jeton: string, categorie: string, actif: boolean) =>
+    appelApi<{ categories: CategoriePush[] }>('push.php', { methode: 'POST', jeton, corps: { action: 'preference', categorie, actif } }),
   moi: (jeton: string) => appelApi<{ utilisateur: Profil }>('me.php', { jeton }),
 
   evenements: (jeton: string, params?: { type?: string; musique?: string; q?: string; pe?: number }) =>
@@ -690,13 +857,21 @@ export const api = {
   photosEvenement: (jeton: string, evenementId: number) =>
     appelApi<ReponsePhotosEvenement>('evenement_photos.php', { jeton, params: { id: evenementId } }),
   partenaireDashboard: (jeton: string) => appelApi<{ success: true } & ReponseDashboardPartenaire>('partenaire_dashboard.php', { jeton }),
-  partenaireEvenements: (jeton: string) => appelApi<{ evenements: EvenementPartenaire[] }>('partenaire_evenements.php', { jeton }),
+  partenaireEvenements: (jeton: string) => appelApi<{ evenements: EvenementPartenaire[]; usage: UsageMoisPartenaire }>('partenaire_evenements.php', { jeton }),
+  partenaireSuiviEvenement: (jeton: string, id: number) =>
+    appelApi<{ success: true } & SuiviEvenementPartenaire>('partenaire_evenement_suivi.php', { jeton, params: { id } }),
   partenaireSupprimerEvenement: (jeton: string, id: number) =>
     appelApi<Ok>('partenaire_evenements.php', { methode: 'POST', jeton, corps: { action: 'supprimer', id } }),
   partenaireFormulaireEvenement: (jeton: string, id?: number) =>
     appelApi<{ success: true } & ReponseFormulaireEvenementPartenaire>('partenaire_evenement.php', { jeton, params: { id } }),
   partenaireEnregistrerEvenement: (jeton: string, corps: Record<string, unknown>) =>
     appelApi<Ok & { id: number }>('partenaire_evenement.php', { methode: 'POST', jeton, corps }),
+  partenaireRechercherCollaborateurs: (jeton: string, q: string) =>
+    appelApi<{ etablissements: EtablissementInvitable[] }>('partenaire_collaborations.php', { jeton, params: { q } }),
+  partenaireInvitationsCollaboration: (jeton: string) =>
+    appelApi<{ invitations: InvitationCollaboration[] }>('partenaire_collaborations.php', { jeton, params: { invitations: 1 } }),
+  partenaireRepondreCollaboration: (jeton: string, id: number, action: 'accepter' | 'refuser' | 'quitter') =>
+    appelApi<Ok>('partenaire_collaborations.php', { methode: 'POST', jeton, corps: { action, id } }),
   partenaireScan: (jeton: string, corps: { qr_code?: string; inscription_id?: number; event_id: number }) =>
     appelApi<Ok & { personne: { id: number; prenom: string; nom: string; ecole: string | null; promo: string | null; photo_url: string | null } }>(
       'partenaire_scan.php', { methode: 'POST', jeton, corps }
@@ -716,15 +891,13 @@ export const api = {
   adminFinances: (jeton: string) =>
     appelApi<{ success: true } & ReponseFinancesAdmin>('admin_finances.php', { jeton }),
   partenaireProfil: (jeton: string) =>
-    appelApi<{ success: true; compte: { prenom: string; nom: string; email: string }; etablissement: { nom: string; type: string; ville: string; adresse: string; latitude: number | null; longitude: number | null } }>(
+    appelApi<{ success: true; compte: { prenom: string; nom: string; email: string }; etablissement: { nom: string; type: string; type_modifiable: boolean; verification: string; ville: string; adresse: string; latitude: number | null; longitude: number | null } }>(
       'partenaire_profil.php', { jeton }
     ),
   partenaireEnregistrerProfil: (jeton: string, corps: { nom: string; type: string; ville: string; adresse: string; latitude?: number; longitude?: number }) =>
     appelApi<Ok>('partenaire_profil.php', { methode: 'POST', jeton, corps }),
   partenaireAbonnement: (jeton: string) =>
     appelApi<{ success: true } & ReponseAbonnementPartenaire>('partenaire_abonnement.php', { jeton }),
-  partenaireSouscrire: (jeton: string, offre: string) =>
-    appelApi<Ok & { client: ClientPartenaireAbonnement | null }>('partenaire_abonnement.php', { methode: 'POST', jeton, corps: { offre } }),
   partenairePhotos: (jeton: string) =>
     appelApi<{ success: true } & ReponsePhotosPartenaire>('partenaire_photos.php', { jeton }),
   partenaireAjouterPhoto: (jeton: string, formulaire: FormData) =>
@@ -741,7 +914,9 @@ export const api = {
     appelApi<Ok>('evenement_photo_signaler.php', { methode: 'POST', jeton, corps }),
 
   // ─── Sport ────────────────────────────────────────────────────────────────
-  sport: (jeton: string, sport?: string) => appelApi<{ success: true } & ReponseSport>('sport.php', { jeton, params: { sport } }),
+  /** `autour` : ne garder que les clubs à moins de `rayon` km du point (parties, terrains, événements de club). */
+  sport: (jeton: string, sport?: string, autour?: { lat: number; lng: number; rayon: number }) =>
+    appelApi<{ success: true } & ReponseSport>('sport.php', { jeton, params: { sport, ...(autour ?? {}) } }),
   creneau: (jeton: string, id: number) => appelApi<{ creneau: CreneauDetail }>('sport_creneau.php', { jeton, params: { id } }),
   reserverCreneau: (jeton: string, id: number, choix: { amis: number[]; ouvert: boolean; niveau: NiveauSport }) =>
     appelApi<Ok & { creneau: CreneauDetail }>('sport_creneau.php', { methode: 'POST', jeton, corps: { action: 'reserver', id, ...choix } }),
@@ -777,6 +952,10 @@ export const api = {
     appelApi<Ok & { inscrit: boolean; inscrits: number }>('culture_inscription.php', {
       methode: 'POST', jeton, corps: { evenement_id: evenementId, action: annuler ? 'annuler' : 'inscrire' },
     }),
+  adminBdeListe: (jeton: string) =>
+    appelApi<{ success: true; en_attente: number; comptes: CompteBdeAdmin[] }>('admin_bde.php', { jeton }),
+  adminBde: (jeton: string, corps: { action: 'valider' | 'refuser' | 'remettre'; id: number; note?: string }) =>
+    appelApi<Ok>('admin_bde.php', { methode: 'POST', jeton, corps }),
   adminCulture: (jeton: string) => appelApi<{ success: true } & ReponseCultureAdmin>('admin_culture.php', { jeton }),
   adminEnregistrerCulture: (jeton: string, corps: Record<string, unknown>) =>
     appelApi<Ok & { id: number }>('admin_culture.php', { methode: 'POST', jeton, corps: { ...corps, action: 'enregistrer' } }),

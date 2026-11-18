@@ -57,6 +57,8 @@ if ($comptePrive === null) {
 }
 synchroniserInterets($pdo, $uid, interetsDepuisTexte($interests));
 oublierEcolesRepresentees();
+require_once __DIR__ . '/../../includes/hub.php';
+hubAnnuaireOublier((int) $uid);
 
 $stmt = $pdo->prepare('SELECT id, nom, prenom, email, ecole, promo, ville, photo, interests, type, compte_prive FROM users WHERE id=?');
 $stmt->execute([$uid]);

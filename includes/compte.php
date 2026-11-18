@@ -360,3 +360,162 @@ function compteNettoyerApres(PDO $pdo, array $restes): void
         fluxToucher($pdo, canalEvenement($evenementId));
     }
 }
+
+// ─── Suppression d'un compte établissement ─────────────────────────────────
+
+/**
+ * Supprime un compte établissement, tout de suite (Apple 5.1.1(v) : la
+ * suppression se fait depuis l'application, pas par une demande à traiter).
+ *
+ * Dans l'ordre :
+ *   1. l'abonnement Stripe est résilié immédiatement : plus aucun
+ *      prélèvement ne part. S'il ne peut pas l'être (Stripe injoignable, ou
+ *      clé absente alors qu'un abonnement existe), rien n'est supprimé :
+ *      effacer le compte en laissant courir les prélèvements serait pire ;
+ *   2. dans une transaction : l'établissement est supprimé, et avec lui ses
+ *      soirées (passées et à venir), les inscriptions des étudiants à ces
+ *      soirées, ses photos, ses terrains et créneaux, ses abonnés et son
+ *      registre d'achats ; la ligne `users` est vidée de toute identité et
+ *      passe au type « supprime », comme pour un étudiant ;
+ *   3. conservé, sans coordonnées : la fiche client (crm_clients, passée à
+ *      « perdu ») et le registre financier. Ce sont des pièces comptables,
+ *      que l'entreprise doit garder ; elles ne désignent plus le compte.
+ *
+ * @return array{avatar: string|null, photos: list<string>, photos_lieu: list<string>, evenements: list<int>}
+ * @throws RuntimeException quand l'abonnement ne peut pas être résilié
+ */
+function compteSupprimerPartenaire(PDO $pdo, int $uid): array
+{
+    require_once __DIR__ . '/stripe.php';
+
+    $stmt = $pdo->prepare("SELECT id, email, photo FROM users WHERE id = ? AND type = 'partenaire'");
+    $stmt->execute([$uid]);
+    $compte = $stmt->fetch();
+    if (!$compte) {
+        throw new RuntimeException("Aucun compte partenaire n'a l'identifiant $uid.");
+    }
+    $stmt = $pdo->prepare('SELECT * FROM etablissements WHERE user_id = ?');
+    $stmt->execute([$uid]);
+    $etab   = $stmt->fetch() ?: null;
+    $client = $etab ? abonnementEtablissement($pdo, (int) $etab['id']) : null;
+
+    // 1. Plus aucun prélèvement : l'abonnement s'arrête avant tout le reste.
+    if (stripeAbonnementVivant($client)) {
+        if (!stripeActif()) {
+            throw new RuntimeException('Abonnement Stripe en cours, mais Stripe n’est pas configuré : résiliation impossible.');
+        }
+        stripeRequete('DELETE', 'subscriptions/' . rawurlencode((string) $client['stripe_subscription_id']));
+    }
+
+    $email      = (string) $compte['email'];
+    $photos     = [];
+    $photosLieu = [];
+    $evenements = [];
+
+    $pdo->beginTransaction();
+    try {
+        $pdo->prepare("SELECT id FROM users WHERE id = ? FOR UPDATE")->execute([$uid]);
+
+        if ($etab) {
+            $etabId = (int) $etab['id'];
+
+            $stmt = $pdo->prepare('SELECT p.fichier FROM evenement_photos p JOIN evenements e ON e.id = p.evenement_id WHERE e.etablissement_id = ?');
+            $stmt->execute([$etabId]);
+            $photos = array_map('strval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+
+            $stmt = $pdo->prepare('SELECT fichier FROM etablissement_photos WHERE etablissement_id = ?');
+            $stmt->execute([$etabId]);
+            $photosLieu = array_map('strval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+
+            $stmt = $pdo->prepare('SELECT id FROM evenements WHERE etablissement_id = ? AND date_heure > NOW()');
+            $stmt->execute([$etabId]);
+            $evenements = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+
+            // La fiche client reste, sans coordonnées : pièce comptable.
+            $pdo->prepare(
+                "UPDATE crm_clients
+                    SET offre = 'aucune', mrr = 0, statut = 'perdu', perdu_le = CURDATE(),
+                        motif_perte = 'Compte supprimé par l’établissement',
+                        contact_nom = NULL, contact_email = NULL, contact_tel = NULL,
+                        stripe_statut = IF(stripe_subscription_id IS NULL, stripe_statut, 'canceled')
+                  WHERE etablissement_id = ?"
+            )->execute([$etabId]);
+
+            // Les clés étrangères font le reste : soirées, inscriptions,
+            // photos, terrains, créneaux, abonnés, achats, paiements en attente.
+            $pdo->prepare('DELETE FROM etablissements WHERE id = ?')->execute([$etabId]);
+        }
+
+        foreach ([
+            'DELETE FROM api_tokens WHERE user_id = ?',
+            'DELETE FROM user_settings WHERE user_id = ?',
+            'DELETE FROM notifications_lues WHERE user_id = ?',
+            'DELETE FROM follows_etablissements WHERE user_id = ?',
+            'DELETE FROM user_interets WHERE user_id = ?',
+        ] as $sql) {
+            $pdo->prepare($sql)->execute([$uid]);
+        }
+        foreach ([
+            'DELETE FROM user_blocks WHERE blocker_id = ? OR blocked_id = ?',
+            'DELETE FROM user_reports WHERE reporter_id = ? OR reported_id = ?',
+            'DELETE FROM follows_users WHERE follower_id = ? OR followed_id = ?',
+        ] as $sql) {
+            $pdo->prepare($sql)->execute([$uid, $uid]);
+        }
+        foreach ([
+            'DELETE FROM login_attempts WHERE email = ?',
+            'DELETE FROM password_resets WHERE email = ?',
+            'DELETE FROM password_reset_codes WHERE email = ?',
+        ] as $sql) {
+            $pdo->prepare($sql)->execute([$email]);
+        }
+
+        $pdo->prepare(
+            "UPDATE users
+                SET prenom = ?, nom = ?, email = ?, password = ?,
+                    ville = NULL, photo = NULL,
+                    date_naissance = NULL, cgu_acceptees_le = NULL, interests = NULL,
+                    compte_prive = 1, type = 'supprime'
+              WHERE id = ?"
+        )->execute([
+            COMPTE_SUPPRIME_PRENOM,
+            COMPTE_SUPPRIME_NOM,
+            compteAdresseSupprimee($uid),
+            password_hash(bin2hex(random_bytes(19)), PASSWORD_DEFAULT),
+            $uid,
+        ]);
+
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
+
+    return [
+        'avatar'      => !empty($compte['photo']) ? (string) $compte['photo'] : null,
+        'photos'      => $photos,
+        'photos_lieu' => $photosLieu,
+        'evenements'  => $evenements,
+    ];
+}
+
+/**
+ * Après la suppression d'un établissement : fichiers et temps réel.
+ *
+ * @param array{avatar: string|null, photos: list<string>, photos_lieu: list<string>, evenements: list<int>} $restes
+ */
+function compteNettoyerApresPartenaire(PDO $pdo, array $restes): void
+{
+    foreach ($restes['photos_lieu'] as $fichier) {
+        deleteStoredImage($fichier, venuePhotoDir());
+    }
+    compteNettoyerApres($pdo, [
+        'avatar'     => $restes['avatar'],
+        'photos'     => $restes['photos'],
+        'evenements' => $restes['evenements'],
+    ]);
+    // Des soirées viennent de quitter le fil.
+    fluxToucher($pdo, CANAL_GLOBAL);
+}

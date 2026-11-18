@@ -1,9 +1,11 @@
 /**
  * Le hub étudiant — explore.php.
  *
- * En-tête : « Les bons plans / du moment. », la cloche et sa pastille. Les
- * filtres de type (dont « Pour moi ») et de musique, les cartes flash et
- * classiques, l'état vide, « Voir plus d'événements ».
+ * En-tête : le logo, la recherche et la cloche, puis « Les bons plans [du
+ * moment.] ». Une rangée de chips : Filtres, Tout, Pour moi, Carte, Bars,
+ * Boîtes, Restos. Les styles de musique sont dans le panneau Filtres
+ * (refonte 2026-11) ; le filtrage, lui, n'a pas changé. Puis les cartes —
+ * la première en couleur accent —, l'état vide, « Voir plus d'événements ».
  *
  * La partie Personnes de l'ancien sélecteur Événements / Personnes vit
  * maintenant dans son propre onglet (personnes.tsx) — plus lisible qu'un
@@ -13,24 +15,35 @@
  * feuille — les deux fenêtres du site.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import React, { useCallback, useRef, useState } from 'react';
+import { Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 
 import { api, type CibleInvitation, type Evenement, type Notification } from '../../api';
 import { Bouton } from '../../composants/Bouton';
 import { CarteEvenement, enregistrerStyles } from '../../composants/CarteEvenement';
+import { Apparition } from '../../composants/Animations';
+import { BarreRecherche } from '../../composants/BarreRecherche';
+import { EnTeteApp, PanneauFiltres, rangeeChips, Tuile, useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Pilule } from '../../composants/Elements';
+import { RangeeDefilante } from '../../composants/RangeeDefilante';
 import { Feuille } from '../../composants/Feuille';
-import { Icone } from '../../composants/Icone';
-import { Marque } from '../../composants/Marque';
+import { Icone, type NomIcone } from '../../composants/Icone';
 import { ElementNotification, FeuilleInvitation, FermerFeuille, NotificationsVides, SurtitreFeuille } from '../../composants/Social';
 import { Display, T, TitreEcran } from '../../composants/Texte';
 import { ts } from '../../format';
 import { useJeton } from '../../session';
-import { fixe, fs, gutter, lh, mono, rayon, sans } from '../../theme';
+import { couleursCategorie, fs, gutter, lh, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
+
+/** L'icône du petit carré coloré de chaque chip (« Tout » n'en a pas). */
+const ICONES_TYPE: Record<string, NomIcone | undefined> = {
+  'pour-moi': 'etoile-fine',
+  bar: 'verre',
+  boite: 'musique',
+  resto: 'billet',
+};
 
 const TYPES = [
   { code: 'all', libelle: 'Tout' },
@@ -41,12 +54,18 @@ const TYPES = [
 ];
 
 export default function Hub() {
-  const { c, ombre } = useTheme();
+  const { c } = useTheme();
+  const bleu = useRubrique('bleu');
   const jeton = useJeton();
+  const [panneau, setPanneau] = useState(false);
 
   const [rechercheOuverte, setRechercheOuverte] = useState(false);
   const [saisie, setSaisie] = useState('');
   const [q, setQ] = useState('');
+  const [cherche, setCherche] = useState(false);
+  // Le numéro de la dernière requête : une réponse plus ancienne, arrivée
+  // après une frappe plus récente, est ignorée au lieu d'écraser la liste.
+  const derniere = useRef(0);
 
   const [type, setType] = useState('all');
   const [musique, setMusique] = useState('');
@@ -69,33 +88,49 @@ export default function Hub() {
   }, [jeton]);
 
   const charger = useCallback(async () => {
+    const numero = ++derniere.current;
     try {
       setErreur(null);
       const r = await api.evenements(jeton, { type, musique, q, pe: pageE });
+      if (numero !== derniere.current) return;
       enregistrerStyles(r.filtres.styles_musique);
       setStyles(r.filtres.styles_musique);
       setEvenements(r.evenements);
       setResteE(r.pagination.a_suivre);
     } catch (e) {
-      setErreur(e instanceof Error ? e.message : 'Chargement impossible.');
+      if (numero === derniere.current) setErreur(e instanceof Error ? e.message : 'Chargement impossible.');
     } finally {
-      setRafraichit(false);
-      setChargeSuite(false);
+      if (numero === derniere.current) {
+        setRafraichit(false);
+        setChargeSuite(false);
+        setCherche(false);
+      }
     }
   }, [jeton, type, musique, q, pageE]);
 
-  useEffect(() => {
-    // Toutes les écritures d'état de charger() suivent l'attente réseau ;
-    // l'analyse statique ne peut pas le démontrer à travers l'appel.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void charger();
-  }, [charger]);
+  // Rechargé à chaque retour sur l'onglet, et non plus au seul montage : un
+  // pass annulé depuis l'onglet Pass laissait la carte afficher « Inscrit ».
+  useFocusEffect(useCallback(() => { void charger(); }, [charger]));
   useFocusEffect(useCallback(() => { void chargerNotifs(); }, [chargerNotifs]));
 
   const filtreActif = type !== 'all' || musique !== '' || q !== '';
 
   const choisirType = (t: string) => { setType(t); setPageE(1); setEvenements(null); };
   const choisirMusique = (m: string) => { setMusique(m); setPageE(1); setEvenements(null); };
+  // La liste déjà affichée reste à l'écran pendant la recherche : pas de
+  // clignotement à chaque lettre, seule la loupe tourne.
+  const chercher = (terme: string) => {
+    if (terme === q) return;
+    setCherche(true);
+    setQ(terme);
+    setPageE(1);
+  };
+  // Fermer la recherche la retire : la liste ne reste pas filtrée en cachette.
+  const basculerRecherche = () => {
+    if (rechercheOuverte) { setSaisie(''); chercher(''); }
+    setRechercheOuverte(!rechercheOuverte);
+  };
+  const toutVoir = () => { setSaisie(''); setQ(''); setRechercheOuverte(false); choisirType('all'); choisirMusique(''); };
 
   // La première carte flash porte le compte à rebours ($firstCard).
   const [instant] = useState(() => Date.now() / 1000);
@@ -139,129 +174,121 @@ export default function Hub() {
             </View>
           </Feuille>
           <FeuilleInvitation cible={invitation} onClose={() => setInvitation(null)} />
+          <PanneauFiltres
+            visible={panneau}
+            onClose={() => setPanneau(false)}
+            section="Musique"
+            options={[{ code: '', libelle: 'Toute musique' }, ...styles]}
+            valeur={musique}
+            onAppliquer={choisirMusique}
+            accent={bleu.accent}
+          />
         </>
       }
     >
       <EnTete style={{ paddingBottom: 4 }}>
-        <View style={{ marginBottom: 14 }}>
-          <Marque taille={fs[6]} />
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
-          <View style={{ flex: 1 }}>
-            <TitreEcran lignes={['Les bons plans', 'du moment.']} />
-          </View>
-          <View style={{ gap: 8, alignItems: 'flex-end', marginTop: -16 }}>
-            {/* Recherche au-dessus des notifications : « en haut à droite ».
-                Le marginTop négatif rattrape le blanc au-dessus des
-                majuscules du titre (métrique de la police Unbounded) : sans
-                lui, les deux pilules de 44 px semblaient posées plus bas que
-                le texte et le logo. */}
-            <Pressable
-              onPress={() => setRechercheOuverte((o) => !o)}
-              accessibilityRole="button"
-              accessibilityLabel="Rechercher"
-              accessibilityState={{ expanded: rechercheOuverte }}
-              style={[{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.blanc, borderWidth: 1, borderColor: c.line2 }, ombre('sm')]}
-            >
-              <Icone nom="loupe" taille={20} couleur={c.noir} />
-            </Pressable>
-
-            <Pressable
-              onPress={() => { setCloche(true); void chargerNotifs(); }}
-              accessibilityRole="button"
-              accessibilityLabel="Notifications"
-              style={[{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.blanc, borderWidth: 1, borderColor: c.line2 }, ombre('sm')]}
-            >
-              <Icone nom="cloche" taille={22} couleur={c.noir} />
-              {notifs?.a_traiter ? (
-                <View style={{ position: 'absolute', top: -3, right: -3, minWidth: 19, height: 19, paddingHorizontal: 5, borderRadius: rayon.pill, backgroundColor: c.rouge, borderWidth: 2, borderColor: c.bg, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontFamily: mono(600), fontSize: fs[1], lineHeight: fs[1] + 1, color: fixe.surAccent }}>{notifs.a_traiter}</Text>
-                </View>
-              ) : null}
-            </Pressable>
-          </View>
-        </View>
+        <Apparition index={0}>
+          <EnTeteApp
+            onRecherche={basculerRecherche}
+            rechercheOuverte={rechercheOuverte}
+            onNotifications={() => { setCloche(true); void chargerNotifs(); }}
+            nonLues={!!notifs?.a_traiter}
+          />
+        </Apparition>
+        <Apparition index={1}>
+          <TitreEcran avant="Les bons plans" surligne="du moment." style={{ marginBottom: 16 }} />
+        </Apparition>
 
         {rechercheOuverte ? (
           <View style={{ marginBottom: 16 }}>
-            <TextInput
-              autoFocus
-              value={saisie}
-              onChangeText={setSaisie}
-              onSubmitEditing={() => { setQ(saisie.trim()); setPageE(1); setEvenements(null); }}
-              placeholder="Chercher une soirée, un lieu..."
-              placeholderTextColor={c.gris}
-              returnKeyType="search"
-              style={{ paddingVertical: 14, paddingLeft: 20, paddingRight: 52, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.pill, fontFamily: sans(400), fontSize: fs[4], backgroundColor: c.blanc, color: c.noir }}
+            <BarreRecherche
+              valeur={saisie}
+              onChange={setSaisie}
+              onChercher={chercher}
+              chargement={cherche}
+              placeholder="Une soirée, un lieu, un bar..."
+              accessibilityLabel="Chercher une soirée ou un lieu"
             />
-            <Pressable onPress={() => { setQ(saisie.trim()); setPageE(1); setEvenements(null); }} accessibilityLabel="Chercher" style={{ position: 'absolute', right: 14, top: 0, bottom: 0, justifyContent: 'center' }}>
-              <Icone nom="loupe" taille={20} couleur={c.gris} />
-            </Pressable>
           </View>
         ) : null}
       </EnTete>
 
-      <View style={{ paddingTop: 2 }}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 20 }} contentContainerStyle={{ gap: 8, paddingHorizontal: gutter, paddingBottom: 16 }}>
-          {TYPES.map((t) => {
-            const actif = type === t.code;
-            const pourMoi = t.code === 'pour-moi';
-            return (
-              <React.Fragment key={t.code}>
-                <Pilule
-                  libelle={t.libelle}
-                  actif={actif}
-                  onPress={() => choisirType(t.code)}
-                  icone={pourMoi ? 'etoile-fine' : undefined}
-                  style={pourMoi && !actif ? { borderColor: c.surRougeClair } : undefined}
-                  couleurTexte={pourMoi && !actif ? c.surRougeClair : undefined}
-                />
-                {/* Juste après « Pour moi », avant les types de lieu : une
-                    action (ouvrir la carte), pas un filtre de plus. */}
-                {pourMoi ? (
-                  <>
-                    <Pilule libelle="Carte" icone="epingle" actif={false} onPress={() => router.push('/carte')} />
-                  </>
-                ) : null}
-              </React.Fragment>
-            );
-          })}
-        </ScrollView>
+      <View>
+        <Apparition index={2}>
+          <RangeeDefilante style={{ marginBottom: 20 }} contentContainerStyle={rangeeChips}>
+            {/* La musique est passée dans le panneau Filtres ; la chip le
+                signale quand un style est choisi. */}
+            <Pilule
+              libelle={musique ? 'Filtres · 1' : 'Filtres'}
+              icone="reglages"
+              contour
+              actif={false}
+              onPress={() => setPanneau(true)}
+              accessibilityLabel={musique ? `Filtres, musique : ${styles.find((s) => s.code === musique)?.libelle ?? musique}` : 'Filtres'}
+            />
+            {TYPES.filter((t) => t.code !== 'pour-moi').map((t) => (
+              <Pilule
+                key={t.code}
+                libelle={t.libelle}
+                actif={type === t.code}
+                onPress={() => choisirType(t.code)}
+                icone={ICONES_TYPE[t.code]}
+                carre={couleursCategorie[t.code]}
+              />
+            ))}
+          </RangeeDefilante>
+        </Apparition>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginTop: -12, marginBottom: 24 }} contentContainerStyle={{ gap: 8, paddingHorizontal: gutter, paddingBottom: 16 }}>
-          <Pilule libelle="Toute musique" icone="musique" musique actif={musique === ''} onPress={() => choisirMusique('')} />
-          {styles.map((s) => (
-            <Pilule key={s.code} libelle={s.libelle} musique actif={musique === s.code} onPress={() => choisirMusique(s.code)} />
-          ))}
-        </ScrollView>
+        {/* Comme les rubriques de Sport : deux tuiles. « Pour moi » est le
+            même filtre qu'avant (le retoucher revient à « Tout ») ; « Carte »
+            reste une action qui ouvre la carte. */}
+        <Apparition index={3}>
+          <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: gutter, marginBottom: 20 }}>
+            <Tuile
+              icone="etoile-fine"
+              libelle="Pour moi"
+              actif={type === 'pour-moi'}
+              onPress={() => choisirType(type === 'pour-moi' ? 'all' : 'pour-moi')}
+              style={{ flex: 1 }}
+            />
+            <Tuile icone="epingle" libelle="Carte" droite="chevron-d" onPress={() => router.push('/carte')} style={{ flex: 1 }} />
+          </View>
+        </Apparition>
 
         <Contenu>
           {erreur ? <Erreur message={erreur} onReessayer={charger} /> : evenements === null ? <Chargement /> : (
             <>
               {evenements.length === 0 ? (
-                <View style={[{ backgroundColor: c.blanc, borderRadius: rayon.base, borderWidth: 1, borderColor: c.grisClair, paddingVertical: 36, paddingHorizontal: 26, alignItems: 'center', marginBottom: 14 }, ombre('sm')]}>
+                <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, paddingVertical: 36, paddingHorizontal: 26, alignItems: 'center', marginBottom: 16 }}>
                   <View style={{ marginBottom: 14 }}><Icone nom={filtreActif ? 'loupe' : 'vide'} taille={24} couleur={c.gris} /></View>
                   <Display taille={fs[6]} interligne={lh.tight} style={{ marginBottom: 6, textAlign: 'center', letterSpacing: -0.02 * fs[6] }}>
                     {filtreActif ? 'Aucun résultat' : 'Rien de prévu pour le moment'}
                   </Display>
                   <T taille={fs[3]} poids={500} couleur={c.grisFonce} interligne={lh.snug} style={{ textAlign: 'center', maxWidth: 290 }}>
                     {filtreActif
-                      ? 'Aucun événement ne correspond à cette recherche. Essaie un autre filtre.'
-                      : "Les établissements n'ont pas encore publié de soirée. Reviens d'ici quelques jours."}
+                      ? (q ? `Rien pour « ${q} ». Vérifie l'orthographe ou essaie un autre mot.` : 'Aucun événement ne correspond à ce filtre. Essaie-en un autre.')
+                      : "Les établissements n'ont pas encore publié de soirée près de toi. En attendant, suis des personnes pour voir où elles sortent, ou explore la culture et le sport."}
                   </T>
                   {filtreActif ? (
-                    <Bouton libelle="Voir tous les événements" onPress={() => { choisirType('all'); choisirMusique(''); }} style={{ marginTop: 20, alignSelf: 'center' }} />
-                  ) : null}
+                    <Bouton libelle="Voir tous les événements" onPress={toutVoir} style={{ marginTop: 20, alignSelf: 'center' }} />
+                  ) : (
+                    <View style={{ marginTop: 20, gap: 10, alignSelf: 'stretch' }}>
+                      <Bouton libelle="Trouver des gens à suivre" icone="personnes" plein onPress={() => router.navigate('/personnes')} />
+                      <Bouton libelle="Voir la culture" icone="musee" variante="contour" plein onPress={() => router.navigate('/culture')} />
+                    </View>
+                  )}
                 </View>
               ) : null}
 
-              {evenements.map((e) => (
-                <CarteEvenement
-                  key={e.id}
-                  ev={e}
-                  premiere={e.id === premiereFlash}
-                  onInviter={() => setInvitation({ type: 'event', id: e.id, nom: e.titre })}
-                />
+              {evenements.map((e, i) => (
+                <Apparition key={e.id} index={4 + Math.min(i, 3)}>
+                  <CarteEvenement
+                    ev={e}
+                    accent={i === 0}
+                    premiere={e.id === premiereFlash}
+                    onInviter={() => setInvitation({ type: 'event', id: e.id, nom: e.titre })}
+                  />
+                </Apparition>
               ))}
 
               {resteE ? (

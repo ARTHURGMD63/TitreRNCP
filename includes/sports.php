@@ -13,6 +13,8 @@
  * l'autre aussi.
  */
 
+require_once __DIR__ . '/comptes.php';
+
 /**
  * Les sports proposés, dans leur ordre d'affichage.
  *
@@ -185,9 +187,7 @@ function apiClubDe(PDO $pdo, int $uid): array
     if (($etab['type'] ?? '') !== 'club') {
         apiErreur('Réservé aux clubs et établissements sportifs.', 403, 'pas_un_club');
     }
-    if (!abonnementChoisi(abonnementEtablissement($pdo, (int) $etab['id']))) {
-        apiErreur('Choisis une formule d’abonnement pour continuer.', 403, 'abonnement_requis');
-    }
+    exigerAbonnementValide($pdo, $etab);
 
     return $etab;
 }

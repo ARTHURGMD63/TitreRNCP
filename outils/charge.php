@@ -32,6 +32,10 @@
  *                      et l'on mesure ce verrou plutôt que le serveur. De vrais
  *                      utilisateurs ont des sessions distinctes : c'est cela
  *                      qu'il faut reproduire.
+ *     --bearer=…       jeton d'API (en-tête Authorization: Bearer), pour tester
+ *                      l'API mobile /api/v1/ ; --bearers=… prend un fichier de
+ *                      jetons, un par ligne, distribués en rotation comme les
+ *                      cookies : de vrais comptes, pas un seul qui se répète.
  *     --concurrence=N  requêtes en vol simultanément (défaut 20)
  *     --total=N        requêtes au total (défaut 200)
  *     --etag=…         valeur If-None-Match, pour mesurer le chemin 304
@@ -67,6 +71,20 @@ $concurrence = max(1, (int) $opt('concurrence', '20'));
 $total       = max($concurrence, (int) $opt('total', '200'));
 $cookie      = $opt('cookie');
 $etag        = $opt('etag');
+$bearer      = $opt('bearer');
+
+/** @var list<string> $jetons */
+$jetons = [];
+if (($fichierJetons = $opt('bearers')) !== null) {
+    if (!is_file($fichierJetons)) {
+        fwrite(STDERR, "Fichier de jetons introuvable : $fichierJetons\n");
+        exit(1);
+    }
+    $jetons = array_values(array_filter(array_map('trim', file($fichierJetons) ?: [])));
+}
+if (!$jetons && $bearer !== null && $bearer !== '') {
+    $jetons = [$bearer];
+}
 
 /** @var list<string> $cookies */
 $cookies = [];
@@ -89,12 +107,20 @@ if ($etag !== null) {
 printf("Cible       : %s\n", $url);
 printf("Charge      : %d requêtes, %d en parallèle\n\n", $total, $concurrence);
 printf("Sessions    : %s\n", $cookies ? count($cookies) . ' distincte(s)' : 'aucune (anonyme)');
+if ($jetons) {
+    printf("Jetons API  : %d distinct(s)\n", count($jetons));
+}
 
 $tour = 0;
-$fabriquer = static function () use ($url, $cookies, $entetes, &$tour) {
+$fabriquer = static function () use ($url, $cookies, $jetons, $entetes, &$tour) {
     // Rotation : chaque requête prend la session suivante, pour qu'aucune
     // n'attende le verrou d'une autre.
-    $cookie = $cookies ? $cookies[$tour++ % count($cookies)] : '';
+    $cookie = $cookies ? $cookies[$tour % count($cookies)] : '';
+    $entetesRequete = $entetes;
+    if ($jetons) {
+        $entetesRequete[] = 'Authorization: Bearer ' . $jetons[$tour % count($jetons)];
+    }
+    $tour++;
 
     $ch = curl_init($url);
     curl_setopt_array($ch, [
@@ -104,7 +130,7 @@ $fabriquer = static function () use ($url, $cookies, $entetes, &$tour) {
         // mesurer ce que vit un visiteur qui arrive, pas un client
         // artificiellement avantagé par une connexion déjà ouverte.
         CURLOPT_FORBID_REUSE   => true,
-        CURLOPT_HTTPHEADER     => $entetes,
+        CURLOPT_HTTPHEADER     => $entetesRequete,
         CURLOPT_COOKIE         => $cookie,
         CURLOPT_ENCODING       => '',   // accepte gzip : mesure ce que fait un navigateur
     ]);

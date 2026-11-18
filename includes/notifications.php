@@ -210,6 +210,31 @@ function notificationsEtudiant(PDO $pdo, int $uid, int $limite = 25): array
         $items[] = ['type' => 'lieu', 'ts' => $e['ts'], 'traiter' => false, 'event' => $e];
     }
 
+    // ── Notifications comprises dans un post sponsorisé (v30) ───────────
+    // L'établissement choisit l'heure d'envoi (heure de Paris). Elle compte
+    // pour les abonnés du lieu, dès cette heure et pendant la fenêtre
+    // habituelle. Le fil attend des horodatages UTC : on convertit.
+    $stmt = $pdo->prepare("
+        SELECT e.id, e.titre, e.date_heure, sn.envoyer_le, et.nom AS lieu
+        FROM sponsor_notifications sn
+        JOIN evenements e ON e.id = sn.evenement_id
+        JOIN etablissements et ON et.id = e.etablissement_id
+        JOIN follows_etablissements fe ON fe.etablissement_id = et.id AND fe.user_id = ?
+        WHERE e.is_sponsorise = 1
+          AND e.date_heure >= ?
+          AND sn.envoyer_le <= ?
+          AND sn.envoyer_le >= ?
+        ORDER BY sn.envoyer_le DESC
+        LIMIT 25
+    ");
+    $maintenantParis = date('Y-m-d H:i:s');
+    $stmt->execute([$uid, $maintenantParis, $maintenantParis, date('Y-m-d H:i:s', strtotime('-' . NOTIF_FENETRE_HEURES . ' hour'))]);
+    foreach ($stmt->fetchAll() as $e) {
+        $utc = (new DateTime((string) $e['envoyer_le'], new DateTimeZone('Europe/Paris')))
+            ->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
+        $items[] = ['type' => 'lieu', 'ts' => $utc, 'traiter' => false, 'event' => $e + ['ts' => $utc, 'promo' => true]];
+    }
+
     // Ce qui attend une réponse n'est jamais coupé par la limite : sinon la
     // pastille annonce six demandes et le panneau n'en montre que cinq, la
     // sixième étant poussée dehors par l'activité des amis. La limite ne

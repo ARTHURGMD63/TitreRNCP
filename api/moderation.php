@@ -38,6 +38,8 @@ if (!$stmt->fetchColumn()) {
     exit;
 }
 
+require_once __DIR__ . '/../includes/hub.php';
+
 try {
     switch ($action) {
         case 'block':
@@ -55,12 +57,16 @@ try {
                               AND ((from_user_id=? AND to_user_id=?) OR (from_user_id=? AND to_user_id=?))")
                 ->execute([$uid, $target_id, $target_id, $uid]);
 
+            hubAnnuaireOublier((int) $uid);
+            hubAnnuaireOublier((int) $target_id);
             echo json_encode(['success' => true, 'bloque' => true, 'message' => 'Personne bloquée']);
             break;
 
         case 'unblock':
             $pdo->prepare("DELETE FROM user_blocks WHERE blocker_id=? AND blocked_id=?")
                 ->execute([$uid, $target_id]);
+            hubAnnuaireOublier((int) $uid);
+            hubAnnuaireOublier((int) $target_id);
             echo json_encode(['success' => true, 'bloque' => false, 'message' => 'Blocage levé']);
             break;
 

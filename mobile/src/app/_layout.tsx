@@ -23,17 +23,17 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
-import { Unbounded_400Regular, Unbounded_800ExtraBold } from '@expo-google-fonts/unbounded';
-import {
-  InstrumentSans_400Regular, InstrumentSans_500Medium, InstrumentSans_600SemiBold,
-  InstrumentSans_600SemiBold_Italic, InstrumentSans_700Bold,
-} from '@expo-google-fonts/instrument-sans';
-import { JetBrainsMono_400Regular, JetBrainsMono_500Medium, JetBrainsMono_600SemiBold } from '@expo-google-fonts/jetbrains-mono';
+// Refonte 2026-11 : une seule police, Onest, sur toute l'application.
+import { Onest_400Regular, Onest_500Medium, Onest_600SemiBold, Onest_700Bold } from '@expo-google-fonts/onest';
 
 import { FournisseurSession, useSession } from '../session';
 import { FournisseurTheme, useTheme } from '../useTheme';
 import { FournisseurToast } from '../composants/Toast';
 import { IntroSplash } from '../composants/IntroSplash';
+import { installerSuiviErreurs } from '../suiviErreurs';
+
+// Les plantages non rattrapés sont signalés au serveur (anonymement).
+installerSuiviErreurs();
 
 // L'écran de lancement (fond basalte, les deux anneaux) reste affiché tant
 // que l'application n'est pas prête : polices chargées ET session tranchée.
@@ -88,6 +88,7 @@ function Navigation() {
           <Stack.Screen name="culture/[id]" />
           <Stack.Screen name="etudiant/[id]" />
           <Stack.Screen name="avis/[id]" />
+          <Stack.Screen name="profil/modifier" options={{ animation: 'slide_from_right' }} />
         </Stack.Protected>
 
         <Stack.Protected guard={partenaire}>
@@ -102,6 +103,7 @@ function Navigation() {
         <Stack.Screen name="legal/[page]" />
 
         <Stack.Protected guard={(etudiant && !nouveau) || partenaire}>
+          <Stack.Screen name="compte" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="supprimer-compte" />
         </Stack.Protected>
       </Stack>
@@ -112,14 +114,11 @@ function Navigation() {
 
 function Polices({ children }: { children: React.ReactNode }) {
   const [pretes] = useFonts({
-    Unbounded_400Regular, Unbounded_800ExtraBold,
-    InstrumentSans_400Regular, InstrumentSans_500Medium, InstrumentSans_600SemiBold,
-    InstrumentSans_600SemiBold_Italic, InstrumentSans_700Bold,
-    JetBrainsMono_400Regular, JetBrainsMono_500Medium, JetBrainsMono_600SemiBold,
+    Onest_400Regular, Onest_500Medium, Onest_600SemiBold, Onest_700Bold,
   });
   // Sans ses polices, l'écran s'afficherait une fraction de seconde en
   // police système puis sauterait : l'écran de lancement reste affiché.
-  if (!pretes) return <View style={{ flex: 1, backgroundColor: '#111013' }} />;
+  if (!pretes) return <View style={{ flex: 1, backgroundColor: '#111116' }} />;
   return <>{children}</>;
 }
 

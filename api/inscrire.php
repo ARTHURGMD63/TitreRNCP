@@ -40,7 +40,7 @@ try {
     // une soirée en cours et pas encore complète doit rester rejoignable.
     $finEff = sqlFinEffectiveEvenement();
     $stmt = $pdo->prepare(
-        "SELECT e.quota, e.prix_normal, e.reduction
+        "SELECT e.quota, e.prix_normal, e.reduction, e.date_heure, e.inscriptions_jusqu_au
            FROM evenements e
           WHERE e.id = ? AND $finEff >= NOW()
           FOR UPDATE"
@@ -51,6 +51,13 @@ try {
     if (!$event) {
         $pdo->rollBack();
         echo json_encode(['success' => false, 'message' => 'Événement introuvable ou terminé']);
+        exit;
+    }
+
+    // Clôture fixée par l'établissement, sinon le début de la soirée (v38).
+    if (!evenementInscriptionsOuvertes((string) $event['date_heure'], $event['inscriptions_jusqu_au'] ?? null)) {
+        $pdo->rollBack();
+        echo json_encode(['success' => false, 'message' => 'Les inscriptions sont closes']);
         exit;
     }
 
@@ -69,10 +76,30 @@ try {
     // Identifiant du pass : imprévisible, et propre à ce couple étudiant/événement.
     $qr_code = bin2hex(random_bytes(32));
 
-    $pdo->prepare(
-        "INSERT INTO inscriptions (user_id, evenement_id, qr_code, statut)
-         VALUES (?, ?, ?, 'inscrit')"
-    )->execute([$uid, $evenement_id, $qr_code]);
+    // La clé unique (user_id, evenement_id) garde la ligne d'un pass annulé :
+    // un INSERT échouait alors en « déjà inscrit » et l'étudiant qui s'était
+    // désinscrit ne pouvait plus revenir. On ranime cette ligne, avec un code
+    // neuf pour que l'ancien QR ne repasse pas au scan.
+    $stmt = $pdo->prepare('SELECT id, statut FROM inscriptions WHERE user_id = ? AND evenement_id = ? FOR UPDATE');
+    $stmt->execute([$uid, $evenement_id]);
+    $existante = $stmt->fetch();
+
+    if ($existante && $existante['statut'] !== 'annule') {
+        $pdo->rollBack();
+        echo json_encode(['success' => false, 'message' => 'Tu es déjà inscrit']);
+        exit;
+    }
+
+    if ($existante) {
+        $pdo->prepare(
+            "UPDATE inscriptions SET statut = 'inscrit', qr_code = ?, checkin_le = NULL, created_at = NOW() WHERE id = ?"
+        )->execute([$qr_code, (int) $existante['id']]);
+    } else {
+        $pdo->prepare(
+            "INSERT INTO inscriptions (user_id, evenement_id, qr_code, statut)
+             VALUES (?, ?, ?, 'inscrit')"
+        )->execute([$uid, $evenement_id, $qr_code]);
+    }
 
     if ($event['prix_normal'] > 0 && $event['reduction'] > 0) {
         $montant = round($event['prix_normal'] * $event['reduction'] / 100, 2);

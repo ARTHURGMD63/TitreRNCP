@@ -23,11 +23,12 @@ export const TYPES_ETABLISSEMENT = [
   { valeur: 'boite', libelle: 'Boîte' },
   { valeur: 'resto', libelle: 'Restaurant' },
   { valeur: 'afterwork', libelle: 'Afterwork' },
+  { valeur: 'bde', libelle: 'BDE / association' },
   { valeur: 'club', libelle: 'Club sportif' },
 ];
 
 /** Les libellés des types sur les cartes (explore.php, $typeLabels). */
-export const LIBELLES_TYPE: Record<string, string> = { bar: 'Bar', boite: 'Boîte', resto: 'Resto', afterwork: 'Afterwork', club: 'Club', sport: 'Sport' };
+export const LIBELLES_TYPE: Record<string, string> = { bar: 'Bar', boite: 'Boîte', resto: 'Resto', afterwork: 'Afterwork', club: 'Club', bde: 'BDE', sport: 'Sport' };
 
 /**
  * Les sports, recopiés de catalogueSports() (includes/sports.php) : si l'un

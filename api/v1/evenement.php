@@ -12,6 +12,8 @@ require_once __DIR__ . '/../../includes/places.php';
 require_once __DIR__ . '/../../includes/uploads.php';
 require_once __DIR__ . '/../../includes/agregats.php';
 require_once __DIR__ . '/../../includes/sponsoring.php';
+require_once __DIR__ . '/../../includes/evenements_temps.php';
+require_once __DIR__ . '/../../includes/collaborations.php';
 
 apiExigerMethode('GET');
 
@@ -83,6 +85,13 @@ apiReponse([
         'sport'         => isset($e['sport']) && $e['sport'] !== null ? (string) $e['sport'] : null,
         'format'        => isset($e['format']) && $e['format'] !== null ? (string) $e['format'] : null,
         'date_heure'    => (string) $e['date_heure'],
+        'date_fin'      => !empty($e['date_fin']) ? (string) $e['date_fin'] : null,
+        // Clôture des inscriptions (v38) : celle de l'établissement si elle
+        // précède le début, sinon le début. `inscriptions_ouvertes` porte la
+        // règle pour que l'application n'ait pas à la refaire.
+        'inscriptions_jusqu_au' => evenementClotureInscriptions((string) $e['date_heure'], $e['inscriptions_jusqu_au'] ?? null),
+        'cloture_anticipee'     => evenementClotureInscriptions((string) $e['date_heure'], $e['inscriptions_jusqu_au'] ?? null) !== (string) $e['date_heure'],
+        'inscriptions_ouvertes' => evenementInscriptionsOuvertes((string) $e['date_heure'], $e['inscriptions_jusqu_au'] ?? null),
         'lieu'          => (string) ($e['lieu'] ?? ''),
 
         'etablissement' => [
@@ -96,6 +105,9 @@ apiReponse([
             'latitude'  => $e['etab_latitude'] !== null ? (float) $e['etab_latitude'] : null,
             'longitude' => $e['etab_longitude'] !== null ? (float) $e['etab_longitude'] : null,
         ],
+
+        // Les établissements qui co-organisent (v39), une fois l'invitation acceptée.
+        'collaborateurs' => collaborationsPourApi(collaborationsDe($pdo, [(int) $e['id']]), (int) $e['id']),
 
         'places' => [
             'quota'       => $quota,

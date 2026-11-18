@@ -1,7 +1,10 @@
 /**
  * Le logo Outsee : deux anneaux entrelacés, l'un basalte, l'autre craie, sur
- * une tuile bleue aux coins arrondis, et le logotype « outsee » à côté. Le
- * bleu est la Pantone 2728 C (`fixe.logo`), sur la tuile comme sur le « ee ».
+ * une tuile colorée aux coins arrondis, et le logotype « Outsee » à côté.
+ *
+ * Refonte 2026-11 : le carré et le « ee » prennent la couleur de la rubrique
+ * (bleu #1D55F0 par défaut, rouge sur Sport, violet sur Culture) ; le
+ * logotype prend un O majuscule.
  *
  * Le dessin reprend Logo.png (512 px) cote pour cote. L'entrelacement est
  * l'essentiel : au croisement du haut l'anneau craie passe devant le noir, à
@@ -14,7 +17,7 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import Svg, { ClipPath, Circle, Defs, Rect } from 'react-native-svg';
 
-import { fixe, fs, police } from '../theme';
+import { fixe, fs, police, teintes, type Rubrique } from '../theme';
 import { useTheme } from '../useTheme';
 
 function Entrelacs() {
@@ -33,10 +36,10 @@ function Entrelacs() {
 }
 
 /** Le logo complet : tuile bleue carrée, anneaux au centre. */
-export function Anneaux({ hauteur }: { hauteur: number }) {
+export function Anneaux({ hauteur, couleur = fixe.logo }: { hauteur: number; couleur?: string }) {
   return (
     <Svg width={hauteur} height={hauteur} viewBox="0 0 512 512" fill="none">
-      <Rect x={0} y={0} width={512} height={512} rx={112} fill={fixe.logo} />
+      <Rect x={0} y={0} width={512} height={512} rx={112} fill={couleur} />
       <Entrelacs />
     </Svg>
   );
@@ -55,19 +58,16 @@ type Props = {
   /** font-size de .marque — var(--fs-6) par défaut. */
   taille?: number;
   suffixe?: string;
-  /**
-   * Remplace le bleu du « ee » par une autre teinte — dérogation à la charte.
-   * Plus aucun écran ne s'en sert : l'onglet Sport passait le « ee » au dôme,
-   * mais à côté de la tuile en Pantone 2728 C cela faisait deux bleus voisins
-   * dans un même logo. La Pantone reste la couleur du logo partout.
-   */
+  /** La rubrique dont le logo prend la couleur (carré et « ee »). */
+  rubrique?: Rubrique;
+  /** Force une teinte précise, hors rubrique. */
   accent?: string;
 };
 
-export function Marque({ taille = fs[6], suffixe, accent }: Props) {
-  const { c } = useTheme();
-  const teinte = accent ?? fixe.logo;
-  const mot = { fontFamily: police.display, fontSize: taille, letterSpacing: -0.045 * taille, lineHeight: taille * 1.15 };
+export function Marque({ taille = fs[6], suffixe, rubrique = 'bleu', accent }: Props) {
+  const { c, mode } = useTheme();
+  const teinte = accent ?? teintes(rubrique, mode).accent;
+  const mot = { fontFamily: police.display, fontSize: taille, letterSpacing: -0.035 * taille, lineHeight: taille * 1.15 };
 
   return (
     <View
@@ -76,9 +76,9 @@ export function Marque({ taille = fs[6], suffixe, accent }: Props) {
       accessibilityLabel={'Outsee' + (suffixe ? ' ' + suffixe : '')}
       style={{ flexDirection: 'row', alignItems: 'center', gap: 0.4 * taille }}
     >
-      <Anneaux hauteur={taille * 1.6} />
+      <Anneaux hauteur={taille * 1.6} couleur={teinte} />
       <Text style={[mot, { color: c.noir }]}>
-        outs<Text style={{ color: teinte }}>ee</Text>
+        Outs<Text style={{ color: teinte }}>ee</Text>
         {suffixe ? (
           <Text style={{ fontFamily: police.displayRegular, letterSpacing: -0.03 * taille, color: c.gris }}>
             {' ' + suffixe}

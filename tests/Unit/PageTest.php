@@ -44,6 +44,9 @@ final class PageTest extends TestCase
         $exemptes = array_map('realpath', array_filter([
             // C'est lui qui écrit la coquille.
             $racine . '/includes/page.php',
+            // La coquille du site refait (vitrine, connexion, espace pro) :
+            // siteDebut(), au même titre que pageDebut() pour le back-office.
+            $racine . '/includes/site.php',
             // Pages de secours : elles s'affichent quand la base est
             // injoignable ou qu'une erreur fatale est interceptée, c'est-à-dire
             // au moment précis où charger le gabarit — donc auth_check, donc la

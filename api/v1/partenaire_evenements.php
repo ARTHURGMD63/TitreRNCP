@@ -14,8 +14,11 @@
 require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/places.php';
 require_once __DIR__ . '/../../includes/crm.php';
+require_once __DIR__ . '/../../includes/comptes.php';
 require_once __DIR__ . '/../../includes/sponsoring.php';
 require_once __DIR__ . '/../../includes/evenements_temps.php';
+require_once __DIR__ . '/../../includes/capacites.php';
+require_once __DIR__ . '/../../includes/collaborations.php';
 
 $u   = apiPartenaire($pdo);
 $uid = (int) $u['id'];
@@ -24,9 +27,7 @@ $etab = apiEtablissementDe($pdo, $uid);
 if (!$etab) {
     apiErreur('Aucun établissement associé à ce compte.', 404, 'etablissement_absent');
 }
-if (!abonnementChoisi(abonnementEtablissement($pdo, (int) $etab['id']))) {
-    apiErreur('Choisis une formule d’abonnement pour continuer.', 403, 'abonnement_requis');
-}
+exigerAbonnementValide($pdo, $etab);
 
 $methode = (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET');
 
@@ -61,11 +62,14 @@ $stmt = $pdo->prepare(
 );
 $stmt->execute([(int) $etab['id']]);
 $evenements = $stmt->fetchAll();
+// L'établissement invité à co-organiser chaque événement (v39), et sa réponse.
+$collaborations = collaborationsDe($pdo, array_map(static fn (array $e): int => (int) $e['id'], $evenements), false);
 
 apiReponse([
     'success'     => true,
+    'usage'       => usagePartenaireMois($pdo, (int) $etab['id'], capacitesEtablissement($pdo, (int) $etab['id'])),
     'evenements'  => array_map(
-        static function (array $e): array {
+        static function (array $e) use ($collaborations): array {
             $quota    = (int) ($e['quota'] ?? 0);
             $inscrits = (int) $e['nb_inscrits'];
             // Passée = terminée, pas seulement commencée : une soirée en cours
@@ -88,7 +92,13 @@ apiReponse([
                 'is_flash'       => (bool) $e['is_flash'],
                 'is_sponsorise'  => (bool) $e['is_sponsorise'],
                 'sponsorise_actif' => (bool) $e['is_sponsorise'] && sponsoringActif($e),
+                'sponsor_debut'  => sponsoringChrono($e)['debut'] ?? null,
+                'sponsor_jusqu_au' => !empty($e['sponsor_jusqu_au']) ? (string) $e['sponsor_jusqu_au'] : null,
+                'sponsor_restant_s' => sponsoringChrono($e)['restant_s'] ?? null,
+                'supplement_tarif' => (float) ($e['supplement_tarif'] ?? 0),
+                'sponsor_tarif'  => (float) ($e['sponsor_tarif'] ?? 0),
                 'statut'         => $passe ? 'passe' : ($complet ? 'complet' : 'actif'),
+                'collaboration'  => ($collaborations[(int) $e['id']] ?? [])[0] ?? null,
             ];
         },
         $evenements

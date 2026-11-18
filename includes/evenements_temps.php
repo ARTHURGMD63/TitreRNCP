@@ -50,6 +50,32 @@ function evenementTermine(string $dateHeure, ?string $dateFin): bool
     return $fin !== null && time() > $fin;
 }
 
+/**
+ * Jusqu'à quand on peut s'inscrire : la clôture fixée par l'établissement
+ * (migration v38) si elle tombe avant le début, sinon le début lui-même.
+ * Heure de Paris, comme date_heure.
+ */
+function evenementClotureInscriptions(string $dateHeure, ?string $jusquAu): string
+{
+    if ($jusquAu && strtotime($jusquAu) !== false && strtotime($jusquAu) < strtotime($dateHeure)) {
+        return $jusquAu;
+    }
+
+    return $dateHeure;
+}
+
+/** Les inscriptions sont-elles encore ouvertes ? */
+function evenementInscriptionsOuvertes(string $dateHeure, ?string $jusquAu): bool
+{
+    return time() < strtotime(evenementClotureInscriptions($dateHeure, $jusquAu));
+}
+
+/** Fragment SQL de la clôture des inscriptions (même règle qu'au-dessus). */
+function sqlClotureInscriptions(string $alias = 'e'): string
+{
+    return "LEAST($alias.date_heure, COALESCE($alias.inscriptions_jusqu_au, $alias.date_heure))";
+}
+
 /** Fragment SQL de la fin effective d'un événement, pour un WHERE/ORDER BY. */
 function sqlFinEffectiveEvenement(string $aliasDateHeure = 'e.date_heure', string $aliasDateFin = 'e.date_fin'): string
 {

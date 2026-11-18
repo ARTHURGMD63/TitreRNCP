@@ -1,13 +1,14 @@
 /**
- * Le design system de Outsee (charte v1.0), transposé pour React Native.
+ * Le design system d'Outsee, pour React Native : la référence de toutes les
+ * couleurs, tailles et rayons de l'application.
  *
- * Chaque valeur est reprise d'assets/css/style.css, jeton pour jeton : même
- * palette, mêmes graisses, même échelle typographique, mêmes rayons. Ce n'est
- * pas une palette « inspirée de » : un étudiant qui passe du site à
- * l'application doit voir le même produit.
+ * Depuis la refonte du 2026-11-16, c'est ce fichier qui fait foi, et la
+ * charte qui le documente est docs/CHARTE_GRAPHIQUE_OUTSEE.md. Le site
+ * (assets/css/site.css) en reprend les valeurs ; assets/css/style.css, lui,
+ * garde l'ancienne palette Linkee et ne sert plus qu'au back-office.
  *
- * Deux univers, comme le site : « la nuit » (basalte, par défaut) et « le
- * jour » (craie). Le choix se fait dans Moi › Apparence.
+ * Deux thèmes, clair (craie) et sombre (basalte). Par défaut, l'application
+ * suit le réglage du téléphone ; on le change dans Moi › Apparence.
  *
  * Les noms de jetons sont conservés tels quels — `noir`, `blanc`, `bg` — y
  * compris là où ils mentent en sombre (`noir` y vaut la craie) : c'est ce qui
@@ -20,32 +21,42 @@ export type Mode = 'clair' | 'sombre';
 /** Couleurs qui ne suivent JAMAIS le thème. */
 export const fixe = {
   /** Un QR code est une cible optique : modules sombres sur fond clair. */
-  qrSombre: '#111013',
+  qrSombre: '#111116',
   qrClair: '#FFFFFF',
-  basalte: '#111013',
-  craie: '#F5F1E8',
+  basalte: '#111116',
+  craie: '#F2F2F5',
   /**
    * --sur-lave : texte basalte sur les aplats vifs et clairs (volt, dôme,
    * moutarde, alerte). Malgré son nom, il ne va plus sur l'accent : voir
    * surAccent.
    */
-  surLave: '#111013',
+  surLave: '#111116',
   /**
-   * Texte sur l'aplat d'accent (bleu Pantone 2728 C). Le basalte n'y
-   * atteindrait qu'environ 2,4:1 ; la craie y dépasse 7:1.
+   * Texte sur l'aplat d'accent (bleu #1D55F0). Le blanc y atteint 5,8:1
+   * (WCAG AA, texte normal) ; le basalte n'y atteindrait que 3,2:1.
    */
-  surAccent: '#F5F1E8',
+  surAccent: '#FFFFFF',
   /** --sur-media : texte clair posé sur une photo. */
-  surMedia: '#F5F1E8',
+  surMedia: '#FFFFFF',
   /**
-   * Le bleu du logo : Pantone 2728 C (sRGB #0047BB). Depuis le 2026-11-10,
-   * c'est aussi l'accent de l'interface (le jeton `rouge`, ex-lave).
+   * Le bleu du logo, #1D55F0 (refonte du 2026-11-16, qui remplace le
+   * Pantone 2728 C #0047BB). C'est aussi l'accent de l'interface (le jeton
+   * `rouge`, nom historique). Dans les rubriques Sport et Culture, le logo
+   * prend la couleur de la rubrique (teintes()).
    *
-   * La teinte reste exacte même sur basalte, où le « ee » n'atteint
-   * qu'environ 2,4:1 : choix de marque assumé (2026-11-09), à ne pas
-   * éclaircir en mode sombre.
+   * La teinte reste exacte même sur basalte, où le « ee » atteint 3,2:1 :
+   * choix de marque, à ne pas éclaircir en mode sombre.
    */
-  logo: '#0047BB',
+  logo: '#1D55F0',
+  /** Refonte 2026-11 : la barre d'onglets flottante, sombre dans les deux thèmes. */
+  barre: '#16161C',
+  barreIcone: '#A7A7B3',
+  /** Point « En cours », pastille de notification, « Squad commun ». */
+  enCours: '#2BD67B',
+  notif: '#FF3B30',
+  squadCommun: '#FFE58A',
+  /** Voile du panneau Filtres. */
+  voile: 'rgba(17,17,22,0.45)',
 } as const;
 
 /**
@@ -53,11 +64,11 @@ export const fixe = {
  * charte), pour ne pas toucher aux règles qui l'emploient. Il vaut le bleu du
  * logo, identique dans les deux thèmes : les aplats portent du texte craie
  * (fixe.surAccent). Sur basalte, le texte d'accent passe par `surRougeClair`,
- * un bleu éclairci, car le 2728 C n'y serait pas lisible.
+ * un bleu éclairci, car #1D55F0 n'y atteindrait que 3,2:1.
  */
 const marque = {
-  rouge: '#0047BB', // accent : Pantone 2728 C, le bleu du logo
-  rougeDeep: '#00368F',
+  rouge: '#1D55F0', // accent : le bleu Outsee (refonte 2026-11)
+  rougeDeep: '#1A47C8',
   bleu: '#5B8CFF', // dôme
   bleuDeep: '#2A56C0',
   lime: '#C8F547', // volt
@@ -65,33 +76,35 @@ const marque = {
   orange: '#FFC23D', // moutarde
   orangeDeep: '#8A5A00',
   alerteVif: '#FF4D6A',
-  surLave: '#111013',
+  surLave: '#111116',
 } as const;
 
 const clair = {
   ...marque,
-  bg: '#F5F1E8',
+  bg: '#F2F2F5',
   blanc: '#FFFFFF',
-  surface2: '#EFEAE0',
-  noir: '#111013',
-  grisFonce: '#4B4751',
-  gris: '#67626D',
-  grisClair: '#E8E2D6',
-  line2: '#DCD5C7',
+  surface2: '#EDEDF1',
+  noir: '#111116',
+  grisFonce: '#3C3C46',
+  gris: '#5A5A66',
+  grisClair: '#E4E4EA',
+  line2: '#D4D4DC',
+  /** Texte posé sur un élément « encre » actif (chip, tuile, bouton). */
+  surEncre: '#FFFFFF',
 
-  succes: '#2D6A14',
-  succesClair: '#E6F4D6',
+  succes: '#137A44',
+  succesClair: '#D9F7E6',
   danger: '#C4203F',
   dangerClair: '#FFE4E9',
   alerte: '#8A5A00',
   alerteClair: '#FFF1D1',
 
-  surRougeClair: '#00368F',
+  surRougeClair: '#1A47C8',
   surBleuClair: '#2A56C0',
-  surLimeClair: '#4D6B00',
+  surLimeClair: '#137A44',
   surOrangeClair: '#8A5A00',
 
-  rougeClair: '#E0E9FA',
+  rougeClair: '#E3EAFF',
   bleuClair: '#E3EBFF',
   limeClair: '#EEF9CF',
   orangeClair: '#FFF1D1',
@@ -99,28 +112,29 @@ const clair = {
 
 const sombre: typeof clair = {
   ...marque,
-  bg: '#111013',
-  blanc: '#1C1A1F',
-  surface2: '#242127',
-  noir: '#F5F1E8',
-  grisFonce: '#CFC9D3',
-  gris: '#8A858F',
-  grisClair: '#2A272E',
-  line2: '#36323B',
+  bg: '#0E0E12',
+  blanc: '#1C1C22',
+  surface2: '#2A2A32',
+  noir: '#F2F2F5',
+  grisFonce: '#C9C9D3',
+  gris: '#A7A7B3',
+  grisClair: '#2A2A32',
+  line2: '#3A3A44',
+  surEncre: '#111116',
 
-  succes: '#C8F547',
-  succesClair: '#273011',
+  succes: '#3DDC84',
+  succesClair: '#123222',
   danger: '#FF4D6A',
   dangerClair: '#3A151D',
   alerte: '#FFC23D',
   alerteClair: '#33280F',
 
-  surRougeClair: '#7FA5FF',
+  surRougeClair: '#8FA9FF',
   surBleuClair: '#5B8CFF',
-  surLimeClair: '#C8F547',
+  surLimeClair: '#3DDC84',
   surOrangeClair: '#FFC23D',
 
-  rougeClair: '#0F1D3A',
+  rougeClair: '#18213F',
   bleuClair: '#18223D',
   limeClair: '#273011',
   orangeClair: '#33280F',
@@ -164,42 +178,112 @@ export function couleurCss(valeur: string | null | undefined, c: Couleurs, repli
   return (c[cle] as string | undefined) ?? repli;
 }
 
-/** --fs-1 … --fs-10, en points. */
+/** --fs-1 … --fs-10, en points. 32 : grand titre d'écran ; 26 : titre de carte ; 19 : titre de section. */
 export const fs = { 1: 11, 2: 12, 3: 13, 4: 14, 5: 16, 6: 20, 7: 24, 8: 32, 9: 36, 10: 48 } as const;
 
+/**
+ * Tailles de la refonte qui ne tombent pas sur l'échelle historique.
+ *
+ * Resserrées le 2026-11-16 : sur un téléphone de 390 pt, la première
+ * version (titre d'écran 32, titre de carte 26) ne laissait voir qu'une
+ * carte d'événement par écran.
+ */
+export const taille = { titreEcran: 27, titreCarte: 18, titreCarteSport: 18, section: 17, surtitre: 11, secondaire: 14, chiffre: 22 } as const;
+
 /** Interlignes, en multiples du corps (--lh-*). */
-export const lh = { display: 1.04, tight: 1.12, snug: 1.3, normal: 1.5, relaxed: 1.6 } as const;
+export const lh = { display: 1.2, tight: 1.2, snug: 1.3, normal: 1.5, relaxed: 1.6 } as const;
 
 /** Interlettrages, en em (--ls-*) : à multiplier par le corps, voir ls(). */
-export const lsEm = { display: -0.035, tight: -0.02, normal: 0, wide: 0.06, label: 0.1 } as const;
+export const lsEm = { display: -0.035, carte: -0.03, tight: -0.02, normal: 0, wide: 0.06, label: 0.06 } as const;
 export const ls = (em: number, taille: number) => em * taille;
 
-/** Rayons (--radius-*). */
-export const rayon = { xs: 8, sm: 12, md: 16, base: 24, lg: 24, xl: 32, pill: 999 } as const;
+/**
+ * Rayons. Refonte 2026-11 : cartes 20, personnes 18, tuiles 18, boutons et
+ * chips 16, grands boutons 18, petit carré d'icône 10, barre 28. Cartes et
+ * personnes resserrées le 2026-11-16 avec le reste du gabarit.
+ */
+export const rayon = {
+  xs: 8, sm: 12, md: 16, base: 24, lg: 24, xl: 32, pill: 999,
+  carte: 20, personne: 18, tuile: 18, bouton: 16, grandBouton: 18, mini: 10, barre: 28, panneau: 28,
+} as const;
 
-/** Gouttière horizontale (--gutter) et cible tactile (--touch-min). */
-export const gutter = 20;
+/** Gouttière horizontale (18 px depuis la refonte) et cible tactile. */
+export const gutter = 18;
 export const toucheMin = 44;
+
+/**
+ * Les rubriques de l'application et leur couleur. Elle colore le logo, le
+ * surlignage du titre, la carte principale de l'écran et les boutons
+ * d'action principale.
+ *
+ *  - accent : l'aplat ; ce qui est posé dessus est blanc ;
+ *  - surAccent2 : le texte secondaire sur l'aplat ;
+ *  - doux / texteDoux : la pastille teintée (niveau, statut) et son texte.
+ */
+export type Rubrique = 'bleu' | 'sport' | 'culture';
+export type Teintes = { accent: string; surAccent2: string; doux: string; texteDoux: string };
+
+const TEINTES: Record<Rubrique, Record<Mode, Teintes>> = {
+  bleu: {
+    clair: { accent: '#1D55F0', surAccent2: '#E3EAFF', doux: '#E3EAFF', texteDoux: '#1A47C8' },
+    sombre: { accent: '#1D55F0', surAccent2: '#E3EAFF', doux: '#1D2647', texteDoux: '#A9BDFF' },
+  },
+  sport: {
+    clair: { accent: '#E02D24', surAccent2: '#FDE3E1', doux: '#FDE3E1', texteDoux: '#A3160F' },
+    sombre: { accent: '#E02D24', surAccent2: '#FDE3E1', doux: '#3D1A18', texteDoux: '#FF9C96' },
+  },
+  culture: {
+    clair: { accent: '#7B4DF2', surAccent2: '#EDE5FF', doux: '#EDE5FF', texteDoux: '#5B3BB5' },
+    sombre: { accent: '#7B4DF2', surAccent2: '#EDE5FF', doux: '#2C2250', texteDoux: '#C7B3FF' },
+  },
+};
+
+export function teintes(r: Rubrique, mode: Mode): Teintes {
+  return TEINTES[r][mode];
+}
+
+/**
+ * Le petit carré coloré des chips de catégorie (28 px, rayon 10, icône
+ * blanche). La clé est le code de la catégorie côté API.
+ */
+export const couleursCategorie: Record<string, string> = {
+  'pour-moi': '#FFB020',
+  carte: '#22B573',
+  bar: '#FF8A3D',
+  boite: '#8B5CF6',
+  resto: '#F0508A',
+  padel: '#3B82F6',
+  tennis: '#22B573',
+  golf: '#14B8A6',
+  squash: '#FF8A3D',
+  expo: '#F0508A',
+  concert: '#8B5CF6',
+  spectacle: '#FFB020',
+  patrimoine: '#14B8A6',
+};
+
+/** Les couleurs des confettis, en plus de l'accent de la rubrique. */
+export const couleursConfettis = ['#FF8A3D', '#FFB020', '#22B573', '#F0508A', '#8B5CF6'] as const;
 
 /**
  * Familles typographiques, une par graisse : React Native ne synthétise pas
  * les graisses d'une police chargée, il faut nommer le fichier.
  *
- *  - display : Unbounded 800 (titres, chiffres clés), 400 (suffixe du logo)
- *  - sans    : Instrument Sans 400 à 700 (texte, interfaces, boutons)
- *  - mono    : JetBrains Mono 400 à 600 (étiquettes, horaires, XP)
+ * Refonte 2026-11 : une seule police, Onest (400 à 700), sur toute
+ * l'application. Les anciens noms de rôles (display, sans, mono) restent pour
+ * ne pas toucher aux écrans qui les emploient.
  */
 export const police = {
-  display: 'Unbounded_800ExtraBold',
-  displayRegular: 'Unbounded_400Regular',
-  sans400: 'InstrumentSans_400Regular',
-  sans500: 'InstrumentSans_500Medium',
-  sans600: 'InstrumentSans_600SemiBold',
-  sans700: 'InstrumentSans_700Bold',
-  sans600Italique: 'InstrumentSans_600SemiBold_Italic',
-  mono400: 'JetBrainsMono_400Regular',
-  mono500: 'JetBrainsMono_500Medium',
-  mono600: 'JetBrainsMono_600SemiBold',
+  display: 'Onest_700Bold',
+  displayRegular: 'Onest_400Regular',
+  sans400: 'Onest_400Regular',
+  sans500: 'Onest_500Medium',
+  sans600: 'Onest_600SemiBold',
+  sans700: 'Onest_700Bold',
+  sans600Italique: 'Onest_600SemiBold',
+  mono400: 'Onest_500Medium',
+  mono500: 'Onest_500Medium',
+  mono600: 'Onest_600SemiBold',
 } as const;
 
 export function sans(poids: 400 | 500 | 600 | 700 = 400): string {
@@ -210,28 +294,22 @@ export function mono(poids: 400 | 500 | 600 = 500): string {
 }
 
 /**
- * Ombres (--shadow-*). Sur basalte, pas d'ombre portée : on superpose des
- * surfaces plus claires — sauf --shadow-lg, gardé pour ce qui flotte.
+ * Ombres. Refonte : elles sont rares — seulement ce qui flotte (barre
+ * d'onglets, bouton « + Créer ») et la carte accent principale (halo()).
+ * sm et base ne dessinent donc plus rien.
  */
 export function ombre(mode: Mode, niveau: 'sm' | 'base' | 'lg') {
+  if (niveau !== 'lg') return {};
   if (mode === 'sombre') {
-    return niveau === 'lg'
-      ? { shadowColor: '#000', shadowOffset: { width: 0, height: 18 }, shadowOpacity: 0.5, shadowRadius: 24, elevation: 12 }
-      : {};
+    return { shadowColor: '#000', shadowOffset: { width: 0, height: 18 }, shadowOpacity: 0.5, shadowRadius: 24, elevation: 12 };
   }
-  const t = {
-    sm: { h: 1, r: 2, o: 0.04, e: 1 },
-    base: { h: 6, r: 12, o: 0.06, e: 2 },
-    lg: { h: 16, r: 22, o: 0.12, e: 10 },
-  }[niveau];
-  return { shadowColor: '#111013', shadowOffset: { width: 0, height: t.h }, shadowOpacity: t.o, shadowRadius: t.r, elevation: t.e };
+  return { shadowColor: '#111116', shadowOffset: { width: 0, height: 16 }, shadowOpacity: 0.14, shadowRadius: 22, elevation: 10 };
 }
 
-/** --halo-lave : carte flash, pass actif, et le liseré d'une soirée en cours. */
-export const haloLave = {
-  shadowColor: '#0047BB',
-  shadowOffset: { width: 0, height: 18 },
-  shadowOpacity: 0.45,
-  shadowRadius: 26,
-  elevation: 14,
-} as const;
+/** L'ombre colorée de la carte accent principale. */
+export function halo(couleur: string) {
+  return { shadowColor: couleur, shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.3, shadowRadius: 22, elevation: 10 } as const;
+}
+
+/** --halo-lave : carte flash, pass actif — désormais l'accent bleu. */
+export const haloLave = halo('#1D55F0');

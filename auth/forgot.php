@@ -2,7 +2,7 @@
 // La session est demarree par auth_check.php, qui pose d'abord les
 // drapeaux du cookie : la demarrer ici la ferait naitre sans eux.
 require_once __DIR__ . '/../includes/auth_check.php';
-require_once __DIR__ . '/../includes/page.php';
+require_once __DIR__ . '/../includes/site.php';
 require_once __DIR__ . '/../includes/db.php';
 
 $sent  = false;
@@ -12,7 +12,7 @@ $devLink = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrfVerify();
     $email = trim($_POST['email'] ?? '');
-    $ip    = (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+    $ip    = ipClient();
 
     // Sans cette garde, connaître l'adresse d'une victime suffisait à la
     // bombarder de mails de réinitialisation à volonté.
@@ -30,10 +30,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // prefixeApplication() — et non plus deviné d'après le nom d'hôte, ce
         // qui produisait un lien sans « /TitreRNCP » dès qu'on ouvrait le site
         // à autre chose que localhost.
-        $host    = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $enHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-                || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
-        $base    = ($enHttps ? 'https://' : 'http://') . $host . baseUrl('');
+        // APP_URL en production : un Host forgé enverrait à la victime un
+        // vrai e-mail Outsee dont le lien pointe chez l'attaquant.
+        $base    = urlPublique();
 
         if ($token) {
             sendResetEmail($email, $token, $base);
@@ -45,52 +44,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-<?php pageDebut('Outsee — Mot de passe oublié'); ?>
-<div class="auth-page">
-  <div class="auth-logo">
-    <a class="bouton-retour" href="<?= baseUrl('/auth/login.php') ?>" aria-label="Retour à la connexion"><?= icon('fleche-g') ?></a>
-  </div>
-
-  <h1 class="auth-headline titre-page">
-    <div class="display" style="font-size:var(--fs-8);">Mot de passe</div>
-    <div class="display-italic" style="font-size:var(--fs-8);">oublié ?</div>
-  </h1>
-
-  <?php if ($sent): ?>
-    <div class="encart-ok" role="status">
-      Si cet email est associé à un compte, tu recevras un lien de réinitialisation dans quelques minutes.
+<?php siteDebut('Mot de passe oublié — Outsee'); ?>
+<div class="auth">
+  <div class="auth__formulaire">
+    <div class="auth__haut">
+      <?= marqueSite('', baseUrl('/')) ?>
+      <a class="bouton bouton--texte" href="<?= htmlspecialchars(baseUrl('/auth/login.php'), ENT_QUOTES) ?>"><?= iconeSite('fleche-g', 'icon-sm') ?> Connexion</a>
     </div>
-    <?php if ($devLink): ?>
-      <div class="encart-info">
-        <strong class="with-icon"><?= icon('outil', 'icon-sm') ?>Mode dev — lien de réinitialisation :</strong><br>
-        <a href="<?= htmlspecialchars($devLink) ?>" style="word-break:break-all;"><?= htmlspecialchars($devLink) ?></a>
+    <main class="auth__corps" id="contenu">
+      <h1 class="auth__titre">Mot de passe <em>oublié ?</em></h1>
+      <p class="auth__sous">Indiquez l'adresse de votre compte : vous recevrez un lien pour en choisir un nouveau, valable une heure.</p>
+
+      <div class="auth__form">
+        <?php if ($sent): ?>
+          <div class="message message--succes" role="status"><?= iconeSite('check') ?><span>Si un compte existe avec cette adresse, un e-mail vient de partir. Pensez à regarder dans les indésirables.</span></div>
+          <?php if ($devLink): ?>
+            <div class="message message--alerte"><?= iconeSite('info') ?><span>Mode développement : <a href="<?= htmlspecialchars($devLink, ENT_QUOTES) ?>">ouvrir le lien de réinitialisation</a></span></div>
+          <?php endif; ?>
+          <a class="bouton bouton--clair bouton--bloc" href="<?= htmlspecialchars(baseUrl('/auth/login.php'), ENT_QUOTES) ?>">Retour à la connexion</a>
+        <?php else: ?>
+          <form method="post" class="auth__form" style="margin-top:0;" novalidate>
+            <?= csrfField() ?>
+            <?php if ($error): ?>
+              <div class="message message--erreur" role="alert"><?= iconeSite('alerte') ?><span><?= htmlspecialchars($error) ?></span></div>
+            <?php endif; ?>
+            <div class="champ">
+              <label for="email">E-mail</label>
+              <input type="email" id="email" name="email" autocomplete="email" required autofocus value="<?= htmlspecialchars((string) ($_POST['email'] ?? '')) ?>">
+            </div>
+            <button type="submit" class="bouton bouton--plein bouton--grand bouton--bloc">Recevoir le lien</button>
+          </form>
+        <?php endif; ?>
       </div>
-    <?php endif; ?>
-  <?php else: ?>
-    <?php if ($error): ?>
-      <div class="form-error"><?= htmlspecialchars($error) ?></div>
-    <?php endif; ?>
-
-    <p style="font-size:var(--fs-5);color:var(--gris-fonce);line-height:var(--lh-normal);margin-bottom:24px;">
-      Saisis ton adresse email. Si elle est associée à un compte, tu recevras un lien valable <strong>1 heure</strong>.
-    </p>
-
-    <form method="POST">
-      <?= csrfField() ?>
-      <div class="form-group">
-        <label for="email">Adresse email</label>
-        <input type="email" id="email" name="email" autocomplete="username"
-               placeholder="arthur@uca.fr" required autofocus>
-      </div>
-      <button type="submit" class="btn btn-primary btn-full" style="margin-top:8px;">
-        Envoyer le lien
-      </button>
-    </form>
-  <?php endif; ?>
-
-  <div class="auth-link">
-    <a href="<?= baseUrl('/auth/login.php') ?>" style="font-weight:var(--fw-medium);color:var(--gris);">Retour à la connexion</a>
+      <p class="auth__bas">Étudiant ? Le mot de passe se change aussi depuis l'application.</p>
+    </main>
   </div>
+  <aside class="auth__visuel" aria-hidden="true">
+    <h2>On vous remet <em>sur la piste.</em></h2>
+  </aside>
 </div>
-</body>
-</html>
+<?php siteFin(); ?>

@@ -17,6 +17,8 @@
 export function messageConnexion(erreur: { code: string; message: string } | null): string {
   if (!erreur) return 'Connexion impossible.';
   if (erreur.code === 'identifiants') return 'Email ou mot de passe incorrect.';
+  if (erreur.code === 'totp_requis') return "Saisis le code de vérification de ton application d'authentification.";
+  if (erreur.code === 'totp_invalide') return 'Code de vérification incorrect.';
   if (erreur.code === 'trop_de_tentatives') return 'Trop de tentatives. Réessaye dans 15 minutes.';
   return erreur.message;
 }
@@ -34,9 +36,10 @@ export type EtatInscription = 'libre' | 'attente' | 'vient';
  * Le texte du bouton de la fiche d'une soirée. Une soirée déjà complète le
  * dit d'emblée, sans attendre le refus du serveur.
  */
-export function libelleInscription(etat: EtatInscription, dejaInscrit: boolean, libelleErreur: string | null, complet = false): string {
+export function libelleInscription(etat: EtatInscription, dejaInscrit: boolean, libelleErreur: string | null, complet = false, closes = false): string {
   if (etat === 'vient') return 'Inscrit';
   if (dejaInscrit) return 'Tu es inscrit·e';
+  if (closes) return 'Inscriptions closes';
   if (complet) return 'Complet';
   return libelleErreur ?? "Rejoindre l'événement";
 }
@@ -117,6 +120,19 @@ export function formatEuros(montant: number): string {
   const arrondi = Math.round(montant * 100) / 100;
   const texte = Number.isInteger(arrondi) ? String(arrondi) : arrondi.toFixed(2).replace('.', ',');
   return `${texte} €`;
+}
+
+/**
+ * Le prix d'un événement tel que l'étudiant le paie : le prix habituel fixé
+ * par l'établissement, moins la réduction. `null` quand aucun prix n'est
+ * renseigné ou que l'entrée est gratuite (la mention « Gratuit » existe déjà).
+ */
+export function prixEvenement(ev: { prix_normal: number | null; reduction: number | null; is_gratuit: boolean }): { final: string; barre: string | null } | null {
+  const normal = ev.prix_normal ?? 0;
+  if (ev.is_gratuit || normal <= 0) return null;
+  const reduction = Math.max(0, Math.min(100, ev.reduction ?? 0));
+  if (reduction <= 0) return { final: formatEuros(normal), barre: null };
+  return { final: formatEuros(normal * (1 - reduction / 100)), barre: formatEuros(normal) };
 }
 
 /**

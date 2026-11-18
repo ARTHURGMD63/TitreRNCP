@@ -22,8 +22,9 @@ import { useJeton } from '../../session';
 import { useTheme } from '../../useTheme';
 
 const ONGLETS: OngletBarre[] = [
-  { route: 'index', libelle: 'Tableau de bord', icone: 'appareil' },
-  { route: 'evenements', libelle: 'Événements', icone: 'calendrier' },
+  // « Tableau de bord » tronquait en « Tableau de b… » sur 375 px ; la barre des clubs dit déjà « Tableau ».
+  { route: 'index', libelle: 'Tableau', icone: 'appareil', court: 'Accueil' },
+  { route: 'evenements', libelle: 'Événements', icone: 'calendrier', court: 'Soirées' },
   { route: 'moi', libelle: 'Moi', icone: 'personne' },
 ];
 
@@ -37,6 +38,7 @@ const ONGLETS_CLUB: OngletBarre[] = [
 const PARENT: Record<string, string> = {
   scan: 'index',
   'evenement-form': 'evenements',
+  'evenement-suivi': 'evenements',
   abonnement: 'moi',
   photos: 'moi',
 };
@@ -61,7 +63,7 @@ export default function OngletsPartenaire() {
           {...props}
           onglets={estClub ? ONGLETS_CLUB : ONGLETS}
           parent={PARENT}
-          actionCentrale={estClub ? undefined : { libelle: 'Créer une soirée', icone: 'plus', couleur: c.orange, onPress: () => router.push({ pathname: '/evenement-form' }) }}
+          actionCentrale={estClub ? undefined : { libelle: 'Créer une soirée', icone: 'plus', couleur: c.rouge, onPress: () => router.push({ pathname: '/evenement-form' }) }}
         />
       )}
       screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: c.bg }, animation: 'none', lazy: false }}
@@ -72,6 +74,7 @@ export default function OngletsPartenaire() {
       <Tabs.Screen name="moi" options={{ title: 'Moi' }} />
       <Tabs.Screen name="scan" options={{ href: null }} />
       <Tabs.Screen name="evenement-form" options={{ href: null }} />
+      <Tabs.Screen name="evenement-suivi" options={{ href: null }} />
       <Tabs.Screen name="abonnement" options={{ href: null }} />
       <Tabs.Screen name="photos" options={{ href: null }} />
     </Tabs>

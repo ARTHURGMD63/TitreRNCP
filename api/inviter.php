@@ -13,6 +13,7 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/places.php';
 require_once __DIR__ . '/../includes/temps_reel.php';
 require_once __DIR__ . '/../includes/culture.php';
+require_once __DIR__ . '/../includes/evenements_temps.php';
 header('Content-Type: application/json');
 
 // Ecriture : POST obligatoire, jeton CSRF et origine verifies.
@@ -43,8 +44,10 @@ function cibleValide(PDO $pdo, string $type, int $id): ?array
                     (SELECT COUNT(*) FROM inscriptions i
                       WHERE i.evenement_id = e.id AND i.statut != 'annule') AS nb
                FROM evenements e
-              WHERE e.id = ? AND e.date_heure >= NOW()"
+              WHERE e.id = ? AND " . sqlClotureInscriptions('e') . " > '" . date('Y-m-d H:i:s') . "'"
         );
+        // Inscriptions closes (clôture de l'établissement ou début, v38) :
+        // une invitation n'ouvre pas de porte dérobée.
     } elseif ($type === 'culture') {
         // Une exposition commencée reste une invitation valable jusqu'à sa
         // fermeture : on compare à la fin, pas au début.
@@ -208,8 +211,14 @@ if ($action === 'accept') {
     try {
         if ($invite['type'] === 'event') {
             // Meme identifiant de pass que l'inscription directe : imprevisible.
-            $pdo->prepare("INSERT INTO inscriptions (user_id, evenement_id, qr_code, statut) VALUES (?,?,?,'inscrit')")
-                ->execute([$moi, $cibleId, bin2hex(random_bytes(32))]);
+            // Un pass annulé garde sa ligne (clé unique) : on la ranime au lieu
+            // de buter sur le doublon, sinon l'invité resterait sans pass.
+            $pdo->prepare(
+                "INSERT INTO inscriptions (user_id, evenement_id, qr_code, statut) VALUES (?,?,?,'inscrit')
+                 ON DUPLICATE KEY UPDATE
+                    qr_code = IF(statut = 'annule', VALUES(qr_code), qr_code),
+                    statut  = IF(statut = 'annule', 'inscrit', statut)"
+            )->execute([$moi, $cibleId, bin2hex(random_bytes(32))]);
         } elseif ($invite['type'] === 'culture') {
             $pdo->prepare("INSERT INTO culture_inscriptions (user_id, evenement_id) VALUES (?,?)")
                 ->execute([$moi, $cibleId]);

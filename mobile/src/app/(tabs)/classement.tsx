@@ -53,7 +53,7 @@ export default function Classement() {
 
   const videCarte = (texte: string, bouton: string, vers: () => void) => (
     <View style={[{ backgroundColor: c.blanc, borderRadius: rayon.base, borderWidth: 1, borderColor: c.grisClair, paddingVertical: 36, paddingHorizontal: 18, alignItems: 'center' }, ombre('sm')]}>
-      <T taille={fs[5]} couleur={c.grisFonce} style={{ textAlign: 'center', marginBottom: 14 }}>{texte}</T>
+      <T taille={fs[4]} couleur={c.grisFonce} style={{ textAlign: 'center', marginBottom: 14 }}>{texte}</T>
       <Bouton libelle={bouton} onPress={vers} style={{ alignSelf: 'center' }} />
     </View>
   );
@@ -62,7 +62,7 @@ export default function Classement() {
     <Ecran rafraichit={rafraichit} onRafraichir={() => { setRafraichit(true); void charger(); }}>
       <EnTete>
         <BoutonRetour vers="/moi" libelle="Retour à mon profil" style={{ marginBottom: 18 }} />
-        <Display taille={fs[8]} interligne={lh.tight} accessibilityRole="header" style={{ marginBottom: 22 }}>Classement</Display>
+        <Display taille={fs[7]} interligne={lh.tight} accessibilityRole="header" style={{ marginBottom: 22 }}>Classement</Display>
         <Segments
           options={[{ code: 'amis', libelle: 'Amis' }, { code: 'ecole', libelle: 'Mon école' }, { code: 'ville', libelle: 'Clermont' }]}
           valeur={portee}
@@ -95,8 +95,8 @@ export default function Classement() {
                         alignSelf: 'stretch', borderRadius: rayon.md, borderWidth: 1, alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 12, paddingHorizontal: 6,
                         backgroundColor: premier ? c.lime : c.blanc, borderColor: premier ? c.lime : c.grisClair, minHeight: premier ? 118 : i === 1 ? 92 : 76,
                       }}>
-                        <Display taille={fs[8]} couleur={premier ? fixe.surLave : c.noir}>{l.rang}</Display>
-                        <Text numberOfLines={1} style={{ fontFamily: mono(400), fontSize: fs[1], color: premier ? 'rgba(17,16,19,0.72)' : c.gris }}>{nombre(l.xp)} XP</Text>
+                        <Display taille={fs[6]} couleur={premier ? fixe.surLave : c.noir}>{l.rang}</Display>
+                        <Text numberOfLines={1} style={{ fontFamily: mono(400), fontSize: fs[1], color: premier ? 'rgba(17,17,22,0.72)' : c.gris }}>{nombre(l.xp)} XP</Text>
                       </View>
                     </Pressable>
                   );

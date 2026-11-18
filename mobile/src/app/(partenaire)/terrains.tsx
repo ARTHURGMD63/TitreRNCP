@@ -21,14 +21,16 @@ import { useFocusEffect } from 'expo-router';
 
 import { api, ErreurApi, type Creneau, type ReponseTerrainsClub, type TerrainClub } from '../../api';
 import { SPORTS } from '../../catalogue';
+import { Apparition, PressableAnime } from '../../composants/Animations';
 import { Bouton } from '../../composants/Bouton';
+import { CarreIcone, EnTeteApp, useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Encart, Pilule } from '../../composants/Elements';
 import { Feuille } from '../../composants/Feuille';
 import { Case, Champ, ChampDate, isoDate, Selecteur } from '../../composants/Formulaire';
 import { Icone } from '../../composants/Icone';
 import { libelleSport } from '../../composants/Sport';
-import { Display, Mono, T, TitreEcran } from '../../composants/Texte';
+import { T, TitreEcran, TitreSection } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
 import { dateFr } from '../../format';
@@ -46,6 +48,7 @@ const RECURRENCES = [
 
 function LigneCreneau({ cr, onToucher }: { cr: Creneau; onToucher: () => void }) {
   const { c } = useTheme();
+  const sport = useRubrique('sport');
   const libre = cr.statut === 'libre';
   const annule = cr.statut === 'annule';
   const etat = libre
@@ -53,26 +56,29 @@ function LigneCreneau({ cr, onToucher }: { cr: Creneau; onToucher: () => void })
     : annule
       ? 'Annulé'
       : `Réservé par ${cr.organisateur?.prenom ?? 'un joueur'} · ${cr.places.prises}/${cr.places.total}${cr.ouvert && cr.places.restantes > 0 ? ' · ouverte' : ''}`;
-  const couleur = libre ? c.gris : annule ? c.danger : c.surBleuClair;
+  const couleur = libre ? c.gris : annule ? c.danger : sport.texteDoux;
   return (
     <Pressable
       onPress={annule ? undefined : onToucher}
       accessibilityRole="button"
       accessibilityLabel={`${cr.terrain.nom} ${dateFr(cr.debut, 'H\\hi')}, ${etat}`}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderTopWidth: 1, borderTopColor: c.grisClair }}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 46, paddingVertical: 10, borderTopWidth: 1, borderTopColor: c.grisClair }}
     >
-      <Mono couleur={c.noir} style={{ width: 52 }}>{dateFr(cr.debut, 'H\\hi')}</Mono>
-      <View style={{ flex: 1 }}>
-        <T taille={fs[3]} poids={700}>{cr.terrain.nom}</T>
-        <T taille={fs[2]} couleur={couleur}>{etat}</T>
+      <View style={{ width: 58, paddingVertical: 6, borderRadius: rayon.mini, backgroundColor: libre ? c.surface2 : annule ? c.dangerClair : sport.doux, alignItems: 'center' }}>
+        <T taille={fs[4]} poids={700} couleur={libre ? c.noir : annule ? c.danger : sport.texteDoux}>{dateFr(cr.debut, 'H\\hi')}</T>
       </View>
-      {!annule ? <Icone nom="croix" taille={14} couleur={c.gris} /> : null}
+      <View style={{ flex: 1 }}>
+        <T taille={fs[4]} poids={700}>{cr.terrain.nom}</T>
+        <T taille={fs[4]} couleur={couleur}>{etat}</T>
+      </View>
+      {!annule ? <Icone nom="croix" taille={16} couleur={c.gris} /> : null}
     </Pressable>
   );
 }
 
 export default function Terrains() {
   const { c } = useTheme();
+  const sport = useRubrique('sport');
   const jeton = useJeton();
   const toast = useToast();
 
@@ -147,11 +153,16 @@ export default function Terrains() {
         </>
       }
     >
-      <EnTete>
-        <TitreEcran lignes={['Mes', 'terrains.']} accent={c.surBleuClair} />
-        <T taille={fs[3]} couleur={c.gris} style={{ marginTop: 10 }}>
-          Mets tes créneaux en ligne : les étudiants réservent entre amis ou complètent une partie. Le prix se règle chez toi.
-        </T>
+      <EnTete style={{ paddingBottom: 4 }}>
+        <Apparition index={0}>
+          <EnTeteApp rubrique="sport" />
+        </Apparition>
+        <Apparition index={1}>
+          <TitreEcran avant="Mes" surligne="terrains." rubrique="sport" style={{ marginBottom: 12 }} />
+          <T taille={fs[4]} couleur={c.gris} style={{ marginBottom: 16 }}>
+            Mets tes créneaux en ligne : les étudiants réservent entre amis ou complètent une partie. Le prix se règle chez toi.
+          </T>
+        </Apparition>
       </EnTete>
 
       <Contenu style={{ paddingTop: 0 }}>
@@ -160,46 +171,53 @@ export default function Terrains() {
             <T taille={fs[3]} couleur={c.grisFonce}>Ajoute un premier terrain pour pouvoir publier des créneaux.</T>
           </Encart>
         ) : (
-          <Bouton libelle="Publier des créneaux" icone="plus" variante="bleu" plein onPress={() => setPublication(true)} style={{ marginBottom: 20 }} />
+          <Bouton libelle="Publier des créneaux" icone="plus" variante="sport" plein onPress={() => setPublication(true)} style={{ marginBottom: 20 }} />
         )}
 
-        <Mono accessibilityRole="header" style={{ marginBottom: 8 }}>Les 7 prochains jours</Mono>
+        <TitreSection style={{ marginBottom: 12 }}>Les 7 prochains jours</TitreSection>
         {planning.length === 0 ? (
-          <T taille={fs[3]} couleur={c.gris} style={{ marginBottom: 20 }}>Aucun créneau en ligne cette semaine.</T>
+          <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 14, marginBottom: 16 }}>
+            <T taille={fs[4]} couleur={c.gris}>Aucun créneau en ligne cette semaine.</T>
+          </View>
         ) : (
           Object.entries(parJour).map(([jour, liste]) => (
-            <View key={jour} style={{ backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.base, paddingHorizontal: 16, paddingTop: 14, marginBottom: 12 }}>
-              <T taille={fs[4]} poids={700} style={{ marginBottom: 6 }}>{dateFr(`${jour} 12:00:00`, 'l j F')}</T>
+            <View key={jour} style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, paddingHorizontal: 18, paddingTop: 16, paddingBottom: 6, marginBottom: 12 }}>
+              <T taille={fs[5] + 1} poids={700} style={{ marginBottom: 8 }}>{dateFr(`${jour} 12:00:00`, 'l j F')}</T>
               {liste.map((cr) => <LigneCreneau key={cr.id} cr={cr} onToucher={() => toucherCreneau(cr)} />)}
             </View>
           ))
         )}
 
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, marginBottom: 12 }}>
-          <Mono accessibilityRole="header">Terrains</Mono>
-          <Pressable onPress={() => setEdition('nouveau')} accessibilityRole="button" hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <Icone nom="plus" taille={14} couleur={c.surBleuClair} />
-            <T taille={fs[3]} poids={700} couleur={c.surBleuClair}>Ajouter</T>
-          </Pressable>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, marginBottom: 12 }}>
+          <TitreSection>Terrains</TitreSection>
+          <PressableAnime onPress={() => setEdition('nouveau')} accessibilityRole="button" accessibilityLabel="Ajouter un terrain"
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, paddingHorizontal: 14, borderRadius: rayon.bouton, backgroundColor: c.blanc }}>
+            <Icone nom="plus" taille={16} couleur={sport.texteDoux} trait={2.5} />
+            <T taille={fs[4]} poids={700} couleur={sport.texteDoux}>Ajouter</T>
+          </PressableAnime>
         </View>
         {donnees.terrains.map((t) => (
-          <Pressable
+          <PressableAnime
             key={t.id}
             onPress={() => setEdition(t)}
             accessibilityRole="button"
-            style={{ backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.base, padding: 16, marginBottom: 10, opacity: t.actif ? 1 : 0.6 }}
+            accessibilityLabel={`Modifier ${t.nom}`}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: c.blanc, borderRadius: rayon.tuile, padding: 14, marginBottom: 10, opacity: t.actif ? 1 : 0.6 }}
           >
+            <CarreIcone icone="terrain" fond={sport.doux} encre={sport.texteDoux} taille={40} />
+            <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
               <T taille={fs[4]} poids={700} style={{ flex: 1 }}>{t.nom}</T>
-              <Icone nom="outil" taille={14} couleur={c.gris} />
+              <Icone nom="crayon" taille={16} couleur={c.gris} />
             </View>
-            <T taille={fs[3]} couleur={c.gris}>
+            <T taille={fs[4]} couleur={c.gris}>
               {libelleSport(t.sport)} · {t.joueurs} joueurs · {t.duree_min} min · {formatEuros(t.prix)}{t.actif ? '' : ' · désactivé'}
             </T>
-            <T taille={fs[2]} couleur={c.gris} style={{ marginTop: 4 }}>
+            <T taille={fs[4]} couleur={c.gris} style={{ marginTop: 2 }}>
               {t.creneaux_libres} libre{t.creneaux_libres > 1 ? 's' : ''} · {t.creneaux_reserves} réservé{t.creneaux_reserves > 1 ? 's' : ''} à venir
             </T>
-          </Pressable>
+            </View>
+          </PressableAnime>
         ))}
       </Contenu>
     </Ecran>
@@ -268,7 +286,7 @@ function FeuilleTerrain({ terrain, onClose, onEnregistre }: {
 
   return (
     <Feuille visible={terrain !== null} onClose={onClose}>
-      <Display taille={fs[7]} style={{ marginBottom: 20 }}>{existant ? 'Modifier le terrain' : 'Nouveau terrain'}</Display>
+      <T taille={20} poids={700} style={{ marginBottom: 20, letterSpacing: -0.03 * 20 }}>{existant ? 'Modifier le terrain' : 'Nouveau terrain'}</T>
       <Champ etiquette="Nom" value={nom} onChangeText={setNom} placeholder="Terrain 1, couvert" />
       <Selecteur etiquette="Sport" valeur={sport} onChange={setSport} options={Object.entries(SPORTS).map(([valeur, libelle]) => ({ valeur, libelle }))} />
       <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -279,7 +297,7 @@ function FeuilleTerrain({ terrain, onClose, onEnregistre }: {
       {existant ? (
         <Case coche={actif} onChange={setActif} style={{ marginBottom: 16 }}>Terrain actif (réservable)</Case>
       ) : null}
-      <Bouton libelle="Enregistrer" variante="bleu" plein chargement={attente} onPress={enregistrer} />
+      <Bouton libelle="Enregistrer" variante="sport" plein chargement={attente} onPress={enregistrer} />
       {existant ? <Bouton libelle="Supprimer le terrain" variante="alerte" plein onPress={supprimer} style={{ marginTop: 8 }} /> : null}
       <Bouton libelle="Annuler" variante="contour" plein onPress={onClose} style={{ marginTop: 8 }} />
     </Feuille>
@@ -322,8 +340,8 @@ function FeuillePublication({ visible, terrains, onClose, onPublie }: {
 
   return (
     <Feuille visible={visible} onClose={onClose}>
-      <Display taille={fs[7]} style={{ marginBottom: 20 }}>Publier des créneaux</Display>
-      <Mono style={{ marginBottom: 8 }}>Terrain</Mono>
+      <T taille={20} poids={700} style={{ marginBottom: 20, letterSpacing: -0.03 * 20 }}>Publier des créneaux</T>
+      <T taille={fs[4]} poids={500} couleur={c.gris} style={{ marginBottom: 8 }}>Terrain</T>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 16 }} contentContainerStyle={{ gap: 8 }}>
         {terrains.map((t) => (
           <Pilule key={t.id} libelle={t.nom} actif={terrain?.id === t.id} accent={c.bleu} onPress={() => setTerrainId(t.id)} />
@@ -335,14 +353,14 @@ function FeuillePublication({ visible, terrains, onClose, onPublie }: {
         <Champ style={{ flex: 1 }} etiquette="À" value={a} onChangeText={setA} placeholder="22:00" keyboardType="numbers-and-punctuation" />
       </View>
       <Selecteur etiquette="Récurrence" valeur={semaines} onChange={setSemaines} options={RECURRENCES} />
-      <T taille={fs[3]} couleur={c.grisFonce} style={{ marginBottom: 16 }}>
+      <T taille={fs[4]} couleur={c.grisFonce} style={{ marginBottom: 16 }}>
         {terrain && jour
           ? debuts.length > 0
             ? `${debuts.length} créneau${debuts.length > 1 ? 'x' : ''} de ${terrain.duree_min} min, à ${formatEuros(terrain.prix)} chacun.`
             : 'Aucun créneau entier dans cette plage horaire.'
           : 'Choisis un jour pour voir les créneaux.'}
       </T>
-      <Bouton libelle="Mettre en ligne" variante="bleu" plein chargement={attente} desactive={debuts.length === 0} onPress={publier} />
+      <Bouton libelle="Mettre en ligne" variante="sport" plein chargement={attente} desactive={debuts.length === 0} onPress={publier} />
       <Bouton libelle="Annuler" variante="contour" plein onPress={onClose} style={{ marginTop: 8 }} />
     </Feuille>
   );

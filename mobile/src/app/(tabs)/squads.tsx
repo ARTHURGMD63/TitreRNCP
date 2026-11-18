@@ -2,41 +2,47 @@
  * Sport — l'onglet de l'univers sport, dôme pour l'accent.
  *
  * « Ne fais pas / de sport tout seul. », puis :
- *   - les filtres par sport (Tout, Padel, Tennis…) ;
+ *   - les filtres par sport (Tout, Padel, Tennis…), et le panneau Filtres :
+ *     niveau, et distance (1 à 20 km) autour d'un point posé sur la carte ;
  *   - « Mes parties » quand j'en ai, en tête : c'est ce qui me concerne ;
  *   - quatre rubriques :
  *       Parties à compléter : des étudiants ont réservé un terrain et ouvert
- *         les places restantes aux inconnus, filtrables par niveau ;
+ *         les places restantes aux inconnus ;
  *       Terrains libres : les créneaux que les clubs ont mis en ligne ;
  *       Clubs : les événements des clubs (tournois, stages…) ;
  *       Mes abonnements : les événements d'étudiants que je peux voir —
  *         ceux des personnes qui m'ont accepté, et ceux des associations.
+ *   Le niveau trie les parties et les événements d'étudiants ; les
+ *   compteurs des tuiles comptent ce que la liste montre vraiment.
  *
  * Tout vient d'un seul appel (api/v1/sport.php). Créer un événement est
  * gratuit et le réserve à mes abonnés (sport_squad.php).
  */
 
-import React, { useCallback, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import React, { useCallback, useRef, useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 
 import { actions, api, ErreurApi, type ReponseSport, type Squad } from '../../api';
 import { NIVEAUX_SQUAD, SPORTS, TYPES_SQUAD } from '../../catalogue';
+import { Apparition, PressableAnime } from '../../composants/Animations';
 import { Bouton } from '../../composants/Bouton';
+import { AvatarsEmpiles, EnTeteApp, Pastille, rangeeChips, Tuile, useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Pilule, Separateur } from '../../composants/Elements';
+import { RangeeDefilante } from '../../composants/RangeeDefilante';
 import { Feuille } from '../../composants/Feuille';
+import { FiltresSport, type FiltreDistance } from '../../composants/FiltresSport';
 import { Case, Champ, ChampDate, isoDateHeure, Selecteur } from '../../composants/Formulaire';
-import { Icone } from '../../composants/Icone';
-import { Marque } from '../../composants/Marque';
+import { Icone, type NomIcone } from '../../composants/Icone';
 import { CarteCreneau, CarteEvenementSport, VideSport } from '../../composants/Sport';
-import { Display, Mono, T, TitreEcran } from '../../composants/Texte';
+import { Display, Mono, T, TitreEcran, TitreSection } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
-import { court, dateFr, majuscules } from '../../format';
+import { court, dateFr } from '../../format';
 import { libelleVisibilite, niveauCompatible } from '../../regles';
 import { useJeton } from '../../session';
-import { fixe, fs, gutter, lh, police, rayon, sans } from '../../theme';
+import { couleursCategorie, fs, gutter, rayon, sans, taille } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 type Rubrique = 'parties' | 'terrains' | 'clubs' | 'abonnements';
@@ -55,6 +61,26 @@ const NIVEAUX = [
   { code: 'avance', libelle: 'Avancé' },
 ];
 
+/** Les icônes des tuiles de rubrique et des chips de sport. */
+const ICONES_RUBRIQUE: Record<Rubrique, NomIcone> = {
+  parties: 'ajout-personne',
+  terrains: 'terrain',
+  clubs: 'club',
+  abonnements: 'personnes',
+};
+
+const ICONES_SPORT: Record<string, NomIcone> = {
+  padel: 'raquette', tennis: 'balle', golf: 'drapeau', squash: 'balle', badminton: 'raquette',
+  foot5: 'balle', basket: 'balle', escalade: 'activite', running: 'activite', velo: 'activite',
+  muscu: 'activite', yoga: 'soleil', autre: 'trophee',
+};
+
+/** La couleur du carré d'un sport : celle de la maquette, sinon une teinte de la palette. */
+function couleurSport(code: string): string {
+  const palette = ['#3B82F6', '#22B573', '#14B8A6', '#FF8A3D', '#F0508A', '#8B5CF6', '#FFB020'];
+  return couleursCategorie[code] ?? palette[Array.from(code).reduce((n, ch) => n + ch.charCodeAt(0), 0) % palette.length];
+}
+
 function ouvrirCreneau(id: number) {
   router.push({ pathname: '/creneau/[id]', params: { id: String(id) } });
 }
@@ -62,14 +88,14 @@ function ouvrirCreneau(id: number) {
 // ─── Événement d'étudiant (squad) ───────────────────────────────────────────
 
 function CarteSquad({ s, onGerer }: { s: Squad; onGerer: () => void }) {
-  const { c, ombre } = useTheme();
+  const { c } = useTheme();
+  const sport = useRubrique('sport');
   const jeton = useJeton();
   const toast = useToast();
   const [rejoint, setRejoint] = useState(false);
   const [attente, setAttente] = useState(false);
   const [membres, setMembres] = useState(s.places.membres);
   const complet = s.places.membres >= s.places.quota;
-  const initiales = s.membres.slice(0, 3).map((m) => (m.prenom || '?').charAt(0).toUpperCase());
 
   async function rejoindre() {
     setAttente(true);
@@ -86,58 +112,54 @@ function CarteSquad({ s, onGerer }: { s: Squad; onGerer: () => void }) {
   }
 
   const cta = (libelle: string | null, style: object, couleur: string, props: { onPress?: () => void; disabled?: boolean; icone?: 'check' | 'engrenage' }) => (
-    <Pressable
+    <PressableAnime
       onPress={props.onPress}
       disabled={props.disabled}
       accessibilityRole="button"
-      style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 11, paddingHorizontal: 18, borderRadius: rayon.pill, borderWidth: 1.5, borderColor: 'transparent', transform: pressed && !props.disabled ? [{ scale: 0.98 }] : [] }, style]}
+      accessibilityLabel={libelle ?? 'Inscrit'}
+      style={[{ flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 36, minWidth: 40, justifyContent: 'center', paddingHorizontal: 12, borderRadius: rayon.sm, borderWidth: 1, borderColor: 'transparent' }, style]}
     >
-      {props.icone ? <Icone nom={props.icone} taille={props.icone === 'engrenage' ? 12 : 16} couleur={couleur} /> : null}
-      {libelle ? <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: couleur }}>{libelle}</Text> : null}
-    </Pressable>
+      {props.icone ? <Icone nom={props.icone} taille={14} couleur={couleur} trait={props.icone === 'check' ? 2.5 : 2} /> : null}
+      {libelle ? <Text style={{ fontFamily: sans(600), fontSize: fs[4], color: couleur }}>{libelle}</Text> : null}
+    </PressableAnime>
   );
 
   return (
-    <View style={[{ borderRadius: rayon.base, padding: 20, marginBottom: 14, borderWidth: 1, borderColor: c.grisClair, backgroundColor: c.blanc, overflow: 'hidden' }, ombre('base')]}>
-      <View style={{ position: 'absolute', top: 16, right: 16, borderWidth: 1, borderColor: c.line2, borderRadius: rayon.pill, paddingVertical: 4, paddingHorizontal: 10 }}>
-        <T taille={fs[2]} poids={500} couleur={c.grisFonce}>{NIVEAUX_SQUAD[s.niveau] ?? s.niveau}</T>
+    <View style={{ borderRadius: rayon.carte, padding: 14, marginBottom: 16, backgroundColor: c.blanc, gap: 8 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <Pastille libelle={NIVEAUX_SQUAD[s.niveau] ?? s.niveau} fond={sport.doux} encre={sport.texteDoux} />
+        <Pastille libelle={dateFr(s.date_heure, 'D j M · H\\hi')} fond={c.noir} encre={c.surEncre} style={{ flexShrink: 1 }} />
       </View>
 
-      <Mono couleur={c.surBleuClair} style={{ marginBottom: 6, paddingRight: 96 }}>
-        {majuscules(TYPES_SQUAD[s.type] ?? s.type)} · {dateFr(s.date_heure, 'D H\\hi')} ·{' '}
-        <Text style={{ color: s.visibilite === 'public' ? c.surBleuClair : c.surLimeClair }}>
-          {majuscules(s.cree_par_association ? 'Association' : libelleVisibilite(s.visibilite))}
+      <View style={{ gap: 1 }}>
+        <Text style={{ fontFamily: sans(600), fontSize: 10, letterSpacing: 0.06 * 10, textTransform: 'uppercase', color: c.gris, marginTop: 2 }}>
+          {TYPES_SQUAD[s.type] ?? s.type} ·{' '}
+          <Text style={{ color: s.visibilite === 'public' ? c.gris : c.succes }}>
+            {s.cree_par_association ? 'Association' : libelleVisibilite(s.visibilite)}
+          </Text>
         </Text>
-      </Mono>
-      <Display taille={fs[6]} interligne={lh.tight} style={{ marginBottom: 6, paddingRight: 70 }}>{s.titre}</Display>
-      <T taille={fs[3]} couleur={c.grisFonce} style={{ marginBottom: 12 }}>
-        {s.est_createur ? 'Ton événement' : `Par ${court(s.createur.prenom, s.createur.nom)}`}{s.lieu ? ` · ${s.lieu}` : ''}
-      </T>
-      {s.description ? <T taille={fs[3]} couleur={c.grisFonce} style={{ marginBottom: 12 }}>{Array.from(s.description).slice(0, 80).join('')}{Array.from(s.description).length > 80 ? '…' : ''}</T> : null}
+        <Text numberOfLines={2} style={{ fontFamily: sans(700), fontSize: taille.titreCarte, lineHeight: taille.titreCarte * 1.2, letterSpacing: -0.02 * taille.titreCarte, color: c.noir }}>{s.titre}</Text>
+        <T taille={fs[3]} couleur={c.gris} numberOfLines={1} style={{ marginTop: 2 }}>
+          {s.est_createur ? 'Ton événement' : `Par ${court(s.createur.prenom, s.createur.nom)}`}{s.lieu ? ` · ${s.lieu}` : ''}
+        </T>
+        {s.description ? <T taille={fs[3]} couleur={c.gris} numberOfLines={2}>{Array.from(s.description).slice(0, 80).join('')}{Array.from(s.description).length > 80 ? '…' : ''}</T> : null}
+      </View>
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingTop: 15, borderTopWidth: 1, borderTopColor: c.grisClair }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <View style={{ flexDirection: 'row' }}>
-            {initiales.map((l, i) => (
-              <View key={i} style={{ width: 35, height: 35, borderRadius: 18, marginLeft: i === 0 ? 0 : -15, backgroundColor: c.blanc, alignItems: 'center', justifyContent: 'center' }}>
-                <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c.bleu, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontFamily: police.display, fontSize: fs[1], color: fixe.surLave }}>{l}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-          <T taille={fs[3]} poids={500} couleur={c.grisFonce} style={{ marginLeft: 3 }}>{membres}/{s.places.quota}</T>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingTop: 10, marginTop: 2, borderTopWidth: 1, borderTopColor: c.grisClair }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <AvatarsEmpiles personnes={s.membres.slice(0, 3).map((m, i) => ({ cle: `${m.prenom}${i}`, prenom: m.prenom }))} fond={c.blanc} taille={22} />
+          <T taille={fs[3]} couleur={c.gris}>{membres}/{s.places.quota}</T>
         </View>
 
         {s.est_createur
-          ? cta('Gérer', { backgroundColor: 'transparent', borderColor: c.noir }, c.noir, { onPress: onGerer, icone: 'engrenage' })
+          ? cta('Gérer', { backgroundColor: 'transparent', borderColor: c.line2 }, c.noir, { onPress: onGerer, icone: 'engrenage' })
           : s.deja_membre
-            ? cta('Inscrit', { backgroundColor: c.surface2, borderColor: c.line2 }, c.grisFonce, { disabled: true, icone: 'check' })
+            ? cta('Inscrit', { backgroundColor: c.surface2 }, c.grisFonce, { disabled: true, icone: 'check' })
             : rejoint
-              ? cta(null, { backgroundColor: c.bleu }, fixe.surLave, { disabled: true, icone: 'check' })
+              ? cta(null, { backgroundColor: sport.accent }, '#FFFFFF', { disabled: true, icone: 'check' })
               : complet
-                ? cta('Complet', { backgroundColor: c.surface2, borderColor: c.line2 }, c.grisFonce, { disabled: true })
-                : cta(attente ? '…' : 'Rejoindre', { backgroundColor: c.bleu }, fixe.surLave, { onPress: rejoindre, disabled: attente })}
+                ? cta('Complet', { backgroundColor: c.surface2 }, c.grisFonce, { disabled: true })
+                : cta(attente ? '…' : 'Rejoindre', { backgroundColor: sport.accent }, '#FFFFFF', { onPress: rejoindre, disabled: attente })}
       </View>
     </View>
   );
@@ -146,7 +168,6 @@ function CarteSquad({ s, onGerer }: { s: Squad; onGerer: () => void }) {
 // ─── Écran ──────────────────────────────────────────────────────────────────
 
 export default function Sport() {
-  const { c } = useTheme();
   const jeton = useJeton();
   const toast = useToast();
   const [donnees, setDonnees] = useState<ReponseSport | null>(null);
@@ -155,31 +176,49 @@ export default function Sport() {
   const [sport, setSport] = useState('');
   const [rubrique, setRubrique] = useState<Rubrique>('parties');
   const [niveau, setNiveau] = useState('tous');
+  const [distance, setDistance] = useState<FiltreDistance | null>(null);
 
   const [creation, setCreation] = useState(false);
   const [gestion, setGestion] = useState<number | null>(null);
+  const [panneau, setPanneau] = useState(false);
+  const accent = useRubrique('sport');
 
+  // Le numéro de la dernière requête : en touchant Padel puis Tennis d'affilée,
+  // la réponse Padel arrivée en retard n'écrase plus la liste Tennis.
+  const derniere = useRef(0);
   const charger = useCallback(async () => {
+    const numero = ++derniere.current;
     try {
       setErreur(null);
-      setDonnees(await api.sport(jeton, sport || undefined));
+      const r = await api.sport(jeton, sport || undefined, distance ?? undefined);
+      if (numero === derniere.current) setDonnees(r);
     } catch (e) {
-      setErreur(e instanceof Error ? e.message : 'Chargement impossible.');
+      if (numero === derniere.current) setErreur(e instanceof Error ? e.message : 'Chargement impossible.');
     } finally {
-      setRafraichit(false);
+      if (numero === derniere.current) setRafraichit(false);
     }
-  }, [jeton, sport]);
+  }, [jeton, sport, distance]);
 
   useFocusEffect(useCallback(() => { void charger(); }, [charger]));
 
   const sports = [{ code: '', libelle: 'Tout' }, ...(donnees?.sports ?? Object.entries(SPORTS).map(([code, libelle]) => ({ code, libelle })))];
+  // Le niveau trie les parties et les événements d'étudiants (les deux en
+  // ont un) ; les terrains libres et les événements de club n'en ont pas.
   const parties = (donnees?.parties ?? []).filter((p) => niveauCompatible(p.niveau, niveau));
+  const squads = (donnees?.squads ?? []).filter((s) => niveauCompatible(s.niveau, niveau));
+  const nbFiltres = (niveau !== 'tous' ? 1 : 0) + (distance ? 1 : 0);
+  const resumeFiltres = [
+    niveau !== 'tous' ? `niveau : ${NIVEAUX.find((n) => n.code === niveau)?.libelle}` : null,
+    distance ? `à moins de ${distance.rayon} km` : null,
+  ].filter(Boolean).join(', ');
+  /** Le complément des listes vides quand la distance filtre. */
+  const horsZone = distance ? ` à moins de ${distance.rayon} km` : '';
 
   const nombre: Record<Rubrique, number> = {
-    parties: donnees?.parties.length ?? 0,
+    parties: parties.length,
     terrains: donnees?.libres.length ?? 0,
     clubs: donnees?.evenements.length ?? 0,
-    abonnements: donnees?.squads.length ?? 0,
+    abonnements: squads.length,
   };
 
   return (
@@ -190,59 +229,102 @@ export default function Sport() {
         <>
           <FeuilleCreation visible={creation} onClose={() => setCreation(false)} onCree={(m) => { toast(m, 'success'); setCreation(false); setRubrique('abonnements'); void charger(); }} />
           <FeuilleGestion squadId={gestion} onClose={() => setGestion(null)} onSupprime={() => { setGestion(null); void charger(); }} />
+          <FiltresSport
+            visible={panneau}
+            onClose={() => setPanneau(false)}
+            niveaux={NIVEAUX}
+            niveau={niveau}
+            distance={distance}
+            onAppliquer={(n, d) => { setNiveau(n); setDistance(d); }}
+            accent={accent.accent}
+          />
         </>
       }
     >
-      <EnTete>
-        <View style={{ marginBottom: 14 }}>
-          <Marque taille={fs[6]} />
-        </View>
-        <TitreEcran lignes={['Ne fais pas', 'de sport tout seul.']} accent={c.surBleuClair} />
+      <EnTete style={{ paddingBottom: 4 }}>
+        <Apparition index={0}>
+          <EnTeteApp
+            rubrique="sport"
+            // « Créer un événement » : la même feuille qu'avant, depuis l'en-tête.
+            action={{ libelle: 'Créer', accessibilityLabel: 'Créer un événement', icone: 'plus', onPress: () => setCreation(true) }}
+            onNotifications={() => router.navigate('/notifications')}
+          />
+        </Apparition>
+        <Apparition index={1}>
+          <TitreEcran avant="Ne fais pas de sport" surligne="tout seul." rubrique="sport" style={{ marginBottom: 16 }} />
+        </Apparition>
       </EnTete>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ gap: 8, paddingHorizontal: gutter, paddingBottom: 8 }}>
-        {sports.map((s) => (
-          <Pilule key={s.code || 'tout'} libelle={s.libelle} actif={sport === s.code} accent={c.bleu} onPress={() => setSport(s.code)} />
-        ))}
-      </ScrollView>
-
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ gap: 8, paddingHorizontal: gutter, paddingBottom: 16 }}>
-        {RUBRIQUES.map((r) => (
+      <Apparition index={2}>
+        <RangeeDefilante style={{ marginBottom: 20 }} contentContainerStyle={rangeeChips}>
+          {/* Le niveau (parties à compléter seulement) et la distance sont
+              dans le panneau Filtres. */}
           <Pilule
-            key={r.code}
-            libelle={donnees && nombre[r.code] > 0 ? `${r.libelle} · ${nombre[r.code]}` : r.libelle}
-            actif={rubrique === r.code}
-            accent={c.bleu}
-            onPress={() => setRubrique(r.code)}
+            libelle={nbFiltres ? `Filtres · ${nbFiltres}` : 'Filtres'}
+            icone="reglages"
+            contour
+            actif={false}
+            onPress={() => setPanneau(true)}
+            accessibilityLabel={nbFiltres ? `Filtres, ${resumeFiltres}` : 'Filtres'}
           />
-        ))}
-      </ScrollView>
+          {distance ? (
+            <Pilule
+              libelle={`${distance.rayon} km`}
+              icone="epingle"
+              actif
+              onPress={() => setDistance(null)}
+              accessibilityLabel={`Rayon de ${distance.rayon} km, retirer`}
+            />
+          ) : null}
+          {sports.map((s) => (
+            <Pilule
+              key={s.code || 'tout'}
+              libelle={s.libelle}
+              actif={sport === s.code}
+              onPress={() => setSport(s.code)}
+              icone={s.code ? ICONES_SPORT[s.code] ?? 'trophee' : undefined}
+              carre={s.code ? couleurSport(s.code) : undefined}
+            />
+          ))}
+        </RangeeDefilante>
+      </Apparition>
+
+      <Apparition index={3}>
+        {/* Les rubriques en tuiles ; la quatrième déborde et invite à défiler. */}
+        <RangeeDefilante style={{ marginBottom: 20 }} contentContainerStyle={{ gap: 10, paddingHorizontal: gutter }}>
+          {RUBRIQUES.map((r) => (
+            <Tuile
+              key={r.code}
+              icone={ICONES_RUBRIQUE[r.code]}
+              libelle={r.libelle}
+              compteur={donnees ? nombre[r.code] : undefined}
+              actif={rubrique === r.code}
+              accentCompteur={accent.accent}
+              onPress={() => setRubrique(r.code)}
+              style={{ width: 112 }}
+            />
+          ))}
+        </RangeeDefilante>
+      </Apparition>
 
       <Contenu>
-        <Bouton libelle="Créer un événement" icone="plus" variante="contour" plein onPress={() => setCreation(true)} style={{ marginBottom: 16 }} />
-
         {erreur ? <Erreur message={erreur} onReessayer={charger} /> : donnees === null ? <Chargement /> : (
-          <>
+          <Apparition index={4}>
             {donnees.mes_parties.length > 0 ? (
               <>
-                <Mono accessibilityRole="header" style={{ marginBottom: 12 }}>Mes parties</Mono>
+                <TitreSection style={{ marginBottom: 12 }}>Mes parties</TitreSection>
                 {donnees.mes_parties.map((p) => (
                   <CarteCreneau key={`m${p.id}`} cr={p} action={p.statut === 'annule' ? 'Annulée' : 'Ma partie'} onPress={() => ouvrirCreneau(p.id)} />
                 ))}
-                <Separateur />
+                <View style={{ height: 8 }} />
               </>
             ) : null}
 
             {rubrique === 'parties' ? (
               <>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 14 }} contentContainerStyle={{ gap: 8 }}>
-                  {NIVEAUX.map((n) => (
-                    <Pilule key={n.code} libelle={n.libelle} actif={niveau === n.code} accent={c.bleu} onPress={() => setNiveau(n.code)} />
-                  ))}
-                </ScrollView>
                 {parties.map((p) => <CarteCreneau key={p.id} cr={p} action="Compléter" onPress={() => ouvrirCreneau(p.id)} />)}
                 {parties.length === 0 ? (
-                  <VideSport titre="Aucune partie à compléter." texte="Réserve un terrain libre et ouvre les places restantes : d'autres viendront compléter." />
+                  <VideSport titre={`Aucune partie à compléter${niveau !== 'tous' ? ' à ce niveau' : ''}${horsZone}.`} texte="Réserve un terrain libre et ouvre les places restantes : d'autres viendront compléter." />
                 ) : null}
               </>
             ) : null}
@@ -250,7 +332,7 @@ export default function Sport() {
             {rubrique === 'terrains' ? (
               <>
                 {donnees.libres.map((p) => <CarteCreneau key={p.id} cr={p} action="Réserver" onPress={() => ouvrirCreneau(p.id)} />)}
-                {donnees.libres.length === 0 ? <VideSport titre="Aucun terrain libre." texte="Les clubs n'ont pas encore mis de créneaux en ligne." /> : null}
+                {donnees.libres.length === 0 ? <VideSport titre={`Aucun terrain libre${horsZone}.`} texte="Les clubs n'ont pas encore mis de créneaux en ligne." /> : null}
               </>
             ) : null}
 
@@ -259,19 +341,22 @@ export default function Sport() {
                 {donnees.evenements.map((ev) => (
                   <CarteEvenementSport key={ev.id} ev={ev} onPress={() => router.push({ pathname: '/evenement/[id]', params: { id: String(ev.id) } })} />
                 ))}
-                {donnees.evenements.length === 0 ? <VideSport titre="Aucun événement de club." texte="Tournois, stages et initiations apparaîtront ici." /> : null}
+                {donnees.evenements.length === 0 ? <VideSport titre={`Aucun événement de club${horsZone}.`} texte="Tournois, stages et initiations apparaîtront ici." /> : null}
               </>
             ) : null}
 
             {rubrique === 'abonnements' ? (
               <>
-                {donnees.squads.map((s) => <CarteSquad key={s.id} s={s} onGerer={() => setGestion(s.id)} />)}
-                {donnees.squads.length === 0 ? (
-                  <VideSport titre="Rien chez tes abonnements." texte="Tu vois ici les événements des personnes qui ont accepté que tu les suives." />
+                {squads.map((s) => <CarteSquad key={s.id} s={s} onGerer={() => setGestion(s.id)} />)}
+                {squads.length === 0 ? (
+                  <VideSport
+                    titre={niveau !== 'tous' && donnees.squads.length > 0 ? 'Rien à ce niveau chez tes abonnements.' : 'Rien chez tes abonnements.'}
+                    texte="Tu vois ici les événements des personnes qui ont accepté que tu les suives."
+                  />
                 ) : null}
               </>
             ) : null}
-          </>
+          </Apparition>
         )}
       </Contenu>
     </Ecran>
@@ -313,7 +398,7 @@ function FeuilleCreation({ visible, onClose, onCree }: { visible: boolean; onClo
 
   return (
     <Feuille visible={visible} onClose={onClose}>
-      <Display taille={fs[7]} style={{ marginBottom: 20 }}>Créer un événement</Display>
+      <Display taille={fs[6]} style={{ marginBottom: 20 }}>Créer un événement</Display>
       <Champ etiquette="Titre" value={titre} onChangeText={setTitre} placeholder="Sortie Puy-de-Dôme" />
       <View style={{ flexDirection: 'row', gap: 12 }}>
         <Selecteur style={{ flex: 1 }} etiquette="Sport" valeur={type} onChange={setType}
@@ -340,7 +425,7 @@ function FeuilleCreation({ visible, onClose, onCree }: { visible: boolean; onClo
             : 'Gratuit et réservé à tes abonnés : seules les personnes dont tu as accepté la demande le voient et peuvent le rejoindre.'}
         </T>
       </View>
-      <Bouton libelle="Publier" variante="bleu" plein chargement={attente} onPress={creer} />
+      <Bouton libelle="Publier" variante="sport" plein chargement={attente} onPress={creer} />
       <Bouton libelle="Annuler" variante="contour" plein onPress={onClose} style={{ marginTop: 8 }} />
     </Feuille>
   );
@@ -393,9 +478,9 @@ function FeuilleGestion({ squadId, onClose, onSupprime }: { squadId: number | nu
 
   return (
     <Feuille visible={squadId !== null} onClose={onClose}>
-      <Display taille={fs[7]} style={{ marginBottom: 20 }}>Gérer mon événement</Display>
+      <Display taille={fs[6]} style={{ marginBottom: 20 }}>Gérer mon événement</Display>
       {donnees === null ? (
-        <T taille={fs[5]} style={{ textAlign: 'center', padding: 20 }}>Chargement...</T>
+        <T taille={fs[4]} style={{ textAlign: 'center', padding: 14 }}>Chargement...</T>
       ) : (
         <>
           <Mono accessibilityRole="header" style={{ marginBottom: 12 }}>Participants inscrits</Mono>
@@ -403,7 +488,7 @@ function FeuilleGestion({ squadId, onClose, onSupprime }: { squadId: number | nu
             {donnees.membres.map((m) => (
               <View key={m.id} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.sm, backgroundColor: c.blanc }}>
                 <View>
-                  <T taille={fs[5]} poids={700}>{court(m.prenom, m.nom)}</T>
+                  <T taille={fs[4]} poids={700}>{court(m.prenom, m.nom)}</T>
                   <T taille={12} couleur={c.gris}>{m.ecole || 'Étudiant'}</T>
                 </View>
                 {m.id === donnees.my_id ? (

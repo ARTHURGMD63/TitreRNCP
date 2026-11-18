@@ -20,7 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { actions, adresseServeur, api, ErreurApi, type EvenementDetail, type PhotoEvenement, type ReponsePhotosEvenement } from '../../api';
 import { Bouton } from '../../composants/Bouton';
 import { FORMATS_SPORT, LIBELLES_TYPE, SPORTS } from '../../catalogue';
-import { libelleStyle } from '../../composants/CarteEvenement';
+import { libelleStyle, nomsCollaborateurs } from '../../composants/CarteEvenement';
 import { Chargement, Ecran, Erreur } from '../../composants/Ecran';
 import { Avatar, Badge, BoutonRetour, Jauge } from '../../composants/Elements';
 import { Feuille } from '../../composants/Feuille';
@@ -29,7 +29,7 @@ import { Icone, type NomIcone } from '../../composants/Icone';
 import { Display, Mono, T } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
-import { libelleApresEchecInscription, libelleInscription } from '../../regles';
+import { libelleApresEchecInscription, libelleInscription, prixEvenement } from '../../regles';
 import { dateFr, heure, majuscules, ts } from '../../format';
 import { useJeton } from '../../session';
 import { couleurs, fixe, fs, gutter, lh, lsEm, mono, rayon, sans } from '../../theme';
@@ -94,6 +94,11 @@ export default function FicheEvenement() {
     try {
       setErreur(null);
       setE((await api.evenement(jeton, Number(id))).evenement);
+      // L'inscription faite ici n'est qu'une avance sur le serveur : au
+      // rechargement (retour de l'onglet Pass après une annulation), c'est
+      // deja_inscrit qui décide, sinon le bouton restait sur « Inscrit ».
+      setInscription('libre');
+      setLibelleErreur(null);
     } catch (err) {
       setErreur(err instanceof Error ? err.message : 'Événement introuvable.');
     }
@@ -191,6 +196,9 @@ export default function FicheEvenement() {
   const pct = e.places.pourcentage ?? 0;
   const style = e.style_musique ? ' · ' + majuscules(libelleStyle(e.style_musique)) : '';
   const inscrit = e.deja_inscrit || inscription === 'vient';
+  // Clôture des inscriptions (v38) : celle de l'établissement, sinon le début.
+  const cloture = e.inscriptions_jusqu_au ?? e.date_heure;
+  const closes = e.inscriptions_ouvertes === false || ts(cloture) <= instant;
 
   async function partager() {
     try {
@@ -218,21 +226,32 @@ export default function FicheEvenement() {
   }
 
   // padding-top: 120px, et margin-top: -20px sur le site.
+  const prix = prixEvenement(e);
   const contenuHero = (
-    <View style={{ paddingTop: 100 + top, paddingHorizontal: 20, paddingBottom: 32 }}>
+    <View style={{ paddingTop: 100 + top, paddingHorizontal: 16, paddingBottom: 32 }}>
       <Text style={{ fontFamily: mono(500), fontSize: fs[2], letterSpacing: lsEm.label * fs[2], textTransform: 'uppercase', color: accent, marginBottom: 10 }}>
         {majuscules(e.sport ? `${SPORTS[e.sport] ?? e.sport}${e.format ? ` · ${FORMATS_SPORT[e.format] ?? e.format}` : ''}` : (LIBELLES_TYPE[e.etablissement.type] ?? e.etablissement.type))} · {dateFr(e.date_heure, 'D j M')}{style}
       </Text>
       {e.sponsorise ? (
-        <Badge libelle="Sponsorisé" fond="rgba(17,16,19,0.1)" encre={encre} filet="rgba(17,16,19,0.3)" style={{ alignSelf: 'flex-start', marginBottom: 10 }} />
+        <Badge libelle="Sponsorisé" fond="rgba(17,17,22,0.1)" encre={encre} filet="rgba(17,17,22,0.3)" style={{ alignSelf: 'flex-start', marginBottom: 10 }} />
       ) : null}
       <View accessibilityRole="header">
-        <Display taille={fs[9]} interligne={lh.display} couleur={encre}>{e.titre}</Display>
-        <Display taille={fs[7]} interligne={lh.display} couleur={encre} style={{ opacity: 0.85, marginTop: 6 }}>{e.etablissement.nom}</Display>
+        <Display taille={fs[7]} interligne={lh.display} couleur={encre}>{e.titre}</Display>
+        <Display taille={fs[5]} interligne={lh.display} couleur={encre} style={{ opacity: 0.85, marginTop: 4 }}>{e.etablissement.nom}</Display>
+        {e.collaborateurs?.length ? (
+          <T taille={fs[4]} couleur={encre} style={{ opacity: 0.85, marginTop: 6 }}>
+            En collaboration avec <T taille={fs[4]} poids={700} couleur={encre}>{nomsCollaborateurs(e.collaborateurs)}</T>
+          </T>
+        ) : null}
       </View>
+      {prix ? (
+        <T taille={fs[5]} poids={700} couleur={encre} style={{ marginTop: 14 }}>
+          {prix.barre ? `${prix.final}  ·  au lieu de ${prix.barre}` : prix.final}
+        </T>
+      ) : null}
       {(e.reduction ?? 0) > 0 || e.is_gratuit ? (
-        <View style={{ alignSelf: 'flex-start', marginTop: 18, backgroundColor: flash && !photo ? fixe.basalte : c.rouge, borderRadius: rayon.pill, paddingVertical: 8, paddingHorizontal: 20 }}>
-          <Display taille={fs[7]} interligne={1.2} couleur={flash && !photo ? fixe.craie : fixe.surAccent}>
+        <View style={{ alignSelf: 'flex-start', marginTop: 18, backgroundColor: flash && !photo ? fixe.basalte : c.rouge, borderRadius: rayon.pill, paddingVertical: 8, paddingHorizontal: 16 }}>
+          <Display taille={fs[5] + 1} interligne={1.2} couleur={flash && !photo ? fixe.craie : fixe.surAccent}>
             {(e.reduction ?? 0) > 0 ? `-${e.reduction}%` : 'Gratuit'}
           </Display>
         </View>
@@ -268,7 +287,7 @@ export default function FicheEvenement() {
           </Feuille>
 
           <Feuille visible={signalementPhoto} onClose={() => setSignalementPhoto(false)}>
-            <Display taille={fs[7]} interligne={lh.tight} style={{ marginBottom: 6, letterSpacing: lsEm.tight * fs[7] }}>Signaler cette photo</Display>
+            <Display taille={fs[6]} interligne={lh.tight} style={{ marginBottom: 6, letterSpacing: lsEm.tight * fs[7] }}>Signaler cette photo</Display>
             <T taille={fs[3]} poids={500} couleur={c.grisFonce} interligne={lh.snug} style={{ marginBottom: 20 }}>
               Ton signalement est envoyé à l&apos;équipe de modération.
             </T>
@@ -284,7 +303,7 @@ export default function FicheEvenement() {
       {photo ? (
         <ImageBackground source={{ uri: photo }} accessibilityLabel={e.photos[0]?.legende ?? `Photo de ${e.etablissement.nom}`} style={arrondi}>
           <LinearGradient
-            colors={['rgba(17,16,19,0.94)', 'rgba(17,16,19,0.74)', 'rgba(17,16,19,0.34)', 'rgba(17,16,19,0.18)']}
+            colors={['rgba(17,17,22,0.94)', 'rgba(17,17,22,0.74)', 'rgba(17,17,22,0.34)', 'rgba(17,17,22,0.18)']}
             locations={[0, 0.32, 0.62, 1]}
             start={{ x: 0, y: 1 }} end={{ x: 0, y: 0 }}
             style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
@@ -359,7 +378,7 @@ export default function FicheEvenement() {
 
         <View style={{ marginTop: 32 }}>
           <Section icone="info">À propos de l&apos;événement</Section>
-          <T taille={fs[5]} interligne={lh.relaxed} couleur={c.grisFonce}>{e.description}</T>
+          <T taille={fs[4]} interligne={lh.relaxed} couleur={c.grisFonce}>{e.description}</T>
         </View>
 
         {e.photos.length ? (
@@ -399,7 +418,7 @@ export default function FicheEvenement() {
               <Mono>Date &amp; heure</Mono>
             </View>
             <T taille={fs[4]} poids={700}>{dateFr(e.date_heure, 'j M Y')}</T>
-            <Text style={{ fontFamily: mono(400), fontSize: fs[4], color: c.grisFonce }}>{heure(e.date_heure)}</Text>
+            <Text style={{ fontFamily: mono(400), fontSize: fs[4], color: c.grisFonce }}>{heure(e.date_heure)}{e.date_fin ? ` – ${heure(e.date_fin)}` : ''}</Text>
           </View>
           <View style={{ flex: 1, backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.md, padding: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 8 }}>
@@ -411,17 +430,28 @@ export default function FicheEvenement() {
           </View>
         </View>
 
+        {!inscrit ? (
+          <View testID="evenement-cloture" style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12, backgroundColor: closes ? c.surface2 : c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.md, padding: 14 }}>
+            <Icone nom={closes ? 'cadenas' : 'horloge'} taille={16} couleur={closes ? c.grisFonce : c.gris} />
+            <T taille={fs[4]} poids={600} couleur={closes ? c.grisFonce : c.noir} style={{ flex: 1 }}>
+              {closes
+                ? (e.cloture_anticipee ? `Inscriptions closes depuis le ${dateFr(cloture, 'j M à H\\hi')}` : 'Inscriptions closes : la soirée a commencé')
+                : `Inscriptions ouvertes jusqu'au ${dateFr(cloture, 'D j M à H\\hi')}`}
+            </T>
+          </View>
+        ) : null}
+
         <View style={{ marginTop: 40, marginBottom: 60 }}>
           <Bouton
             plein
             testID="evenement-rejoindre"
             variante={inscription === 'vient' ? 'contour' : 'primaire'}
-            libelle={libelleInscription(inscription, !!e.deja_inscrit, libelleErreur, e.places.complet)}
+            libelle={libelleInscription(inscription, !!e.deja_inscrit, libelleErreur, e.places.complet, closes)}
             icone={inscrit ? 'check' : undefined}
-            desactive={inscrit || e.places.complet}
+            desactive={inscrit || e.places.complet || closes}
             chargement={inscription === 'attente'}
             onPress={rejoindre}
-            style={{ paddingVertical: 18 }}
+            style={{ paddingVertical: 14 }}
           />
         </View>
       </View>

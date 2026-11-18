@@ -29,6 +29,10 @@ export default function Connexion() {
   const [email, setEmail] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
   const [erreur, setErreur] = useState<string | null>(null);
+  // Réservé aux administrateurs protégés par une double authentification :
+  // le champ n'apparaît que si le serveur le demande.
+  const [codeRequis, setCodeRequis] = useState(false);
+  const [codeTotp, setCodeTotp] = useState('');
 
   async function valider() {
     if (!connexionComplete(email, motDePasse)) {
@@ -37,8 +41,9 @@ export default function Connexion() {
     }
     setErreur(null);
     try {
-      await connexion(email, motDePasse);
+      await connexion(email, motDePasse, codeRequis ? codeTotp.trim() : undefined);
     } catch (e) {
+      if (e instanceof ErreurApi && e.code === 'totp_requis') setCodeRequis(true);
       // Mêmes phrases que le site : « Email ou mot de passe incorrect. »
       setErreur(messageConnexion(e instanceof ErreurApi ? { code: e.code, message: e.message } : null));
     }
@@ -83,6 +88,21 @@ export default function Connexion() {
           returnKeyType="go"
           onSubmitEditing={valider}
         />
+
+        {codeRequis ? (
+          <Champ
+            etiquette="Code de vérification"
+            testID="connexion-code-totp"
+            value={codeTotp}
+            onChangeText={setCodeTotp}
+            placeholder="123456"
+            keyboardType="number-pad"
+            autoComplete="one-time-code"
+            textContentType="oneTimeCode"
+            returnKeyType="go"
+            onSubmitEditing={valider}
+          />
+        ) : null}
 
         <View style={{ alignItems: 'flex-end', marginTop: -4, marginBottom: 18 }}>
           <Link href="/mot-de-passe" style={{ minHeight: 44, paddingVertical: 12 }}>

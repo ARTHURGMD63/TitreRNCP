@@ -1,9 +1,8 @@
 /**
  * La carte d'un événement de l'espace Culture.
  *
- * Même gabarit que la carte classique des soirées (CarteEvenement) — pastille
- * « En cours » / « À venir », étiquette en mono teintée, titre, amis qui y
- * vont, description coupée, places, « Inviter » et l'inscription, jauge —
+ * Même gabarit que la carte des soirées (CarteEvenement) — pastilles de
+ * statut, surtitre, titre, amis qui y vont, « Inviter » et l'inscription —
  * pour qu'on la lise sans réapprendre. Ce qui change dit ce qui diffère :
  *
  *  - l'organisateur (la ville, un musée) à la place de l'établissement, avec
@@ -16,21 +15,20 @@
  */
 
 import React, { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 
 import { api, ErreurApi, type EvenementCulture } from '../api';
 import { LIBELLES_CULTURE } from '../catalogue';
-import { libelleAmis, libelleBoutonCulture, libellePlaces, libellePrix, pourcentagePlaces, surPlusieursJours, type EtatInscriptionCulture } from '../culture';
+import { libelleBoutonCulture, libellePlaces, libellePrix, surPlusieursJours, type EtatInscriptionCulture } from '../culture';
 import { dateFr, majuscules, ts } from '../format';
 import { useJeton } from '../session';
-import { fs, haloLave, lh, rayon } from '../theme';
+import { fs, lh, sans } from '../theme';
 import { useTheme } from '../useTheme';
-import { Bouton } from './Bouton';
-import { PastilleAVenir, PastilleEnCours } from './CarteEvenement';
-import { Badge, Jauge } from './Elements';
+import { PastilleAVenir, PastilleEnCours, STYLE_CARTE, TITRE } from './CarteEvenement';
+import { BoutonAction, BoutonContour, CarteRefonte, Pastille, QuiYVa, useRubrique } from './Design';
 import { Icone } from './Icone';
-import { Display, Mono, T } from './Texte';
+import { T } from './Texte';
 import { useToast } from './Toast';
 
 /** « EXPO · JUSQU'AU 3 DÉC », « CONCERT · SAM 15 NOV · 20H30 ». */
@@ -48,6 +46,16 @@ export function useInscriptionCulture(ev: { id: number; deja_inscrit: boolean })
   const toast = useToast();
   const [etat, setEtat] = useState<EtatInscriptionCulture>(ev.deja_inscrit ? 'inscrit' : 'libre');
   const [inscrits, setInscrits] = useState<number | null>(null);
+  // Le serveur a le dernier mot : une désinscription faite ailleurs (onglet
+  // Pass) doit rendre le bouton « S'inscrire » au prochain chargement.
+  const [inscritVu, setInscritVu] = useState(ev.deja_inscrit);
+  if (ev.deja_inscrit !== inscritVu) {
+    setInscritVu(ev.deja_inscrit);
+    setEtat(ev.deja_inscrit ? 'inscrit' : 'libre');
+    setInscrits(null);
+  }
+  // Refonte : les confettis ne partent qu'après une inscription réussie.
+  const [fete, setFete] = useState(0);
 
   async function inscrire() {
     setEtat('attente');
@@ -55,6 +63,7 @@ export function useInscriptionCulture(ev: { id: number; deja_inscrit: boolean })
       const rep = await api.cultureInscription(jeton, ev.id);
       setInscrits(rep.inscrits);
       setEtat('inscrit');
+      setFete((n) => n + 1);
       toast('Tu es inscrit ! Invite tes potes.', 'success');
     } catch (e) {
       setEtat('libre');
@@ -75,99 +84,78 @@ export function useInscriptionCulture(ev: { id: number; deja_inscrit: boolean })
     }
   }
 
-  return { etat, inscrits, inscrire, annuler };
+  return { etat, inscrits, inscrire, annuler, fete };
 }
 
-export function CarteCulture({ ev, onInviter }: { ev: EvenementCulture; onInviter: () => void }) {
-  const { c, ombre } = useTheme();
-  const { etat, inscrits, inscrire } = useInscriptionCulture(ev);
+/**
+ * Refonte 2026-11 : la 1ʳᵉ carte de la liste est violette (`accent`), les
+ * suivantes blanches. Dans l'ordre : pastilles de statut et « À la une »,
+ * le prix à droite ; le surtitre et le titre ; l'organisateur en gras ; le
+ * lieu et ses places sur une ligne ; la description ; « qui y va » ;
+ * « Inviter » et « S'inscrire ». La jauge reste dans la fiche.
+ */
+export function CarteCulture({ ev, onInviter, accent = false }: { ev: EvenementCulture; onInviter: () => void; accent?: boolean }) {
+  const { c } = useTheme();
+  const violet = useRubrique('culture');
+  const { etat, inscrits, inscrire, fete } = useInscriptionCulture(ev);
   const places = inscrits === null ? ev.places : { ...ev.places, inscrits };
-  const pct = pourcentagePlaces(places);
-  const amis = libelleAmis(ev.amis);
   const inscrit = etat === 'inscrit';
   const ouvrir = () => router.push({ pathname: '/culture/[id]', params: { id: String(ev.id) } });
 
+  const encre = accent ? '#FFFFFF' : c.noir;
+  const secondaire = accent ? violet.surAccent2 : c.gris;
+  const voile = 'rgba(255,255,255,0.18)';
+
   return (
-    <View
-      style={[
-        { backgroundColor: c.blanc, padding: 20, borderRadius: rayon.base, borderWidth: 1, borderColor: c.grisClair, marginBottom: 20 },
-        ev.en_cours ? [{ borderWidth: 2, borderColor: c.rouge }, haloLave] : ombre('base'),
-      ]}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-        {ev.en_cours ? <PastilleEnCours quoi="Événement" /> : <PastilleAVenir quoi="Événement" />}
-        {ev.mis_en_avant ? <Badge libelle="À la une" icone="etoile-fine" fond={c.rougeClair} encre={c.surRougeClair} style={{ gap: 4 }} /> : null}
+    <CarteRefonte accent={accent ? violet.accent : undefined} style={STYLE_CARTE}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1, flexWrap: 'wrap' }}>
+          {ev.en_cours ? <PastilleEnCours petite quoi="Événement" surAccent={accent} /> : <PastilleAVenir petite quoi="Événement" surAccent={accent} />}
+          {ev.mis_en_avant ? <Pastille petite libelle="À la une" icone="etoile-fine" fond={accent ? voile : violet.doux} encre={accent ? '#FFFFFF' : violet.texteDoux} /> : null}
+        </View>
+        <Pastille petite libelle={libellePrix(ev.prix)} fond={accent ? '#FFFFFF' : c.noir} encre={accent ? '#111116' : c.surEncre} />
       </View>
 
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <Mono couleur={c.surRougeClair}>{etiquetteCulture(ev)}</Mono>
-        {ev.is_gratuit
-          ? <Badge libelle="GRATUIT" fond={c.noir} encre={c.bg} />
-          : <Badge libelle={libellePrix(ev.prix)} fond={c.surface2} encre={c.grisFonce} filet={c.line2} />}
-      </View>
-
-      <Pressable onPress={ouvrir} accessibilityRole="link">
-        <Display taille={fs[6]} interligne={lh.tight} style={{ marginBottom: 8 }}>{ev.titre}</Display>
+      <Pressable onPress={ouvrir} accessibilityRole="link" accessibilityHint="Ouvre la fiche de l'événement" style={{ gap: 1, marginTop: 2 }}>
+        <Text style={{ fontFamily: sans(600), fontSize: 10, letterSpacing: 0.06 * 10, textTransform: 'uppercase', color: secondaire }}>{etiquetteCulture(ev)}</Text>
+        <Text numberOfLines={2} style={{ fontFamily: sans(700), fontSize: TITRE, lineHeight: TITRE * 1.2, letterSpacing: -0.02 * TITRE, color: encre }}>{ev.titre}</Text>
       </Pressable>
 
-      <Pressable onPress={ouvrir} style={{ gap: 4, marginBottom: 4 }}>
+      <Pressable onPress={ouvrir} style={{ gap: 3 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Icone nom="musee" taille={14} couleur={c.grisFonce} />
-          <T numberOfLines={1} taille={fs[3]} poids={600} couleur={c.grisFonce} style={{ flexShrink: 1 }}>{ev.organisateur}</T>
+          <Icone nom="musee" taille={14} couleur={encre} />
+          <T numberOfLines={1} taille={fs[3]} poids={600} couleur={encre} style={{ flexShrink: 1 }}>{ev.organisateur}</T>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Icone nom="epingle" taille={14} couleur={c.gris} />
-          <T numberOfLines={1} taille={fs[3]} couleur={c.gris} style={{ flexShrink: 1 }}>{ev.lieu}</T>
+          <Icone nom="epingle" taille={14} couleur={secondaire} />
+          <T numberOfLines={1} taille={fs[3]} couleur={secondaire} style={{ flexShrink: 1 }}>{ev.lieu} · {libellePlaces(places)}</T>
         </View>
       </Pressable>
-
-      {amis ? (
-        <View style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Icone nom="personnes" taille={14} couleur={c.surRougeClair} />
-          <T taille={fs[3]} poids={600} couleur={c.surRougeClair}>{amis}</T>
-        </View>
-      ) : null}
 
       {ev.description ? (
-        <T taille={fs[3]} couleur={c.grisFonce} interligne={lh.snug} style={{ marginTop: 12 }}>
-          {Array.from(ev.description).length > 100 ? Array.from(ev.description).slice(0, 100).join('') + '...' : ev.description}
+        <T taille={fs[3]} couleur={secondaire} interligne={lh.snug} numberOfLines={2}>
+          {Array.from(ev.description).length > 100 ? Array.from(ev.description).slice(0, 100).join('') + '…' : ev.description}
         </T>
       ) : null}
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 14 }}>
-        <T taille={fs[3]} couleur={c.gris} style={{ flexShrink: 1 }}>{libellePlaces(places)}</T>
-        <View style={{ flexDirection: 'row', gap: 6 }}>
-          <Pressable
-            onPress={onInviter}
-            accessibilityRole="button"
-            accessibilityLabel={`Inviter un ami à ${ev.titre}`}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1.5, borderColor: c.line2, borderRadius: rayon.pill, paddingVertical: 8, paddingHorizontal: 14, minHeight: 44 }}
-          >
-            <Icone nom="ajout-personne" taille={13} couleur={c.noir} />
-            <T taille={fs[3]} poids={700}>Inviter</T>
-          </Pressable>
-          <Bouton
-            variante="primaire"
-            libelle={libelleBoutonCulture(etat === 'attente' ? 'libre' : etat, places.complet)}
-            icone={inscrit ? 'check' : undefined}
-            desactive={inscrit || places.complet}
-            chargement={etat === 'attente'}
-            onPress={inscrire}
-            taillePolice={fs[3]}
-            style={{ paddingVertical: 8, paddingHorizontal: 18 }}
-          />
-        </View>
-      </View>
+      <QuiYVa prenoms={ev.amis.prenoms} nb={ev.amis.nb} surAccent={accent} fond={accent ? violet.accent : c.blanc} />
 
-      {pct !== null ? (
-        <>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 14, marginBottom: 6 }}>
-            <Mono>Taux d&apos;inscription</Mono>
-            <Mono>{pct}%</Mono>
-          </View>
-          <Jauge pourcentage={pct} piste={c.grisClair} remplissage={c.rouge} />
-        </>
-      ) : null}
-    </View>
+      {/* Les actions se rangent à droite, à la taille de leur libellé. */}
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 2 }}>
+        <BoutonContour iconeSeule libelle="Inviter" icone="ajout-personne" onPress={onInviter} surAccent={accent} />
+        <BoutonAction
+          fin
+          style={{ minWidth: 124 }}
+          libelle={libelleBoutonCulture(etat === 'attente' ? 'libre' : etat, places.complet)}
+          accent={violet.accent}
+          surAccent={accent}
+          fait={inscrit}
+          desactive={inscrit || places.complet}
+          chargement={etat === 'attente'}
+          onPress={inscrire}
+          confettis={fete}
+        />
+      </View>
+    </CarteRefonte>
   );
 }

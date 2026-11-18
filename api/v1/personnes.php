@@ -20,7 +20,7 @@ $u   = apiEtudiant($pdo);
 $uid = (int) $u['id'];
 
 $criteres = hubCriteres(['view' => 'people'] + $_GET);
-$annuaire = hubAnnuaire($pdo, ['id' => $uid, 'ecole' => (string) ($u['ecole'] ?? '')], $criteres);
+$annuaire = hubAnnuaireEnCache($pdo, ['id' => $uid, 'ecole' => (string) ($u['ecole'] ?? '')], $criteres);
 
 $profil = static fn (array $p): array => apiPersonne($p) + [
     'etat_suivi'       => in_array($p['follow_statut'] ?? null, ['pending', 'accepted'], true) ? (string) $p['follow_statut'] : 'none',

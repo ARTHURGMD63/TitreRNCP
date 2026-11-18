@@ -11,6 +11,8 @@
  * destinés à l'utilisateur restent neutres.
  */
 
+require_once __DIR__ . '/config.php';
+
 /**
  * Consigne une erreur avec son contexte.
  *
@@ -56,7 +58,10 @@ function logErreur(string $message, ?Throwable $e = null, array $contexte = []):
  */
 function installerGardesErreurs(): void
 {
-    $prod = in_array(strtolower((string) getenv('APP_ENV')), ['production', 'prod'], true);
+    // Les traces ne s'affichent que sur un poste de développement : un serveur
+    // où APP_ENV manque (pool PHP-FPM qui efface l'environnement) ne doit pas
+    // montrer chemins et requêtes au premier visiteur venu.
+    $prod = !estEnDeveloppement();
 
     ini_set('log_errors', '1');
     ini_set('display_errors', $prod ? '0' : '1');

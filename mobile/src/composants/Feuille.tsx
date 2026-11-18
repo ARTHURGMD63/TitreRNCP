@@ -1,9 +1,8 @@
 /**
  * La feuille modale du site (.modal-overlay + .modal-sheet).
  *
- * Un voile basalte à 60 % légèrement flouté qui apparaît en fondu (250 ms),
- * et la feuille qui monte du bas avec la même courbe que le site
- * (cubic-bezier(0.32, 0.72, 0, 1), 340 ms) : fond de page, rayon de 32 en
+ * Un voile rgba(17,17,22,.45) qui apparaît en fondu, et la feuille qui
+ * monte du bas en 300 ms ease-out (refonte 2026-11) : surface, rayon 28 en
  * haut, poignée, 90 % de la hauteur au plus. Un toucher sur le voile la
  * ferme, comme un clic à côté sur le site. Elle passe au-dessus de tout,
  * barre d'onglets comprise.
@@ -16,11 +15,11 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, KeyboardAvoidingView, Modal, PanResponder, Platform, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { rayon } from '../theme';
+import { fixe, rayon } from '../theme';
 import { useTheme } from '../useTheme';
+import { useMouvementReduit } from './Animations';
 import { VueToast } from './Toast';
 
 type Props = {
@@ -29,10 +28,12 @@ type Props = {
   children: React.ReactNode;
 };
 
-const courbe = Easing.bezier(0.32, 0.72, 0, 1);
+// Refonte 2026-11 : montée en 300 ms ease-out, voile rgba(17,17,22,.45).
+const courbe = Easing.out(Easing.cubic);
 
 export function Feuille({ visible, onClose, children }: Props) {
   const { c } = useTheme();
+  const reduit = useMouvementReduit();
   const { height } = useWindowDimensions();
   const bas = useSafeAreaInsets().bottom;
 
@@ -62,18 +63,18 @@ export function Feuille({ visible, onClose, children }: Props) {
       glisse.setValue(height);
       arrache.setValue(0);
       Animated.parallel([
-        Animated.timing(voile, { toValue: 1, duration: 250, useNativeDriver: true }),
-        Animated.timing(glisse, { toValue: 0, duration: 340, easing: courbe, useNativeDriver: true }),
+        Animated.timing(voile, { toValue: 1, duration: reduit ? 0 : 220, useNativeDriver: true }),
+        Animated.timing(glisse, { toValue: 0, duration: reduit ? 0 : 300, easing: courbe, useNativeDriver: true }),
       ]).start();
     } else {
       Animated.parallel([
-        Animated.timing(voile, { toValue: 0, duration: 250, useNativeDriver: true }),
-        Animated.timing(glisse, { toValue: height, duration: 280, easing: courbe, useNativeDriver: true }),
+        Animated.timing(voile, { toValue: 0, duration: reduit ? 0 : 220, useNativeDriver: true }),
+        Animated.timing(glisse, { toValue: height, duration: reduit ? 0 : 260, easing: courbe, useNativeDriver: true }),
       ]).start(({ finished }) => {
         if (finished) setMonte(false);
       });
     }
-  }, [visible, height, voile, glisse, arrache]);
+  }, [visible, height, voile, glisse, arrache, reduit]);
 
   // Glisser la poignée vers le bas referme la feuille — au-delà d'un seuil de
   // distance ou de vitesse, comme un tiroir qu'on lâche en plein mouvement.
@@ -103,17 +104,14 @@ export function Feuille({ visible, onClose, children }: Props) {
         <View style={{ flex: 1, justifyContent: 'flex-end' }}>
           <Animated.View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, opacity: voile }}>
             <Pressable onPress={onClose} accessibilityLabel="Fermer" style={{ flex: 1 }}>
-              <BlurView intensity={8} tint="dark" style={{ flex: 1 }}>
-                <View style={{ flex: 1, backgroundColor: 'rgba(17,16,19,0.6)' }} />
-              </BlurView>
+              <View style={{ flex: 1, backgroundColor: fixe.voile }} />
             </Pressable>
           </Animated.View>
           <Animated.View
             accessibilityViewIsModal
             style={{
-              maxHeight: height * 0.9, backgroundColor: c.bg,
-              borderTopLeftRadius: rayon.xl, borderTopRightRadius: rayon.xl,
-              borderWidth: 1, borderBottomWidth: 0, borderColor: c.grisClair,
+              maxHeight: height * 0.9, backgroundColor: c.blanc,
+              borderTopLeftRadius: rayon.panneau, borderTopRightRadius: rayon.panneau,
               transform: [{ translateY: Animated.add(glisse, arrache) }],
             }}
           >

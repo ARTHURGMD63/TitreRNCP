@@ -1,0 +1,45 @@
+# Ce qui ne part JAMAIS sur le serveur (rsync --exclude-from).
+# outils/, cron/, deploy/ et les migrations SQL partent, mais nginx refuse
+# de les servir : ils ne tournent qu'en ligne de commande.
+
+# Dépôt et outils de développement
+.git/
+.github/
+.claude/
+.phpunit.cache/
+.gitattributes
+.gitignore
+.gitmessage
+.dockerignore
+.env
+.env.*
+.shot-enabled
+__shot.php
+phpunit.xml
+phpstan.neon
+composer.json
+composer.lock
+vendor/
+tests/
+node_modules/
+
+# Application mobile (construite par GitHub, publiée sur les stores)
+mobile/
+
+# Documents, supports, hébergements précédents
+docs/
+*.md
+*.docx
+*.pptx
+*.pdf
+*.mp4
+*.xlsx
+Outsee.bat
+Dockerfile
+docker/
+nixpacks.toml
+install_mutualise.sql
+
+# Données et réglages propres au serveur (dossier shared/ du VPS)
+uploads/
+includes/config.local.php

@@ -1,312 +1,199 @@
 <?php
-require_once __DIR__ . '/../includes/auth_check.php';
-require_once __DIR__ . '/../includes/page.php';
+/**
+ * Création d'un espace établissement.
+ *
+ * Le site n'inscrit plus d'étudiants : leur compte se crée dans
+ * l'application (api/v1/inscription.php), seul endroit qui leur sert
+ * d'interface. Ce formulaire reprend les règles de l'API pour les
+ * partenaires — mêmes contrôles, même vérification initiale selon le type
+ * (verificationInitiale()) — pour qu'un compte créé ici et un compte créé
+ * dans l'app soient identiques.
+ *
+ * ?formule=essentiel (lien d'un tarif de la vitrine) est retenu en session
+ * et présélectionne la formule à l'étape suivante. Il ne décide de rien :
+ * la formule réellement souscrite est revérifiée sur la page Abonnement.
+ */
+require_once __DIR__ . '/../includes/site.php';
 require_once __DIR__ . '/../includes/db.php';
-require_once __DIR__ . '/../includes/interets.php';
-require_once __DIR__ . '/../includes/agregats.php';
+require_once __DIR__ . '/../includes/comptes.php';
+require_once __DIR__ . '/../includes/crm.php';
+
 if (!empty($_SESSION['user_id'])) {
-    // Vers son écran, pas vers la vitrine : depuis que la racine est une page
-    // de présentation, y renvoyer un compte connecté ajoutait une redirection
-    // de plus pour arriver au même endroit.
     header('Location: ' . accueilSelonType($_SESSION['user_type'] ?? null));
     exit;
 }
 
-$error   = '';
-$success = '';
+$formuleVoulue = (string) ($_GET['formule'] ?? '');
+if (isset(crmOffres()[$formuleVoulue]) && $formuleVoulue !== 'aucune') {
+    $_SESSION['formule_souhaitee'] = $formuleVoulue;
+}
 
-$ecoles = ['UCA', 'SIGMA Clermont', 'INP Ingénieurs', 'IFSI', 'Autre'];
-$promos = ['L1','L2','L3','M1','M2','BUT1','BUT2','BUT3'];
-$villes = ['Clermont-Ferrand', 'Lyon', 'Paris', 'Toulouse', 'Bordeaux', 'Autre'];
+$types  = typesEtablissement();
+$erreur = '';
+$v      = static fn (string $cle, string $defaut = ''): string => trim((string) ($_POST[$cle] ?? $defaut));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrfVerify();
 
-    // Même garde qu'au login, un seuil plus large : cette page répond
-    // différemment selon qu'un e-mail existe déjà, ce qui en ferait sinon un
-    // outil d'énumération des comptes à débit illimité.
-    $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
-    $tropDeTentatives = isRateLimited($pdo, $ip, 20, 900);
+    // Même garde qu'au login, seuil plus large : la page répond différemment
+    // selon qu'un e-mail existe déjà.
+    $ip = ipClient();
 
-    $type    = in_array($_POST['type'] ?? '', ['etudiant','partenaire']) ? $_POST['type'] : 'etudiant';
-    $prenom  = trim($_POST['prenom'] ?? '');
-    $nom     = trim($_POST['nom'] ?? '');
-    $email   = trim($_POST['email'] ?? '');
-    $pass    = $_POST['password'] ?? '';
-    $ecole   = trim($_POST['ecole'] ?? '');
-    $promo   = trim($_POST['promo'] ?? '');
-    $etablNom  = trim($_POST['etablissement_nom'] ?? '');
-    $etablType = in_array($_POST['etablissement_type'] ?? '', ['bar','boite','resto','afterwork'])
-        ? $_POST['etablissement_type'] : 'bar';
-    $etablVille = trim($_POST['ville'] ?? 'Clermont-Ferrand');
-    $etudiantVille = trim($_POST['ville_etudiant'] ?? '') ?: null;
-    $naissance  = trim($_POST['date_naissance'] ?? '');
-    $cgu        = !empty($_POST['cgu']);
+    $prenom    = $v('prenom');
+    $nom       = $v('nom');
+    $email     = $v('email');
+    $pass      = (string) ($_POST['password'] ?? '');
+    $naissance = $v('date_naissance');
+    $etabNom   = $v('etablissement_nom');
+    $etabType  = typeEtablissementValide($_POST['etablissement_type'] ?? null) ? (string) $_POST['etablissement_type'] : '';
+    $ville     = $v('ville', 'Clermont-Ferrand') ?: 'Clermont-Ferrand';
+    $cgu       = !empty($_POST['cgu']);
+    $age       = ageEnAnnees($naissance);
+    $min       = longueurMinimaleMotDePasse('partenaire');
 
-    // Les centres d'intérêt ne concernent que les comptes étudiants, et ne
-    // passent que par le catalogue : ce qui arrive du formulaire n'est jamais
-    // écrit tel quel en base.
-    $interets = $type === 'etudiant' ? filtrerInterets($_POST['interests'] ?? []) : [];
-
-    /*
-     * L'âge se calcule à partir de la date, il ne se déclare pas : une case
-     * « je certifie être majeur » ne vaut rien, ni pour la revue de l'App
-     * Store, ni devant un établissement qui sert de l'alcool.
-     */
-    $age = ageEnAnnees($naissance);
-
-    // École et promo ne concernent que les 18-25 ans : au-delà, la question
-    // n'a plus de sens et ne doit pas être écrite en base même si un ancien
-    // onglet ouvert les avait pré-remplies avant que l'âge change.
-    if ($type === 'etudiant' && ($age === null || $age > 25)) {
-        $ecole = '';
-        $promo = '';
-    }
-
-    // Même politique qu'à la réinitialisation (longueurMinimaleMotDePasse()) :
-    // un compte ne doit pas pouvoir naître en dessous du plancher qu'il
-    // faudrait de toute façon respecter au premier mot de passe oublié.
-    $longueurMin = longueurMinimaleMotDePasse($type);
-
-    if ($tropDeTentatives) {
-        $error = 'Trop de tentatives. Réessaie dans quinze minutes.';
-    } elseif (!$prenom || !$nom || !$email || !$pass) {
-        $error = 'Merci de remplir tous les champs obligatoires.';
-    } elseif (strlen($pass) < $longueurMin) {
-        $error = "Le mot de passe doit faire au moins $longueurMin caractères.";
-    } elseif ($age === null) {
-        $error = 'Merci d’indiquer une date de naissance valide.';
+    if (isRateLimited($pdo, $ip, 20, 900)) {
+        $erreur = 'Trop de tentatives. Réessayez dans quinze minutes.';
+    } elseif ($prenom === '' || $nom === '' || $email === '' || $pass === '' || $etabNom === '' || $etabType === '') {
+        $erreur = 'Merci de remplir tous les champs.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $erreur = "Cette adresse e-mail n'est pas valide.";
+    } elseif (strlen($pass) < $min) {
+        $erreur = "Le mot de passe doit faire au moins $min caractères.";
+    } elseif ($age === null || $age > 120) {
+        $erreur = 'Merci d’indiquer une date de naissance valide.';
     } elseif ($age < 18) {
-        $error = 'Outsee est réservée aux personnes majeures : '
-               . 'l’inscription n’est pas possible avant 18 ans.';
-    } elseif ($age > 120) {
-        $error = 'Cette date de naissance ne semble pas correcte.';
+        $erreur = 'La personne qui gère le compte doit être majeure.';
     } elseif (!$cgu) {
-        $error = 'Merci d’accepter les conditions générales pour continuer.';
+        $erreur = 'Merci d’accepter les conditions générales pour continuer.';
     } else {
         try {
-            $hash = password_hash($pass, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare(
-                "INSERT INTO users (nom, prenom, email, password, ecole, promo, ville,
-                                    date_naissance, cgu_acceptees_le, type, interests)
-                 VALUES (?,?,?,?,?,?,?,?,NOW(),?,?)"
-            );
-            $stmt->execute([$nom, $prenom, $email, $hash, $ecole ?: null, $promo ?: null,
-                            $type === 'etudiant' ? $etudiantVille : null,
-                            $naissance, $type, interetsVersTexte($interets)]);
-            $userId = $pdo->lastInsertId();
+            $pdo->beginTransaction();
+            $pdo->prepare(
+                "INSERT INTO users (nom, prenom, email, password, date_naissance, cgu_acceptees_le, type)
+                 VALUES (?,?,?,?,?,NOW(),'partenaire')"
+            )->execute([$nom, $prenom, $email, password_hash($pass, PASSWORD_DEFAULT), $naissance]);
+            $userId = (int) $pdo->lastInsertId();
 
-            // Table indexee des gouts : c'est elle que lit le classement de
-            // l'annuaire. Sans cet appel, le nouveau compte n'apparaitrait
-            // jamais dans les suggestions de personne.
-            synchroniserInterets($pdo, (int) $userId, $interets);
-
-            // La liste des ecoles du filtre est mise en cache : un inscrit
-            // venant d'une ecole encore absente doit l'y faire entrer tout de
-            // suite, sinon il ne se retrouve pas dans l'annuaire.
-            oublierEcolesRepresentees();
-
-            if ($type === 'partenaire' && $etablNom) {
-                $stmt2 = $pdo->prepare(
-                    "INSERT INTO etablissements (user_id, nom, type, ville) VALUES (?,?,?,?)"
-                );
-                $stmt2->execute([$userId, $etablNom, $etablType, $etablVille]);
-            }
+            $pdo->prepare('INSERT INTO etablissements (user_id, nom, type, ville, verification) VALUES (?,?,?,?,?)')
+                ->execute([$userId, $etabNom, $etabType, $ville, verificationInitiale($etabType)]);
+            $pdo->commit();
+            emailBienvenueEtablissement($email, $prenom, $etabNom, $etabType);
 
             session_regenerate_id(true);
             $_SESSION['user_id']     = $userId;
             $_SESSION['user_prenom'] = $prenom;
             $_SESSION['user_nom']    = $nom;
-            $_SESSION['user_type']   = $type;
-            $_SESSION['user_ecole']  = $ecole;
+            $_SESSION['user_type']   = 'partenaire';
+            $_SESSION['user_ecole']  = '';
 
-            $loc = $type === 'partenaire'
-                ? baseUrl('/partenaire/dashboard.php')
-                : baseUrl('/onboarding.php');
-            header('Location: ' . $loc);
+            // Première étape d'un nouvel établissement : choisir sa formule.
+            header('Location: ' . baseUrl('/partenaire/abonnement.php?bienvenue=1'));
             exit;
         } catch (PDOException $e) {
-            // Code MySQL 1062, pas le texte du message : sur un serveur dont
-            // la langue des erreurs n'est pas l'anglais, chercher "Duplicate"
-            // ne matchait jamais (voir api/v1/inscription.php).
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             if (($e->errorInfo[1] ?? null) === 1062) {
                 recordLoginAttempt($pdo, $ip, $email);
-                $error = 'Cet email est déjà utilisé.';
+                $erreur = 'Un compte existe déjà avec cette adresse. Connectez-vous.';
             } else {
-                $error = 'Erreur lors de la création du compte.';
+                logErreur('Inscription établissement impossible', $e);
+                $erreur = 'Le compte n’a pas pu être créé. Réessayez dans un instant.';
             }
         }
     }
 }
-// L'onglet ouvert au chargement. Le ?type= de l'URL sert aux liens de la page
-// d'accueil : un gérant de bar qui clique « Devenir partenaire » doit trouver
-// le formulaire partenaire ouvert, pas le formulaire étudiant. Il ne décide de
-// rien — le type réellement enregistré est celui relu du POST, plus haut.
-$selectedType = $_POST['type'] ?? $_GET['type'] ?? 'etudiant';
-if (!in_array($selectedType, ['etudiant', 'partenaire'], true)) {
-    $selectedType = 'etudiant';
-}
-// Une erreur de formulaire ne doit pas effacer les étiquettes déjà choisies.
-$interetsChoisis = filtrerInterets($_POST['interests'] ?? []);
+
+$borneMajeur   = (new DateTimeImmutable('today'))->modify('-18 years')->format('Y-m-d');
+$bornePlancher = (new DateTimeImmutable('today'))->modify('-120 years')->format('Y-m-d');
+
+siteDebut('Créer mon espace pro — Outsee', ['description' => "Créez l'espace Outsee de votre bar, boîte, restaurant, club sportif ou BDE."]);
 ?>
-<?php pageDebut('Outsee — Inscription'); ?>
-<div class="auth-page" style="padding-top:24px;">
-  <div class="auth-logo">
-    <?= marqueOutsee() ?>
-  </div>
-
-  <h1 class="auth-headline titre-page">
-    <div class="display" style="font-size:var(--fs-8);">Rejoins la</div>
-    <div class="display-italic" style="font-size:var(--fs-8);">communauté.</div>
-  </h1>
-
-  <div class="type-toggle" style="margin-bottom:24px;">
-    <button type="button" class="type-toggle-btn <?= $selectedType === 'etudiant' ? 'active' : '' ?>" data-type="etudiant">
-      Étudiant·e
-    </button>
-    <button type="button" class="type-toggle-btn <?= $selectedType === 'partenaire' ? 'active' : '' ?>" data-type="partenaire">
-      Partenaire
-    </button>
-  </div>
-
-  <?php if ($error): ?>
-    <div class="form-error" role="alert" aria-live="assertive"><?= htmlspecialchars($error) ?></div>
-  <?php endif; ?>
-
-  <form method="POST">
-    <?= csrfField() ?>
-    <input type="hidden" name="type" id="user-type-input" value="<?= htmlspecialchars($selectedType) ?>">
-
-    <div class="form-row">
-      <div class="form-group">
-        <label for="inscription-prenom">Prénom</label>
-        <input id="inscription-prenom" type="text" name="prenom" autocomplete="given-name" value="<?= htmlspecialchars($_POST['prenom'] ?? '') ?>" placeholder="Arthur" required>
-      </div>
-      <div class="form-group">
-        <label for="inscription-nom">Nom</label>
-        <input id="inscription-nom" type="text" name="nom" autocomplete="family-name" value="<?= htmlspecialchars($_POST['nom'] ?? '') ?>" placeholder="Martin" required>
-      </div>
+<div class="auth">
+  <div class="auth__formulaire">
+    <div class="auth__haut">
+      <?= marqueSite('pro', baseUrl('/')) ?>
+      <a class="bouton bouton--texte" href="<?= htmlspecialchars(baseUrl('/'), ENT_QUOTES) ?>"><?= iconeSite('fleche-g', 'icon-sm') ?> Retour au site</a>
     </div>
 
-    <div class="form-group">
-      <label for="inscription-email">Email</label>
-      <input id="inscription-email" type="email" name="email" autocomplete="username" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" placeholder="arthur@uca.fr" required>
-    </div>
+    <main class="auth__corps" id="contenu" style="max-width:520px;">
+      <p class="surtitre" style="color:var(--bleu);">Espace établissement</p>
+      <h1 class="auth__titre" style="margin-top:10px;">Créez votre <em>espace pro.</em></h1>
+      <p class="auth__sous">Vous choisirez votre formule juste après. Vous êtes étudiant ? <a href="<?= htmlspecialchars(baseUrl('/application.php'), ENT_QUOTES) ?>" style="color:var(--bleu);font-weight:600;">Inscris-toi dans l'application</a>.</p>
 
-    <div class="form-group">
-      <label for="inscription-password">Mot de passe</label>
-      <input type="password" id="inscription-password" name="password" autocomplete="new-password" placeholder="••••••••" required>
-    </div>
+      <form class="auth__form" method="post" novalidate>
+        <?= csrfField() ?>
+        <?php if ($erreur !== ''): ?>
+          <div class="message message--erreur" role="alert"><?= iconeSite('alerte') ?><span><?= htmlspecialchars($erreur) ?></span></div>
+        <?php endif; ?>
 
-    <div class="form-group">
-      <label for="inscription-naissance">Date de naissance</label>
-      <?php
-        // Le champ natif propose d'emblée une borne cohérente ; le vrai
-        // contrôle reste celui du serveur, juste au-dessus.
-        $borneMajeur = (new DateTimeImmutable('today'))->modify('-18 years')->format('Y-m-d');
-        $bornePlancher = (new DateTimeImmutable('today'))->modify('-120 years')->format('Y-m-d');
-      ?>
-      <input type="date" id="inscription-naissance" name="date_naissance"
-             autocomplete="bday"
-             min="<?= $bornePlancher ?>" max="<?= $borneMajeur ?>"
-             value="<?= htmlspecialchars($_POST['date_naissance'] ?? '') ?>"
-             aria-describedby="aide-naissance" required>
-      <p class="aide-champ" id="aide-naissance">
-        Outsee donne accès à des soirées en bar et en discothèque :
-        l’inscription est réservée aux personnes majeures.
-      </p>
-    </div>
-
-    <!-- Student fields -->
-    <div id="student-fields" <?= $selectedType === 'partenaire' ? 'class="hidden"' : '' ?>>
-      <div class="form-group">
-        <label for="inscription-ville-etudiant">Ville</label>
-        <select id="inscription-ville-etudiant" name="ville_etudiant">
-          <?php foreach ($villes as $v): ?>
-            <option value="<?= $v ?>" <?= ($_POST['ville_etudiant'] ?? 'Clermont-Ferrand') === $v ? 'selected' : '' ?>><?= $v ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-
-      <!-- Visible seulement pour les 18-25 ans : basculé par l'écouteur sur
-           la date de naissance, plus bas dans le script de la page. -->
-      <div id="etude-fields" class="hidden">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="inscription-ecole">École</label>
-            <select id="inscription-ecole" name="ecole">
-              <option value="">— Choisir —</option>
-              <?php foreach ($ecoles as $e): ?>
-                <option value="<?= $e ?>" <?= ($_POST['ecole'] ?? '') === $e ? 'selected' : '' ?>><?= $e ?></option>
+        <div class="champ">
+          <label for="etablissement_nom">Nom de l'établissement</label>
+          <input type="text" id="etablissement_nom" name="etablissement_nom" required maxlength="120" value="<?= htmlspecialchars($v('etablissement_nom')) ?>" placeholder="Le Comptoir de Jaude">
+        </div>
+        <div class="formulaire__ligne">
+          <div class="champ">
+            <label for="etablissement_type">Type</label>
+            <select id="etablissement_type" name="etablissement_type" required>
+              <option value="">Choisir</option>
+              <?php foreach ($types as $code => $t): ?>
+                <option value="<?= htmlspecialchars($code) ?>"<?= $v('etablissement_type') === $code ? ' selected' : '' ?>><?= htmlspecialchars($t['libelle']) ?></option>
               <?php endforeach; ?>
             </select>
           </div>
-          <div class="form-group">
-            <label for="inscription-promo">Promo</label>
-            <select id="inscription-promo" name="promo">
-              <option value="">—</option>
-              <?php foreach ($promos as $p): ?>
-                <option value="<?= $p ?>" <?= ($_POST['promo'] ?? '') === $p ? 'selected' : '' ?>><?= $p ?></option>
-              <?php endforeach; ?>
-            </select>
+          <div class="champ">
+            <label for="ville">Ville</label>
+            <input type="text" id="ville" name="ville" required maxlength="80" value="<?= htmlspecialchars($v('ville', 'Clermont-Ferrand')) ?>">
           </div>
         </div>
-      </div>
 
-      <div class="form-group">
-        <label id="label-interets">Centres d'intérêt</label>
-        <p class="aide-champ" style="margin-bottom:10px;">
-          Ils servent à te proposer des étudiants qui aiment les mêmes choses que toi.
-          Tu pourras les changer quand tu veux depuis ton profil.
-        </p>
-        <?= selecteurInteretsHtml($interetsChoisis) ?>
-      </div>
-    </div>
-
-    <!-- Partner fields -->
-    <div id="partner-fields" <?= $selectedType !== 'partenaire' ? 'class="hidden"' : '' ?>>
-      <div class="form-group">
-        <label for="inscription-etablissement-nom">Nom de l'établissement</label>
-        <input id="inscription-etablissement-nom" type="text" name="etablissement_nom" value="<?= htmlspecialchars($_POST['etablissement_nom'] ?? '') ?>" placeholder="Le Bec qui Pique">
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="inscription-etablissement-type">Type</label>
-          <select id="inscription-etablissement-type" name="etablissement_type">
-            <option value="bar">Bar</option>
-            <option value="boite">Boîte</option>
-            <option value="resto">Restaurant</option>
-            <option value="afterwork">Afterwork</option>
-          </select>
+        <div class="formulaire__ligne">
+          <div class="champ">
+            <label for="prenom">Prénom</label>
+            <input type="text" id="prenom" name="prenom" autocomplete="given-name" required value="<?= htmlspecialchars($v('prenom')) ?>">
+          </div>
+          <div class="champ">
+            <label for="nom">Nom</label>
+            <input type="text" id="nom" name="nom" autocomplete="family-name" required value="<?= htmlspecialchars($v('nom')) ?>">
+          </div>
         </div>
-        <div class="form-group">
-          <label for="inscription-ville">Ville</label>
-          <input id="inscription-ville" type="text" name="ville" value="<?= htmlspecialchars($_POST['ville'] ?? 'Clermont-Ferrand') ?>">
+        <div class="champ">
+          <label for="email">E-mail professionnel</label>
+          <input type="email" id="email" name="email" autocomplete="email" required value="<?= htmlspecialchars($v('email')) ?>" placeholder="contact@votre-bar.fr">
         </div>
-      </div>
-    </div>
+        <div class="formulaire__ligne">
+          <div class="champ">
+            <label for="password">Mot de passe</label>
+            <input type="password" id="password" name="password" autocomplete="new-password" required minlength="<?= longueurMinimaleMotDePasse('partenaire') ?>" aria-describedby="aide-mdp">
+            <span class="champ__aide" id="aide-mdp"><?= longueurMinimaleMotDePasse('partenaire') ?> caractères minimum.</span>
+          </div>
+          <div class="champ">
+            <label for="date_naissance">Date de naissance</label>
+            <input type="date" id="date_naissance" name="date_naissance" autocomplete="bday" required min="<?= $bornePlancher ?>" max="<?= $borneMajeur ?>" value="<?= htmlspecialchars($v('date_naissance')) ?>" aria-describedby="aide-naissance">
+            <span class="champ__aide" id="aide-naissance">Le gérant du compte doit être majeur.</span>
+          </div>
+        </div>
 
-    <label class="case" style="margin-top:10px; align-items:flex-start; line-height:var(--lh-normal);">
-      <input type="checkbox" name="cgu" value="1" style="margin-top:2px;"
-             <?= !empty($_POST['cgu']) ? 'checked' : '' ?> required>
-      <span>
-        J’accepte les
-        <a href="<?= baseUrl('/cgu.php') ?>" target="_blank" rel="noopener">conditions générales</a>
-        et la
-        <a href="<?= baseUrl('/confidentialite.php') ?>" target="_blank" rel="noopener">politique de confidentialité</a>.
-      </span>
-    </label>
+        <label class="case">
+          <input type="checkbox" name="cgu" value="1" required<?= !empty($_POST['cgu']) ? ' checked' : '' ?>>
+          <span>J'accepte les <a href="<?= htmlspecialchars(baseUrl('/cgu.php'), ENT_QUOTES) ?>" target="_blank" rel="noopener">conditions générales</a> et la <a href="<?= htmlspecialchars(baseUrl('/confidentialite.php'), ENT_QUOTES) ?>" target="_blank" rel="noopener">politique de confidentialité</a>.</span>
+        </label>
 
-    <button type="submit" class="btn btn-primary btn-full" style="margin-top:14px;">
-      Créer mon compte
-    </button>
-  </form>
+        <button type="submit" class="bouton bouton--plein bouton--grand bouton--bloc">Créer mon espace <?= iconeSite('fleche-d', 'icon-sm') ?></button>
+      </form>
 
-  <div class="auth-link">
-    Déjà un compte ? <a href="<?= baseUrl('/auth/login.php') ?>">Se connecter</a>
+      <p class="auth__bas">Déjà un compte ? <a href="<?= htmlspecialchars(baseUrl('/auth/login.php'), ENT_QUOTES) ?>">Se connecter</a></p>
+    </main>
   </div>
+
+  <aside class="auth__visuel" aria-hidden="true">
+    <p class="surtitre" style="color:var(--bleu-clair);margin-bottom:16px;">En trois étapes</p>
+    <h2>Votre première soirée publiée <em>ce soir.</em></h2>
+    <ul class="auth__points">
+      <li><?= iconeSite('check') ?> Créez votre espace</li>
+      <li><?= iconeSite('check') ?> Choisissez votre formule</li>
+      <li><?= iconeSite('check') ?> Publiez, les étudiants s'inscrivent</li>
+    </ul>
+  </aside>
 </div>
-
-<script src="<?= asset('/assets/js/app.js') ?>"></script>
-</body>
-</html>
+<?php siteFin(); ?>

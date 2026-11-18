@@ -11,6 +11,11 @@
  *     qui quitte libère le terrain.
  *
  * Le prix est affiché, réglé au club : rien n'est payé dans l'application.
+ *
+ * Refonte 2026-11 : l'accent du sport est rouge. Quand « Prendre ma place »
+ * réussit — et seulement alors —, ma place s'affiche sur fond rouge, le
+ * décompte des places passe au rouge selon le nombre renvoyé par le
+ * serveur, et un bouton « Inscrit » à coche lance des confettis.
  */
 
 import React, { useCallback, useState } from 'react';
@@ -19,7 +24,9 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 
 import { api, ErreurApi, type CreneauDetail, type NiveauSport, type Personne } from '../../api';
 import { NIVEAUX_SQUAD } from '../../catalogue';
+import { Confettis, paletteConfettis } from '../../composants/Animations';
 import { Bouton } from '../../composants/Bouton';
+import { BoutonAction, teinteAvatar, useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Avatar, BoutonRetour, Encart, Pilule } from '../../composants/Elements';
 import { Case } from '../../composants/Formulaire';
@@ -30,7 +37,7 @@ import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
 import { court, dateFr } from '../../format';
 import { amisMax, formatEuros, libellePlaces, prixParJoueur } from '../../regles';
-import { useJeton } from '../../session';
+import { useJeton, useSession } from '../../session';
 import { fs, gutter, rayon } from '../../theme';
 import { useTheme } from '../../useTheme';
 
@@ -38,9 +45,13 @@ const NIVEAUX: NiveauSport[] = ['tous', 'debutant', 'inter', 'avance'];
 
 export default function FicheCreneau() {
   const { c } = useTheme();
+  const sport = useRubrique('sport');
+  const moi = useSession().profil?.id;
   const jeton = useJeton();
   const toast = useToast();
   const { id } = useLocalSearchParams<{ id: string }>();
+  // Incrémenté après un « Prendre ma place » réussi : déclenche l'animation.
+  const [fete, setFete] = useState(0);
   const creneauId = Number(id);
 
   const [cr, setCr] = useState<CreneauDetail | null>(null);
@@ -78,12 +89,13 @@ export default function FicheCreneau() {
       .catch(() => setAmis([]));
   }, [cr?.peut_reserver, amis, jeton]);
 
-  async function agir(action: () => Promise<{ message?: string; creneau: CreneauDetail }>) {
+  async function agir(action: () => Promise<{ message?: string; creneau: CreneauDetail }>, celebrer = false) {
     setEnvoi(true);
     try {
       const rep = await action();
       appliquer(rep.creneau);
       setChoisis([]);
+      if (celebrer) setFete((n) => n + 1);
       toast(rep.message ?? 'Enregistré.', 'success');
     } catch (e) {
       toast(e instanceof ErreurApi ? e.message : 'Erreur réseau', 'error');
@@ -129,7 +141,7 @@ export default function FicheCreneau() {
   const choixNiveau = (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 16 }} contentContainerStyle={{ gap: 8 }}>
       {NIVEAUX.map((n) => (
-        <Pilule key={n} libelle={NIVEAUX_SQUAD[n] ?? n} actif={niveau === n} accent={c.bleu} onPress={() => setNiveau(n)} />
+        <Pilule key={n} libelle={NIVEAUX_SQUAD[n] ?? n} actif={niveau === n} onPress={() => setNiveau(n)} />
       ))}
     </ScrollView>
   );
@@ -138,7 +150,7 @@ export default function FicheCreneau() {
     <Ecran avecBarre={false}>
       <EnTete>
         <BoutonRetour style={{ marginBottom: 18 }} />
-        <Mono couleur={c.surBleuClair} style={{ marginBottom: 6 }}>{etiquetteCreneau(cr)}</Mono>
+        <Mono couleur={sport.texteDoux} style={{ marginBottom: 6 }}>{etiquetteCreneau(cr)}</Mono>
         <Display taille={fs[7]} style={{ marginBottom: 4 }}>{cr.club.nom}</Display>
         <T taille={fs[3]} couleur={c.grisFonce}>
           {dateFr(cr.debut, 'l j F')} · {dateFr(cr.debut, 'H\\hi')} – {dateFr(cr.fin, 'H\\hi')}
@@ -157,7 +169,7 @@ export default function FicheCreneau() {
             { titre: 'Joueurs', valeur: String(cr.places.total) },
             { titre: 'Terrain', valeur: formatEuros(cr.prix) },
           ].map((b) => (
-            <View key={b.titre} style={{ flex: 1, backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.md, padding: 12 }}>
+            <View key={b.titre} style={{ flex: 1, backgroundColor: c.blanc, borderRadius: rayon.tuile, padding: 14 }}>
               <Mono couleur={c.gris} style={{ marginBottom: 4 }}>{b.titre}</Mono>
               <T taille={fs[4]} poids={700}>{b.valeur}</T>
             </View>
@@ -170,12 +182,13 @@ export default function FicheCreneau() {
         {cr.statut !== 'libre' ? (
           <>
             <Mono accessibilityRole="header" style={{ marginBottom: 12 }}>
-              {cr.ouvert ? `Partie ouverte · ${NIVEAUX_SQUAD[cr.niveau] ?? cr.niveau}` : 'Partie privée'} · {libellePlaces(cr.places.restantes)}
+              {cr.ouvert ? `Partie ouverte · ${NIVEAUX_SQUAD[cr.niveau] ?? cr.niveau}` : 'Partie privée'} ·{' '}
+              <Mono couleur={fete > 0 ? sport.accent : undefined}>{libellePlaces(cr.places.restantes)}</Mono>
             </Mono>
             <View style={{ gap: 8, marginBottom: 20 }}>
               {cr.joueurs.map((j) => (
-                <View key={j.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.md, backgroundColor: c.blanc }}>
-                  <Avatar photo={j.photo_url} prenom={j.prenom} taille={36} fond={c.bleu} />
+                <View key={j.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: rayon.bouton, backgroundColor: c.blanc }}>
+                  <Avatar photo={j.photo_url} prenom={j.prenom} taille={36} fond={fete > 0 && j.id === moi ? sport.accent : teinteAvatar(j.prenom + j.id)} />
                   <View style={{ flex: 1 }}>
                     <T taille={fs[4]} poids={700}>{court(j.prenom, j.nom)}</T>
                     <T taille={fs[2]} couleur={c.gris}>
@@ -189,7 +202,7 @@ export default function FicheCreneau() {
                 </View>
               ))}
               {Array.from({ length: cr.places.restantes }, (_, i) => (
-                <View key={`v${i}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderWidth: 1, borderStyle: 'dashed', borderColor: c.line2, borderRadius: rayon.md }}>
+                <View key={`v${i}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderWidth: 1, borderStyle: 'dashed', borderColor: c.line2, borderRadius: rayon.bouton }}>
                   <View style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.gris, alignItems: 'center', justifyContent: 'center' }}>
                     <Icone nom="plus" taille={14} couleur={c.gris} />
                   </View>
@@ -219,11 +232,11 @@ export default function FicheCreneau() {
                       accessibilityRole="checkbox"
                       accessibilityState={{ checked: actif }}
                       accessibilityLabel={court(a.prenom, a.nom)}
-                      style={{ width: 84, alignItems: 'center', gap: 6, paddingVertical: 10, borderRadius: rayon.md, borderWidth: actif ? 1.5 : 1, borderColor: actif ? c.bleu : c.grisClair, backgroundColor: c.blanc }}
+                      style={{ width: 84, alignItems: 'center', gap: 6, paddingVertical: 10, borderRadius: rayon.bouton, borderWidth: 1.5, borderColor: actif ? sport.accent : c.blanc, backgroundColor: c.blanc }}
                     >
                       <Avatar photo={a.photo_url} prenom={a.prenom} taille={40} />
                       <T numberOfLines={1} taille={fs[2]} poids={actif ? 700 : 500} style={{ maxWidth: 76 }}>{a.prenom}</T>
-                      {actif ? <Icone nom="check" taille={14} couleur={c.surBleuClair} /> : <View style={{ height: 14 }} />}
+                      {actif ? <Icone nom="check" taille={14} couleur={sport.texteDoux} /> : <View style={{ height: 14 }} />}
                     </Pressable>
                   );
                 })}
@@ -244,7 +257,7 @@ export default function FicheCreneau() {
 
             <Bouton
               libelle={`Réserver · ${prixParJoueur(cr.prix, cr.places.total)}`}
-              variante="bleu"
+              variante="sport"
               plein
               chargement={envoi}
               onPress={() => agir(() => api.reserverCreneau(jeton, cr.id, { amis: choisis, ouvert: restantesApresMoi > 0 && ouvert, niveau }))}
@@ -255,11 +268,20 @@ export default function FicheCreneau() {
         {cr.peut_rejoindre ? (
           <Bouton
             libelle={`Prendre ma place · ${prixParJoueur(cr.prix, cr.places.total)}`}
-            variante="bleu"
+            variante="sport"
             plein
             chargement={envoi}
-            onPress={() => agir(() => api.rejoindreCreneau(jeton, cr.id))}
+            onPress={() => agir(() => api.rejoindreCreneau(jeton, cr.id), true)}
           />
+        ) : null}
+
+        {fete > 0 && cr.je_joue && !cr.peut_rejoindre ? (
+          // L'état « Inscrit » qui suit une place prise : décoratif, il ne
+          // fait rien de plus — « Quitter la partie » reste dessous.
+          <View style={{ marginBottom: 8 }}>
+            <BoutonAction libelle="Inscrit" fait accent={sport.accent} desactive />
+            <Confettis declencheur={fete} couleurs={paletteConfettis(sport.accent).concat([c.noir, '#1D55F0'])} />
+          </View>
         ) : null}
 
         {cr.je_organise && cr.statut === 'reserve' && cr.peut_quitter ? (

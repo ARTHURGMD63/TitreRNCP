@@ -117,6 +117,11 @@ try {
         $etat = null; // sans objet : l'action porte sur la demande d'un tiers
     }
 
+    // Les annuaires en cache des deux personnes ne sont plus à jour.
+    require_once __DIR__ . '/../includes/hub.php';
+    hubAnnuaireOublier((int) $uid);
+    hubAnnuaireOublier((int) $target_id);
+
     // Seuls les abonnements acceptés sont comptés.
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM follows_users WHERE followed_id=? AND statut='accepted'");
     $stmt->execute([$action === 'follow' || $action === 'unfollow' ? $target_id : $uid]);

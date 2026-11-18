@@ -1,68 +1,51 @@
 /**
- * Abonnement établissement — partenaire/abonnement.php.
+ * Formule de l'établissement, en lecture seule.
  *
- * Aucun paiement en ligne, comme sur le site : choisir une formule pose
- * l'engagement et la date de première facturation, l'équipe Outsee contacte
- * ensuite pour le prélèvement. Passage obligé avant le tableau de bord tant
- * qu'aucune formule n'est choisie (voir partenaire_dashboard.php,
- * code `abonnement_requis`).
+ * L'application ne vend rien (règles Apple 3.1.1 / 3.1.3 et Google Play
+ * Billing) : la formule, les événements supplémentaires et les mises en avant
+ * se règlent hors de l'application. Cet écran affiche seulement l'état du
+ * compte, tel que le serveur le connaît — formule, période offerte, usage du
+ * mois — et suit tout seul : un paiement enregistré par le serveur apparaît
+ * au prochain chargement de l'écran.
+ *
+ * Aucun prix, aucun lien d'achat ici : c'est ce que demandent les stores.
+ * Reste le passage obligé tant qu'aucune formule n'est active (voir
+ * partenaire_dashboard.php, code `abonnement_requis`).
  */
 
 import React, { useCallback, useState } from 'react';
-import { Pressable, View } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { Text, View } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 
-import { api, ErreurApi, type FormulePartenaireAbonnement, type ReponseAbonnementPartenaire } from '../../api';
-import { Bouton } from '../../composants/Bouton';
+import { api, ErreurApi, type ReponseAbonnementPartenaire } from '../../api';
+import { Apparition } from '../../composants/Animations';
+import { CarreIcone, EnTeteApp, useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Encart } from '../../composants/Elements';
-import { Case } from '../../composants/Formulaire';
-import { Display, Mono, T, TitreEcran } from '../../composants/Texte';
-import { useToast } from '../../composants/Toast';
+import { T, TitreEcran } from '../../composants/Texte';
+import { UsageMois } from '../../composants/UsageMois';
 import { useJeton } from '../../session';
-import { fs, rayon } from '../../theme';
+import { fs, halo, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 export default function AbonnementPartenaire() {
   const { c } = useTheme();
+  const bleu = useRubrique('bleu');
   const jeton = useJeton();
-  const toast = useToast();
 
   const [donnees, setDonnees] = useState<ReponseAbonnementPartenaire | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
-  const [selection, setSelection] = useState<string | null>(null);
-  const [engagement, setEngagement] = useState(false);
-  const [envoi, setEnvoi] = useState(false);
-  const [erreurEnvoi, setErreurEnvoi] = useState<string | null>(null);
 
   const charger = useCallback(async () => {
     try {
       setErreur(null);
-      const rep = await api.partenaireAbonnement(jeton);
-      setDonnees(rep);
-      setSelection((s) => s ?? rep.client?.offre ?? rep.formules[0]?.code ?? null);
+      setDonnees(await api.partenaireAbonnement(jeton));
     } catch (e) {
       setErreur(e instanceof ErreurApi ? e.message : 'Chargement impossible.');
     }
   }, [jeton]);
 
   useFocusEffect(useCallback(() => { void charger(); }, [charger]));
-
-  async function souscrire() {
-    if (!selection) return;
-    setEnvoi(true);
-    setErreurEnvoi(null);
-    try {
-      const rep = await api.partenaireSouscrire(jeton, selection);
-      toast(rep.message ?? 'Formule enregistrée.', 'success');
-      setEngagement(false);
-      router.replace('/');
-    } catch (e) {
-      setErreurEnvoi(e instanceof ErreurApi ? e.message : 'Erreur réseau');
-    } finally {
-      setEnvoi(false);
-    }
-  }
 
   if (!donnees) {
     return (
@@ -72,94 +55,62 @@ export default function AbonnementPartenaire() {
     );
   }
 
-  const { client, formules } = donnees;
+  const { client } = donnees;
 
   return (
     <Ecran>
-      <EnTete>
-        <TitreEcran lignes={['Choisis ta', 'formule.']} />
-        <T taille={fs[3]} couleur={c.gris} style={{ marginTop: 10 }}>
-          Sans engagement de durée, résiliable au mois par simple message.
-        </T>
+      <EnTete style={{ paddingBottom: 4 }}>
+        <Apparition index={0}>
+          <EnTeteApp />
+        </Apparition>
+        <Apparition index={1}>
+          <TitreEcran avant="Ta" surligne="formule." style={{ marginBottom: 16 }} />
+        </Apparition>
       </EnTete>
       <Contenu style={{ paddingTop: 0 }}>
-        {erreurEnvoi ? <Encart genre="erreur">{erreurEnvoi}</Encart> : null}
-
-        {client ? (
-          <View style={{ backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.base, padding: 18, marginBottom: 20 }}>
-            <Mono couleur={c.gris} style={{ marginBottom: 4 }}>FORMULE EN COURS</Mono>
-            <Display taille={fs[6]} style={{ marginBottom: 2 }}>{client.offre_libelle}</Display>
-            <T taille={fs[3]} couleur={c.gris}>
-              {client.mrr > 0 ? `${client.mrr.toLocaleString('fr-FR')} € HT / mois` : 'Gratuit'}
-              {client.essai_jusquau ? ` · offert jusqu'au ${client.essai_jusquau.split('-').reverse().join('/')}` : ''}
-            </T>
-          </View>
+        {!donnees.validation.valide ? (
+          <Encart genre={donnees.validation.statut === 'refusee' ? 'erreur' : 'info'}>
+            {donnees.validation.statut === 'refusee'
+              ? `Ton compte BDE n'a pas été validé${donnees.validation.note ? ` : ${donnees.validation.note}` : '.'} Si c'est une erreur, écris-nous à contact@outsee.fr depuis l'adresse de ton compte.`
+              : "Ton compte BDE est en attente de validation par l'équipe Outsee. Tu pourras publier dès qu'il sera validé. Une question ? contact@outsee.fr."}
+          </Encart>
         ) : null}
 
-        <Mono style={{ marginBottom: 12 }}>{client ? 'Changer de formule' : 'Formules'}</Mono>
-        {formules.map((f: FormulePartenaireAbonnement) => {
-          const active = selection === f.code;
-          return (
-            <Pressable
-              key={f.code}
-              onPress={() => setSelection(f.code)}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: active }}
-              style={{
-                backgroundColor: c.blanc, borderWidth: active ? 1.5 : 1, borderColor: active ? c.rouge : c.grisClair,
-                borderRadius: rayon.base, padding: 18, marginBottom: 12,
-              }}
-            >
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                <T taille={fs[4]} poids={700}>{f.libelle}</T>
-                {f.code === 'fondateur' && f.places_restantes !== null ? (
-                  <View style={{ backgroundColor: c.lime, borderRadius: rayon.pill, paddingHorizontal: 10, paddingVertical: 3 }}>
-                    <T taille={fs[1]} poids={700}>{f.places_restantes} place{f.places_restantes > 1 ? 's' : ''} restante{f.places_restantes > 1 ? 's' : ''}</T>
-                  </View>
-                ) : null}
-              </View>
-              <Display taille={fs[7]} style={{ marginBottom: 4 }}>
-                {f.tarif > 0 ? `${f.tarif} € ` : '0 € '}
-                <T taille={fs[2]} couleur={c.gris}>HT / mois</T>
-              </Display>
-              <T taille={fs[3]} couleur={c.gris}>{f.note}</T>
-              <T taille={fs[2]} couleur={c.gris} style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: c.grisClair }}>
-                {f.code === 'fondateur'
-                  ? `Offert ${f.mois_essai} mois, puis tarif gelé tant que l'abonnement n'est pas interrompu.`
-                  : f.code === 'club'
-                    ? `Offert ${f.mois_essai} mois, puis facturé chaque mois.`
-                    : "Offert jusqu'à ta première soirée test publiée et scannée."}
+        {client ? (
+          <View style={[{ backgroundColor: bleu.accent, borderRadius: rayon.carte, padding: 14, gap: 4, marginBottom: 20 }, halo(bleu.accent)]}>
+            <Text style={{ fontFamily: sans(600), fontSize: 12, letterSpacing: 0.06 * 12, textTransform: 'uppercase', color: bleu.surAccent2 }}>Formule en cours</Text>
+            <Text style={{ fontFamily: sans(700), fontSize: 19, letterSpacing: -0.03 * 19, color: '#FFFFFF' }}>{client.offre_libelle}</Text>
+            {client.essai_jusquau ? (
+              <T taille={fs[4]} couleur={bleu.surAccent2}>
+                Période offerte jusqu&apos;au {client.essai_jusquau.split('-').reverse().join('/')}
               </T>
-            </Pressable>
-          );
-        })}
+            ) : null}
+          </View>
+        ) : donnees.validation.valide ? (
+          <Encart genre="info">
+            Ton espace s&apos;active depuis le site outsee.fr : connecte-toi avec le même e-mail et le même mot de passe, choisis ta formule dans « Ma formule », puis reviens ici. Dès qu&apos;elle est active, cet écran s&apos;ouvre tout seul.
+          </Encart>
+        ) : null}
 
-        <View style={{ backgroundColor: c.grisClair, borderRadius: rayon.md, padding: 16, marginTop: 8, marginBottom: 20 }}>
-          <T taille={fs[3]} poids={700} style={{ marginBottom: 6 }}>Dans toutes les formules</T>
-          <T taille={fs[3]} couleur={c.gris}>
-            {donnees.est_club
-              ? 'Événements sportifs et créneaux de terrain illimités, page établissement avec photos, tableau de bord des inscrits, scan des pass. Les joueurs règlent leurs terrains chez toi : Outsee ne prend aucune commission.'
-              : 'Soirées illimitées, page établissement avec photos, tableau de bord des inscrits et des présents, scan des pass à l’entrée. Tu fixes ta remise étudiante, y compris à zéro.'}
-          </T>
+        {client ? (
+          <UsageMois usage={donnees.usage} offreLibelle={client.offre_libelle} essaiJusquau={client.essai_jusquau} club={donnees.est_club} />
+        ) : null}
+
+        <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', backgroundColor: bleu.doux, borderRadius: rayon.carte, padding: 18, marginTop: 4, marginBottom: 20 }}>
+          <CarreIcone icone="check" fond={bleu.accent} encre="#FFFFFF" taille={36} />
+          <View style={{ flex: 1 }}>
+            <T taille={fs[4]} poids={700} couleur={bleu.texteDoux} style={{ marginBottom: 6 }}>Dans toutes les formules</T>
+            <T taille={fs[4]} couleur={bleu.texteDoux}>
+              {donnees.est_club
+                ? 'Créneaux de terrain illimités, page établissement avec photos, tableau de bord des inscrits, scan des pass. Les joueurs règlent leurs terrains chez toi : Outsee ne prend aucune commission.'
+                : 'Page établissement avec photos, tableau de bord des inscrits et des présents, scan des pass à l’entrée. Tu fixes ta remise étudiante, y compris à zéro.'}
+            </T>
+          </View>
         </View>
 
-        <Case coche={engagement} onChange={setEngagement} style={{ marginBottom: 16, alignItems: 'flex-start' }}>
-          J&apos;ai pris connaissance du tarif et je souhaite souscrire. Facturation mensuelle,
-          sans engagement de durée, résiliable par simple message.
-        </Case>
-
-        <T taille={fs[2]} couleur={c.gris} style={{ marginBottom: 18 }}>
-          Aucune donnée bancaire n&apos;est demandée ici. L&apos;équipe Outsee te contacte pour la mise
-          en place du prélèvement avant la première échéance.
+        <T taille={fs[4]} couleur={c.gris} style={{ marginBottom: 18 }}>
+          La formule et la facturation se gèrent sur le site outsee.fr, depuis ton espace établissement (connexion avec les mêmes identifiants), pas dans l&apos;application.
         </T>
-
-        <Bouton
-          libelle={client ? 'Changer de formule' : "Souscrire et accéder à mon espace"}
-          plein
-          desactive={!selection || !engagement}
-          chargement={envoi}
-          onPress={souscrire}
-        />
       </Contenu>
     </Ecran>
   );

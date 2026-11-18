@@ -267,19 +267,90 @@ function protegerEcritureApi(): void {
 // ─── Rate limiting (anti-bruteforce) ──────────────────────────────────────
 
 /**
- * Limite les tentatives de login par IP.
- * Retourne true si bloqué, false sinon.
+ * L'adresse IP du client, y compris derrière le répartiteur de charge.
+ *
+ * POURQUOI : en production (Render, Railway, Docker derrière un proxy), la
+ * connexion TCP vient du répartiteur, pas de l'utilisateur. `REMOTE_ADDR`
+ * vaut alors l'adresse interne du proxy, la même pour tout le monde. Le
+ * limiteur de connexion comptait donc les échecs de TOUS les utilisateurs
+ * ensemble : cinq fautes de frappe, d'où qu'elles viennent, bloquaient la
+ * connexion de chacun pendant quinze minutes — et une connexion réussie
+ * effaçait le compteur de l'attaquant.
+ *
+ * Les en-têtes de transfert ne sont crus que si la connexion vient d'une
+ * adresse privée ou de bouclage : un client direct sur Internet ne peut pas
+ * se faire passer pour un proxy, et un X-Forwarded-For qu'il ajouterait
+ * lui-même est ignoré.
+ *
+ * Ordre : CF-Connecting-IP (posé par Cloudflare, qui écrase toute valeur
+ * envoyée par le client), puis l'entrée la plus à droite de X-Forwarded-For
+ * qui n'est pas une adresse privée (celles de gauche sont écrites par le
+ * client, celles de droite par les proxys de confiance).
  */
-function isRateLimited(PDO $pdo, string $ip, int $maxAttempts = 5, int $windowSeconds = 900): bool {
-    // Nettoie les anciennes entrées
+function ipClient(): string {
+    $direct   = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+    $valide   = static fn (string $ip): bool => filter_var($ip, FILTER_VALIDATE_IP) !== false;
+    $publique = static fn (string $ip): bool => filter_var(
+        $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+    ) !== false;
+
+    if (!$valide($direct)) {
+        return '0.0.0.0';
+    }
+    if ($publique($direct)) {
+        return $direct; // aucun proxy devant nous : l'adresse est la bonne
+    }
+
+    $cf = trim((string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? ''));
+    if ($cf !== '' && $valide($cf)) {
+        return $cf;
+    }
+
+    $chaine = array_reverse(array_map('trim', explode(',', (string) ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ''))));
+    foreach ($chaine as $ip) {
+        if ($valide($ip) && $publique($ip)) {
+            return $ip;
+        }
+    }
+
+    return $direct;
+}
+
+/**
+ * Limite les tentatives par IP, et par compte quand l'e-mail est connu.
+ * Retourne true si bloqué, false sinon.
+ *
+ * Sans e-mail : au plus $maxAttempts tentatives par IP dans la fenêtre.
+ *
+ * Avec l'e-mail (connexion) : trois compteurs.
+ *   - IP + compte : $maxAttempts — la règle d'avant, pour un compte visé ;
+ *   - compte, toutes IP : 2 × $maxAttempts — un compte attaqué depuis
+ *     plusieurs adresses reste protégé ;
+ *   - IP, tous comptes : 10 × $maxAttempts — un campus entier sort souvent
+ *     par une seule adresse (NAT) : cinq fautes de frappe d'étudiants
+ *     différents ne doivent pas bloquer tout le monde, mais un robot qui
+ *     balaie les comptes depuis une adresse est arrêté.
+ */
+function isRateLimited(PDO $pdo, string $ip, int $maxAttempts = 5, int $windowSeconds = 900, ?string $email = null): bool {
+    // Nettoie les anciennes entrées (index sur attempted_at, migration v33).
     $pdo->prepare("DELETE FROM login_attempts WHERE attempted_at < DATE_SUB(NOW(), INTERVAL ? SECOND)")
         ->execute([$windowSeconds]);
 
-    $stmt = $pdo->prepare(
-        "SELECT COUNT(*) FROM login_attempts WHERE ip = ? AND attempted_at > DATE_SUB(NOW(), INTERVAL ? SECOND)"
-    );
-    $stmt->execute([$ip, $windowSeconds]);
-    return (int)$stmt->fetchColumn() >= $maxAttempts;
+    $compter = static function (string $where, array $params) use ($pdo, $windowSeconds): int {
+        $stmt = $pdo->prepare(
+            "SELECT COUNT(*) FROM login_attempts WHERE $where AND attempted_at > DATE_SUB(NOW(), INTERVAL ? SECOND)"
+        );
+        $stmt->execute([...$params, $windowSeconds]);
+        return (int) $stmt->fetchColumn();
+    };
+
+    if ($email === null || $email === '') {
+        return $compter('ip = ?', [$ip]) >= $maxAttempts;
+    }
+
+    return $compter('ip = ? AND email = ?', [$ip, $email]) >= $maxAttempts
+        || $compter('email = ?', [$email]) >= 2 * $maxAttempts
+        || $compter('ip = ?', [$ip]) >= 10 * $maxAttempts;
 }
 
 function recordLoginAttempt(PDO $pdo, string $ip, string $email): void {
@@ -287,9 +358,19 @@ function recordLoginAttempt(PDO $pdo, string $ip, string $email): void {
         ->execute([$ip, $email]);
 }
 
-function clearLoginAttempts(PDO $pdo, string $ip): void {
-    $pdo->prepare("DELETE FROM login_attempts WHERE ip = ?")
-        ->execute([$ip]);
+/**
+ * Efface les échecs du compte qui vient de se connecter, depuis cette IP.
+ *
+ * Plus jamais toute l'IP : sinon quatre essais sur le compte d'une victime,
+ * une connexion réussie sur son propre compte, et le compteur repartait de
+ * zéro — une force brute illimitée.
+ */
+function clearLoginAttempts(PDO $pdo, string $ip, ?string $email = null): void {
+    if ($email === null || $email === '') {
+        return;
+    }
+    $pdo->prepare("DELETE FROM login_attempts WHERE ip = ? AND email = ?")
+        ->execute([$ip, $email]);
 }
 
 // ─── Politique de mot de passe ────────────────────────────────────
@@ -347,6 +428,13 @@ function consumeResetToken(PDO $pdo, string $token, string $newPassword): bool {
     $pdo->prepare("UPDATE password_resets SET used=1 WHERE token_hash=?")->execute([$hash]);
     $pdo->prepare("UPDATE users SET password=? WHERE email=?")
         ->execute([password_hash($newPassword, PASSWORD_DEFAULT), $email]);
+
+    // Un mot de passe changé ferme les accès ouverts avec l'ancien : jetons de
+    // l'application (un téléphone volé reste connecté sinon) et codes de
+    // réinitialisation en cours.
+    $pdo->prepare("DELETE t FROM api_tokens t JOIN users u ON u.id = t.user_id WHERE u.email = ?")
+        ->execute([$email]);
+    $pdo->prepare("DELETE FROM password_resets WHERE email = ? AND used = 0")->execute([$email]);
 
     return true;
 }

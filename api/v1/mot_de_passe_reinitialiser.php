@@ -22,7 +22,7 @@ apiExigerMethode('POST');
 // Un code à six chiffres se devine en un million d'essais : la limite par
 // code (cinq saisies) est la vraie protection, celle-ci borne en plus ce
 // qu'une même machine peut tenter sur plusieurs adresses.
-$ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+$ip = ipClient();
 if (isRateLimited($pdo, $ip, 15, 900)) {
     apiErreur('Trop de tentatives. Réessaie dans quinze minutes.', 429, 'trop_de_tentatives');
 }
@@ -56,6 +56,6 @@ if (mb_strlen($pass) < $minimum) {
 }
 
 codeReinitialisationAppliquer($pdo, $compte['id'], $compte['email'], $pass);
-clearLoginAttempts($pdo, $ip);
+clearLoginAttempts($pdo, $ip, $email);
 
 apiReponse(['success' => true]);

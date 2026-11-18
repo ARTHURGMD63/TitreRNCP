@@ -6,7 +6,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { court, dateFr, heure, lireDate, majuscules, nombre, ts } from '../src/format.ts';
+import { compteARebours, court, dateFr, heure, lireDate, majuscules, nombre, ts } from '../src/format.ts';
 
 // 23 septembre 2026 est un mercredi.
 const SOIREE = '2026-09-23 20:30:00';
@@ -79,4 +79,14 @@ test('court : prénom et initiale du nom', () => {
 
 test('majuscules : accents conservés', () => {
   assert.equal(majuscules('Févr déjà'), 'FÉVR DÉJÀ');
+});
+
+test('compteARebours : minutes, heures, puis le jour au-delà de 24 h', () => {
+  const debut = ts(SOIREE);
+  const avant = (minutes: number) => debut * 1000 - minutes * 60000;
+  assert.equal(compteARebours(debut, avant(25)), 'Dans 25 min');
+  assert.equal(compteARebours(debut, avant(130)), 'Dans 2 h');
+  assert.equal(compteARebours(debut, avant(23 * 60 + 59)), 'Dans 23 h');
+  assert.equal(compteARebours(debut, avant(3 * 24 * 60)), 'Mercredi');
+  assert.equal(compteARebours(debut, debut * 1000 + 1000), 'Maintenant');
 });

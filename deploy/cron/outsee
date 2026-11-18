@@ -1,0 +1,23 @@
+# ============================================================
+#  Outsee — tâches planifiées
+#  Installé dans /etc/cron.d/outsee (propriétaire root, mode 644).
+#  Toujours en ligne de commande : ces scripts répondent 404 au web.
+# ============================================================
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+APP_ENV=production
+
+# Suppléments du mois → lignes de la prochaine facture Stripe.
+*/5 * * * *  www-data  php /var/www/outsee/current/cron/stripe.php >> /var/log/outsee/stripe.log 2>&1
+
+# Rappels de veille de soirée (e-mails), une fois par jour.
+0 10 * * *   www-data  php /var/www/outsee/current/cron/rappels.php >> /var/log/outsee/rappels.log 2>&1
+
+# Entretien : caches, canaux temps réel abandonnés, vieilles tentatives.
+30 4 * * *   www-data  php /var/www/outsee/current/cron/entretien.php >> /var/log/outsee/entretien.log 2>&1
+
+# Sauvegarde de la base, chaque nuit (deploy/sauvegarder.sh).
+15 3 * * *   root      /var/www/outsee/current/deploy/sauvegarder.sh >> /var/log/outsee/sauvegarde.log 2>&1
+
+# Surveillance : sonde de disponibilité et alerte e-mail (une par panne).
+*/5 * * * *  www-data  php /var/www/outsee/current/cron/sante.php >> /var/log/outsee/sante.log 2>&1

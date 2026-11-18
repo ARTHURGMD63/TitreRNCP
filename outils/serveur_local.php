@@ -69,6 +69,7 @@ $types = [
     'webp' => 'image/webp',                    'gif'   => 'image/gif',
     'ico' => 'image/x-icon',                   'woff2' => 'font/woff2',
     'woff' => 'font/woff',                     'txt'   => 'text/plain; charset=UTF-8',
+    'ttf' => 'font/ttf',
     'pdf' => 'application/pdf',                'mp4'   => 'video/mp4',
 ];
 $ext = strtolower(pathinfo($fichier, PATHINFO_EXTENSION));
@@ -82,7 +83,7 @@ if (basename($fichier) === 'sw.js' || $ext === 'html') {
     $cache = 'no-cache, max-age=0, must-revalidate';
 } elseif (basename($fichier) === 'manifest.json') {
     $cache = 'public, max-age=86400';
-} elseif (in_array($ext, ['css', 'js', 'png', 'jpg', 'jpeg', 'webp', 'svg', 'woff', 'woff2', 'ico', 'gif'], true)) {
+} elseif (in_array($ext, ['css', 'js', 'png', 'jpg', 'jpeg', 'webp', 'svg', 'woff', 'woff2', 'ttf', 'ico', 'gif'], true)) {
     $cache = 'public, max-age=31536000, immutable';
 } else {
     $cache = 'public, max-age=3600';

@@ -28,6 +28,7 @@ require_once __DIR__ . '/../../includes/places.php';
 require_once __DIR__ . '/../../includes/hub.php';
 require_once __DIR__ . '/../../includes/musique.php';
 require_once __DIR__ . '/../../includes/evenements_photos.php';
+require_once __DIR__ . '/../../includes/collaborations.php';
 
 apiExigerMethode('GET');
 
@@ -43,6 +44,9 @@ $amisParEvent = hubAmisParEvenement($pdo, $uid);
 // défaut) — la même définition que celle qui autorise à y poster une photo.
 $resultat = hubEvenements($pdo, $uid, $criteres, $etabsSuivis, $amisParEvent);
 
+// Les établissements qui co-organisent (v39), en une requête pour tout le fil.
+$collaborations = collaborationsDe($pdo, array_map(static fn (array $e): int => (int) $e['id'], $resultat['evenements']));
+
 /**
  * Met un evenement en forme pour l'application.
  *
@@ -56,8 +60,9 @@ $resultat = hubEvenements($pdo, $uid, $criteres, $etabsSuivis, $amisParEvent);
  *        hubAmisParEvenement() : les prenoms deja agreges, et leur nombre.
  * @return array<string,mixed>
  * @param list<int> $etabsSuivis
+ * @param array<int, list<array<string, mixed>>> $collaborations tel que le rend collaborationsDe()
  */
-function apiEvenement(array $e, array $amis, array $etabsSuivis): array
+function apiEvenement(array $e, array $amis, array $etabsSuivis, array $collaborations = []): array
 {
     $id      = (int) $e['id'];
     $quota   = (int) ($e['quota'] ?? 0);
@@ -70,6 +75,12 @@ function apiEvenement(array $e, array $amis, array $etabsSuivis): array
         'type'        => (string) ($e['type'] ?? ''),
         'style_musique' => $e['style_musique'] !== null ? (string) $e['style_musique'] : null,
         'date_heure'  => (string) $e['date_heure'],
+        'date_fin'    => !empty($e['date_fin']) ? (string) $e['date_fin'] : null,
+        // La fin retenue par le serveur (date_fin, sinon la fenêtre par
+        // défaut) : l'application bascule « En cours » sans refaire la règle.
+        'fin_effective' => date('Y-m-d H:i:s', (int) evenementFinEffective((string) $e['date_heure'], $e['date_fin'] ?? null)),
+        'inscriptions_jusqu_au' => evenementClotureInscriptions((string) $e['date_heure'], $e['inscriptions_jusqu_au'] ?? null),
+        'cloture_anticipee'     => evenementClotureInscriptions((string) $e['date_heure'], $e['inscriptions_jusqu_au'] ?? null) !== (string) $e['date_heure'],
         'lieu'        => (string) ($e['lieu'] ?? ''),
 
         'etablissement' => [
@@ -90,6 +101,10 @@ function apiEvenement(array $e, array $amis, array $etabsSuivis): array
             // deja sous la main.
             'suivi'   => in_array((int) ($e['etab_id'] ?? $e['etablissement_id']), $etabsSuivis, true),
         ],
+
+        // « avec … » sur la carte : les établissements qui ont accepté de
+        // co-organiser (v39). Jamais une invitation encore sans réponse.
+        'collaborateurs' => collaborationsPourApi($collaborations, $id),
 
         'places' => [
             'quota'     => $quota,
@@ -124,7 +139,7 @@ function apiEvenement(array $e, array $amis, array $etabsSuivis): array
 apiReponse([
     'success'    => true,
     'evenements' => array_map(
-        static fn (array $e): array => apiEvenement($e, $amisParEvent, $etabsSuivis),
+        static fn (array $e): array => apiEvenement($e, $amisParEvent, $etabsSuivis, $collaborations),
         $resultat['evenements']
     ),
     'pagination' => [

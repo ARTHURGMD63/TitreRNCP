@@ -8,11 +8,13 @@
  *  - étudiant   : effacement immédiat des données personnelles, trace anonyme
  *                 conservée (includes/compte.php).
  *                 Réponse { success, supprime: true }.
- *  - partenaire : un compte établissement porte un contrat, un abonnement et
- *                 des soirées auxquelles d'autres étudiants sont inscrits : il
- *                 ne s'efface pas d'un geste. La demande est transmise à
- *                 l'équipe, qui la traite.
- *                 Réponse { success, supprime: false, demande: true }.
+ *  - partenaire : suppression immédiate (Apple 5.1.1(v)) : abonnement Stripe
+ *                 résilié, établissement et soirées retirés, identité effacée ;
+ *                 la fiche client et le registre financier restent, sans
+ *                 coordonnées (includes/compte.php, compteSupprimerPartenaire()).
+ *                 Si l'abonnement ne peut pas être résilié, rien n'est
+ *                 supprimé : 503, à réessayer.
+ *                 Réponse { success, supprime: true }.
  *  - admin      : refusé. Un compte fondateur ne se supprime pas depuis un
  *                 téléphone.
  */
@@ -28,7 +30,7 @@ $uid = (int) $u['id'];
 
 // Même garde que la connexion : ce point vérifie un mot de passe, il ne doit
 // pas permettre d'en tester à volonté depuis un jeton volé.
-$ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+$ip = ipClient();
 if (isRateLimited($pdo, $ip, 5, 900)) {
     apiErreur('Trop de tentatives. Réessaie dans quinze minutes.', 429, 'trop_de_tentatives');
 }
@@ -54,16 +56,14 @@ if ($u['type'] === 'etudiant') {
 }
 
 if ($u['type'] === 'partenaire') {
-    $nom = trim((string) ($u['prenom'] ?? '') . ' ' . (string) ($u['nom'] ?? ''));
-    envoyerEmail(
-        'contact@outsee.fr',
-        'Outsee — Demande de suppression de compte partenaire',
-        "Un établissement demande la suppression de son compte depuis l'application.\n\n"
-        . "Compte  : #$uid — $nom\n"
-        . 'Adresse : ' . (string) $u['email'] . "\n\n"
-        . "À traiter : vérifier l'abonnement et les soirées à venir avant de supprimer.\n"
-    );
-    apiReponse(['success' => true, 'supprime' => false, 'demande' => true]);
+    try {
+        $restes = compteSupprimerPartenaire($pdo, $uid);
+    } catch (Throwable $e) {
+        logErreur('Suppression de compte partenaire impossible', $e, ['utilisateur' => $uid]);
+        apiErreur('La suppression n’a pas pu se faire : ton abonnement n’a pas pu être résilié. Réessaie dans un instant.', 503, 'suppression_impossible');
+    }
+    compteNettoyerApresPartenaire($pdo, $restes);
+    apiReponse(['success' => true, 'supprime' => true]);
 }
 
 apiErreur("Ce type de compte ne peut pas être supprimé depuis l'application.", 403, 'type_non_supprimable');

@@ -38,23 +38,34 @@ if (!$squad) {
     exit;
 }
 
-$stmt = $pdo->prepare("SELECT COUNT(*) FROM squad_membres WHERE squad_id = ?");
-$stmt->execute([$squad_id]);
-$nbMembres = $stmt->fetchColumn();
-
-if (estComplet((int) $nbMembres, (int) $squad['quota'])) {
-    echo json_encode(['success' => false, 'message' => 'Complet']);
-    exit;
-}
-
 try {
+    // Compter puis insérer sous verrou : sans lui, deux joueurs qui
+    // rejoignent la dernière place au même instant lisent tous deux « une
+    // place libre » et passent tous les deux (même règle que api/inscrire.php).
+    $pdo->beginTransaction();
+    $pdo->prepare("SELECT id FROM squads WHERE id = ? FOR UPDATE")->execute([$squad_id]);
+
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM squad_membres WHERE squad_id = ?");
+    $stmt->execute([$squad_id]);
+    $nbMembres = (int) $stmt->fetchColumn();
+
+    if (estComplet($nbMembres, (int) $squad['quota'])) {
+        $pdo->rollBack();
+        echo json_encode(['success' => false, 'message' => 'Complet']);
+        exit;
+    }
+
     $stmt = $pdo->prepare("INSERT INTO squad_membres (squad_id, user_id) VALUES (?, ?)");
     $stmt->execute([$squad_id, $_SESSION['user_id']]);
+    $pdo->commit();
 
     fluxToucher($pdo, canalSquad((int) $squad_id));
 
     echo json_encode(['success' => true, 'membres' => $nbMembres + 1]);
 } catch (PDOException $e) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
     if ($e->getCode() == '23000') {
         echo json_encode(['success' => false, 'message' => 'Tu es déjà membre']);
     } else {

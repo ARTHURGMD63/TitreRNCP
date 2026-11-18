@@ -70,7 +70,7 @@ export default function Avis() {
       {erreur ? <Erreur message={erreur} onReessayer={charger} /> : !donnees ? <Chargement /> : (
         <>
           <Mono couleur={c.surRougeClair} style={{ marginTop: 24, marginBottom: 8 }}>{donnees.evenement.etablissement}</Mono>
-          <Display taille={fs[8]} interligne={lh.tight} accessibilityRole="header" style={{ marginBottom: 8 }}>{donnees.evenement.titre}</Display>
+          <Display taille={fs[7]} interligne={lh.tight} accessibilityRole="header" style={{ marginBottom: 8 }}>{donnees.evenement.titre}</Display>
           <Text style={{ fontFamily: mono(400), fontSize: fs[3], color: c.gris, marginBottom: 28 }}>{donnees.evenement.date}</Text>
 
           {succes ? <Encart genre="ok">Merci pour ton avis !</Encart> : null}
@@ -115,7 +115,7 @@ export default function Avis() {
             onFocus={() => setFocus(true)}
             onBlur={() => setFocus(false)}
             accessibilityHint="Maximum 1000 caractères"
-            style={{ minHeight: 130, borderWidth: 1, borderColor: focus ? c.rouge : c.grisClair, backgroundColor: c.blanc, color: c.noir, borderRadius: rayon.md, padding: 16, fontFamily: sans(400), fontSize: fs[5] }}
+            style={{ minHeight: 130, borderWidth: 1, borderColor: focus ? c.rouge : c.grisClair, backgroundColor: c.blanc, color: c.noir, borderRadius: rayon.md, padding: 16, fontFamily: sans(400), fontSize: fs[4] }}
           />
 
           <Bouton libelle={donnees.avis ? 'Modifier mon avis' : 'Envoyer mon avis'} plein chargement={envoi} onPress={envoyer} style={{ marginTop: 24 }} />

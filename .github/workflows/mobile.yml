@@ -17,7 +17,7 @@
 #  À régler UNE fois : Settings → Secrets and variables → Actions →
 #  onglet « Variables » → New repository variable :
 #
-#    EXPO_PUBLIC_API_URL   https://outsee-xxxx.onrender.com
+#    EXPO_PUBLIC_API_URL   https://outsee.fr   (le domaine du VPS OVH)
 #
 #  L'adresse publique du serveur, en https, sans barre finale. Elle est
 #  inscrite dans l'application au moment de la construction : la changer
@@ -36,6 +36,9 @@ on:
 
 env:
   EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
+  # Clé Google Maps Android (onglet « Secrets ») : sans elle, l'écran Carte
+  # plante sur Android. Voir mobile/app.config.js.
+  GOOGLE_MAPS_ANDROID_API_KEY: ${{ secrets.GOOGLE_MAPS_ANDROID_API_KEY }}
 
 jobs:
   android:
@@ -65,6 +68,15 @@ jobs:
           java-version: 17
 
       - run: npm ci
+
+      # Numéro de build lu dans l'étiquette (mobile-v42 → 42) : voir
+      # mobile/app.config.js. Sans étiquette (lancement manuel), rien n'est imposé.
+      - name: Numéro de build
+        shell: bash
+        run: |
+          case "$GITHUB_REF_NAME" in
+            mobile-v[0-9]*) echo "OUTSEE_BUILD=${GITHUB_REF_NAME#mobile-v}" >> "$GITHUB_ENV" ;;
+          esac
 
       # Génère le projet Android natif à partir d'app.json (dossier jetable,
       # jamais versionné).
@@ -106,16 +118,34 @@ jobs:
 
       - run: npm ci
 
+      # Numéro de build lu dans l'étiquette (mobile-v42 → 42) : voir
+      # mobile/app.config.js. Sans étiquette (lancement manuel), rien n'est imposé.
+      - name: Numéro de build
+        shell: bash
+        run: |
+          case "$GITHUB_REF_NAME" in
+            mobile-v[0-9]*) echo "OUTSEE_BUILD=${GITHUB_REF_NAME#mobile-v}" >> "$GITHUB_ENV" ;;
+          esac
+
       # Génère le projet Xcode et installe les CocoaPods.
       - run: npx expo prebuild --platform ios
 
       # Archive SANS signature : c'est Sideloadly qui signera, avec
       # l'identifiant Apple de la personne qui installe.
+      #
+      # Le nom du workspace et du scheme vient du champ « name » d'app.json,
+      # casse comprise (« outsee » donne outsee.xcworkspace et le scheme
+      # outsee). On le lit dans ce que prebuild a généré au lieu de l'écrire
+      # en dur : xcodebuild distingue les majuscules pour le scheme.
       - name: Construire l'application
         run: |
+          workspace=$(ls -d ios/*.xcworkspace | head -n 1)
+          scheme=$(basename "$workspace" .xcworkspace)
+          echo "Workspace : $workspace — scheme : $scheme"
+          xcodebuild -list -workspace "$workspace"
           xcodebuild \
-            -workspace ios/Outsee.xcworkspace \
-            -scheme Outsee \
+            -workspace "$workspace" \
+            -scheme "$scheme" \
             -configuration Release \
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
@@ -123,11 +153,11 @@ jobs:
             archive \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
 
-      # Un .ipa n'est qu'une archive zip contenant Payload/Outsee.app.
+      # Un .ipa n'est qu'une archive zip contenant Payload/<Nom>.app.
       - name: Empaqueter le .ipa
         run: |
           mkdir -p Payload
-          cp -R build/Outsee.xcarchive/Products/Applications/Outsee.app Payload/
+          cp -R build/Outsee.xcarchive/Products/Applications/*.app Payload/
           zip -qr Outsee.ipa Payload
 
       - uses: actions/upload-artifact@v7

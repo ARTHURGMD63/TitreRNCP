@@ -78,7 +78,12 @@ CREATE TABLE IF NOT EXISTS etablissements (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     nom VARCHAR(200) NOT NULL,
-    type ENUM('bar', 'boite', 'resto', 'afterwork', 'club') NOT NULL,
+    type ENUM('bar', 'boite', 'resto', 'afterwork', 'club', 'bde') NOT NULL,
+    -- Validation des BDE par l'administrateur (migration v32).
+    verification ENUM('non_requise','en_attente','validee','refusee') NOT NULL DEFAULT 'non_requise',
+    verifie_par INT NULL DEFAULT NULL,
+    verifie_le DATETIME NULL DEFAULT NULL,
+    verification_note VARCHAR(255) NULL DEFAULT NULL,
     adresse VARCHAR(255),
     ville VARCHAR(100) DEFAULT 'Clermont-Ferrand',
     latitude DECIMAL(10,7) DEFAULT NULL,
@@ -117,6 +122,10 @@ CREATE TABLE IF NOT EXISTS evenements (
     sponsor_formule ENUM('boost24','top7','premium30') DEFAULT NULL,
     sponsor_tarif DECIMAL(8,2) NOT NULL DEFAULT 0,
     sponsor_jusqu_au DATETIME DEFAULT NULL,
+    sponsor_debut DATETIME DEFAULT NULL,
+    inscriptions_jusqu_au DATETIME DEFAULT NULL,
+    -- Prix d'un événement publié au-delà du quota mensuel (migration v30).
+    supplement_tarif DECIMAL(8,2) NOT NULL DEFAULT 0,
     lieu VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_sponsor (is_sponsorise, sponsor_jusqu_au),
@@ -290,7 +299,10 @@ CREATE TABLE IF NOT EXISTS login_attempts (
     ip           VARCHAR(45)  NOT NULL,
     email        VARCHAR(255) NOT NULL,
     attempted_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_ip_time (ip, attempted_at)
+    INDEX idx_ip_time (ip, attempted_at),
+    -- Migration v33 : purge des anciennes tentatives et compteur par compte.
+    INDEX idx_login_time (attempted_at),
+    INDEX idx_login_email (email(191), attempted_at)
 );
 
 CREATE TABLE IF NOT EXISTS password_resets (
@@ -709,6 +721,15 @@ CREATE TABLE IF NOT EXISTS crm_clients (
     mrr              DECIMAL(8,2) NOT NULL DEFAULT 0,
     -- Fin des 3 mois offerts, pour savoir quand la facturation démarre.
     essai_jusqu_au   DATE NULL,
+    -- Dernier changement de formule (migration v31) : un par mois au plus.
+    offre_changee_le DATE NULL DEFAULT NULL,
+    -- Lien avec Stripe (migration v33) : client, abonnement, état, fin de
+    -- période, date du lien.
+    stripe_customer_id     VARCHAR(64) NULL DEFAULT NULL,
+    stripe_subscription_id VARCHAR(64) NULL DEFAULT NULL,
+    stripe_statut          VARCHAR(32) NULL DEFAULT NULL,
+    stripe_periode_fin     DATE NULL DEFAULT NULL,
+    stripe_lie_le          DATETIME NULL DEFAULT NULL,
     signe_le         DATE NULL,
     perdu_le         DATE NULL,
     motif_perte      VARCHAR(255) NULL,
@@ -721,6 +742,7 @@ CREATE TABLE IF NOT EXISTS crm_clients (
     UNIQUE KEY uniq_etablissement (etablissement_id),
     KEY k_statut (statut),
     KEY k_responsable (responsable_id),
+    KEY k_crm_stripe_abonnement (stripe_subscription_id),
     CONSTRAINT fk_crm_client_etab
         FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE SET NULL,
     CONSTRAINT fk_crm_client_resp
@@ -1288,6 +1310,155 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
     PRIMARY KEY (version)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Notifications comprises dans un post sponsorisé (migration v30).
+CREATE TABLE IF NOT EXISTS sponsor_notifications (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    evenement_id INT NOT NULL,
+    envoyer_le DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY k_sponsor_notif_evenement (evenement_id),
+    KEY k_sponsor_notif_date (envoyer_le),
+    FOREIGN KEY (evenement_id) REFERENCES evenements(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Registre des achats des partenaires (migration v31).
+CREATE TABLE IF NOT EXISTS achats_partenaires (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    etablissement_id INT NOT NULL,
+    evenement_id INT NULL DEFAULT NULL,
+    nature ENUM('evenement','flash','sponsoring') NOT NULL,
+    -- 'AAAA-MM' : le mois (de Paris) où l'achat a été fait.
+    mois CHAR(7) NOT NULL,
+    -- 0 quand c'est compris dans l'abonnement (quota, flash, mise en avant offerte).
+    montant DECIMAL(8,2) NOT NULL DEFAULT 0,
+    formule VARCHAR(20) NULL DEFAULT NULL,
+    libelle VARCHAR(255) NULL DEFAULT NULL,
+    -- Ligne de facture Stripe (migration v33) ; NULL = pas encore envoyée.
+    stripe_ligne VARCHAR(64) NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY k_achats_mois (etablissement_id, mois, nature),
+    KEY k_achats_evenement (evenement_id),
+    FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE CASCADE,
+    FOREIGN KEY (evenement_id) REFERENCES evenements(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Suppléments payés à la publication (migration v34) : les valeurs saisies
+-- attendent ici le retour du paiement Stripe.
+CREATE TABLE IF NOT EXISTS paiements_evenements (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    etablissement_id INT NOT NULL,
+    evenement_id INT NULL DEFAULT NULL,
+    valeurs JSON NOT NULL,
+    montant_supplement DECIMAL(8,2) NOT NULL DEFAULT 0,
+    montant_sponsoring DECIMAL(8,2) NOT NULL DEFAULT 0,
+    stripe_session_id VARCHAR(255) NULL DEFAULT NULL,
+    stripe_paiement_id VARCHAR(255) NULL DEFAULT NULL,
+    statut ENUM('en_attente','paye','expire') NOT NULL DEFAULT 'en_attente',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    paye_le DATETIME NULL DEFAULT NULL,
+    UNIQUE KEY uniq_paiement_session (stripe_session_id),
+    KEY k_paiement_etab (etablissement_id, statut),
+    FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE CASCADE,
+    FOREIGN KEY (evenement_id) REFERENCES evenements(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Événements Stripe déjà traités (migration v33).
+CREATE TABLE IF NOT EXISTS stripe_evenements (
+    id VARCHAR(255) NOT NULL PRIMARY KEY,
+    type VARCHAR(100) NOT NULL,
+    recu_le TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY k_stripe_evenements_date (recu_le)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Notifications push (migration v35).
+-- Appareils qui reçoivent les notifications push (jeton Expo, un par
+-- installation de l'application). Un jeton appartient à UN compte à la fois :
+-- quand quelqu'un d'autre se connecte sur le même téléphone, il change de
+-- propriétaire (voir pushEnregistrerAppareil()).
+CREATE TABLE IF NOT EXISTS appareils_push (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    jeton VARCHAR(255) NOT NULL,
+    plateforme ENUM('ios','android') NOT NULL,
+    appareil VARCHAR(120) NULL DEFAULT NULL,
+    actif TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    derniere_vue DATETIME NULL DEFAULT NULL,
+    UNIQUE KEY uniq_appareil_jeton (jeton),
+    KEY k_appareil_user (user_id, actif),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Ce que la personne a choisi de ne pas recevoir. Absence de ligne = reçoit :
+-- une nouvelle catégorie est active pour tout le monde sans rien écrire.
+CREATE TABLE IF NOT EXISTS preferences_push (
+    user_id INT NOT NULL,
+    categorie VARCHAR(30) NOT NULL,
+    actif TINYINT(1) NOT NULL DEFAULT 1,
+    PRIMARY KEY (user_id, categorie),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- File d'envoi : tout message part d'ici, qu'il soit immédiat ou programmé.
+--   cle           identifie l'événement à l'origine (« invitation:12 ») : la
+--                 même clé pour la même personne ne s'écrit qu'une fois, donc
+--                 un rappel ou une invitation ne part jamais deux fois ;
+--   envoyer_apres UTC ; reporté au matin quand le message tombe la nuit ;
+--   statut        en_attente, envoye, ignore (préférence, plafond, aucun
+--                 appareil) ou echec (Expo injoignable, après plusieurs essais).
+CREATE TABLE IF NOT EXISTS push_envois (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    categorie VARCHAR(30) NOT NULL,
+    cle VARCHAR(120) NOT NULL,
+    titre VARCHAR(120) NOT NULL,
+    corps VARCHAR(255) NOT NULL,
+    donnees TEXT NULL,
+    envoyer_apres DATETIME NOT NULL,
+    statut ENUM('en_attente','envoye','ignore','echec') NOT NULL DEFAULT 'en_attente',
+    tentatives TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    envoye_le DATETIME NULL DEFAULT NULL,
+    UNIQUE KEY uniq_push_cle (user_id, cle),
+    KEY k_push_file (statut, envoyer_apres),
+    KEY k_push_user_date (user_id, statut, envoye_le),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- v36 : confirmation du changement d'e-mail, double authentification des administrateurs.
+CREATE TABLE IF NOT EXISTS changements_email (
+    user_id INT PRIMARY KEY,
+    nouvel_email VARCHAR(190) NOT NULL,
+    code_hash CHAR(64) NOT NULL,
+    essais TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    expire_le DATETIME NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS totp_comptes (
+    user_id INT PRIMARY KEY,
+    secret VARCHAR(64) NOT NULL,
+    dernier_pas BIGINT NOT NULL DEFAULT 0,
+    codes_secours TEXT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- v39 : événements en collaboration (un établissement invite un autre à co-organiser).
+CREATE TABLE IF NOT EXISTS evenement_collaborations (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    evenement_id INT NOT NULL,
+    etablissement_id INT NOT NULL,
+    statut ENUM('en_attente','acceptee','refusee') NOT NULL DEFAULT 'en_attente',
+    invite_le DATETIME NOT NULL,
+    repondu_le DATETIME NULL DEFAULT NULL,
+    UNIQUE KEY uniq_collab (evenement_id, etablissement_id),
+    KEY k_collab_invite (etablissement_id, statut),
+    FOREIGN KEY (evenement_id) REFERENCES evenements(id) ON DELETE CASCADE,
+    FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 INSERT IGNORE INTO schema_migrations (version) VALUES
 ('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
-('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27'), ('v28'), ('v29');
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27'), ('v28'), ('v29'), ('v30'), ('v31'), ('v32'), ('v33'), ('v34'), ('v35'), ('v36'), ('v37'), ('v38'), ('v39');

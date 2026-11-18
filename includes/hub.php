@@ -29,6 +29,7 @@ require_once __DIR__ . '/interets.php';
 require_once __DIR__ . '/social.php';
 require_once __DIR__ . '/musique.php';
 require_once __DIR__ . '/agregats.php';
+require_once __DIR__ . '/cache.php';
 require_once __DIR__ . '/evenements_temps.php';
 
 /**
@@ -84,8 +85,11 @@ function hubCriteres(array $get): array
         'comme_moi'       => $interet === FILTRE_MES_INTERETS,
         // max(1, …) : « ?p=-3 » ou « ?p=abc » ne doit pas produire un LIMIT
         // négatif, qui est une erreur SQL et non une page vide.
-        'page_profils'    => max(1, (int) ($get['p'] ?? 1)),
-        'page_evenements' => max(1, (int) ($get['pe'] ?? 1)),
+        // min(20, …) : « Voir plus » rallonge la liste depuis le début, et
+        // « ?pe=1000 » demandait 24 000 lignes d'un coup — de quoi occuper un
+        // processus PHP et la base pour une seule requête.
+        'page_profils'    => min(20, max(1, (int) ($get['p'] ?? 1))),
+        'page_evenements' => min(20, max(1, (int) ($get['pe'] ?? 1))),
     ];
 }
 
@@ -151,6 +155,63 @@ function hubAmisParEvenement(PDO $pdo, int $uid): array
     }
 
     return $par;
+}
+
+/** Durée de vie d'un annuaire en cache, en secondes. */
+const HUB_ANNUAIRE_TTL = 45;
+
+/**
+ * Le « numéro de version » de l'annuaire d'une personne : il fait partie de
+ * la clé de cache, si bien qu'en changer rend tous ses annuaires périmés d'un
+ * coup, sans avoir à les énumérer.
+ */
+function hubAnnuaireVersion(int $uid): string
+{
+    return (string) cacheGet('annuaire_version_' . $uid, '0');
+}
+
+/**
+ * Rend périmés les annuaires en cache d'une personne.
+ *
+ * À appeler quand une écriture change ce QU'ELLE voit : elle suit ou cesse de
+ * suivre quelqu'un, bloque ou débloque, change ses goûts ou son école. Ce
+ * que fait un tiers (une inscription, une squad) n'est pas suivi : l'annuaire
+ * se met à jour de lui-même au bout de HUB_ANNUAIRE_TTL secondes.
+ */
+function hubAnnuaireOublier(int $uid): void
+{
+    cacheSet('annuaire_version_' . $uid, bin2hex(random_bytes(4)), 86400);
+}
+
+/**
+ * hubAnnuaire() derrière un cache court, propre à chaque personne.
+ *
+ * Le classement par affinité parcourt tout l'annuaire : c'est la requête la
+ * plus chère de l'application, et la même personne la redemande à chaque
+ * retour sur l'onglet. Le résultat dépend de qui regarde (goûts, abonnements,
+ * blocages), donc la clé contient son identifiant — jamais de partage entre
+ * deux comptes.
+ *
+ * Pas de cache pour une recherche libre : le texte tapé varie à l'infini, ce
+ * ne serait que du remplissage qui n'est jamais relu.
+ *
+ * @param array{id:?int,ecole:string} $utilisateur
+ * @param array<string,mixed>         $criteres
+ * @return array<string,mixed> comme hubAnnuaire()
+ */
+function hubAnnuaireEnCache(PDO $pdo, array $utilisateur, array $criteres): array
+{
+    if ((string) $criteres['q'] !== '') {
+        return hubAnnuaire($pdo, $utilisateur, $criteres);
+    }
+
+    $uid = (int) $utilisateur['id'];
+    $cle = 'annuaire_' . $uid . '_' . hubAnnuaireVersion($uid) . '_' . md5(json_encode([
+        $utilisateur['ecole'] ?? '',
+        $criteres['ecole'], $criteres['interet'], $criteres['comme_moi'], $criteres['page_profils'],
+    ], JSON_THROW_ON_ERROR));
+
+    return cacheRemember($cle, HUB_ANNUAIRE_TTL, static fn(): array => hubAnnuaire($pdo, $utilisateur, $criteres));
 }
 
 /**
@@ -444,6 +505,7 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
     $musique = (string) $criteres['musique'];
     $q       = (string) $criteres['q'];
     $finEff  = sqlFinEffectiveEvenement();
+    $clotureSql = sqlClotureInscriptions();
 
     /*
      * Le fil des soirées se construit en deux temps, et ce n'est pas un
@@ -456,8 +518,9 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
      * cartes à l'écran, mais le travail était fait pour le catalogue entier.
      *
      * Désormais :
-     *   1. une requête ne ramène que les identifiants de la tranche affichée,
-     *      sans aucune sous-requête — elle lit un index et trie des entiers ;
+     *   1. une requête ne ramène que les identifiants de la tranche affichée ;
+     *      sa seule sous-requête (les places restantes, v38) ne lit qu'un
+     *      index, et ne joue que pour les soirées encore ouvertes ;
      *   2. une seconde va chercher le détail de ces identifiants-là, et d'eux
      *      seuls.
      *
@@ -465,20 +528,49 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
      * de l'utilisateur — ont quitté le SQL : le premier vient d'un cache
      * partagé, le second d'une requête unique recoupée en PHP.
      */
+    // L'heure vient de PHP (Europe/Paris), comme sponsor_jusqu_au qui est écrit
+    // par PHP : NOW() est à l'heure de la base, UTC en ligne, et rallongerait
+    // chaque mise en avant d'une ou deux heures.
+    $maintenantParis = date('Y-m-d H:i:s');
     $sponsoActif = "(e.is_sponsorise = 1
-                     AND (e.sponsor_jusqu_au IS NULL OR e.sponsor_jusqu_au > NOW()))";
+                     AND (e.sponsor_jusqu_au IS NULL OR e.sponsor_jusqu_au > '$maintenantParis'))";
 
-    // Une soirée reste dans le fil tant qu'elle n'est pas terminée — donc à
-    // venir, ou en cours (voir evenements_temps.php pour ce que « terminée »
-    // veut dire : date_fin si l'établissement l'a saisie, sinon une fenêtre
-    // par défaut après le début).
+    // Les soirées où l'étudiant a un pass : une lecture par l'index
+    // (user_id, statut), faite une fois pour tout le fil — elle filtre la
+    // tranche ci-dessous et marque ensuite les cartes « inscrit ».
+    // Seulement les soirées pas encore terminées : un habitué a des centaines
+    // de pass passés, qui n'ont rien à faire dans le IN() ci-dessous.
+    $stmtMoi = $pdo->prepare(
+        "SELECT i.evenement_id FROM inscriptions i
+           JOIN evenements e ON e.id = i.evenement_id
+          WHERE i.user_id = ? AND i.statut <> 'annule' AND $finEff >= '$maintenantParis'"
+    );
+    $stmtMoi->execute([$uid]);
+    $mesEvenements   = array_map('intval', $stmtMoi->fetchAll(PDO::FETCH_COLUMN));
+    $mesInscriptions = array_flip($mesEvenements);
+    $trousMoi        = $mesEvenements ? implode(',', array_fill(0, count($mesEvenements), '?')) : '0';
+
+    /*
+     * Ce que le fil montre, toutes les heures à l'heure de Paris (comme
+     * date_heure, date_fin et la clôture, saisies en heure locale) :
+     *  - jamais une soirée terminée (evenements_temps.php : date_fin, sinon
+     *    une fenêtre par défaut après le début) ni un événement de club
+     *    (type 'sport', v28 : il vit dans l'onglet Sport) ;
+     *  - à un étudiant inscrit, sa soirée jusqu'à la fin — « En cours » ;
+     *  - aux autres, seulement tant qu'on peut s'y inscrire : clôture de
+     *    l'établissement (v38) ou début pas encore passés, places restantes.
+     *    Le comptage des places ne lit que l'index (evenement_id, statut).
+     */
     $ouE     = " FROM evenements e
                  JOIN etablissements et ON et.id = e.etablissement_id
-                 WHERE $finEff >= NOW()
-                   AND e.type <> 'sport'";
-    // Les événements des clubs (type 'sport', v28) vivent dans l'onglet
-    // Sport : le fil des soirées ne les montre pas, la carte non plus.
-    $paramsE = [];
+                 WHERE $finEff >= '$maintenantParis'
+                   AND e.type <> 'sport'
+                   AND (e.id IN ($trousMoi)
+                        OR ($clotureSql > '$maintenantParis'
+                            AND (e.quota <= 0
+                                 OR (SELECT COUNT(*) FROM inscriptions ic
+                                      WHERE ic.evenement_id = e.id AND ic.statut <> 'annule') < e.quota)))";
+    $paramsE = $mesEvenements;
 
     if ($filter === 'pour-moi') {
         $friendEventIds     = array_keys($amisParEvent);
@@ -505,7 +597,7 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
     // Une soirée en cours passe devant tout le reste, sponsoring compris :
     // c'est la seule dont l'écran a une action à proposer maintenant plutôt
     // que plus tard.
-    $enCoursSql = "(e.date_heure <= NOW() AND $finEff >= NOW()) DESC, ";
+    $enCoursSql = "(e.date_heure <= '$maintenantParis' AND $finEff >= '$maintenantParis') DESC, ";
 
     // Le sponsoring acheté passe devant le reste du fil — c'est ce que le
     // partenaire paie. Il ne s'en cache pas pour autant : chaque carte
@@ -513,7 +605,10 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
     // e.id départage : sans dernier critère stable, deux soirées à la même
     // heure peuvent changer de place d'un chargement à l'autre, et la
     // pagination sauter ou répéter une carte.
-    $classementE = " ORDER BY $enCoursSql $sponsoActif DESC, e.is_flash DESC, e.date_heure ASC, e.id ASC";
+    // Le Top du fil (7 jours, 350 €) passe devant le Coup de projecteur (48 h,
+    // 70 €) : à prix différent, rang différent.
+    $topSql = "($sponsoActif AND e.sponsor_formule IN ('top7','premium30')) DESC, ";
+    $classementE = " ORDER BY $enCoursSql $sponsoActif DESC, $topSql e.is_flash DESC, e.date_heure ASC, e.id ASC";
 
     // Même mécanique que l'annuaire : « voir plus » rallonge la page.
     $limiteE = HUB_EVENEMENTS_PAR_PAGE * (int) $criteres['page_evenements'];
@@ -540,7 +635,7 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
         "SELECT e.*, et.id AS etab_id, et.nom AS etablissement_nom, et.type AS etab_type, et.ville,
                 et.latitude AS etab_latitude, et.longitude AS etab_longitude,
                 $sponsoActif AS sponso_actif,
-                (e.date_heure <= NOW() AND $finEff >= NOW()) AS en_cours_calc,
+                (e.date_heure <= '$maintenantParis' AND $finEff >= '$maintenantParis') AS en_cours_calc,
                 (SELECT COUNT(*) FROM inscriptions i
                   WHERE i.evenement_id = e.id AND i.statut <> 'annule') AS nb_inscrits
            FROM evenements e
@@ -551,15 +646,7 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
     $stmtE->execute(array_merge($idsE, $idsE));
     $evenements = $stmtE->fetchAll();
 
-    // Mes inscriptions parmi les soirées affichées : une requête pour
-    // toute la page, là où il y avait une sous-requête par carte.
-    $stmtMoi = $pdo->prepare(
-        "SELECT evenement_id FROM inscriptions
-          WHERE user_id = ? AND statut <> 'annule' AND evenement_id IN ($trousE)"
-    );
-    $stmtMoi->execute(array_merge([$uid], $idsE));
-    $mesInscriptions = array_flip(array_map('intval', $stmtMoi->fetchAll(PDO::FETCH_COLUMN)));
-
+    // « Inscrit » sur chaque carte : $mesInscriptions, lue avant l'étape 1.
     $notesEtab = notesEtablissements($pdo);
 
     // array_map plutôt qu'un foreach par référence : voir la note de

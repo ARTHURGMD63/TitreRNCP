@@ -178,7 +178,7 @@ function financeSerieMensuelle(PDO $pdo, int $nbMois = 12): array
  *
  * Sans client payant on se rabat sur le tarif Essentiel de la grille : le
  * panier moyen vaut alors zéro, et diviser les charges par zéro ne donne
- * rien d'affichable. C'est aussi l'hypothèse de SL-03 — « 3 clients à 79 € ».
+ * rien d'affichable. C'est aussi l'hypothèse de SL-03 — « clients à l'Essentiel » (49,99 € dans la grille tarifaire).
  *
  * @return array{charges:float, panier_moyen:float, clients_requis:int, atteint:bool, mrr:float}
  */

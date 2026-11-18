@@ -10,46 +10,64 @@ import { router } from 'expo-router';
 
 import { encreSur, fixe, fs, lsEm, mono, police, rayon, sans, toucheMin } from '../theme';
 import { useTheme } from '../useTheme';
+import { PressableAnime } from './Animations';
 import { Icone, type NomIcone } from './Icone';
 import { T } from './Texte';
 
-// ─── .pill ──────────────────────────────────────────────────────────────────
+// ─── Chip de filtre ─────────────────────────────────────────────────────────
 
-export function Pilule({ libelle, actif, onPress, icone, accent, musique, style, couleurTexte }: {
+/**
+ * La chip de filtre de la refonte : fond surface sans bordure au repos,
+ * encre (texte inversé) une fois choisie, rayon 12, 40 px de haut au moins.
+ *
+ *  - `carre` : le petit carré coloré (28 px, rayon 10) qui porte l'icône de
+ *    la catégorie en blanc ;
+ *  - `contour` : la chip « Filtres », bordée d'encre.
+ *
+ * `accent`, `musique` et `couleurTexte` sont acceptés pour les écrans pas
+ * encore redessinés (partenaire, admin), sans effet sur le dessin.
+ */
+export function Pilule({ libelle, actif, onPress, icone, carre, contour, style, accessibilityLabel }: {
   libelle: string;
   actif: boolean;
   onPress: () => void;
   icone?: NomIcone;
-  /** Couleur de la pilule active : lave, ou dôme dans l'univers sport. */
+  carre?: string;
+  contour?: boolean;
   accent?: string;
-  /** .pill-musique : semi-gras même au repos. */
   musique?: boolean;
   style?: StyleProp<ViewStyle>;
-  /** « Pour moi » au repos : contour et texte en lave lisible. */
   couleurTexte?: string;
+  accessibilityLabel?: string;
 }) {
   const { c } = useTheme();
-  const plein = accent ?? c.rouge;
-  const encre = actif ? encreSur(plein) : couleurTexte ?? c.noir;
+  const encre = actif ? c.surEncre : c.noir;
   return (
-    <Pressable
+    <PressableAnime
       onPress={onPress}
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? libelle}
       accessibilityState={{ selected: actif }}
-      hitSlop={{ top: 4, bottom: 4 }}
-      style={({ pressed }) => [
+      style={[
         {
-          flexDirection: 'row', alignItems: 'center', gap: 6,
-          paddingVertical: 10, paddingHorizontal: 17, borderRadius: rayon.pill, borderWidth: 1,
-          borderColor: actif ? plein : c.line2, backgroundColor: actif ? plein : 'transparent',
-          transform: pressed ? [{ scale: 0.98 }] : [],
+          flexDirection: 'row', alignItems: 'center', gap: 8,
+          minHeight: 40, paddingVertical: carre ? 6 : 9, paddingLeft: carre ? 6 : 14, paddingRight: 14,
+          borderRadius: rayon.sm, borderWidth: 1.5,
+          borderColor: contour ? c.noir : actif ? c.noir : c.blanc,
+          backgroundColor: actif ? c.noir : contour ? 'transparent' : c.blanc,
         },
         style,
       ]}
     >
-      {icone ? <View style={musique ? { marginRight: 4 } : null}><Icone nom={icone} taille={16} couleur={encre} trait={2} /></View> : null}
-      <Text style={{ fontFamily: sans(actif || musique ? 600 : 500), fontSize: fs[4], color: encre }}>{libelle}</Text>
-    </Pressable>
+      {carre && icone ? (
+        <View style={{ width: 26, height: 26, borderRadius: 8, backgroundColor: carre, alignItems: 'center', justifyContent: 'center' }}>
+          <Icone nom={icone} taille={15} couleur="#FFFFFF" trait={2} />
+        </View>
+      ) : icone ? (
+        <Icone nom={icone} taille={17} couleur={encre} trait={2} />
+      ) : null}
+      <Text style={{ fontFamily: sans(500), fontSize: fs[4], color: encre }}>{libelle}</Text>
+    </PressableAnime>
   );
 }
 
@@ -84,7 +102,8 @@ export function Badge({ libelle, fond, encre, filet, icone, espacement = lsEm.la
 
 /**
  * La photo, ou l'initiale sur un rond de couleur — le repli d'avatarHtml() :
- * Unbounded, basalte, corps de 40 % du diamètre (11 px au minimum).
+ * Onest 700 (police.display), encre choisie selon le fond (encreSur()), corps
+ * de 40 % du diamètre (11 px au minimum).
  */
 export function Avatar({ photo, prenom, taille = 48, fond, anneau }: {
   photo?: string | null;
@@ -191,12 +210,13 @@ export function BoutonRetour({ media, vers, style, libelle = 'Retour' }: {
       accessibilityRole="button"
       accessibilityLabel={libelle}
       style={[
-        { width: toucheMin, height: toucheMin, borderRadius: toucheMin / 2, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
-        media ? { backgroundColor: fixe.basalte, borderColor: fixe.basalte } : { backgroundColor: c.blanc, borderColor: c.grisClair },
+        // Refonte 2026-11 : carré arrondi de 42 px, comme les boutons d'en-tête.
+        { width: 42, height: 42, borderRadius: rayon.sm, alignItems: 'center', justifyContent: 'center' },
+        media ? { backgroundColor: fixe.basalte } : { backgroundColor: c.blanc },
         style,
       ]}
     >
-      <Icone nom="fleche-g" taille={20} couleur={media ? fixe.craie : c.noir} />
+      <Icone nom="chevron-g" taille={20} couleur={media ? fixe.craie : c.noir} />
     </Pressable>
   );
 }
@@ -231,7 +251,8 @@ export function Encart({ genre, children, style }: {
   if (genre === 'info') {
     return (
       <View style={[{ backgroundColor: c.surface2, borderWidth: 1, borderStyle: 'dashed', borderColor: c.line2, borderRadius: rayon.md, padding: 16, marginBottom: 24 }, style]}>
-        {children}
+        {/* Un texte brut dans une View plante sur téléphone (« Text strings must be rendered within a <Text> ») : il est enveloppé, comme dans les autres genres. */}
+        {typeof children === 'string' ? <T taille={fs[4]} couleur={c.grisFonce} interligne={1.5}>{children}</T> : children}
       </View>
     );
   }

@@ -25,6 +25,8 @@
 # Ce qui doit rester en LF sur le disque, y compris sous Windows.
 *.sh            text eol=lf
 docker/*        text eol=lf
+# Configurations du VPS : cron et nginx refusent les fins de ligne Windows.
+deploy/**       text eol=lf
 .htaccess       text eol=lf
 *.yml           text eol=lf
 *.yaml          text eol=lf
