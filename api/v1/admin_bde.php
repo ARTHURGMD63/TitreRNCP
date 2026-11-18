@@ -16,6 +16,7 @@
 
 require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/comptes.php';
+require_once __DIR__ . '/../../includes/push.php';
 
 apiExigerMethode(($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' ? 'POST' : 'GET');
 
@@ -80,6 +81,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             break;
         default:
             apiErreur('Action inconnue', 422, 'action_inconnue');
+    }
+
+    // Le BDE n'a aucune raison d'ouvrir l'application pour savoir où il en est :
+    // la décision lui arrive sur le téléphone.
+    if ($action === 'valider' || $action === 'refuser') {
+        $stmt = $pdo->prepare('SELECT user_id FROM etablissements WHERE id = ?');
+        $stmt->execute([$id]);
+        $proprietaire = (int) $stmt->fetchColumn();
+        if ($proprietaire > 0) {
+            [$titre, $corps] = $action === 'valider' ? pushTexteBdeValide() : pushTexteBdeRefuse();
+            pushNotifier($pdo, $proprietaire, 'compte', "bde_$action:$id:" . date('YmdHis'), $titre, $corps, ['url' => '/abonnement']);
+        }
     }
 
     apiReponse(['success' => true, 'message' => $message]);

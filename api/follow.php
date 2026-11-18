@@ -4,6 +4,7 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/social.php';
 require_once __DIR__ . '/../includes/gamification.php';
 require_once __DIR__ . '/../includes/temps_reel.php';
+require_once __DIR__ . '/../includes/push.php';
 header('Content-Type: application/json');
 
 // Ecriture : POST obligatoire, jeton CSRF et origine verifies.
@@ -34,6 +35,19 @@ if (!$target_id || !in_array($action, $actions, true) || !in_array($type, ['user
 if ($type === 'user' && $target_id === $uid) {
     echo json_encode(['success' => false, 'message' => 'Tu ne peux pas te suivre toi-même']);
     exit;
+}
+
+// La cible doit exister, et être du bon type : on ne suit qu'un étudiant (pas
+// un administrateur ni un compte supprimé), ou un établissement réel.
+if ($action === 'follow') {
+    $existe = $type === 'user'
+        ? $pdo->prepare("SELECT 1 FROM users WHERE id = ? AND type = 'etudiant'")
+        : $pdo->prepare('SELECT 1 FROM etablissements WHERE id = ?');
+    $existe->execute([$target_id]);
+    if (!$existe->fetchColumn()) {
+        echo json_encode(['success' => false, 'message' => 'Compte introuvable']);
+        exit;
+    }
 }
 
 // Un établissement reste un abonnement libre : c'est un lieu public,
@@ -83,6 +97,13 @@ try {
         }
         $etat    = followState($pdo, $uid, $target_id);
         $message = $etat === FOLLOW_ACCEPTED ? 'Tu suis maintenant cette personne' : 'Demande envoyée';
+        if ($etat === FOLLOW_PENDING) {
+            // Une demande attend une réponse : la personne visée est prévenue.
+            // Une demande par jour et par paire au plus : annuler puis redemander
+            // en boucle ne doit pas devenir du harcèlement.
+            [$titre, $corps] = pushTexteDemandeSuivi(pushPrenomDe($pdo, $uid));
+            pushNotifier($pdo, $target_id, 'social', "demande:$uid:$target_id:" . date('Ymd'), $titre, $corps, ['url' => '/notifications']);
+        }
 
     } elseif ($action === 'unfollow') {
         // Couvre l'annulation d'une demande et le désabonnement.
@@ -107,6 +128,8 @@ try {
                             WHERE follower_id=? AND followed_id=?")
                 ->execute([$target_id, $uid]);
             $message = 'Demande acceptée';
+            [$titre, $corps] = pushTexteDemandeAcceptee(pushPrenomDe($pdo, $uid));
+            pushNotifier($pdo, $target_id, 'social', "acceptee:$uid:$target_id:" . date('Ymd'), $titre, $corps, ['url' => '/etudiant/' . $uid]);
         } else {
             // Un refus efface la ligne : pas d'état mort qui empêcherait de
             // redemander plus tard. Contre l'insistance, c'est le blocage qui agit.
