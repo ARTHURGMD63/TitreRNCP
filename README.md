@@ -43,10 +43,10 @@ Outsee connecte les étudiants aux établissements (bars, boîtes, restos) de le
 | Styles | Charte Outsee : Unbounded, Instrument Sans, JetBrains Mono (hébergées dans `assets/fonts`) |
 | Tests | PHPUnit 10, PHPStan niveau 6 |
 | CI/CD | GitHub Actions (PHP 8.1 / 8.2 / 8.3) |
-| Déploiement | Docker (Apache + mod_php + OPcache) ou hébergement mutualisé |
+| Déploiement | Aujourd'hui : Docker (Apache + mod_php + OPcache) sur Render. À venir : VPS OVH (nginx + PHP-FPM + MariaDB), kit dans `deploy/` |
 | Temps réel | Interrogation courte avec ETag et flux de révisions |
 | Cache | APCu si présent, fichiers sinon |
-| Base de données | MySQL 8 ou MariaDB (local : WAMP ; en ligne : TiDB Cloud, voir [docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md)) |
+| Base de données | MySQL 8 ou MariaDB (local : WAMP ; en ligne aujourd'hui : TiDB Cloud ; sur le VPS : MariaDB locale) |
 | PWA | Web App Manifest |
 
 ## Installation locale
@@ -99,7 +99,7 @@ php outils/migrer.php --adopter=v13    # elle s'arrête à v13 ; v14 et v15 rest
 
 Choisir la borne plutôt que `--adopter` seul dès que la base n'est pas complètement à jour : sans elle, les migrations manquantes sont enregistrées comme faites et ne seront jamais posées. Une base qui ignore de quelles migrations elle a besoin le fait savoir à la première requête sur une table absente, pas avant.
 
-En cas de doute, lancer `php outils/migrer.php` sans option : si la base est en avance sur son suivi, l'erreur nomme la version à adopter.
+En cas de doute, lancer `php outils/migrer.php` sans option. Une erreur « Duplicate » ou « already exists » veut dire que la base porte déjà une partie de la migration : la vérifier à la main avant tout `--adopter` (elle a pu s'arrêter au milieu). L'outil prend un verrou (`GET_LOCK`) : deux passages simultanés sur la même base sont refusés.
 
 > Les migrations ne se posent plus à la main dans phpMyAdmin. C'est ce qui avait laissé `db_setup.sql` et `install_mutualise.sql` diverger de quatre tables, et toute installation faite en suivant ce README produisait un back-office en erreur. `tests/Unit/SchemaTest.php` échoue désormais en intégration continue à la première divergence.
 
@@ -112,20 +112,21 @@ En cas de doute, lancer `php outils/migrer.php` sans option : si la base est en 
 
 ## Déploiement
 
-Le détail — serveur, base, distribution de l'application — est dans
-[docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md). En résumé :
+État au 18/11/2026 :
 
-| Voie | Pour quoi |
-|------|-----------|
-| Image Docker (`Dockerfile`) sur Render, avec une base TiDB Cloud | Le serveur de l'API pour l'application mobile |
-| Hébergement mutualisé, par FTP | Le site, déployé par `.github/workflows/deploiement.yml` |
-| WAMP / serveur PHP intégré | Le développement local |
+| Voie | État | Pour quoi |
+|------|------|-----------|
+| Image Docker (`Dockerfile`) sur Render, base TiDB Cloud | **En service** | L'API de l'application mobile, avec `APP_ENV=production` et `APP_URL` réglés dans Render |
+| VPS OVH (nginx, PHP-FPM, MariaDB) | **À installer** | La future production unique : site, espace pro, API. Kit dans `deploy/`, marche à suivre dans [docs/DEPLOIEMENT_VPS_OVH.md](docs/DEPLOIEMENT_VPS_OVH.md), workflow `.github/workflows/deploiement-vps.yml` (lancé à la main, depuis `main` seulement) |
+| Hébergement mutualisé, par FTP | Ancien, à supprimer à la bascule VPS | `.github/workflows/deploiement.yml`, **lancé à la main seulement** (plus de déploiement à chaque push sur `main`) |
+| WAMP / serveur PHP intégré | Développement | Le poste local |
 
 Le serveur lit sa base dans l'environnement (`MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`,
-`MYSQLPASSWORD`, `MYSQLDATABASE`) ; voir `includes/config.php`.
+`MYSQLPASSWORD`, `MYSQLDATABASE`) ou dans `includes/config.local.php` ; voir `includes/config.php`.
 
-> **Un push sur `main` déploie par FTP.** C'est pourquoi `main` ne reçoit que des
-> Pull Requests (voir [CONTRIBUTING.md](CONTRIBUTING.md)).
+Sonde de disponibilité : `https://<domaine>/sante.php` (200 si le serveur et la base
+répondent, 503 sinon), à donner à un service de surveillance extérieur.
+
 ## Tests
 
 ```bash
