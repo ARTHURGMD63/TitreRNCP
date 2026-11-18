@@ -15,17 +15,19 @@
  * feuille — les deux fenêtres du site.
  */
 
-import React, { useCallback, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import React, { useCallback, useRef, useState } from 'react';
+import { Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 
 import { api, type CibleInvitation, type Evenement, type Notification } from '../../api';
 import { Bouton } from '../../composants/Bouton';
 import { CarteEvenement, enregistrerStyles } from '../../composants/CarteEvenement';
 import { Apparition } from '../../composants/Animations';
+import { BarreRecherche } from '../../composants/BarreRecherche';
 import { EnTeteApp, PanneauFiltres, rangeeChips, Tuile, useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Pilule } from '../../composants/Elements';
+import { RangeeDefilante } from '../../composants/RangeeDefilante';
 import { Feuille } from '../../composants/Feuille';
 import { Icone, type NomIcone } from '../../composants/Icone';
 import { ElementNotification, FeuilleInvitation, FermerFeuille, NotificationsVides, SurtitreFeuille } from '../../composants/Social';
@@ -60,6 +62,10 @@ export default function Hub() {
   const [rechercheOuverte, setRechercheOuverte] = useState(false);
   const [saisie, setSaisie] = useState('');
   const [q, setQ] = useState('');
+  const [cherche, setCherche] = useState(false);
+  // Le numéro de la dernière requête : une réponse plus ancienne, arrivée
+  // après une frappe plus récente, est ignorée au lieu d'écraser la liste.
+  const derniere = useRef(0);
 
   const [type, setType] = useState('all');
   const [musique, setMusique] = useState('');
@@ -82,18 +88,23 @@ export default function Hub() {
   }, [jeton]);
 
   const charger = useCallback(async () => {
+    const numero = ++derniere.current;
     try {
       setErreur(null);
       const r = await api.evenements(jeton, { type, musique, q, pe: pageE });
+      if (numero !== derniere.current) return;
       enregistrerStyles(r.filtres.styles_musique);
       setStyles(r.filtres.styles_musique);
       setEvenements(r.evenements);
       setResteE(r.pagination.a_suivre);
     } catch (e) {
-      setErreur(e instanceof Error ? e.message : 'Chargement impossible.');
+      if (numero === derniere.current) setErreur(e instanceof Error ? e.message : 'Chargement impossible.');
     } finally {
-      setRafraichit(false);
-      setChargeSuite(false);
+      if (numero === derniere.current) {
+        setRafraichit(false);
+        setChargeSuite(false);
+        setCherche(false);
+      }
     }
   }, [jeton, type, musique, q, pageE]);
 
@@ -106,6 +117,20 @@ export default function Hub() {
 
   const choisirType = (t: string) => { setType(t); setPageE(1); setEvenements(null); };
   const choisirMusique = (m: string) => { setMusique(m); setPageE(1); setEvenements(null); };
+  // La liste déjà affichée reste à l'écran pendant la recherche : pas de
+  // clignotement à chaque lettre, seule la loupe tourne.
+  const chercher = (terme: string) => {
+    if (terme === q) return;
+    setCherche(true);
+    setQ(terme);
+    setPageE(1);
+  };
+  // Fermer la recherche la retire : la liste ne reste pas filtrée en cachette.
+  const basculerRecherche = () => {
+    if (rechercheOuverte) { setSaisie(''); chercher(''); }
+    setRechercheOuverte(!rechercheOuverte);
+  };
+  const toutVoir = () => { setSaisie(''); setQ(''); setRechercheOuverte(false); choisirType('all'); choisirMusique(''); };
 
   // La première carte flash porte le compte à rebours ($firstCard).
   const [instant] = useState(() => Date.now() / 1000);
@@ -164,7 +189,7 @@ export default function Hub() {
       <EnTete style={{ paddingBottom: 4 }}>
         <Apparition index={0}>
           <EnTeteApp
-            onRecherche={() => setRechercheOuverte((o) => !o)}
+            onRecherche={basculerRecherche}
             rechercheOuverte={rechercheOuverte}
             onNotifications={() => { setCloche(true); void chargerNotifs(); }}
             nonLues={!!notifs?.a_traiter}
@@ -176,27 +201,21 @@ export default function Hub() {
 
         {rechercheOuverte ? (
           <View style={{ marginBottom: 16 }}>
-            <TextInput
-              autoFocus
-              value={saisie}
-              onChangeText={setSaisie}
-              onSubmitEditing={() => { setQ(saisie.trim()); setPageE(1); setEvenements(null); }}
-              placeholder="Chercher une soirée, un lieu..."
-              placeholderTextColor={c.gris}
-              returnKeyType="search"
+            <BarreRecherche
+              valeur={saisie}
+              onChange={setSaisie}
+              onChercher={chercher}
+              chargement={cherche}
+              placeholder="Une soirée, un lieu, un bar..."
               accessibilityLabel="Chercher une soirée ou un lieu"
-              style={{ minHeight: 52, paddingVertical: 14, paddingLeft: 18, paddingRight: 52, borderRadius: rayon.bouton, fontFamily: sans(400), fontSize: fs[5], backgroundColor: c.blanc, color: c.noir }}
             />
-            <Pressable onPress={() => { setQ(saisie.trim()); setPageE(1); setEvenements(null); }} accessibilityRole="button" accessibilityLabel="Chercher" style={{ position: 'absolute', right: 4, top: 0, bottom: 0, width: 44, alignItems: 'center', justifyContent: 'center' }}>
-              <Icone nom="loupe" taille={20} couleur={c.gris} />
-            </Pressable>
           </View>
         ) : null}
       </EnTete>
 
       <View>
         <Apparition index={2}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 20 }} contentContainerStyle={rangeeChips}>
+          <RangeeDefilante style={{ marginBottom: 20 }} contentContainerStyle={rangeeChips}>
             {/* La musique est passée dans le panneau Filtres ; la chip le
                 signale quand un style est choisi. */}
             <Pilule
@@ -217,7 +236,7 @@ export default function Hub() {
                 carre={couleursCategorie[t.code]}
               />
             ))}
-          </ScrollView>
+          </RangeeDefilante>
         </Apparition>
 
         {/* Comme les rubriques de Sport : deux tuiles. « Pour moi » est le
@@ -247,11 +266,11 @@ export default function Hub() {
                   </Display>
                   <T taille={fs[3]} poids={500} couleur={c.grisFonce} interligne={lh.snug} style={{ textAlign: 'center', maxWidth: 290 }}>
                     {filtreActif
-                      ? 'Aucun événement ne correspond à cette recherche. Essaie un autre filtre.'
+                      ? (q ? `Rien pour « ${q} ». Vérifie l'orthographe ou essaie un autre mot.` : 'Aucun événement ne correspond à ce filtre. Essaie-en un autre.')
                       : "Les établissements n'ont pas encore publié de soirée près de toi. En attendant, suis des personnes pour voir où elles sortent, ou explore la culture et le sport."}
                   </T>
                   {filtreActif ? (
-                    <Bouton libelle="Voir tous les événements" onPress={() => { choisirType('all'); choisirMusique(''); }} style={{ marginTop: 20, alignSelf: 'center' }} />
+                    <Bouton libelle="Voir tous les événements" onPress={toutVoir} style={{ marginTop: 20, alignSelf: 'center' }} />
                   ) : (
                     <View style={{ marginTop: 20, gap: 10, alignSelf: 'stretch' }}>
                       <Bouton libelle="Trouver des gens à suivre" icone="personnes" plein onPress={() => router.navigate('/personnes')} />

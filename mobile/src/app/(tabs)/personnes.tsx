@@ -10,12 +10,13 @@
  * bon filtre, comme avant avec ?view=people&interest=…
  */
 
-import React, { useCallback, useState } from 'react';
-import { Pressable, ScrollView, TextInput, View } from 'react-native';
+import React, { useCallback, useRef, useState } from 'react';
+import { ScrollView, View } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 
 import { api, type ReponsePersonnes } from '../../api';
 import { Apparition } from '../../composants/Animations';
+import { BarreRecherche } from '../../composants/BarreRecherche';
 import { Bouton } from '../../composants/Bouton';
 import { EnTeteApp, useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
@@ -24,7 +25,7 @@ import { Icone } from '../../composants/Icone';
 import { CarteSuggestion, LARGEUR_SUGGESTION, LignePersonne } from '../../composants/Social';
 import { T, TitreEcran, TitreSection } from '../../composants/Texte';
 import { useJeton } from '../../session';
-import { fs, gutter, lh, rayon, sans } from '../../theme';
+import { fs, gutter, lh, rayon } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 export default function Personnes() {
@@ -35,6 +36,9 @@ export default function Personnes() {
   const [rechercheOuverte, setRechercheOuverte] = useState(false);
   const [saisie, setSaisie] = useState('');
   const [q, setQ] = useState('');
+  const [cherche, setCherche] = useState(false);
+  // Une réponse plus ancienne qu'une frappe récente est ignorée.
+  const derniere = useRef(0);
 
   const [ecole, setEcole] = useState('');
   const [interet, setInteret] = useState(params.interest ?? '');
@@ -55,20 +59,37 @@ export default function Personnes() {
   }
 
   const charger = useCallback(async () => {
+    const numero = ++derniere.current;
     try {
       setErreur(null);
-      setAnnuaire(await api.personnes(jeton, { q, ecole, interest: interet, p: page }));
+      const r = await api.personnes(jeton, { q, ecole, interest: interet, p: page });
+      if (numero === derniere.current) setAnnuaire(r);
     } catch (e) {
-      setErreur(e instanceof Error ? e.message : 'Chargement impossible.');
+      if (numero === derniere.current) setErreur(e instanceof Error ? e.message : 'Chargement impossible.');
     } finally {
-      setRafraichit(false);
-      setChargeSuite(false);
+      if (numero === derniere.current) {
+        setRafraichit(false);
+        setChargeSuite(false);
+        setCherche(false);
+      }
     }
   }, [jeton, q, ecole, interet, page]);
 
   useFocusEffect(useCallback(() => { void charger(); }, [charger]));
 
   const f = annuaire?.filtres;
+
+  const chercher = (terme: string) => {
+    if (terme === q) return;
+    setCherche(true);
+    setQ(terme);
+    setPage(1);
+  };
+  // Fermer la recherche la retire : l'annuaire ne reste pas filtré en cachette.
+  const basculerRecherche = () => {
+    if (rechercheOuverte) { setSaisie(''); chercher(''); }
+    setRechercheOuverte(!rechercheOuverte);
+  };
   const filtreInteretActif = interet !== '';
 
   return (
@@ -76,7 +97,7 @@ export default function Personnes() {
       <EnTete style={{ paddingBottom: 4 }}>
         <Apparition index={0}>
           <EnTeteApp
-            onRecherche={() => setRechercheOuverte((o) => !o)}
+            onRecherche={basculerRecherche}
             rechercheOuverte={rechercheOuverte}
             onNotifications={() => router.navigate('/notifications')}
           />
@@ -87,20 +108,14 @@ export default function Personnes() {
 
         {rechercheOuverte ? (
           <View style={{ marginBottom: 16 }}>
-            <TextInput
-              autoFocus
-              value={saisie}
-              onChangeText={setSaisie}
-              onSubmitEditing={() => { setQ(saisie.trim()); setPage(1); }}
-              placeholder="Chercher un nom ou une passion..."
-              placeholderTextColor={c.gris}
-              returnKeyType="search"
+            <BarreRecherche
+              valeur={saisie}
+              onChange={setSaisie}
+              onChercher={chercher}
+              chargement={cherche}
+              placeholder="Un prénom, un nom, une passion..."
               accessibilityLabel="Chercher un nom ou une passion"
-              style={{ minHeight: 52, paddingVertical: 14, paddingLeft: 18, paddingRight: 52, borderRadius: rayon.bouton, fontFamily: sans(400), fontSize: fs[5], backgroundColor: c.blanc, color: c.noir }}
             />
-            <Pressable onPress={() => { setQ(saisie.trim()); setPage(1); }} accessibilityRole="button" accessibilityLabel="Chercher" style={{ position: 'absolute', right: 4, top: 0, bottom: 0, width: 44, alignItems: 'center', justifyContent: 'center' }}>
-              <Icone nom="loupe" taille={20} couleur={c.gris} />
-            </Pressable>
           </View>
         ) : null}
       </EnTete>
@@ -155,7 +170,7 @@ export default function Personnes() {
               taille={fs[4]}
               poids={700}
               couleur={c.surRougeClair}
-              onPress={() => { setSaisie(''); setQ(''); setEcole(''); setInteret(''); setPage(1); }}
+              onPress={() => { setSaisie(''); setQ(''); setRechercheOuverte(false); setEcole(''); setInteret(''); setPage(1); }}
             >
               Réinitialiser
             </T>

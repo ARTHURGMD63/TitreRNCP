@@ -8,7 +8,7 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 
 import { api, type CategorieCulture, type EvenementCulture } from '../../api';
@@ -18,6 +18,7 @@ import { EnTeteApp, rangeeChips, useRubrique } from '../../composants/Design';
 import { CarteCulture } from '../../composants/CarteCulture';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { Pilule } from '../../composants/Elements';
+import { RangeeDefilante } from '../../composants/RangeeDefilante';
 import { Icone, type NomIcone } from '../../composants/Icone';
 import { FeuilleInvitation } from '../../composants/Social';
 import { Display, T, TitreEcran } from '../../composants/Texte';
@@ -90,13 +91,13 @@ export default function EspaceCulture() {
       </EnTete>
 
       <Apparition index={2}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 20 }} contentContainerStyle={rangeeChips}>
+        <RangeeDefilante style={{ marginBottom: 20 }} contentContainerStyle={rangeeChips}>
           <Pilule libelle="Tout" actif={categorie === ''} onPress={() => choisir('')} />
           {categories.map((k) => (
             <Pilule key={k.code} libelle={k.libelle} actif={categorie === k.code} onPress={() => choisir(k.code)}
               icone={ICONES_CATEGORIE[k.code] ?? 'musee'} carre={couleursCategorie[k.code] ?? COULEUR_REPLI} />
           ))}
-        </ScrollView>
+        </RangeeDefilante>
       </Apparition>
 
       <Contenu>
