@@ -19,7 +19,6 @@ import { ChronoMiseEnAvant } from '../../composants/ChronoMiseEnAvant';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { BoutonRetour, Jauge } from '../../composants/Elements';
 import { Mono, T, TitreEcran, TitreSection } from '../../composants/Texte';
-import { euros } from '../../composants/UsageMois';
 import { dateFr } from '../../format';
 import { useJeton } from '../../session';
 import { fs, halo, rayon, sans } from '../../theme';
@@ -68,6 +67,9 @@ export default function SuiviEvenement() {
   }
 
   const { evenement: ev, chiffres: ch, courbe, ecoles, mise_en_avant: mea, cout } = suivi;
+  // Aucun montant affiché dans l'application (stores, constat MOB-05) : on
+  // compte ce qui sort de la formule — le supplément, la mise en avant payante.
+  const enPlus = (cout.supplement > 0 ? 1 : 0) + (cout.sponsoring > 0 ? 1 : 0);
   const aVenir = ev.statut !== 'passe';
 
   return (
@@ -223,21 +225,21 @@ export default function SuiviEvenement() {
 
         <Apparition index={6}>
           <CarteRefonte>
-            <TitreSection>Ce que cet événement coûte</TitreSection>
+            <TitreSection>Ce que cet événement utilise</TitreSection>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
               <T taille={fs[4]}>Événement</T>
-              <T taille={fs[4]} poids={600}>{cout.supplement > 0 ? `${euros(cout.supplement)} HT (supplément)` : 'Compris dans ta formule'}</T>
+              <T taille={fs[4]} poids={600}>{cout.supplement > 0 ? 'En supplément' : 'Compris dans ta formule'}</T>
             </View>
             {mea.active ? (
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
                 <T taille={fs[4]}>Mise en avant</T>
-                <T taille={fs[4]} poids={600}>{cout.sponsoring > 0 ? `${euros(cout.sponsoring)} HT` : 'Offerte'}</T>
+                <T taille={fs[4]} poids={600}>{cout.sponsoring > 0 ? 'En supplément' : 'Offerte'}</T>
               </View>
             ) : null}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: c.grisClair, paddingTop: 8 }}>
-              <T taille={fs[4]} poids={700}>Total en plus de l&apos;abonnement</T>
-              <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: cout.total > 0 ? c.danger : c.succes }}>
-                {cout.total > 0 ? `${euros(cout.total)} HT` : '0 €'}
+              <T taille={fs[4]} poids={700}>En plus de ta formule</T>
+              <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: enPlus > 0 ? c.danger : c.succes }}>
+                {enPlus > 0 ? String(enPlus) : 'Rien'}
               </Text>
             </View>
           </CarteRefonte>

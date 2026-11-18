@@ -11,7 +11,7 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import { Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 
 import { api, ErreurApi, type EvenementPartenaire, type UsageMoisPartenaire } from '../../api';
@@ -25,30 +25,34 @@ import { Jauge } from '../../composants/Elements';
 import { Icone, type NomIcone } from '../../composants/Icone';
 import { T, TitreEcran } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
-import { euros, UsageMois } from '../../composants/UsageMois';
+import { UsageMois } from '../../composants/UsageMois';
 import { confirmer } from '../../confirmer';
 import { dateFr } from '../../format';
 import { useJeton } from '../../session';
-import { espace, fs, rayon, sans, taille } from '../../theme';
+import { espace, fs, hauteurBouton, rayon, sans, taille } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 const LIBELLES_TYPE: Record<string, string> = { bar: 'Bar', boite: 'Boîte', resto: 'Resto', afterwork: 'Afterwork', sport: 'Sport' };
 const LIBELLES_STATUT: Record<EvenementPartenaire['statut'], string> = { passe: 'Passé', complet: 'Complet', actif: 'Actif' };
 
-/** Un bouton d'action de carte : 44 px, rayon 16. */
-function Action({ libelle, icone, onPress, fond, encre, filet, testID }: {
-  libelle: string; icone: NomIcone; onPress?: () => void; fond: string; encre: string; filet?: string; testID?: string;
+/**
+ * Un bouton d'action de carte : 44 px, rayon 16. En cours, la roue prend la
+ * place de l'icône et le libellé reste : la largeur ne bouge pas.
+ */
+function Action({ libelle, icone, onPress, fond, encre, filet, testID, chargement }: {
+  libelle: string; icone: NomIcone; onPress?: () => void; fond: string; encre: string; filet?: string; testID?: string; chargement?: boolean;
 }) {
   return (
     <PressableAnime
       onPress={onPress}
-      disabled={!onPress}
+      disabled={!onPress || chargement}
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={libelle}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, paddingHorizontal: 16, borderRadius: rayon.bouton, backgroundColor: fond, borderWidth: filet ? 1.5 : 0, borderColor: filet }}
+      accessibilityState={{ disabled: !onPress || !!chargement, busy: !!chargement }}
+      style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: hauteurBouton.normal, paddingHorizontal: 16, borderRadius: rayon.bouton, backgroundColor: fond, borderWidth: filet ? 1.5 : 0, borderColor: filet }}
     >
-      <Icone nom={icone} taille={16} couleur={encre} />
+      {chargement ? <ActivityIndicator size="small" color={encre} style={{ width: 16, height: 16 }} /> : <Icone nom={icone} taille={16} couleur={encre} />}
       <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: encre }}>{libelle}</Text>
     </PressableAnime>
   );
@@ -98,8 +102,9 @@ function CarteEvenementPartenaire({ ev, onSupprime }: { ev: EvenementPartenaire;
           {ev.is_flash ? <Pastille libelle="Flash" icone="eclair" fond={bleu.doux} encre={bleu.texteDoux} /> : null}
           {ev.is_gratuit ? <Pastille libelle="Gratuit" fond={c.noir} encre={c.surEncre} /> : null}
           {ev.is_sponsorise ? <Pastille libelle={ev.sponsorise_actif ? 'Sponsorisé' : 'Sponso. terminé'} fond={c.surface2} encre={c.grisFonce} /> : null}
-          {ev.supplement_tarif > 0 ? <Pastille libelle={`Supplément ${euros(ev.supplement_tarif)}`} fond={c.alerteClair} encre={c.alerte} /> : null}
-          {ev.is_sponsorise && ev.sponsor_tarif > 0 ? <Pastille libelle={`Sponso. ${euros(ev.sponsor_tarif)}`} fond={c.alerteClair} encre={c.alerte} /> : null}
+          {/* Aucun montant côté application (stores, constat MOB-05) : la pastille dit seulement que c'est en plus de la formule. */}
+          {ev.supplement_tarif > 0 ? <Pastille libelle="Supplément" fond={c.alerteClair} encre={c.alerte} /> : null}
+          {ev.is_sponsorise && ev.sponsor_tarif > 0 ? <Pastille libelle="Sponso. en plus" fond={c.alerteClair} encre={c.alerte} /> : null}
         </View>
         {ev.is_sponsorise && ev.sponsorise_actif ? (
           <View style={{ gap: 2, marginTop: 6 }}>
@@ -141,8 +146,8 @@ function CarteEvenementPartenaire({ ev, onSupprime }: { ev: EvenementPartenaire;
         ) : null}
         <Action libelle="Modifier" icone="crayon" fond="transparent" encre={c.noir} filet={c.line2}
           onPress={() => router.push({ pathname: '/evenement-form', params: { id: String(ev.id) } })} />
-        <Action libelle={suppression ? '…' : 'Supprimer'} icone="croix" fond="transparent" encre={c.danger} filet={c.dangerClair}
-          onPress={suppression ? undefined : supprimer} />
+        <Action libelle="Supprimer" icone="croix" fond="transparent" encre={c.danger} filet={c.dangerClair}
+          chargement={suppression} onPress={supprimer} />
       </View>
     </CarteRefonte>
   );
