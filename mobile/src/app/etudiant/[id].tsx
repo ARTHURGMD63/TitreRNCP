@@ -8,8 +8,8 @@
  * après acceptation, comme sur le site.
  */
 
-import React, { useCallback, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 
 import { actions, api, ErreurApi, type Etudiant } from '../../api';
@@ -24,7 +24,7 @@ import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
 import { majuscules } from '../../format';
 import { useJeton } from '../../session';
-import { fixe, fs, lh, lsEm, rayon, sans } from '../../theme';
+import { fixe, fs, hauteurBouton, lh, lsEm, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 import { couleursSuivi, useSuivi } from '../../composants/Social';
 
@@ -49,14 +49,16 @@ function GrandBoutonSuivre({ u }: { u: Etudiant }) {
   return (
     <Pressable
       onPress={basculer}
+      disabled={attente}
       accessibilityRole="button"
+      accessibilityState={{ disabled: attente, busy: attente }}
       style={({ pressed }) => ({
-        minHeight: 46, padding: 16, borderRadius: rayon.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+        minHeight: hauteurBouton.normal, paddingVertical: 12, paddingHorizontal: 16, borderRadius: rayon.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
         backgroundColor: fond, borderWidth: 1.5, borderColor: etat === 'pending' && u.etat_suivi === 'pending' ? c.line2 : 'transparent',
         transform: pressed ? [{ translateY: 1 }, { scale: 0.99 }] : [],
       })}
     >
-      {attente ? <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: encre }}>...</Text> : (
+      {attente ? <ActivityIndicator size="small" color={encre} /> : (
         <>
           {etat === 'accepted' ? <Icone nom="check" taille={17} couleur={encre} /> : null}
           <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: encre }}>{libelle}</Text>
@@ -94,6 +96,11 @@ export default function ProfilEtudiant() {
 
   useFocusEffect(useCallback(() => { void charger(); }, [charger]));
 
+  // Le retour à l'annuaire après un blocage : annulé si l'on a déjà quitté
+  // la fiche entre-temps.
+  const retourDiffere = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (retourDiffere.current) clearTimeout(retourDiffere.current); }, []);
+
   async function basculerBlocage() {
     if (!u) return;
     if (!bloque && !(await confirmer('Bloquer cette personne ? Vous ne verrez plus vos profils respectifs et vos abonnements seront supprimés.'))) return;
@@ -101,7 +108,7 @@ export default function ProfilEtudiant() {
     try {
       const rep = await actions.moderation(jeton, { action: bloque ? 'unblock' : 'block', target_id: u.id });
       toast(rep.message || 'Erreur');
-      if (!bloque) setTimeout(() => router.navigate('/personnes'), 700);
+      if (!bloque) retourDiffere.current = setTimeout(() => router.navigate('/personnes'), 700);
       else setBloque(false);
     } catch (e) {
       toast(e instanceof ErreurApi ? e.message : 'Erreur réseau', 'error');

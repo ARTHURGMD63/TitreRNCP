@@ -15,11 +15,39 @@ import React from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { fs, gutter } from '../theme';
+import { dateFr } from '../format';
+import { useHorsLigne } from '../horsLigne';
+import { fs, gutter, rayon } from '../theme';
 import { useTheme } from '../useTheme';
 import { reserveBarre } from './BarreOnglets';
 import { Bouton } from './Bouton';
+import { Icone } from './Icone';
 import { T } from './Texte';
+
+/**
+ * « Hors connexion · données de 14h05 » : posé en haut de chaque écran tant
+ * que l'API relit ses copies (horsLigne.ts). Les pass et leur QR code restent
+ * présentables ; ce qui a pu changer depuis (places, annulations) le sera au
+ * retour du réseau.
+ */
+export function BandeauHorsLigne({ style }: { style?: StyleProp<ViewStyle> }) {
+  const { c } = useTheme();
+  const depuis = useHorsLigne();
+  if (depuis === null) return null;
+  const d = new Date(depuis);
+  const jour = d.toDateString() === new Date().toDateString() ? dateFr(d, 'H\\hi') : dateFr(d, 'j M · H\\hi');
+  return (
+    <View
+      accessibilityRole="alert"
+      style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: gutter, marginTop: 8, paddingVertical: 8, paddingHorizontal: 12, borderRadius: rayon.sm, backgroundColor: c.surface2 }, style]}
+    >
+      <Icone nom="info" taille={16} couleur={c.grisFonce} />
+      <T taille={fs[3]} couleur={c.grisFonce} style={{ flex: 1 }}>
+        Hors connexion · données de {jour}
+      </T>
+    </View>
+  );
+}
 
 type Props = {
   children: React.ReactNode;
@@ -56,6 +84,7 @@ export function Ecran({ children, avecBarre = true, rafraichit = false, onRafrai
           <RefreshControl refreshing={rafraichit} onRefresh={onRafraichir} tintColor={c.rouge} colors={[c.rouge]} progressBackgroundColor={c.blanc} progressViewOffset={top} />
         ) : undefined}
       >
+        <BandeauHorsLigne style={plein ? { marginTop: top + 8 } : undefined} />
         {children}
       </ScrollView>
       {horsDefilement}

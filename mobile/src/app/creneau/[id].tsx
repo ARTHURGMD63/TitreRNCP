@@ -12,7 +12,7 @@
  *
  * Le prix est affiché, réglé au club : rien n'est payé dans l'application.
  *
- * Refonte 2026-11 : l'accent du sport est rouge. Quand « Prendre ma place »
+ * Refonte 2026-11 : l'accent du sport est rouge. Quand « Rejoindre la partie »
  * réussit — et seulement alors —, ma place s'affiche sur fond rouge, le
  * décompte des places passe au rouge selon le nombre renvoyé par le
  * serveur, et un bouton « Inscrit » à coche lance des confettis.
@@ -50,7 +50,7 @@ export default function FicheCreneau() {
   const jeton = useJeton();
   const toast = useToast();
   const { id } = useLocalSearchParams<{ id: string }>();
-  // Incrémenté après un « Prendre ma place » réussi : déclenche l'animation.
+  // Incrémenté après un « Rejoindre la partie » réussi : déclenche l'animation.
   const [fete, setFete] = useState(0);
   const creneauId = Number(id);
 
@@ -267,7 +267,7 @@ export default function FicheCreneau() {
 
         {cr.peut_rejoindre ? (
           <Bouton
-            libelle={`Prendre ma place · ${prixParJoueur(cr.prix, cr.places.total)}`}
+            libelle={`Rejoindre la partie · ${prixParJoueur(cr.prix, cr.places.total)}`}
             variante="sport"
             plein
             chargement={envoi}
@@ -286,7 +286,10 @@ export default function FicheCreneau() {
 
         {cr.je_organise && cr.statut === 'reserve' && cr.peut_quitter ? (
           <View style={{ backgroundColor: c.blanc, borderWidth: 1, borderColor: c.grisClair, borderRadius: rayon.base, padding: 16, marginBottom: 16 }}>
-            <Mono style={{ marginBottom: 12 }}>Ma partie</Mono>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <Icone nom="reglages" taille={16} couleur={sport.texteDoux} />
+              <Mono accessibilityRole="header">Gérer la partie</Mono>
+            </View>
             <Case coche={ouvert} onChange={setOuvert} style={{ marginBottom: 12, alignItems: 'flex-start' }}>
               Ouverte aux autres joueurs
             </Case>

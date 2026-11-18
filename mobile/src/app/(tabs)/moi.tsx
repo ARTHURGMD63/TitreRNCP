@@ -25,9 +25,10 @@ import { Avatar, Jauge } from '../../composants/Elements';
 import { estIcone, Icone, type NomIcone } from '../../composants/Icone';
 import { Display, Mono, T } from '../../composants/Texte';
 import { nombre } from '../../format';
+import { formatEuros } from '../../regles';
 import { ecrireALEquipe } from '../../contact';
 import { useJeton, useSession } from '../../session';
-import { couleurCss, encreSur, fs, halo, lh, mono, police, rayon, sans } from '../../theme';
+import { couleurCss, encreSur, fs, halo, hauteurBouton, lh, mono, police, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 function CarteProfil({ children, style }: { children: React.ReactNode; style?: object }) {
@@ -169,7 +170,7 @@ export default function Moi() {
             {[
               { l: 'Sorties', v: moi.nb_sorties, format: (n: number) => String(Math.round(n)), icone: 'musique' as const, fond: bleu.doux, encre: bleu.texteDoux },
               { l: 'Squads', v: moi.nb_squads, format: (n: number) => String(Math.round(n)), icone: 'personnes' as const, fond: violet.doux, encre: violet.texteDoux },
-              { l: 'Économies', v: moi.economies, format: (n: number) => nombre(Math.round(n), 0, '') + ' €', icone: 'portefeuille' as const, fond: c.succesClair, encre: c.succes },
+              { l: 'Économies', v: moi.economies, format: (n: number) => formatEuros(n === moi.economies ? moi.economies : Math.round(n)), icone: 'portefeuille' as const, fond: c.succesClair, encre: c.succes },
             ].map((t, i) => (
               <View key={t.l} style={{ flex: 1, backgroundColor: c.blanc, borderRadius: rayon.tuile, padding: 14, gap: 10 }}>
                 <CarreIcone icone={t.icone} fond={t.fond} encre={t.encre} />
@@ -221,17 +222,17 @@ export default function Moi() {
           <TitreSection icone="soleil">Apparence</TitreSection>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Pressable onPress={() => choisir('systeme')} accessibilityRole="button" accessibilityState={{ selected: preference === 'systeme' }}
-              style={{ flex: 1, minHeight: 42, paddingHorizontal: 6, borderRadius: rayon.bouton, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: c.surface2, borderWidth: 2, borderColor: preference === 'systeme' ? bleu.accent : c.surface2 }}>
+              style={{ flex: 1, minHeight: hauteurBouton.normal, paddingHorizontal: 6, borderRadius: rayon.bouton, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: c.surface2, borderWidth: 2, borderColor: preference === 'systeme' ? bleu.accent : c.surface2 }}>
               <Icone nom="engrenage" taille={15} couleur={c.noir} />
               <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: fs[4], color: c.noir }}>Système</Text>
             </Pressable>
             <Pressable onPress={() => choisir('clair')} accessibilityRole="button" accessibilityState={{ selected: preference === 'clair' }}
-              style={{ flex: 1, minHeight: 42, paddingHorizontal: 6, borderRadius: rayon.bouton, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: '#F2F2F5', borderWidth: 2, borderColor: preference === 'clair' ? bleu.accent : '#D4D4DC' }}>
+              style={{ flex: 1, minHeight: hauteurBouton.normal, paddingHorizontal: 6, borderRadius: rayon.bouton, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: '#F2F2F5', borderWidth: 2, borderColor: preference === 'clair' ? bleu.accent : '#D4D4DC' }}>
               <Icone nom="soleil-petit" taille={15} couleur="#111116" />
               <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: fs[4], color: '#111116' }}>Clair</Text>
             </Pressable>
             <Pressable onPress={() => choisir('sombre')} accessibilityRole="button" accessibilityState={{ selected: preference === 'sombre' }}
-              style={{ flex: 1, minHeight: 42, paddingHorizontal: 6, borderRadius: rayon.bouton, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: '#0E0E12', borderWidth: 2, borderColor: preference === 'sombre' ? bleu.accent : '#3A3A44' }}>
+              style={{ flex: 1, minHeight: hauteurBouton.normal, paddingHorizontal: 6, borderRadius: rayon.bouton, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: '#0E0E12', borderWidth: 2, borderColor: preference === 'sombre' ? bleu.accent : '#3A3A44' }}>
               <Icone nom="lune" taille={15} couleur="#F2F2F5" />
               <Text numberOfLines={1} style={{ fontFamily: sans(700), fontSize: fs[4], color: '#F2F2F5' }}>Sombre</Text>
             </Pressable>

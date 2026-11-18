@@ -12,13 +12,13 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 
 import { actions, api, ErreurApi, type CibleInvitation, type EtatSuivi, type Notification, type Personne } from '../api';
 import { court } from '../format';
 import { useJeton } from '../session';
-import { fixe, fs, lh, police, rayon, sans, teintes } from '../theme';
+import { fixe, fs, hauteurBouton, lh, police, rayon, sans, teintes } from '../theme';
 import { useTheme } from '../useTheme';
 import { PressableAnime, Pulsation } from './Animations';
 import { teinteAvatar } from './Design';
@@ -60,7 +60,7 @@ export function useSuivi(cible: number, initial: EtatSuivi) {
 }
 
 /**
- * Refonte 2026-11 : « ✓ Suivi » à l'encre, « En attente » en surface neutre
+ * Refonte 2026-11 : « Suivi » avec sa coche, à l'encre, « En attente » en surface neutre
  * avec l'horloge, « + Suivre » plein de l'accent (`accent`) ou en contour.
  */
 export function couleursSuivi(etat: EtatSuivi, c: ReturnType<typeof useTheme>['c'], accent?: string) {
@@ -233,11 +233,11 @@ export function ElementNotification({ n, onTraitee }: { n: Notification; onTrait
 
   const actionsOuiNon = (onOui: () => void, onNon: () => void) => (
     <View style={{ flexDirection: 'row', gap: 8 }}>
-      <Pressable onPress={onOui} disabled={!!attente} accessibilityRole="button" style={{ flex: 1, minHeight: 40, paddingHorizontal: 12, borderRadius: rayon.pill, backgroundColor: c.rouge, borderWidth: 1, borderColor: c.rouge, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontFamily: sans(700), fontSize: fs[3], color: fixe.surAccent }}>{attente === 'oui' ? '…' : 'Accepter'}</Text>
+      <Pressable onPress={onOui} disabled={!!attente} accessibilityRole="button" accessibilityState={{ disabled: !!attente, busy: attente === 'oui' }} style={{ opacity: attente === 'non' ? 0.5 : 1, flex: 1, minHeight: hauteurBouton.fin, paddingHorizontal: 12, borderRadius: rayon.pill, backgroundColor: c.rouge, borderWidth: 1, borderColor: c.rouge, alignItems: 'center', justifyContent: 'center' }}>
+        {attente === 'oui' ? <ActivityIndicator size="small" color={fixe.surAccent} /> : <Text style={{ fontFamily: sans(700), fontSize: fs[3], color: fixe.surAccent }}>Accepter</Text>}
       </Pressable>
-      <Pressable onPress={onNon} disabled={!!attente} accessibilityRole="button" style={{ flex: 1, minHeight: 40, paddingHorizontal: 12, borderRadius: rayon.pill, borderWidth: 1, borderColor: c.line2, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontFamily: sans(700), fontSize: fs[3], color: c.noir }}>{attente === 'non' ? '…' : 'Refuser'}</Text>
+      <Pressable onPress={onNon} disabled={!!attente} accessibilityRole="button" accessibilityState={{ disabled: !!attente, busy: attente === 'non' }} style={{ opacity: attente === 'oui' ? 0.5 : 1, flex: 1, minHeight: hauteurBouton.fin, paddingHorizontal: 12, borderRadius: rayon.pill, borderWidth: 1, borderColor: c.line2, alignItems: 'center', justifyContent: 'center' }}>
+        {attente === 'non' ? <ActivityIndicator size="small" color={c.noir} /> : <Text style={{ fontFamily: sans(700), fontSize: fs[3], color: c.noir }}>Refuser</Text>}
       </Pressable>
     </View>
   );
@@ -395,11 +395,13 @@ export function FeuilleInvitation({ cible, onClose }: { cible: { type: CibleInvi
                 onPress={() => inviter(f)}
                 disabled={!!etat}
                 accessibilityRole="button"
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: etat === 'ok' ? c.lime : c.noir, borderRadius: rayon.pill, paddingVertical: 9, paddingHorizontal: 18 }}
+                accessibilityState={{ disabled: !!etat, busy: etat === 'attente' }}
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: hauteurBouton.fin, backgroundColor: etat === 'ok' ? c.lime : c.noir, borderRadius: rayon.pill, paddingHorizontal: 18 }}
               >
-                {etat === 'ok' ? <Icone nom="check" taille={16} couleur={fixe.surLave} /> : null}
+                {etat === 'ok' ? <Icone nom="check" taille={16} couleur={fixe.surLave} />
+                  : etat === 'attente' ? <ActivityIndicator size="small" color={c.blanc} style={{ width: 16, height: 16 }} /> : null}
                 <Text style={{ fontFamily: sans(700), fontSize: fs[3], color: etat === 'ok' ? fixe.surLave : c.blanc }}>
-                  {etat === 'ok' ? 'Envoyé' : etat === 'attente' ? '…' : 'Inviter'}
+                  {etat === 'ok' ? 'Envoyé' : 'Inviter'}
                 </Text>
               </Pressable>
             </View>

@@ -22,7 +22,7 @@
  * l'application ne sait ni régler la luminosité ni générer de pass Wallet.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import QRCode from 'react-native-qrcode-svg';
@@ -38,10 +38,21 @@ import { T, TitreEcran, TitreSection } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
 import { compteARebours, court, dateFr, nombre, ts } from '../../format';
-import { prixEvenement } from '../../regles';
+import { formatEuros, lireCodePass, prixEvenement } from '../../regles';
 import { useJeton, useSession } from '../../session';
-import { fixe, fs, gutter, halo, lh, rayon, sans, type Rubrique } from '../../theme';
+import { fixe, fs, gutter, halo, hauteurBouton, lh, rayon, sans, type Rubrique } from '../../theme';
 import { useTheme } from '../../useTheme';
+
+/**
+ * Le texte à encoder dans le QR d'un pass, contrôlé avant d'être dessiné :
+ * « outsee:<64 hexadécimaux> », ou null si le serveur a envoyé autre chose.
+ * Un QR que le scanner refuserait n'est jamais affiché : la carte dit
+ * plutôt de se faire valider à la main.
+ */
+function qrDuPass(p: Pick<Pass, 'code_qr'>): string | null {
+  const code = lireCodePass(p.code_qr);
+  return code ? `outsee:${code}` : null;
+}
 
 /** Le surtitre, l'icône et la rubrique de la carte, selon ce que le pass représente. */
 const GENRES: Record<GenrePass, { surtitre: string; icone: NomIcone; rubrique: Rubrique; couleur: string }> = {
@@ -66,8 +77,22 @@ function ouvrirFiche(p: Pass) {
 
 const MOIS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
-/** Arrondi de number_format() : au plus proche, la moitié vers le haut. */
-const euros = (n: number) => nombre(Math.round(n));
+/**
+ * Le format d'un compteur d'économies : celui de toute l'application
+ * (formatEuros, « 12,50 € »). Pendant le défilement, des euros entiers ; la
+ * valeur exacte, centimes compris, à l'arrivée.
+ */
+const formatCompteur = (cible: number) => (n: number) => formatEuros(n === cible ? cible : Math.round(n));
+
+/** Un rappel différé, annulé si le composant disparaît avant. */
+function useDiffere() {
+  const minuteur = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (minuteur.current) clearTimeout(minuteur.current); }, []);
+  return useCallback((f: () => void, ms: number) => {
+    if (minuteur.current) clearTimeout(minuteur.current);
+    minuteur.current = setTimeout(f, ms);
+  }, []);
+}
 
 /** L'heure courante, rafraîchie chaque minute : assez pour « Dans 2 h ». */
 function useMinute() {
@@ -118,6 +143,7 @@ function useAnnulation(p: Pass, onAnnule: () => void) {
   const jeton = useJeton();
   const toast = useToast();
   const [attente, setAttente] = useState(false);
+  const differer = useDiffere();
   const annulable = genre !== 'partie';
 
   async function annuler() {
@@ -132,7 +158,7 @@ function useAnnulation(p: Pass, onAnnule: () => void) {
         await actions.annulerPass(jeton, p.id);
         toast('Pass annulé !', 'success');
       }
-      setTimeout(onAnnule, 1000);
+      differer(onAnnule, 1000);
     } catch (e) {
       setAttente(false);
       toast(e instanceof ErreurApi ? e.message : 'Erreur réseau', 'error');
@@ -158,6 +184,7 @@ function CarteActivite({ p, index, total, largeur, onAnnule }: {
   const teinte = useRubrique(infos.rubrique);
   const maintenant = useMinute();
   const [qr, setQr] = useState(false);
+  const codeQr = qrDuPass(p);
   const { annuler, attente, annulable } = useAnnulation(p, onAnnule);
 
   return (
@@ -176,7 +203,8 @@ function CarteActivite({ p, index, total, largeur, onAnnule }: {
             disabled={attente}
             accessibilityRole="button"
             accessibilityLabel={genre === 'culture' ? 'Me désinscrire' : 'Annuler ce pass'}
-            style={{ width: 44, height: 44, borderRadius: rayon.bouton, backgroundColor: c.blanc, alignItems: 'center', justifyContent: 'center' }}
+            accessibilityState={{ disabled: attente, busy: attente }}
+            style={{ width: hauteurBouton.normal, height: hauteurBouton.normal, borderRadius: rayon.bouton, backgroundColor: c.blanc, alignItems: 'center', justifyContent: 'center', opacity: attente ? 0.5 : 1 }}
           >
             <Icone nom="croix" taille={18} couleur={c.noir} />
           </PressableAnime>
@@ -211,9 +239,9 @@ function CarteActivite({ p, index, total, largeur, onAnnule }: {
           <T taille={fs[4]} couleur={c.gris}>Terrain réservé. Réglé sur place au club.</T>
         ) : null}
 
-        {qr && p.code_qr ? (
+        {qr && codeQr ? (
           <View style={{ backgroundColor: '#FFFFFF', borderRadius: 20, paddingVertical: 18, alignItems: 'center' }}>
-            <QRCode value={p.code_qr} size={176} color={fixe.qrSombre} backgroundColor={fixe.qrClair} ecl="H" />
+            <QRCode value={codeQr} size={176} color={fixe.qrSombre} backgroundColor={fixe.qrClair} ecl="H" />
           </View>
         ) : null}
 
@@ -222,16 +250,16 @@ function CarteActivite({ p, index, total, largeur, onAnnule }: {
             onPress={() => ouvrirFiche(p)}
             accessibilityRole="button"
             accessibilityLabel="Voir la fiche"
-            style={{ flex: 1, minHeight: 46, borderRadius: rayon.bouton, backgroundColor: teinte.accent, alignItems: 'center', justifyContent: 'center' }}
+            style={{ flex: 1, minHeight: hauteurBouton.normal, borderRadius: rayon.bouton, backgroundColor: teinte.accent, alignItems: 'center', justifyContent: 'center' }}
           >
             <T taille={fs[4]} poids={700} couleur="#FFFFFF">Voir la fiche</T>
           </PressableAnime>
-          {p.code_qr ? (
+          {codeQr ? (
             <PressableAnime
               onPress={() => setQr((v) => !v)}
               accessibilityRole="button"
               accessibilityLabel={qr ? 'Masquer le QR code' : 'Afficher le QR code'}
-              style={{ flex: 1, minHeight: 46, borderRadius: rayon.bouton, backgroundColor: teinte.doux, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center' }}
+              style={{ flex: 1, minHeight: hauteurBouton.normal, borderRadius: rayon.bouton, backgroundColor: teinte.doux, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center' }}
             >
               <Icone nom="qr" taille={18} couleur={teinte.texteDoux} />
               <T taille={fs[4]} poids={700} couleur={teinte.texteDoux}>{qr ? 'Masquer' : 'QR'}</T>
@@ -269,6 +297,7 @@ function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
   const voile = 'rgba(255,255,255,0.18)';
   const reduction = p.reduction ?? 0;
   const HAUTEUR_QR = 240;
+  const codeQr = qrDuPass(p);
 
   return (
     <Animated.View
@@ -293,7 +322,8 @@ function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
             disabled={attente}
             accessibilityRole="button"
             accessibilityLabel={supprime ? 'Supprimer ce pass' : genre === 'culture' ? 'Me désinscrire' : 'Annuler ce pass'}
-            style={{ width: 44, height: 44, borderRadius: rayon.bouton, backgroundColor: voile, alignItems: 'center', justifyContent: 'center' }}
+            accessibilityState={{ disabled: attente, busy: attente }}
+            style={{ width: hauteurBouton.normal, height: hauteurBouton.normal, borderRadius: rayon.bouton, backgroundColor: voile, alignItems: 'center', justifyContent: 'center', opacity: attente ? 0.5 : 1 }}
           >
             <Icone nom="croix" taille={20} couleur={encre} />
           </PressableAnime>
@@ -304,6 +334,13 @@ function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
         <View style={{ backgroundColor: 'rgba(17,17,22,0.12)', borderRadius: 20, paddingVertical: 34, paddingHorizontal: 16, minHeight: 188, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           <Icone nom="interdit" taille={40} couleur="#666666" />
           <T taille={fs[4]} poids={700} couleur="#555555" style={{ textAlign: 'center' }}>{'Événement\nsupprimé'}</T>
+        </View>
+      ) : p.code_qr && !codeQr ? (
+        // Un code reçu mais illisible : pas de QR que le scanner refuserait.
+        <View style={{ backgroundColor: '#FFFFFF', borderRadius: 20, height: HAUTEUR_QR, alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 16 }}>
+          <Icone nom="info" taille={44} couleur="#111116" trait={1.75} />
+          <T taille={fs[5]} poids={700} couleur="#111116" interligne={lh.tight} style={{ textAlign: 'center' }}>{'QR indisponible.\nDonne ton nom à l’entrée.'}</T>
+          <T taille={fs[3]} couleur="#55555C" style={{ textAlign: 'center' }}>Le partenaire peut te valider à la main.</T>
         </View>
       ) : !p.code_qr ? (
         // Culture et parties : rien à scanner. La carte garde la même
@@ -329,9 +366,9 @@ function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
           accessibilityLabel={revele ? 'QR code du pass' : 'Afficher le QR code'}
           style={{ backgroundColor: '#FFFFFF', borderRadius: 20, height: HAUTEUR_QR, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
         >
-          {revele && p.code_qr ? (
+          {revele && codeQr ? (
             <>
-              <QRCode value={p.code_qr} size={196} color={fixe.qrSombre} backgroundColor={fixe.qrClair} ecl="H" />
+              <QRCode value={codeQr} size={196} color={fixe.qrSombre} backgroundColor={fixe.qrClair} ecl="H" />
               <LigneScan hauteur={HAUTEUR_QR} onFin={pulser} />
             </>
           ) : (
@@ -369,13 +406,14 @@ function CarteSquadAgenda({ sq, largeur, onQuitte }: { sq: SquadAgenda; largeur:
   const sport = useRubrique('sport');
   const jeton = useJeton();
   const toast = useToast();
+  const differer = useDiffere();
 
   async function quitter() {
     if (!(await confirmer('Veux-tu vraiment quitter ce groupe de sport ?'))) return;
     try {
       await actions.quitterSquad(jeton, sq.id);
       toast('Groupe quitté !', 'success');
-      setTimeout(onQuitte, 1000);
+      differer(onQuitte, 1000);
     } catch (e) {
       toast(e instanceof ErreurApi ? e.message : 'Erreur réseau', 'error');
     }
@@ -433,7 +471,7 @@ function economie(p: Pass) {
   const g = genreDe(p);
   if (g === 'culture' || g === 'partie') return '';
   if ((p.reduction ?? 0) > 0 && (p.prix_normal ?? 0) > 0) {
-    return '-' + nombre(Math.round((p.prix_normal! * p.reduction!) / 100 * 100) / 100, 2) + '€';
+    return '-' + formatEuros((p.prix_normal! * p.reduction!) / 100);
   }
   // Payant sans réduction : rien d'économisé, mais ce n'est pas gratuit.
   if (!p.is_gratuit && (p.prix_normal ?? 0) > 0) return '';
@@ -613,13 +651,13 @@ export default function Wallet() {
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 <View style={{ flex: 1, borderRadius: rayon.tuile, padding: 16, backgroundColor: c.blanc, gap: 6 }}>
                   <T taille={fs[4]} couleur={c.gris}>{MOIS[new Date().getMonth()]}</T>
-                  <Compteur valeur={donnees.economies.mois} format={(n) => `${euros(n)} €`}
+                  <Compteur valeur={donnees.economies.mois} format={formatCompteur(donnees.economies.mois)}
                     style={{ fontFamily: sans(700), fontSize: 20, letterSpacing: -0.03 * 20, color: c.succes, fontVariant: ['tabular-nums'] }} />
                   <T taille={fs[3]} couleur={c.gris}>économisé ce mois</T>
                 </View>
                 <View style={{ flex: 1, borderRadius: rayon.tuile, padding: 16, backgroundColor: c.blanc, gap: 6 }}>
                   <T taille={fs[4]} couleur={c.gris}>Total année</T>
-                  <Compteur valeur={donnees.economies.annee} delai={120} format={(n) => `${euros(n)} €`}
+                  <Compteur valeur={donnees.economies.annee} delai={120} format={formatCompteur(donnees.economies.annee)}
                     style={{ fontFamily: sans(700), fontSize: 20, letterSpacing: -0.03 * 20, color: c.noir, fontVariant: ['tabular-nums'] }} />
                   <T taille={fs[3]} couleur={c.gris}>depuis janvier</T>
                 </View>

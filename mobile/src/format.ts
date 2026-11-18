@@ -100,3 +100,21 @@ export function compteARebours(debut: number, maintenant: number): string {
   if (minutes < 24 * 60) return `Dans ${Math.floor(minutes / 60)} h`;
   return dateFr(new Date(debut * 1000), 'l');
 }
+
+/**
+ * Une durée courte, des jours aux secondes : « 1j11h », « 2h05 »,
+ * « 12min04s ». Au-delà de 24 h on compte en jours et en heures, jamais
+ * « 35h11 » : personne ne convertit de tête.
+ *
+ * @param ms Durée en millisecondes (positive).
+ */
+export function dureeCourte(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const j = Math.floor(total / 86400);
+  const h = Math.floor((total % 86400) / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (j > 0) return h > 0 ? `${j}j${h}h` : `${j}j`;
+  if (h > 0) return `${h}h${m < 10 ? '0' : ''}${m}`;
+  return `${m}min${s < 10 ? '0' : ''}${s}s`;
+}

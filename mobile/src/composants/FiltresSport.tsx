@@ -14,7 +14,7 @@
  */
 
 import React, { useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import MapView, { Circle, Marker, PROVIDER_DEFAULT, type MapPressEvent } from 'react-native-maps';
 import * as Location from 'expo-location';
 
@@ -23,7 +23,7 @@ import { Feuille } from './Feuille';
 import { Icone } from './Icone';
 import { T } from './Texte';
 import { useToast } from './Toast';
-import { fs, rayon, sans } from '../theme';
+import { fs, hauteurBouton, rayon, sans } from '../theme';
 import { useTheme } from '../useTheme';
 
 export type FiltreDistance = { lat: number; lng: number; rayon: number };
@@ -170,10 +170,10 @@ export function FiltresSport<K extends string>({ visible, onClose, niveaux, nive
         <T taille={fs[3]} couleur={c.gris} style={{ flex: 1 }}>
           {km === null ? 'Touche la carte pour placer le point.' : `Clubs à moins de ${km} km du point. Touche la carte pour le déplacer.`}
         </T>
-        <PressableAnime onPress={maPosition} disabled={localisation} accessibilityRole="button" accessibilityLabel="Utiliser ma position"
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 40, paddingHorizontal: 12, borderRadius: rayon.bouton, backgroundColor: c.surface2 }}>
-          <Icone nom="epingle" taille={16} couleur={c.noir} />
-          <Text style={{ fontFamily: sans(600), fontSize: fs[4], color: c.noir }}>{localisation ? '…' : 'Ma position'}</Text>
+        <PressableAnime onPress={maPosition} disabled={localisation} accessibilityRole="button" accessibilityLabel="Utiliser ma position" accessibilityState={{ disabled: localisation, busy: localisation }}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: hauteurBouton.fin, paddingHorizontal: 12, borderRadius: rayon.bouton, backgroundColor: c.surface2 }}>
+          {localisation ? <ActivityIndicator size="small" color={c.noir} style={{ width: 16, height: 16 }} /> : <Icone nom="epingle" taille={16} couleur={c.noir} />}
+          <Text style={{ fontFamily: sans(600), fontSize: fs[4], color: c.noir }}>Ma position</Text>
         </PressableAnime>
       </View>
       <T taille={fs[3]} couleur={c.gris} style={{ marginBottom: 22 }}>
@@ -194,7 +194,7 @@ export function FiltresSport<K extends string>({ visible, onClose, niveaux, nive
           onClose();
         }}
         accessibilityRole="button"
-        style={{ minHeight: 46, borderRadius: rayon.md, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}
+        style={{ minHeight: hauteurBouton.plein, borderRadius: rayon.md, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}
       >
         <Text style={{ fontFamily: sans(700), fontSize: fs[5] + 1, color: '#FFFFFF' }}>{actifs ? `Appliquer · ${actifs}` : 'Appliquer'}</Text>
       </PressableAnime>

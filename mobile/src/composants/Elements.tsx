@@ -209,6 +209,8 @@ export function BoutonRetour({ media, vers, style, libelle = 'Retour' }: {
       onPress={() => (vers ? router.navigate(vers as never) : router.canGoBack() ? router.back() : router.navigate('/'))}
       accessibilityRole="button"
       accessibilityLabel={libelle}
+      // 42 px visibles, 44 au toucher : le minimum d'Apple (constat MOB-09).
+      hitSlop={1}
       style={[
         // Refonte 2026-11 : carré arrondi de 42 px, comme les boutons d'en-tête.
         { width: 42, height: 42, borderRadius: rayon.sm, alignItems: 'center', justifyContent: 'center' },
