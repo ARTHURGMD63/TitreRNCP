@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'etudiant') {
 }
 
 $uid = $_SESSION['user_id'];
-$limit = (int)($_GET['limit'] ?? 20);
+$limit = max(1, min(50, (int)($_GET['limit'] ?? 20)));
 
 $stmt = $pdo->prepare("
     SELECT 

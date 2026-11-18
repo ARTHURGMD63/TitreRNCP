@@ -6,7 +6,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { compteARebours, court, dateFr, heure, lireDate, majuscules, nombre, ts } from '../src/format.ts';
+import { compteARebours, court, dateFr, dureeCourte, heure, lireDate, majuscules, nombre, ts } from '../src/format.ts';
 
 // 23 septembre 2026 est un mercredi.
 const SOIREE = '2026-09-23 20:30:00';
@@ -89,4 +89,13 @@ test('compteARebours : minutes, heures, puis le jour au-delà de 24 h', () => {
   assert.equal(compteARebours(debut, avant(23 * 60 + 59)), 'Dans 23 h');
   assert.equal(compteARebours(debut, avant(3 * 24 * 60)), 'Mercredi');
   assert.equal(compteARebours(debut, debut * 1000 + 1000), 'Maintenant');
+});
+
+test('dureeCourte : jours et heures au-delà de 24 h, jamais « 35h11 »', () => {
+  const H = 3600_000;
+  assert.equal(dureeCourte(35 * H + 11 * 60_000), '1j11h');
+  assert.equal(dureeCourte(72 * H), '3j');
+  assert.equal(dureeCourte(2 * H + 5 * 60_000), '2h05');
+  assert.equal(dureeCourte(12 * 60_000 + 4_000), '12min04s');
+  assert.equal(dureeCourte(-5), '0min00s');
 });

@@ -5,7 +5,9 @@
  * même chiffre s'écrive de la même façon partout.
  *
  * Trois lignes de jauge (événements, offre flash, mise en avant offerte), puis
- * une ligne « À payer en plus » qui n'apparaît que si quelque chose se paie.
+ * une ligne « En plus de ta formule » : un compteur, jamais un montant — aucun
+ * prix de service numérique ne s'affiche dans l'application (stores, constat
+ * MOB-05 de l'audit).
  */
 
 import React from 'react';
@@ -18,12 +20,6 @@ import { useTheme } from '../useTheme';
 import { Pastille, useRubrique } from './Design';
 import { Jauge } from './Elements';
 import { T } from './Texte';
-
-/** « 49,99 € » — deux décimales seulement quand il y en a. */
-export function euros(n: number): string {
-  const entier = Math.abs(n - Math.round(n)) < 0.005;
-  return `${n.toLocaleString('fr-FR', { minimumFractionDigits: entier ? 0 : 2, maximumFractionDigits: 2 })} €`;
-}
 
 function Ligne({ titre, detail, pourcentage, teinte, alerte }: {
   titre: string; detail: string; pourcentage: number; teinte: string; alerte?: boolean;
@@ -54,6 +50,8 @@ export function UsageMois({ usage, offreLibelle, essaiJusquau, club }: {
   const [annee, mois] = usage.mois.split('-').map(Number);
   const nomMois = dateFr(new Date(annee, (mois ?? 1) - 1, 1), 'F');
   const depasse = ev.supplementaires > 0;
+  const sponsorises = mea.cout > 0 ? Math.max(1, mea.achetees) : 0;
+  const enPlus = ev.supplementaires + sponsorises;
 
   return (
     <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 16, gap: 16, marginBottom: 16 }}>
@@ -105,16 +103,16 @@ export function UsageMois({ usage, offreLibelle, essaiJusquau, club }: {
 
       <View style={{ borderTopWidth: 1, borderTopColor: c.grisClair, paddingTop: 12, gap: 4 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <T taille={fs[4]} poids={700}>À payer en plus ce mois-ci</T>
-          <T taille={fs[4]} poids={700} couleur={usage.achats_total > 0 ? c.danger : c.succes}>
-            {usage.achats_total > 0 ? `${euros(usage.achats_total)} HT` : 'Rien'}
+          <T taille={fs[4]} poids={700}>En plus de ta formule ce mois-ci</T>
+          <T taille={fs[4]} poids={700} couleur={enPlus > 0 ? c.danger : c.succes}>
+            {enPlus > 0 ? String(enPlus) : 'Rien'}
           </T>
         </View>
-        {usage.achats_total > 0 ? (
+        {enPlus > 0 ? (
           <T taille={fs[4]} couleur={c.gris}>
-            {ev.a_payer > 0 ? `Événements en supplément : ${euros(ev.a_payer)}` : ''}
-            {ev.a_payer > 0 && mea.cout > 0 ? ' · ' : ''}
-            {mea.cout > 0 ? `Posts sponsorisés : ${euros(mea.cout)}` : ''}
+            {ev.supplementaires > 0 ? `Événements en supplément : ${ev.supplementaires}` : ''}
+            {ev.supplementaires > 0 && sponsorises > 0 ? ' · ' : ''}
+            {sponsorises > 0 ? `Posts sponsorisés : ${sponsorises}` : ''}
           </T>
         ) : (
           <T taille={fs[4]} couleur={c.gris}>Tout ce que tu as publié est compris dans ta formule.</T>

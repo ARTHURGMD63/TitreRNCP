@@ -181,6 +181,7 @@ CREATE TABLE IF NOT EXISTS economies (
     evenement_id INT NOT NULL,
     montant DECIMAL(8,2) NOT NULL DEFAULT 0,
     date_economie DATE NOT NULL,
+    UNIQUE KEY uniq_economie (user_id, evenement_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (evenement_id) REFERENCES evenements(id) ON DELETE CASCADE
 );
@@ -432,7 +433,7 @@ INSERT INTO inscriptions (user_id, evenement_id, qr_code, statut) VALUES
 INSERT INTO economies (user_id, evenement_id, montant, date_economie) VALUES
 (1, 1, 5.00, CURDATE()),
 (1, 4, 10.00, DATE_SUB(CURDATE(), INTERVAL 3 DAY)),
-(1, 1, 8.50, DATE_SUB(CURDATE(), INTERVAL 7 DAY));
+(1, 2, 8.50, DATE_SUB(CURDATE(), INTERVAL 7 DAY));
 
 INSERT INTO invitations (from_user_id, to_user_id, type, target_id, statut) VALUES
 (6, 1, 'event', 4, 'pending'),
@@ -1324,7 +1325,7 @@ CREATE TABLE IF NOT EXISTS sponsor_notifications (
 -- Registre des achats des partenaires (migration v31).
 CREATE TABLE IF NOT EXISTS achats_partenaires (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    etablissement_id INT NOT NULL,
+    etablissement_id INT NULL,
     evenement_id INT NULL DEFAULT NULL,
     nature ENUM('evenement','flash','sponsoring') NOT NULL,
     -- 'AAAA-MM' : le mois (de Paris) où l'achat a été fait.
@@ -1338,7 +1339,7 @@ CREATE TABLE IF NOT EXISTS achats_partenaires (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY k_achats_mois (etablissement_id, mois, nature),
     KEY k_achats_evenement (evenement_id),
-    FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE CASCADE,
+    FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE SET NULL,
     FOREIGN KEY (evenement_id) REFERENCES evenements(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -1346,7 +1347,7 @@ CREATE TABLE IF NOT EXISTS achats_partenaires (
 -- attendent ici le retour du paiement Stripe.
 CREATE TABLE IF NOT EXISTS paiements_evenements (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    etablissement_id INT NOT NULL,
+    etablissement_id INT NULL,
     evenement_id INT NULL DEFAULT NULL,
     valeurs JSON NOT NULL,
     montant_supplement DECIMAL(8,2) NOT NULL DEFAULT 0,
@@ -1358,7 +1359,7 @@ CREATE TABLE IF NOT EXISTS paiements_evenements (
     paye_le DATETIME NULL DEFAULT NULL,
     UNIQUE KEY uniq_paiement_session (stripe_session_id),
     KEY k_paiement_etab (etablissement_id, statut),
-    FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE CASCADE,
+    FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE SET NULL,
     FOREIGN KEY (evenement_id) REFERENCES evenements(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -1461,4 +1462,4 @@ CREATE TABLE IF NOT EXISTS evenement_collaborations (
 
 INSERT IGNORE INTO schema_migrations (version) VALUES
 ('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
-('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27'), ('v28'), ('v29'), ('v30'), ('v31'), ('v32'), ('v33'), ('v34'), ('v35'), ('v36'), ('v37'), ('v38'), ('v39');
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27'), ('v28'), ('v29'), ('v30'), ('v31'), ('v32'), ('v33'), ('v34'), ('v35'), ('v36'), ('v37'), ('v38'), ('v39'), ('v40');

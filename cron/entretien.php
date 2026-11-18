@@ -27,6 +27,7 @@ if (PHP_SAPI !== 'cli') {
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/cache.php';
 require_once __DIR__ . '/../includes/temps_reel.php';
+require_once __DIR__ . '/../includes/api.php';
 
 $simulation = in_array('--simulation', $argv ?? [], true);
 
@@ -87,6 +88,57 @@ foreach (['password_resets', 'password_reset_codes'] as $table) {
     } else {
         $stmt = $pdo->query("DELETE FROM $table WHERE expires_at < NOW() - INTERVAL 1 DAY");
         printf("  %-10s : %d ligne(s) supprimée(s)\n", $table === 'password_resets' ? 'jetons' : 'codes', $stmt->rowCount());
+    }
+}
+
+// ─── 5. Durées de conservation ──────────────────────────────────────────────
+//
+// Chaque purge a son propre try : une table absente (base pas encore migrée,
+// module non déployé) ne doit pas empêcher les autres de passer. Les montants
+// payés (paiements_evenements au statut « paye ») ne sont jamais touchés :
+// ce sont des pièces comptables.
+$purges = [
+    // Jetons de l'application expirés (includes/api.php).
+    'jetons app' => [
+        'api_tokens',
+        'expire_le < NOW()',
+    ],
+    // Changement d'adresse jamais confirmé : la nouvelle adresse est en clair.
+    'chgt email' => [
+        'changements_email',
+        'expire_le < NOW()',
+    ],
+    // Paiement Stripe abandonné ou expiré depuis plus de 90 jours.
+    'paiements' => [
+        'paiements_evenements',
+        "statut IN ('en_attente', 'expire') AND created_at < NOW() - INTERVAL 90 DAY",
+    ],
+    // Téléphone qui ne s'est plus présenté depuis six mois.
+    'appareils' => [
+        'appareils_push',
+        'COALESCE(derniere_vue, created_at) < NOW() - INTERVAL 180 DAY',
+    ],
+    // Historique des notifications traitées : inutile après un mois.
+    'push' => [
+        'push_envois',
+        "statut IN ('envoye', 'ignore', 'echec') AND created_at < NOW() - INTERVAL 30 DAY",
+    ],
+];
+
+foreach ($purges as $libelle => [$table, $condition]) {
+    try {
+        if ($simulation) {
+            $stmt = $pdo->query("SELECT COUNT(*) FROM $table WHERE $condition");
+            printf("  %-10s : %d ligne(s) seraient supprimée(s)\n", $libelle, (int) $stmt->fetchColumn());
+        } elseif ($table === 'api_tokens') {
+            printf("  %-10s : %d ligne(s) supprimée(s)\n", $libelle, apiPurgerJetons($pdo));
+        } else {
+            $stmt = $pdo->query("DELETE FROM $table WHERE $condition");
+            printf("  %-10s : %d ligne(s) supprimée(s)\n", $libelle, $stmt->rowCount());
+        }
+    } catch (Throwable $e) {
+        printf("  %-10s : non purgé (%s)\n", $libelle, $e->getMessage());
+        logErreur('Entretien : purge impossible', $e, ['table' => $table]);
     }
 }
 

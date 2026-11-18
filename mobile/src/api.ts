@@ -16,6 +16,7 @@
 
 import Constants from 'expo-constants';
 
+import { cleLecture, copieAutorisee, memoriser, relire, signaler } from './horsLigne';
 import type { PageLegale } from './legal';
 
 /**
@@ -26,11 +27,19 @@ import type { PageLegale } from './legal';
  * par elle qu'il sert le bundle — et on la lui reprend, ce qui évite une IP
  * écrite en dur, fausse au prochain bail DHCP.
  *
- * En production, EXPO_PUBLIC_API_URL est fixée au moment du build.
+ * En production, EXPO_PUBLIC_API_URL est fixée au moment du build. Sans
+ * elle, un build de production appelait localhost en silence : chaque écran
+ * échouait sans que rien ne dise pourquoi. Il s'arrête désormais au démarrage
+ * avec une erreur explicite (constat MOB-13) ; le repli sur la machine de
+ * développement n'existe qu'en __DEV__.
  */
 export function adresseServeur(): string {
   const configuree = process.env.EXPO_PUBLIC_API_URL;
   if (configuree) return configuree.replace(/\/+$/, '');
+
+  if (typeof __DEV__ === 'undefined' || !__DEV__) {
+    throw new Error('EXPO_PUBLIC_API_URL manquante : ce build ne sait pas où joindre le serveur Outsee.');
+  }
 
   const hote = Constants.expoConfig?.hostUri?.split(':')[0];
   if (hote) return `http://${hote}:8080/TitreRNCP`;
@@ -38,8 +47,18 @@ export function adresseServeur(): string {
   return 'http://localhost:8080/TitreRNCP';
 }
 
+/**
+ * La version de l'application (app.json), envoyée sur chaque requête dans
+ * l'en-tête X-App-Version : le serveur peut refuser une version trop
+ * ancienne (426, code `mise_a_jour_requise`).
+ */
+export const VERSION_APP: string = Constants.expoConfig?.version ?? '';
+
 export const BASE_API = `${adresseServeur()}/api/v1`;
 const BASE_ACTIONS = `${adresseServeur()}/api`;
+
+/** Les codes qui disent « ce jeton ne vaut plus rien », quel que soit le statut. */
+const CODES_DECONNEXION = new Set(['jeton_invalide', 'non_authentifie']);
 
 /** Erreur portant le code stable renvoyé par l'API. */
 export class ErreurApi extends Error {
@@ -49,8 +68,31 @@ export class ErreurApi extends Error {
   }
   /** Le jeton est absent, expiré ou révoqué : il faut se reconnecter. */
   get estDeconnecte(): boolean {
-    return this.statut === 401;
+    return this.statut === 401 || CODES_DECONNEXION.has(this.code);
   }
+  /** Le serveur refuse cette version de l'application (426). */
+  get estMiseAJourRequise(): boolean {
+    return this.code === 'mise_a_jour_requise';
+  }
+}
+
+/**
+ * Le rappel de déconnexion, enregistré par la session (session.tsx).
+ *
+ * Avant, un jeton expiré n'était détecté qu'au lancement : ensuite, chaque
+ * écran échouait l'un après l'autre sans jamais renvoyer vers la connexion
+ * (constat BUG-03). Désormais, toute réponse qui refuse le jeton envoyé
+ * (401, ou code `jeton_invalide` / `non_authentifie`) prévient la session,
+ * avec le jeton refusé : elle ne déconnecte que si c'est toujours le sien.
+ */
+let rappelDeconnexion: ((jetonRefuse: string) => void) | null = null;
+
+/** Enregistre le rappel ; rend la fonction qui le retire. */
+export function surDeconnexion(f: (jetonRefuse: string) => void): () => void {
+  rappelDeconnexion = f;
+  return () => {
+    if (rappelDeconnexion === f) rappelDeconnexion = null;
+  };
 }
 
 type Options = {
@@ -63,6 +105,7 @@ type Options = {
 
 async function requete<T>(url: string, { methode = 'GET', corps, formulaire, jeton }: Options, messageDefaut: string): Promise<T> {
   const entetes: Record<string, string> = { Accept: 'application/json' };
+  if (VERSION_APP) entetes['X-App-Version'] = VERSION_APP;
   if (corps !== undefined) entetes['Content-Type'] = 'application/json';
   if (jeton) entetes.Authorization = `Bearer ${jeton}`;
 
@@ -105,7 +148,16 @@ async function requete<T>(url: string, { methode = 'GET', corps, formulaire, jet
   // métier — « plus de place », « déjà inscrit ». Le message est fait pour
   // être affiché tel quel, c'est celui du site.
   if (!reponse.ok || donnees?.success === false) {
-    throw new ErreurApi(donnees?.message ?? messageDefaut, donnees?.code ?? String(reponse.status), reponse.status);
+    // 426 : version trop ancienne. Le code est garanti, même si le corps ne
+    // le porte pas ; le message du serveur est gardé tel quel.
+    const code = reponse.status === 426 ? 'mise_a_jour_requise' : donnees?.code ?? String(reponse.status);
+    const erreur = new ErreurApi(donnees?.message ?? messageDefaut, code, reponse.status);
+    // Un jeton refusé : la session repart à l'écran de connexion. Sans jeton
+    // envoyé (connexion, mot de passe oublié), un 401 n'est qu'un refus.
+    if (jeton && erreur.estDeconnecte && rappelDeconnexion) {
+      try { rappelDeconnexion(jeton); } catch { /* jamais bloquant */ }
+    }
+    throw erreur;
   }
   return donnees as T;
 }
@@ -118,8 +170,34 @@ function urlAvecParams(base: string, params?: Options['params']) {
   return url.toString();
 }
 
-export function appelApi<T>(chemin: string, options: Options = {}): Promise<T> {
-  return requete<T>(urlAvecParams(`${BASE_API}/${chemin.replace(/^\/+/, '')}`, options.params), options, 'Une erreur est survenue.');
+/**
+ * Une lecture authentifiée (GET avec jeton) de la liste blanche
+ * (horsLigneRegles.ts) passe par la copie hors connexion : mise de côté quand
+ * le serveur répond, relue quand il ne répond pas — réseau absent ou délai
+ * dépassé. Un refus du serveur (401, 404…) n'est jamais masqué par une
+ * vieille copie. Les autres lectures ne sont ni écrites ni relues.
+ */
+export async function appelApi<T>(chemin: string, options: Options = {}): Promise<T> {
+  const url = urlAvecParams(`${BASE_API}/${chemin.replace(/^\/+/, '')}`, options.params);
+  const lecture = (options.methode ?? 'GET') === 'GET' && !!options.jeton && copieAutorisee(chemin);
+  const cle = lecture ? cleLecture(url) : '';
+  try {
+    const rep = await requete<T>(url, options, 'Une erreur est survenue.');
+    if (lecture) {
+      signaler(cle, null);
+      memoriser(cle, rep);
+    }
+    return rep;
+  } catch (e) {
+    if (lecture && e instanceof ErreurApi && (e.code === 'reseau' || e.code === 'delai')) {
+      const copie = await relire<T>(cle);
+      if (copie) {
+        signaler(cle, copie.le);
+        return copie.donnees;
+      }
+    }
+    throw e;
+  }
 }
 
 function action<T>(fichier: string, jeton: string, corps: unknown): Promise<T> {
@@ -976,8 +1054,6 @@ export const actions = {
   supprimerSquad: (jeton: string, squadId: number) => action<Ok>('delete_squad.php', jeton, { squad_id: squadId }),
   retirerMembre: (jeton: string, squadId: number, membreId: number) =>
     action<Ok>('remove_squad_member.php', jeton, { squad_id: squadId, member_id: membreId }),
-  creerSquad: (jeton: string, squad: { titre: string; type: string; niveau: string; date_heure: string; quota: number; lieu: string; description: string; cree_par_association?: boolean }) =>
-    action<Ok>('create_squad.php', jeton, squad),
   /** follow / unfollow / accept / decline, sur un étudiant ou un établissement. */
   suivi: (jeton: string, act: 'follow' | 'unfollow' | 'accept' | 'decline', type: 'user' | 'etablissement', cible: number) =>
     // etat est null pour accept/decline : l'action porte sur la demande d'un

@@ -17,18 +17,22 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
-import { BASE_API } from './api';
+import { BASE_API, VERSION_APP } from './api';
 
 type Gestionnaire = (erreur: unknown, fatale?: boolean) => void;
 type ErrorUtilsGlobal = { getGlobalHandler?: () => Gestionnaire; setGlobalHandler?: (g: Gestionnaire) => void };
 
 let installe = false;
+/** Les erreurs déjà signalées : une même erreur ne part qu'une fois. */
+const dejaSignalees = new WeakSet<object>();
 
 function signaler(erreur: unknown, fatale?: boolean): void {
   const e = erreur instanceof Error ? erreur : new Error(String(erreur));
+  if (dejaSignalees.has(e)) return;
+  dejaSignalees.add(e);
   void fetch(`${BASE_API}/erreur_app.php`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-App-Version': VERSION_APP },
     body: JSON.stringify({
       message: e.message,
       pile: e.stack ?? '',
@@ -37,6 +41,21 @@ function signaler(erreur: unknown, fatale?: boolean): void {
       version: Constants.expoConfig?.version ?? '',
     }),
   }).catch(() => {});
+}
+
+/**
+ * Une erreur rattrapée par l'ErrorBoundary de la racine (_layout.tsx) : elle
+ * n'atteint jamais le gestionnaire global, on la signale ici. Une seule fois
+ * par erreur, jamais en développement, et sans rien relancer si l'envoi
+ * échoue — pas de boucle possible.
+ */
+export function signalerErreurRattrapee(erreur: unknown): void {
+  if (__DEV__) return;
+  try {
+    signaler(erreur, false);
+  } catch {
+    // Le signalement ne doit jamais aggraver la panne.
+  }
 }
 
 export function installerSuiviErreurs(): void {

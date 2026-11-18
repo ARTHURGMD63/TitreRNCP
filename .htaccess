@@ -33,11 +33,30 @@ Options -Indexes
 # qu'il contient se bloque sur le chemin.
 RedirectMatch 404 (?i)/\.(git|svn|hg|env|idea|vscode)(/|$)
 
+# ─── Dossiers internes ──────────────────────────────────────────────────────
+# Même liste que deploy/nginx/outsee.conf : sous Apache (WAMP, Docker,
+# ancien hébergement FTP), les documents internes, l'application mobile et
+# les fichiers de déploiement étaient servis. includes/, outils/, cron/ et
+# tests/ ont aussi leur propre .htaccess ; ceci couvre les autres.
+#
+# La règle est relative à ce dossier (préfixe /TitreRNCP en local compris)
+# et ne vise que la racine du projet : assets/vendor/ (Chart.js, lecteur de
+# QR), indispensable aux pages, reste servi.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(docs|mobile|deploy|docker|tests|outils|cron|vendor|includes)(/|$) - [NC,R=404,L]
+</IfModule>
+<IfModule !mod_rewrite.c>
+    RedirectMatch 404 (?i)(?<!/assets)/(docs|mobile|deploy|docker|tests|outils|cron|vendor)(/|$)
+</IfModule>
+
 # ─── Fichiers de projet ─────────────────────────────────────────────────────
 # Les migrations décrivent le schéma complet, les fichiers de configuration
-# annoncent les outils et leurs versions. Rien de secret pris isolément,
-# mais rien qui doive être servi non plus.
-<FilesMatch "(?i)\.(sql|md|neon|lock|dist|log|bak|old|swp|toml|phar|sh|bat|ps1|ini|conf|yml|yaml)$">
+# annoncent les outils et leurs versions. Les documents (diaporamas,
+# tableurs, PDF, vidéo) sont des livrables internes. Rien de tout cela ne
+# sert à une page : assets/ et uploads/ ne contiennent que des CSS, JS,
+# images et polices.
+<FilesMatch "(?i)\.(sql|md|neon|lock|dist|log|bak|old|swp|toml|phar|sh|bat|ps1|ini|conf|yml|yaml|py|docx|xlsx|pdf|mp4|pptx)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>

@@ -29,6 +29,12 @@ function sqlCreneauBase(): string
 const SPORT_RAYONS_KM = [1, 2, 5, 10, 15, 20];
 
 /**
+ * Terrains à venir qu'un même compte peut tenir réservés en même temps
+ * (api/v1/sport_creneau.php). Valeur à ajuster selon l'usage réel.
+ */
+const SPORT_RESERVATIONS_MAX = 4;
+
+/**
  * Lit le filtre de distance : un point (lat, lng) et un rayon parmi
  * SPORT_RAYONS_KM. Un point hors des bornes ou un rayon inconnu ne filtre
  * rien, plutôt que de rendre une liste vide qu'on prendrait pour « rien ici ».

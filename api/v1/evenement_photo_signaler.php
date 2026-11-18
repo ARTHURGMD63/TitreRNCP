@@ -24,7 +24,7 @@ $corps   = apiCorps();
 $photoId = (int) ($corps['photo_id'] ?? 0);
 $motif   = in_array($corps['motif'] ?? '', $motifs, true) ? $corps['motif'] : 'autre';
 $details = trim(is_string($corps['details'] ?? null) ? $corps['details'] : '');
-$details = $details !== '' ? substr($details, 0, 500) : null;
+$details = $details !== '' ? mb_substr($details, 0, 500) : null;
 
 if ($photoId <= 0) {
     apiErreur('Photo manquante.', 422, 'id_manquant');

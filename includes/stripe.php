@@ -234,10 +234,23 @@ function stripeVerifierWebhook(string $corps, string $entete, string $secret, ?i
     return $evenement;
 }
 
-/** @return list<string> les taux de TVA à appliquer, s'il y en a un de réglé */
+/**
+ * Les taux de TVA à appliquer, s'il y en a un de réglé.
+ *
+ * Deux situations légitimes : un taux Stripe (STRIPE_TAUX_TVA, « txr_… »),
+ * ou la franchise en base (STRIPE_FRANCHISE_TVA=1 : entreprise individuelle
+ * sous le seuil, « TVA non applicable, art. 293 B du CGI »). En production,
+ * ni l'un ni l'autre est une erreur de réglage : la facture partirait sans
+ * TVA sans qu'on l'ait décidé. Elle est signalée au journal à chaque usage.
+ *
+ * @return list<string>
+ */
 function stripeTauxTva(): array
 {
     $taux = trim(reglage('STRIPE_TAUX_TVA', 'stripe_taux_tva'));
+    if ($taux === '' && estEnProduction() && !reglageBooleen('STRIPE_FRANCHISE_TVA', 'stripe_franchise_tva')) {
+        logErreur('Stripe : ni STRIPE_TAUX_TVA ni STRIPE_FRANCHISE_TVA réglé en production, facture sans TVA.');
+    }
 
     return $taux === '' ? [] : [$taux];
 }
@@ -490,6 +503,12 @@ function stripeAppliquerCheckout(PDO $pdo, array $session): array
     if (!in_array((string) ($session['status'] ?? 'complete'), ['complete'], true)) {
         return ['ok' => false, 'message' => 'Paiement non terminé.'];
     }
+    // Paiement différé (prélèvement SEPA) : la session est « complete » mais
+    // rien n'est encaissé. La formule s'ouvre à
+    // checkout.session.async_payment_succeeded, pas avant.
+    if (!in_array((string) ($session['payment_status'] ?? 'paid'), ['paid', 'no_payment_required'], true)) {
+        return ['ok' => false, 'message' => 'Le paiement n’est pas encore confirmé.'];
+    }
 
     $etabId = (int) ($session['metadata']['etablissement_id'] ?? $session['client_reference_id'] ?? 0);
     $offre  = (string) ($session['metadata']['offre'] ?? '');
@@ -507,6 +526,22 @@ function stripeAppliquerCheckout(PDO $pdo, array $session): array
     $client = abonnementEtablissement($pdo, $etabId);
     if ($client && ($client['stripe_subscription_id'] ?? '') === $abonId) {
         return ['ok' => true, 'message' => 'Déjà enregistrée.'];
+    }
+
+    // Un autre abonnement est déjà en cours pour cet établissement (deux pages
+    // de paiement ouvertes, payées l'une après l'autre) : le second est
+    // résilié aussitôt et son éventuel premier prélèvement remboursé. Sans
+    // cela il écrasait l'identifiant du premier en base, et les deux étaient
+    // prélevés chaque mois, le premier devenant impossible à résilier d'ici.
+    if ($client !== null && !empty($client['stripe_subscription_id'])
+        && in_array((string) ($client['stripe_statut'] ?? ''), ['trialing', 'active', 'past_due'], true)
+        && ($client['stripe_subscription_id'] ?? '') !== $abonId) {
+        stripeAnnulerAbonnementEnDouble($abonId);
+        logErreur('Stripe : abonnement en double résilié et remboursé', null, [
+            'etablissement' => $etabId, 'garde' => $client['stripe_subscription_id'], 'resilie' => $abonId,
+        ]);
+
+        return ['ok' => true, 'message' => 'Un abonnement est déjà en cours : le second paiement a été annulé et remboursé.'];
     }
 
     $stmt = $pdo->prepare('SELECT id, prenom, nom, email FROM users WHERE id = ?');
@@ -549,6 +584,61 @@ function stripeAppliquerCheckout(PDO $pdo, array $session): array
 }
 
 /**
+ * Remboursement, litige, facture annulée : consigné et signalé par e-mail à
+ * l'adresse d'alerte, pour régularisation (registre financier, événement
+ * payé encore en ligne).
+ *
+ * @param array<string, mixed> $obj
+ */
+function stripeSignalerAnomalie(PDO $pdo, string $type, array $obj): void
+{
+    $intent = (string) ($obj['payment_intent'] ?? '');
+    $paiement = null;
+    if ($intent !== '') {
+        $stmt = $pdo->prepare('SELECT id, etablissement_id, evenement_id FROM paiements_evenements WHERE stripe_paiement_id = ?');
+        $stmt->execute([$intent]);
+        $paiement = $stmt->fetch() ?: null;
+    }
+    $contexte = [
+        'type'      => $type,
+        'objet'     => (string) ($obj['id'] ?? ''),
+        'montant'   => isset($obj['amount']) ? ((int) $obj['amount']) / 100 : null,
+        'paiement'  => $paiement['id'] ?? null,
+        'evenement' => $paiement['evenement_id'] ?? null,
+    ];
+    logErreur('Stripe : remboursement, litige ou facture annulée à régulariser', null, $contexte);
+
+    try {
+        require_once __DIR__ . '/mail.php';
+        $dest = reglage('ALERTE_EMAIL', 'alerte_email');
+        if ($dest !== '') {
+            envoyerEmail($dest, 'Stripe : ' . $type . ' à régulariser', json_encode($contexte, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) ?: $type);
+        }
+    } catch (Throwable $e) {
+        logErreur('Stripe : alerte non envoyée', $e);
+    }
+}
+
+/**
+ * Résilie un abonnement souscrit en double et rembourse ce qu'il a prélevé.
+ * Ne lève jamais : l'échec part au journal, à traiter dans le tableau de bord.
+ */
+function stripeAnnulerAbonnementEnDouble(string $abonId): void
+{
+    try {
+        $abonnement = stripeRequete('GET', 'subscriptions/' . rawurlencode($abonId), ['expand' => ['latest_invoice']]);
+        stripeRequete('DELETE', 'subscriptions/' . rawurlencode($abonId));
+        $facture = is_array($abonnement['latest_invoice'] ?? null) ? $abonnement['latest_invoice'] : [];
+        $intent  = is_array($facture['payment_intent'] ?? null) ? (string) ($facture['payment_intent']['id'] ?? '') : (string) ($facture['payment_intent'] ?? '');
+        if ($intent !== '' && (int) ($facture['amount_paid'] ?? 0) > 0) {
+            stripeRequete('POST', 'refunds', ['payment_intent' => $intent], 'remb-double-' . $abonId);
+        }
+    } catch (StripeErreur $e) {
+        logErreur('Stripe : abonnement en double non résilié', $e, ['abonnement' => $abonId]);
+    }
+}
+
+/**
  * Reporte l'état d'un abonnement Stripe sur la fiche client.
  *
  * `trialing` et `active` laissent la formule ouverte. `past_due` (paiement en
@@ -579,6 +669,20 @@ function stripeAppliquerAbonnement(PDO $pdo, array $abonnement, bool $supprime =
             "UPDATE crm_clients
                 SET stripe_statut = ?, offre = 'aucune', mrr = 0, statut = 'perdu', perdu_le = CURDATE(),
                     motif_perte = COALESCE(motif_perte, 'Abonnement résilié (Stripe)')
+              WHERE id = ?"
+        )->execute([$statut, $client['id']]);
+
+        return;
+    }
+
+    // Relances épuisées sans annulation (réglage Stripe « laisser impayé ») :
+    // la formule se ferme comme pour une résiliation, sans quoi le service
+    // restait ouvert gratuitement sans limite de temps.
+    if ($statut === 'unpaid') {
+        $pdo->prepare(
+            "UPDATE crm_clients
+                SET stripe_statut = ?, offre = 'aucune', mrr = 0, statut = 'perdu', perdu_le = CURDATE(),
+                    motif_perte = COALESCE(motif_perte, 'Abonnement impayé (Stripe)')
               WHERE id = ?"
         )->execute([$statut, $client['id']]);
 
@@ -704,6 +808,20 @@ function stripeTraiterEvenement(PDO $pdo, array $evenement): bool
                 break;
             case 'invoice.paid':
                 stripeEnregistrerFacturePayee($pdo, $obj);
+                break;
+            case 'checkout.session.async_payment_failed':
+                // Prélèvement différé refusé : rien n'est publié ni ouvert.
+                $pdo->prepare("UPDATE paiements_evenements SET statut = 'expire' WHERE stripe_session_id = ? AND statut = 'en_attente'")
+                    ->execute([(string) ($obj['id'] ?? '')]);
+                logErreur('Stripe : paiement différé refusé', null, ['session' => $obj['id'] ?? '']);
+                break;
+            case 'charge.refunded':
+            case 'charge.dispute.created':
+            case 'invoice.voided':
+                // Remboursement, litige ou facture annulée : la trésorerie et,
+                // le cas échéant, la mise en ligne sont à revoir à la main.
+                // L'alerte part au journal, que la sonde de santé remonte.
+                stripeSignalerAnomalie($pdo, $type, $obj);
                 break;
             case 'invoice.payment_failed':
                 $pdo->prepare("UPDATE crm_clients SET stripe_statut = 'past_due' WHERE stripe_subscription_id = ?")

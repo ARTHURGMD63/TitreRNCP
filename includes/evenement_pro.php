@@ -138,6 +138,10 @@ function traiterFormulaireEvenement(PDO $pdo, array $etab, array $capacites, ?ar
 
     try {
         $id = ecrireEvenementPro($pdo, $etabId, $existant, $v, $supplement, $sponso);
+    } catch (QuotaEvenementsAtteint) {
+        return ['erreurs' => ['Votre quota d\'événements du mois vient d\'être atteint : cochez l\'acceptation du supplément de '
+                              . eurosSite((float) PRIX_EVENEMENT_SUPPLEMENTAIRE) . ' HT pour publier celui-ci.'],
+                'valeurs' => $v + ['accepte_supplement' => false]];
     } catch (Throwable $e) {
         logErreur('Enregistrement d\'événement impossible', $e, ['etablissement' => $etabId]);
 
@@ -159,15 +163,27 @@ function traiterFormulaireEvenement(PDO $pdo, array $etab, array $capacites, ?ar
     exit;
 }
 
+/** Le quota du mois a été consommé entre la vérification et l'écriture. */
+final class QuotaEvenementsAtteint extends RuntimeException
+{
+}
+
 /**
  * Écrit l'événement (création ou modification) et ce qu'il consomme au
  * registre des achats, dans une transaction. Renvoie son identifiant.
+ *
+ * Le quota du mois est relu sous le verrou : vérifié à l'ouverture du
+ * formulaire ou du paiement, il a pu être consommé entre-temps (plusieurs
+ * formulaires ouverts en même temps). Sans supplément prévu, l'écriture est
+ * alors refusée (QuotaEvenementsAtteint). Après un paiement déjà encaissé
+ * ($apresPaiement), on publie quand même — refuser laisserait un client payé
+ * sans son événement — et l'écart part au journal pour régularisation.
  *
  * @param array<string, mixed>      $v        valeurs validées du formulaire
  * @param array<string, mixed>      $sponso   résultat de resoudreSponsoring()
  * @param array<string, mixed>|null $existant l'événement modifié, null à la création
  */
-function ecrireEvenementPro(PDO $pdo, int $etabId, ?array $existant, array $v, float $supplement, array $sponso): int
+function ecrireEvenementPro(PDO $pdo, int $etabId, ?array $existant, array $v, float $supplement, array $sponso, bool $apresPaiement = false): int
 {
     $commun = [
         $v['titre'], $v['description'], $v['type'], $v['style_musique'] ?: null, $v['date_heure'], $v['date_fin'],
@@ -183,6 +199,16 @@ function ecrireEvenementPro(PDO $pdo, int $etabId, ?array $existant, array $v, f
         // Verrou de l'établissement : deux publications simultanées ne lisent
         // pas toutes deux « il reste une place dans le quota ».
         verrouillerEtablissement($pdo, $etabId);
+
+        if ($existant === null && $supplement <= 0
+            && evenementSeraSupplementaire($pdo, $etabId, capacitesEtablissement($pdo, $etabId))) {
+            if (!$apresPaiement) {
+                throw new QuotaEvenementsAtteint('Le quota d’événements du mois vient d’être atteint.');
+            }
+            logErreur('Événement publié au-delà du quota après paiement, supplément non perçu', null, [
+                'etablissement' => $etabId, 'titre' => (string) $v['titre'],
+            ]);
+        }
 
         if ($existant === null) {
             $pdo->prepare(
@@ -404,7 +430,7 @@ function publierEvenementPaye(PDO $pdo, array $session): array
             $stmt->execute([(int) $paiement['evenement_id'], $etabId]);
             $existant = $stmt->fetch() ?: null;
         }
-        $id = ecrireEvenementPro($pdo, $etabId, $existant, $donnees['v'], (float) $paiement['montant_supplement'], $donnees['sponso']);
+        $id = ecrireEvenementPro($pdo, $etabId, $existant, $donnees['v'], (float) $paiement['montant_supplement'], $donnees['sponso'], true);
     } catch (Throwable $e) {
         // Payé mais pas publié : la ligne revient en attente pour que la
         // relance du webhook réessaie, et l'erreur part au journal.

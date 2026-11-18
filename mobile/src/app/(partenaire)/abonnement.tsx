@@ -8,7 +8,8 @@
  * mois — et suit tout seul : un paiement enregistré par le serveur apparaît
  * au prochain chargement de l'écran.
  *
- * Aucun prix, aucun lien d'achat ici : c'est ce que demandent les stores.
+ * Aucun prix, aucun lien d'achat, aucun nom de site où payer : c'est ce que
+ * demandent les stores (constat MOB-04 de l'audit).
  * Reste le passage obligé tant qu'aucune formule n'est active (voir
  * partenaire_dashboard.php, code `abonnement_requis`).
  */
@@ -88,7 +89,7 @@ export default function AbonnementPartenaire() {
           </View>
         ) : donnees.validation.valide ? (
           <Encart genre="info">
-            Ton espace s&apos;active depuis le site outsee.fr : connecte-toi avec le même e-mail et le même mot de passe, choisis ta formule dans « Ma formule », puis reviens ici. Dès qu&apos;elle est active, cet écran s&apos;ouvre tout seul.
+            Ta formule se gère depuis ton espace établissement. Dès qu&apos;elle est active, cet écran s&apos;ouvre tout seul.
           </Encart>
         ) : null}
 
@@ -109,7 +110,7 @@ export default function AbonnementPartenaire() {
         </View>
 
         <T taille={fs[4]} couleur={c.gris} style={{ marginBottom: 18 }}>
-          La formule et la facturation se gèrent sur le site outsee.fr, depuis ton espace établissement (connexion avec les mêmes identifiants), pas dans l&apos;application.
+          Cette action se gère depuis ton espace établissement.
         </T>
       </Contenu>
     </Ecran>

@@ -34,6 +34,18 @@ require_once __DIR__ . '/log.php';
 /** Durée de vie d'un jeton, prolongée à chaque usage. */
 const API_JETON_JOURS = 30;
 
+/**
+ * Un jeton administrateur ouvre le back-office (fichier clients, trésorerie) :
+ * il vit un jour, prolongé à l'usage, au lieu de trente.
+ */
+const API_JETON_JOURS_ADMIN = 1;
+
+/** Durée de vie d'un jeton selon le type de compte. */
+function apiDureeJetonJours(string $type): int
+{
+    return $type === 'admin' ? API_JETON_JOURS_ADMIN : API_JETON_JOURS;
+}
+
 /** En deçà, on ne réécrit pas `derniere_utilisation` (voir apiUtilisateur()). */
 const API_TOUCHER_APRES_SECONDES = 3600;
 
@@ -132,12 +144,12 @@ function apiEmpreinte(string $jeton): string
  *
  * @return array{token:string,expire_le:string}
  */
-function apiCreerJeton(PDO $pdo, int $userId, ?string $appareil = null): array
+function apiCreerJeton(PDO $pdo, int $userId, ?string $appareil = null, int $jours = API_JETON_JOURS): array
 {
     // 32 octets de random_bytes : c'est le générateur cryptographique du
     // système, pas rand(). Un jeton devinable vaut un mot de passe devinable.
     $jeton  = bin2hex(random_bytes(32));
-    $expire = date('Y-m-d H:i:s', time() + API_JETON_JOURS * 86400);
+    $expire = date('Y-m-d H:i:s', time() + $jours * 86400);
 
     $stmt = $pdo->prepare(
         'INSERT INTO api_tokens (user_id, token_hash, appareil, expire_le, derniere_utilisation)
@@ -195,7 +207,7 @@ function apiUtilisateur(PDO $pdo): array
             'UPDATE api_tokens SET derniere_utilisation = NOW(), expire_le = ? WHERE id = ?'
         );
         $maj->execute([
-            date('Y-m-d H:i:s', time() + API_JETON_JOURS * 86400),
+            date('Y-m-d H:i:s', time() + apiDureeJetonJours((string) $ligne['type']) * 86400),
             (int) $ligne['token_id'],
         ]);
     }
@@ -307,9 +319,11 @@ function apiSessionDepuisJeton(): bool
         'SELECT u.id, u.prenom, u.nom, u.type, u.ecole
            FROM api_tokens t
            JOIN users u ON u.id = t.user_id
-          WHERE t.token_hash = ? AND t.expire_le >= NOW()'
+          WHERE t.token_hash = ? AND t.expire_le >= ?'
     );
-    $stmt->execute([apiEmpreinte($jeton)]);
+    // L'échéance est écrite par PHP (date()) : on la compare à l'heure de PHP,
+    // pas à NOW() de la base, dont le fuseau peut différer.
+    $stmt->execute([apiEmpreinte($jeton), date('Y-m-d H:i:s')]);
     $u = $stmt->fetch();
 
     if (!$u) {

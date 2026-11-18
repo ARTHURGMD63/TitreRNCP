@@ -11,13 +11,19 @@
  * 'club', v28) : le type est lu une fois, au montage, depuis le profil de
  * l'établissement. La route existe pour tous ; un bar qui l'atteindrait par
  * un lien recevrait le refus « pas_un_club » du serveur.
+ *
+ * Tant que le type n'est pas connu, aucun onglet n'est deviné : un club qui
+ * recevait la barre d'un bar (profil en échec, erreur avalée) ne voyait pas
+ * ses terrains. Le chargement, puis l'erreur et « Réessayer » s'affichent à
+ * la place.
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { router, Tabs } from 'expo-router';
 
-import { api } from '../../api';
+import { api, ErreurApi } from '../../api';
 import { BarreOnglets, type OngletBarre } from '../../composants/BarreOnglets';
+import { Chargement, Ecran, Erreur } from '../../composants/Ecran';
 import { useJeton } from '../../session';
 import { useTheme } from '../../useTheme';
 
@@ -46,15 +52,27 @@ const PARENT: Record<string, string> = {
 export default function OngletsPartenaire() {
   const { c } = useTheme();
   const jeton = useJeton();
-  const [estClub, setEstClub] = useState(false);
+  /** null : pas encore connu. */
+  const [estClub, setEstClub] = useState<boolean | null>(null);
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [essai, setEssai] = useState(0);
+  const reessayer = useCallback(() => { setErreur(null); setEssai((n) => n + 1); }, []);
 
   useEffect(() => {
     let actif = true;
     api.partenaireProfil(jeton)
       .then((r) => { if (actif) setEstClub(r.etablissement.type === 'club'); })
-      .catch(() => {});
+      .catch((e) => { if (actif) setErreur(e instanceof ErreurApi ? e.message : 'Chargement impossible.'); });
     return () => { actif = false; };
-  }, [jeton]);
+  }, [jeton, essai]);
+
+  if (estClub === null) {
+    return (
+      <Ecran avecBarre={false}>
+        {erreur ? <Erreur message={erreur} onReessayer={reessayer} /> : <Chargement />}
+      </Ecran>
+    );
+  }
 
   return (
     <Tabs

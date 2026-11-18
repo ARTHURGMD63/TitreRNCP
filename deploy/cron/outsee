@@ -1,23 +1,34 @@
 # ============================================================
 #  Outsee — tâches planifiées
-#  Installé dans /etc/cron.d/outsee (propriétaire root, mode 644).
+#  Installé dans /etc/cron.d/outsee (propriétaire root, mode 644) par
+#  installer_serveur.sh, puis par appliquer_config.sh à chaque changement.
 #  Toujours en ligne de commande : ces scripts répondent 404 au web.
+#
+#  flock -n : si le passage précédent tourne encore, celui-ci ne démarre
+#  pas (pas de double envoi push ou Stripe quand une tâche ralentit).
+#
+#  root n'exécute jamais un fichier de /var/www/outsee : ce dossier
+#  appartient au compte « deploy », que la clé SSH de GitHub pilote.
 # ============================================================
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 APP_ENV=production
 
 # Suppléments du mois → lignes de la prochaine facture Stripe.
-*/5 * * * *  www-data  php /var/www/outsee/current/cron/stripe.php >> /var/log/outsee/stripe.log 2>&1
+*/5 * * * *  www-data  flock -n /run/lock/outsee-stripe.lock php /var/www/outsee/current/cron/stripe.php >> /var/log/outsee/stripe.log 2>&1
+
+# Notifications push : programmées par les lieux, rappel du soir, envoi de la file.
+* * * * *    www-data  flock -n /run/lock/outsee-push.lock php /var/www/outsee/current/cron/push.php >> /var/log/outsee/push.log 2>&1
 
 # Rappels de veille de soirée (e-mails), une fois par jour.
-0 10 * * *   www-data  php /var/www/outsee/current/cron/rappels.php >> /var/log/outsee/rappels.log 2>&1
+0 10 * * *   www-data  flock -n /run/lock/outsee-rappels.lock php /var/www/outsee/current/cron/rappels.php >> /var/log/outsee/rappels.log 2>&1
 
-# Entretien : caches, canaux temps réel abandonnés, vieilles tentatives.
-30 4 * * *   www-data  php /var/www/outsee/current/cron/entretien.php >> /var/log/outsee/entretien.log 2>&1
+# Entretien : caches, canaux temps réel abandonnés, purges de conservation.
+30 4 * * *   www-data  flock -n /run/lock/outsee-entretien.lock php /var/www/outsee/current/cron/entretien.php >> /var/log/outsee/entretien.log 2>&1
 
-# Sauvegarde de la base, chaque nuit (deploy/sauvegarder.sh).
-15 3 * * *   root      /var/www/outsee/current/deploy/sauvegarder.sh >> /var/log/outsee/sauvegarde.log 2>&1
+# Sauvegarde de la base et des photos, chaque nuit. Copie root:root de
+# deploy/sauvegarder.sh, hors des versions déployées.
+15 3 * * *   root      flock -n /run/lock/outsee-sauvegarde.lock bash /usr/local/sbin/outsee-sauvegarde >> /var/log/outsee/sauvegarde.log 2>&1
 
 # Surveillance : sonde de disponibilité et alerte e-mail (une par panne).
-*/5 * * * *  www-data  php /var/www/outsee/current/cron/sante.php >> /var/log/outsee/sante.log 2>&1
+*/5 * * * *  www-data  flock -n /run/lock/outsee-sante.lock php /var/www/outsee/current/cron/sante.php >> /var/log/outsee/sante.log 2>&1

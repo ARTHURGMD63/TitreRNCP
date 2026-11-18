@@ -42,7 +42,7 @@ if (!$event) {
 
 if ($methode === 'POST') {
     $note        = (int) ($corps['note'] ?? 0);
-    $commentaire = substr(trim(is_string($corps['commentaire'] ?? null) ? $corps['commentaire'] : ''), 0, 1000);
+    $commentaire = mb_substr(trim(is_string($corps['commentaire'] ?? null) ? $corps['commentaire'] : ''), 0, 1000);
 
     if ($note < 1 || $note > 5) {
         apiErreur('Note invalide.', 422, 'note');

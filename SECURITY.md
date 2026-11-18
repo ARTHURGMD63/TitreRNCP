@@ -10,7 +10,7 @@
 
 ## Signalement d'une vulnérabilité
 
-Si vous découvrez une faille de sécurité, contactez-nous à **security@outsee.app**.  
+Si vous découvrez une faille de sécurité, contactez-nous à **security@outsee.fr**.  
 Réponse sous 48h. Merci de ne pas publier la vulnérabilité publiquement avant correction.
 
 ---
@@ -108,6 +108,8 @@ Réponse sous 48h. Merci de ne pas publier la vulnérabilité publiquement avant
 | Uploads | `uploads/.htaccess` : moteur PHP coupé, handlers retirés, seules les images servies |
 | Scripts hors-web | `cron/rappels.php`, `outils/creer_admin.php` et `outils/migrer.php` refusent toute invocation qui n'est pas CLI — un outil qui modifie le schéma n'a rien à faire derrière une URL, même protégée |
 
+| Documents et déploiement | `.htaccess` racine et nginx refusent `docs/`, `mobile/`, `deploy/`, `docker/` et les `.docx`, `.xlsx`, `.pdf`, `.pptx`, `.mp4` |
+
 > `AllowOverride all` doit être actif pour que ces `.htaccess` s'appliquent.
 > Sur un hébergement qui l'interdit, reporter ces règles dans la configuration
 > du serveur — sinon elles sont silencieusement ignorées.
@@ -124,7 +126,7 @@ Réponse sous 48h. Merci de ne pas publier la vulnérabilité publiquement avant
 
 | Mesure | Implémentation |
 |--------|----------------|
-| HTTPS | Automatique via Railway (TLS Let's Encrypt) |
+| HTTPS | Aujourd'hui : TLS fourni par Render. Sur le VPS OVH (à venir) : Let's Encrypt, HSTS posé par nginx sur toutes les réponses |
 | Variables d'environnement | Identifiants DB et SMTP via l'environnement ou `includes/config.local.php`, non versionné (jamais dans le code) |
 | Envoi d'e-mails | En-têtes RFC complets, sujet encodé, adresse d'enveloppe explicite, transport SMTP authentifié avec vérification du certificat. SPF/DKIM/DMARC à publier : voir [`docs/EMAIL.md`](docs/EMAIL.md) |
 | Poids du dépôt | `tests/Unit/DepotTest.php` refuse tout binaire suivi de plus de 2 Mo |
@@ -144,5 +146,5 @@ Réponse sous 48h. Merci de ne pas publier la vulnérabilité publiquement avant
 | A06 | Vulnerable Components | PHPStan niveau 6, dépendances minimales |
 | A07 | Auth & Session Failures | Session regen, CSRF, rate limiting |
 | A08 | Software Integrity Failures | Pas de CDN non fiable |
-| A09 | Logging & Monitoring | Partiel : journal PHP via `logErreur()`, échecs d'envoi tracés — pas d'alerte automatique |
+| A09 | Logging & Monitoring | Journal PHP via `logErreur()` ; sur le VPS, sonde `/sante.php` et alerte e-mail par `cron/sante.php` (panne, sauvegarde manquée), journaux tournés chaque semaine |
 | A10 | SSRF | Pas de requêtes HTTP sortantes côté serveur |

@@ -22,20 +22,22 @@ apiExigerMethode('POST');
 // Un code à six chiffres se devine en un million d'essais : la limite par
 // code (cinq saisies) est la vraie protection, celle-ci borne en plus ce
 // qu'une même machine peut tenter sur plusieurs adresses.
+// Deux compteurs : par adresse IP, et par compte visé toutes adresses
+// confondues (une attaque répartie sur plusieurs machines reste bornée).
 $ip = ipClient();
-if (isRateLimited($pdo, $ip, 15, 900)) {
+$corps = apiCorps();
+$email = trim(is_string($corps['email'] ?? null) ? $corps['email'] : '');
+if (limiteAtteinte($pdo, 'reinit', $ip, 15, 900, $email, 10)) {
     apiErreur('Trop de tentatives. Réessaie dans quinze minutes.', 429, 'trop_de_tentatives');
 }
 
-$corps = apiCorps();
-$email = trim(is_string($corps['email'] ?? null) ? $corps['email'] : '');
 $code  = trim(is_string($corps['code'] ?? null) ? $corps['code'] : '');
 $pass  = is_string($corps['mot_de_passe'] ?? null) ? $corps['mot_de_passe'] : '';
 
 // Seuls les échecs comptent contre la limite : une personne qui réussit ne doit
 // pas se retrouver bloquée en voulant se connecter juste après.
 $refuser = static function () use ($pdo, $ip, $email): never {
-    recordLoginAttempt($pdo, $ip, $email);
+    enregistrerTentative($pdo, 'reinit', $ip, $email);
     apiErreur('Code invalide ou expiré.', 422, 'code_invalide');
 };
 
@@ -56,6 +58,5 @@ if (mb_strlen($pass) < $minimum) {
 }
 
 codeReinitialisationAppliquer($pdo, $compte['id'], $compte['email'], $pass);
-clearLoginAttempts($pdo, $ip, $email);
 
 apiReponse(['success' => true]);

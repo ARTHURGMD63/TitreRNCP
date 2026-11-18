@@ -103,6 +103,9 @@ try {
 
     if ($event['prix_normal'] > 0 && $event['reduction'] > 0) {
         $montant = round($event['prix_normal'] * $event['reduction'] / 100, 2);
+        // Une réinscription après annulation ne compte pas deux fois la même
+        // économie (badge « saver » obtenu à tort).
+        $pdo->prepare('DELETE FROM economies WHERE user_id = ? AND evenement_id = ?')->execute([$uid, $evenement_id]);
         $pdo->prepare(
             "INSERT INTO economies (user_id, evenement_id, montant, date_economie)
              VALUES (?, ?, ?, CURDATE())"

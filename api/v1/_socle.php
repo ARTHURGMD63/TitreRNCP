@@ -55,7 +55,7 @@ if (!headers_sent()) {
     // api/ (le socle du site, protege par cookie et jeton CSRF) n'a pas de
     // CORS et ne doit pas en avoir : la distinction est exactement la.
     header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Headers: Authorization, Content-Type');
+    header('Access-Control-Allow-Headers: Authorization, Content-Type, X-App-Version');
     header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
     header('Access-Control-Max-Age: 86400');
 }
@@ -85,6 +85,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
 // quand le client est une application native.
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
+
+// Version minimale de l'application (APP_VERSION_MIN, ou 'app_version_min'
+// dans config.local.php). Une version trop ancienne — cassée, ou non conforme
+// aux règles des stores — reçoit 426 et l'invitation à se mettre à jour.
+// Sans réglage, ou sans en-tête (anciennes versions, outils), rien ne change.
+$versionMin   = trim(reglage('APP_VERSION_MIN', 'app_version_min'));
+$versionCliente = trim((string) ($_SERVER['HTTP_X_APP_VERSION'] ?? ''));
+if ($versionMin !== '' && $versionCliente !== '' && preg_match('/^\d+(\.\d+){0,3}$/', $versionCliente)
+    && version_compare($versionCliente, $versionMin, '<')) {
+    apiErreur('Une nouvelle version d’Outsee est disponible : mets l’application à jour pour continuer.', 426, 'mise_a_jour_requise');
+}
 
 /**
  * Bornes de pagination communes.

@@ -18,7 +18,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { Stack } from 'expo-router';
+import { router, Stack, type ErrorBoundaryProps } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -30,10 +30,37 @@ import { FournisseurSession, useSession } from '../session';
 import { FournisseurTheme, useTheme } from '../useTheme';
 import { FournisseurToast } from '../composants/Toast';
 import { IntroSplash } from '../composants/IntroSplash';
-import { installerSuiviErreurs } from '../suiviErreurs';
+import { Ecran, Erreur } from '../composants/Ecran';
+import { configurerNotifications, ecouterOuvertures } from '../notifications';
+import { installerSuiviErreurs, signalerErreurRattrapee } from '../suiviErreurs';
 
 // Les plantages non rattrapés sont signalés au serveur (anonymement).
 installerSuiviErreurs();
+
+// Notifications : affichage au premier plan et canaux Android. Aucune
+// permission n'est demandée ici (voir notifications.ts).
+configurerNotifications();
+
+/**
+ * Le filet de la racine (convention expo-router) : une donnée inattendue qui
+ * fait planter un écran affiche ce message et « Réessayer », au lieu de
+ * fermer l'application. L'erreur est signalée une fois au serveur
+ * (erreur_app.php), anonymement.
+ */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  useEffect(() => {
+    signalerErreurRattrapee(error);
+  }, [error]);
+  return (
+    <SafeAreaProvider>
+      <FournisseurTheme>
+        <Ecran avecBarre={false}>
+          <Erreur message="Une erreur est survenue." onReessayer={() => void retry()} />
+        </Ecran>
+      </FournisseurTheme>
+    </SafeAreaProvider>
+  );
+}
 
 // L'écran de lancement (fond basalte, les deux anneaux) reste affiché tant
 // que l'application n'est pas prête : polices chargées ET session tranchée.
@@ -56,6 +83,14 @@ function Navigation() {
   useEffect(() => {
     if (profil !== undefined) SplashScreen.hideAsync().catch(() => {});
   }, [profil]);
+
+  // Le toucher d'une notification ouvre sa page — une fois connecté
+  // seulement : déconnecté, aucune de ces pages n'existe.
+  const connecte = !!profil;
+  useEffect(() => {
+    if (!connecte) return;
+    return ecouterOuvertures((route) => router.push(route as never));
+  }, [connecte]);
 
   // Session pas encore vérifiée : l'écran de lancement natif couvre encore
   // l'attente.

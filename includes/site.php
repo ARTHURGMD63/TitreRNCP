@@ -188,6 +188,7 @@ function piedSite(): string
         '/mentions-legales.php' => 'Mentions légales',
         '/confidentialite.php'  => 'Confidentialité',
         '/cgu.php'              => 'Conditions d\'utilisation',
+        '/cgv.php'              => 'Conditions de vente',
         '/auth/login.php'       => 'Espace établissement',
     ];
     $html = '';

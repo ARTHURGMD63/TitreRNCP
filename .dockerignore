@@ -39,6 +39,10 @@ Outsee.bat
 includes/config.local.php
 .shot-enabled
 
+# Capture d'écran locale (contourne la connexion) : jamais dans une image
+# servie, même bloquée par .htaccess.
+__shot.php
+
 # Poste de développement
 node_modules
 .vscode

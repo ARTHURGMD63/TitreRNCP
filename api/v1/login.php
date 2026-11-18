@@ -44,8 +44,8 @@ $u = $stmt->fetch();
 // hachage temoin : sans cela, une adresse inconnue repond nettement plus vite
 // qu'une adresse connue, et le temps de reponse suffit a dresser la liste des
 // comptes existants.
-$hachage = $u ? (string) $u['password'] : '$2y$12$0000000000000000000000000000000000000000000000000000';
-$valide  = password_verify($mdp, $hachage) && $u !== false;
+$hachage = $u ? (string) $u['password'] : hachageTemoin();
+$valide  = password_verify($mdp, $hachage) && $u !== false && !hachageInterdit($hachage);
 
 if (!$valide) {
     recordLoginAttempt($pdo, $ip, $email);
@@ -76,7 +76,7 @@ if (($u['type'] ?? '') === 'admin' && totpActif($pdo, (int) $u['id'])) {
 
 clearLoginAttempts($pdo, $ip, $email);
 
-$jeton = apiCreerJeton($pdo, (int) $u['id'], isset($corps['appareil']) ? (string) $corps['appareil'] : null);
+$jeton = apiCreerJeton($pdo, (int) $u['id'], isset($corps['appareil']) ? (string) $corps['appareil'] : null, apiDureeJetonJours((string) $u['type']));
 
 apiReponse([
     'success'     => true,

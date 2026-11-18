@@ -21,16 +21,17 @@ $u   = apiEtudiant($pdo);
 $uid = (int) $u['id'];
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
-    apiReponse(['success' => marquerNotificationsLues($pdo, $uid)]);
+    // Toujours un succès : l'application lève une erreur sur success:false,
+    // alors qu'une lecture non marquée n'a aucune conséquence pour elle.
+    apiReponse(['success' => true, 'marquees' => marquerNotificationsLues($pdo, $uid)]);
 }
 
 apiExigerMethode('GET');
 
 $notifs = notificationsEtudiant($pdo, $uid);
 $luesLe = notificationsLuesLe($pdo, $uid);
-// epochUtc(), pas strtotime() : lues_le et ts (ci-dessous) viennent de
-// colonnes ecrites par NOW() cote base, qui tourne en UTC ici -- voir
-// includes/notifications.php.
+// epochUtc() : lecture d'un horodatage de base dans le fuseau commun (voir
+// includes/notifications.php).
 $luesTs = $luesLe !== null ? epochUtc($luesLe) : null;
 
 $minuit  = strtotime('today');

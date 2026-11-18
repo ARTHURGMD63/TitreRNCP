@@ -11,12 +11,13 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Animated, Easing, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Animated, AppState, Easing, Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 
 import { actions, ErreurApi, type Evenement } from '../api';
 import { ICONES_TYPE, LIBELLES_TYPE } from '../catalogue';
-import { dateFr, heure, ts } from '../format';
+import { dateFr, dureeCourte, heure, ts } from '../format';
+import { creerHorloge } from '../horloge';
 import { prixEvenement } from '../regles';
 import { useJeton } from '../session';
 import { couleursCategorie, espace, fixe, fs, rayon, sans } from '../theme';
@@ -30,6 +31,24 @@ import { useToast } from './Toast';
 // ─── Comptes à rebours ──────────────────────────────────────────────────────
 
 /**
+ * Une seule minuterie d'une seconde pour toutes les cartes (horloge.ts),
+ * arrêtée quand l'application passe en arrière-plan : personne ne regarde
+ * le décompte, la batterie n'a pas à le payer.
+ */
+const horloge = creerHorloge(1000);
+let suitAppState = false;
+
+function suivrePremierPlan() {
+  if (suitAppState) return;
+  suitAppState = true;
+  if (AppState.currentState && AppState.currentState !== 'active') horloge.pause();
+  AppState.addEventListener('change', (etat) => {
+    if (etat === 'active') horloge.reprendre();
+    else horloge.pause();
+  });
+}
+
+/**
  * L'heure, rafraîchie chaque seconde tant que `actif`. `jusqua` (ms) arrête
  * l'horloge une fois cet instant passé : le décompte avant le début d'une
  * soirée n'a plus rien à compter ensuite.
@@ -38,12 +57,16 @@ function useMaintenant(actif = true, jusqua?: number) {
   const [maintenant, setMaintenant] = useState(() => Date.now());
   useEffect(() => {
     if (!actif) return;
-    const id = setInterval(() => {
-      const t = Date.now();
+    suivrePremierPlan();
+    let desabonner: (() => void) | null = null;
+    desabonner = horloge.abonner((t) => {
       setMaintenant(t);
-      if (jusqua !== undefined && t >= jusqua) clearInterval(id);
-    }, 1000);
-    return () => clearInterval(id);
+      if (jusqua !== undefined && t >= jusqua && desabonner) {
+        desabonner();
+        desabonner = null;
+      }
+    });
+    return () => { desabonner?.(); };
   }, [actif, jusqua]);
   return maintenant;
 }
@@ -102,28 +125,18 @@ export function PastilleAVenir({ quoi = 'Soirée', surAccent, petite }: { quoi?:
   );
 }
 
-/** « Flash · 12min 05s », puis « Expiré » (app.js, [data-expiry]). */
+/** « Flash · 12min05s », « Flash · 2h55 », « Flash · 1j11h », puis « Expiré » (app.js, [data-expiry]). */
 function libelleFlash(expiry: number, maintenant: number) {
-  const diff = Math.max(0, expiry * 1000 - maintenant);
+  const diff = expiry * 1000 - maintenant;
   if (diff <= 0) return 'Expiré';
-  const h = Math.floor(diff / 3600000);
-  const mins = Math.floor((diff % 3600000) / 60000);
-  const secs = Math.floor((diff % 60000) / 1000);
-  // Au-delà d'une heure, les secondes n'apprennent rien : « 2h55 ».
-  if (h > 0) return `Flash · ${h}h${mins < 10 ? '0' : ''}${mins}`;
-  return `Flash · ${mins}min ${secs < 10 ? '0' : ''}${secs}s`;
+  return `Flash · ${dureeCourte(diff)}`;
 }
 
-/** « dans 2h05 », « dans 12min04s », « dans 3j », « EN COURS » (app.js). */
+/** « dans 1j11h », « dans 2h05 », « dans 12min04s », « EN COURS » (app.js). */
 export function libelleDebut(debut: number, maintenant: number) {
   const diff = debut * 1000 - maintenant;
   if (diff <= 0) return 'EN COURS';
-  const h = Math.floor(diff / 3600000);
-  const m = Math.floor((diff % 3600000) / 60000);
-  const s = Math.floor((diff % 60000) / 1000);
-  if (h > 48) return `dans ${Math.floor(h / 24)}j`;
-  if (h > 0) return `dans ${h}h${m < 10 ? '0' : ''}${m}`;
-  return `dans ${m}min${s < 10 ? '0' : ''}${s}s`;
+  return `dans ${dureeCourte(diff)}`;
 }
 
 // ─── Suivre un lieu (.btn-suivre-lieu) ──────────────────────────────────────

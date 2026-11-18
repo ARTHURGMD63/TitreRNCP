@@ -260,6 +260,20 @@ function protegerEcritureApi(): void {
     if (apiSessionDepuisJeton()) {
         return;
     }
+    // Un jeton présenté mais refusé (expiré, révoqué) : 401, comme sur
+    // api/v1. Sans cela l'application recevait un 403 « CSRF » qu'elle ne
+    // savait pas lire comme une fin de session, et restait coincée dans une
+    // interface où tout échouait.
+    if (function_exists('apiJetonPresente') && apiJetonPresente() !== null) {
+        http_response_code(401);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'success' => false,
+            'code'    => 'jeton_invalide',
+            'message' => 'Session expirée, reconnecte-toi',
+        ]);
+        exit;
+    }
 
     csrfVerifyApi();
 }
@@ -344,13 +358,59 @@ function isRateLimited(PDO $pdo, string $ip, int $maxAttempts = 5, int $windowSe
         return (int) $stmt->fetchColumn();
     };
 
+    // Les compteurs des autres actions (« #motif:... », voir limiteAtteinte())
+    // ne comptent pas ici : cinq rapports de plantage depuis le Wi-Fi d'un
+    // campus ne doivent pas bloquer les connexions de tout le campus.
+    $connexion = "email NOT LIKE '#%'";
     if ($email === null || $email === '') {
-        return $compter('ip = ?', [$ip]) >= $maxAttempts;
+        return $compter("ip = ? AND $connexion", [$ip]) >= $maxAttempts;
     }
 
     return $compter('ip = ? AND email = ?', [$ip, $email]) >= $maxAttempts
         || $compter('email = ?', [$email]) >= 2 * $maxAttempts
-        || $compter('ip = ?', [$ip]) >= 10 * $maxAttempts;
+        || $compter("ip = ? AND $connexion", [$ip]) >= 10 * $maxAttempts;
+}
+
+/**
+ * Limite propre à une action (motif) : un compteur par adresse IP et, si un
+ * compte est donné, un compteur par compte toutes adresses confondues.
+ *
+ * Chaque action a son compteur. Avant, tout partageait le compteur par IP de
+ * la connexion : quelques rapports de plantage ou demandes de code depuis un
+ * même réseau bloquaient le changement de mot de passe et la suppression de
+ * compte de tout le monde derrière cette adresse, et pouvaient servir à
+ * bloquer un compte exprès.
+ *
+ * Les lignes vivent dans login_attempts, colonne email = « #motif:compte »,
+ * purgées avec le reste.
+ */
+function limiteAtteinte(PDO $pdo, string $motif, string $ip, int $maxParIp, int $fenetre = 900, ?string $compte = null, ?int $maxParCompte = null): bool {
+    $pdo->prepare("DELETE FROM login_attempts WHERE attempted_at < DATE_SUB(NOW(), INTERVAL ? SECOND)")
+        ->execute([$fenetre]);
+
+    $prefixe = '#' . $motif . ':';
+    $stmt = $pdo->prepare(
+        'SELECT COUNT(*) FROM login_attempts WHERE ip = ? AND email LIKE ? AND attempted_at > DATE_SUB(NOW(), INTERVAL ? SECOND)'
+    );
+    $stmt->execute([$ip, $prefixe . '%', $fenetre]);
+    if ((int) $stmt->fetchColumn() >= $maxParIp) {
+        return true;
+    }
+    if ($compte === null || $compte === '') {
+        return false;
+    }
+    $stmt = $pdo->prepare(
+        'SELECT COUNT(*) FROM login_attempts WHERE email = ? AND attempted_at > DATE_SUB(NOW(), INTERVAL ? SECOND)'
+    );
+    $stmt->execute([mb_substr($prefixe . mb_strtolower($compte), 0, 255), $fenetre]);
+
+    return (int) $stmt->fetchColumn() >= ($maxParCompte ?? $maxParIp);
+}
+
+/** Enregistre une tentative pour limiteAtteinte(). */
+function enregistrerTentative(PDO $pdo, string $motif, string $ip, ?string $compte = null): void {
+    $pdo->prepare('INSERT INTO login_attempts (ip, email) VALUES (?, ?)')
+        ->execute([$ip, mb_substr('#' . $motif . ':' . mb_strtolower((string) $compte), 0, 255)]);
 }
 
 function recordLoginAttempt(PDO $pdo, string $ip, string $email): void {
@@ -374,6 +434,35 @@ function clearLoginAttempts(PDO $pdo, string $ip, ?string $email = null): void {
 }
 
 // ─── Politique de mot de passe ────────────────────────────────────
+
+/**
+ * Un hachage témoin VALIDE, au coût par défaut de ce PHP, vérifié quand
+ * l'adresse ne correspond à aucun compte.
+ *
+ * L'ancien témoin était mal formé (59 caractères) : selon les versions,
+ * password_verify() rendait la main aussitôt ou calculait un coût différent
+ * de celui des vrais comptes, et le temps de réponse disait si l'adresse
+ * existait. Celui-ci est un vrai hachage d'un secret jeté, au même coût que
+ * password_hash(..., PASSWORD_DEFAULT) : 12 depuis PHP 8.4, 10 avant.
+ */
+function hachageDemonstration(string $hachage): bool {
+    // Hachage public de « password » (documentation de Laravel, repris par
+    // db_setup.sql pour les comptes de démonstration). En production, aucun
+    // compte ne s'ouvre avec : une base installée avec les données de démo
+    // ne donne pas d'accès à quiconque lit le dépôt.
+    return hash_equals('$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', $hachage);
+}
+
+/** Le mot de passe est-il refusé d'office (compte de démonstration en production) ? */
+function hachageInterdit(string $hachage): bool {
+    return estEnProduction() && hachageDemonstration($hachage);
+}
+
+function hachageTemoin(): string {
+    return PHP_VERSION_ID >= 80400
+        ? '$2y$12$0jvEzpwyNPKK7WVN.ZdeeepUsu3VYuMrfdt1ieoJGj8m9Yrg1hVoe'
+        : '$2y$10$XRDEfR8.JIa6cYVIxVi2AuKlXF8GCX18q4kPpU18Xl.8UfLsfBRCW';
+}
 
 /**
  * Longueur minimale d'un mot de passe, selon le type de compte.
@@ -424,8 +513,12 @@ function consumeResetToken(PDO $pdo, string $token, string $newPassword): bool {
     $email = validateResetToken($pdo, $token);
     if (!$email) return false;
 
+    // Consommation conditionnelle : deux envois simultanés du même lien ne
+    // posent pas deux mots de passe, seul le premier passe.
     $hash = hash('sha256', $token);
-    $pdo->prepare("UPDATE password_resets SET used=1 WHERE token_hash=?")->execute([$hash]);
+    $marque = $pdo->prepare("UPDATE password_resets SET used=1 WHERE token_hash=? AND used=0 AND expires_at > NOW()");
+    $marque->execute([$hash]);
+    if ($marque->rowCount() !== 1) return false;
     $pdo->prepare("UPDATE users SET password=? WHERE email=?")
         ->execute([password_hash($newPassword, PASSWORD_DEFAULT), $email]);
 

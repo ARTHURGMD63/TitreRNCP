@@ -78,7 +78,7 @@ if ($methode === 'POST') {
     $pdo->prepare(
         'INSERT INTO evenement_photos (evenement_id, user_id, fichier, legende) VALUES (?,?,?,?)
            ON DUPLICATE KEY UPDATE fichier = VALUES(fichier), legende = VALUES(legende),
-                                    masquee = 0, created_at = CURRENT_TIMESTAMP'
+                                    created_at = CURRENT_TIMESTAMP'
     )->execute([$eid, $uid, $res['filename'], $legende]);
 
     if ($existante) {

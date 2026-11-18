@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $age       = ageEnAnnees($naissance);
     $min       = longueurMinimaleMotDePasse('partenaire');
 
-    if (isRateLimited($pdo, $ip, 20, 900)) {
+    if (limiteAtteinte($pdo, 'inscription', $ip, 20)) {
         $erreur = 'Trop de tentatives. Réessayez dans quinze minutes.';
     } elseif ($prenom === '' || $nom === '' || $email === '' || $pass === '' || $etabNom === '' || $etabType === '') {
         $erreur = 'Merci de remplir tous les champs.';
@@ -77,6 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->prepare('INSERT INTO etablissements (user_id, nom, type, ville, verification) VALUES (?,?,?,?,?)')
                 ->execute([$userId, $etabNom, $etabType, $ville, verificationInitiale($etabType)]);
             $pdo->commit();
+            enregistrerTentative($pdo, 'inscription', $ip);
             emailBienvenueEtablissement($email, $prenom, $etabNom, $etabType);
 
             session_regenerate_id(true);
@@ -94,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->rollBack();
             }
             if (($e->errorInfo[1] ?? null) === 1062) {
-                recordLoginAttempt($pdo, $ip, $email);
+                enregistrerTentative($pdo, 'inscription', $ip);
                 $erreur = 'Un compte existe déjà avec cette adresse. Connectez-vous.';
             } else {
                 logErreur('Inscription établissement impossible', $e);
@@ -176,7 +177,7 @@ siteDebut('Créer mon espace pro — Outsee', ['description' => "Créez l'espace
 
         <label class="case">
           <input type="checkbox" name="cgu" value="1" required<?= !empty($_POST['cgu']) ? ' checked' : '' ?>>
-          <span>J'accepte les <a href="<?= htmlspecialchars(baseUrl('/cgu.php'), ENT_QUOTES) ?>" target="_blank" rel="noopener">conditions générales</a> et la <a href="<?= htmlspecialchars(baseUrl('/confidentialite.php'), ENT_QUOTES) ?>" target="_blank" rel="noopener">politique de confidentialité</a>.</span>
+          <span>J'accepte les <a href="<?= htmlspecialchars(baseUrl('/cgu.php'), ENT_QUOTES) ?>" target="_blank" rel="noopener">conditions générales d'utilisation</a>, les <a href="<?= htmlspecialchars(baseUrl('/cgv.php'), ENT_QUOTES) ?>" target="_blank" rel="noopener">conditions générales de vente</a> et la <a href="<?= htmlspecialchars(baseUrl('/confidentialite.php'), ENT_QUOTES) ?>" target="_blank" rel="noopener">politique de confidentialité</a>.</span>
         </label>
 
         <button type="submit" class="bouton bouton--plein bouton--grand bouton--bloc">Créer mon espace <?= iconeSite('fleche-d', 'icon-sm') ?></button>

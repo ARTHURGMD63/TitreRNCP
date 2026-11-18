@@ -181,61 +181,96 @@ if ($action === 'send') {
 }
 
 // ─── Acceptation ────────────────────────────────────────────────────────────
+//
+// Même discipline que l'inscription directe (api/inscrire.php) : la sortie
+// est verrouillée (FOR UPDATE) le temps de compter les places et d'écrire.
+// Sans transaction, deux invités acceptant en même temps la dernière place
+// passaient tous les deux.
 if ($action === 'accept') {
     $inviteId = (int) ($data['invite_id'] ?? 0);
-    $stmt = $pdo->prepare("SELECT * FROM invitations WHERE id = ? AND to_user_id = ? AND statut = 'pending'");
-    $stmt->execute([$inviteId, $moi]);
-    $invite = $stmt->fetch();
-
-    if (!$invite) {
-        echo json_encode(['success' => false, 'message' => 'Invitation introuvable']);
+    $refus = static function (string $message) use ($pdo): never {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        echo json_encode(['success' => false, 'message' => $message]);
         exit;
-    }
-
-    $cibleId = (int) $invite['target_id'];
-    $infos   = cibleValide($pdo, $invite['type'], $cibleId);
-    if (!$infos) {
-        // L'invitation n'a plus d'objet : on la referme au lieu de la laisser
-        // en attente indefiniment dans le profil.
-        $pdo->prepare("UPDATE invitations SET statut = 'declined' WHERE id = ?")->execute([$inviteId]);
-        echo json_encode(['success' => false, 'message' => "Cette sortie n'est plus disponible"]);
-        exit;
-    }
-
-    $dedans = dejaParticipant($pdo, $invite['type'], $cibleId, $moi);
-    if (!$dedans && remplissage((int) $infos['quota'], (int) $infos['nb'])['complet']) {
-        echo json_encode(['success' => false, 'message' => "Trop tard, c'est complet"]);
-        exit;
-    }
+    };
 
     try {
-        if ($invite['type'] === 'event') {
-            // Meme identifiant de pass que l'inscription directe : imprevisible.
-            // Un pass annulé garde sa ligne (clé unique) : on la ranime au lieu
-            // de buter sur le doublon, sinon l'invité resterait sans pass.
-            $pdo->prepare(
-                "INSERT INTO inscriptions (user_id, evenement_id, qr_code, statut) VALUES (?,?,?,'inscrit')
-                 ON DUPLICATE KEY UPDATE
-                    qr_code = IF(statut = 'annule', VALUES(qr_code), qr_code),
-                    statut  = IF(statut = 'annule', 'inscrit', statut)"
-            )->execute([$moi, $cibleId, bin2hex(random_bytes(32))]);
-        } elseif ($invite['type'] === 'culture') {
-            $pdo->prepare("INSERT INTO culture_inscriptions (user_id, evenement_id) VALUES (?,?)")
-                ->execute([$moi, $cibleId]);
-        } else {
-            $pdo->prepare("INSERT INTO squad_membres (squad_id, user_id) VALUES (?,?)")
-                ->execute([$cibleId, $moi]);
+        $pdo->beginTransaction();
+        $stmt = $pdo->prepare("SELECT * FROM invitations WHERE id = ? AND to_user_id = ? AND statut = 'pending' FOR UPDATE");
+        $stmt->execute([$inviteId, $moi]);
+        $invite = $stmt->fetch();
+
+        if (!$invite) {
+            $refus('Invitation introuvable');
         }
-    } catch (PDOException $e) {
-        // 23000 : deja inscrit. L'invitation est honoree quand meme.
-        if ($e->getCode() !== '23000') {
-            logErreur("Acceptation d'invitation impossible", $e, ['invitation' => $inviteId, 'user' => $moi]);
-            echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
+
+        $cibleId = (int) $invite['target_id'];
+        $table   = match ($invite['type']) {
+            'event'   => 'evenements',
+            'culture' => 'culture_evenements',
+            default   => 'squads',
+        };
+        $pdo->prepare("SELECT id FROM $table WHERE id = ? FOR UPDATE")->execute([$cibleId]);
+
+        $infos = cibleValide($pdo, $invite['type'], $cibleId);
+        if (!$infos) {
+            // L'invitation n'a plus d'objet : on la referme au lieu de la laisser
+            // en attente indefiniment dans le profil.
+            $pdo->prepare("UPDATE invitations SET statut = 'declined' WHERE id = ?")->execute([$inviteId]);
+            $pdo->commit();
+            echo json_encode(['success' => false, 'message' => "Cette sortie n'est plus disponible"]);
             exit;
         }
+
+        $dedans = dejaParticipant($pdo, $invite['type'], $cibleId, $moi);
+        if (!$dedans && remplissage((int) $infos['quota'], (int) $infos['nb'])['complet']) {
+            $refus("Trop tard, c'est complet");
+        }
+
+        if (!$dedans) {
+            if ($invite['type'] === 'event') {
+                // Meme identifiant de pass que l'inscription directe : imprevisible.
+                // Un pass annulé garde sa ligne (clé unique) : on la ranime au lieu
+                // de buter sur le doublon, sinon l'invité resterait sans pass.
+                $pdo->prepare(
+                    "INSERT INTO inscriptions (user_id, evenement_id, qr_code, statut) VALUES (?,?,?,'inscrit')
+                     ON DUPLICATE KEY UPDATE
+                        qr_code    = IF(statut = 'annule', VALUES(qr_code), qr_code),
+                        checkin_le = IF(statut = 'annule', NULL, checkin_le),
+                        statut     = IF(statut = 'annule', 'inscrit', statut)"
+                )->execute([$moi, $cibleId, bin2hex(random_bytes(32))]);
+
+                // L'économie réalisée, comme pour une inscription directe.
+                $stmt = $pdo->prepare('SELECT prix_normal, reduction FROM evenements WHERE id = ?');
+                $stmt->execute([$cibleId]);
+                $prix = $stmt->fetch();
+                if ($prix && (float) $prix['prix_normal'] > 0 && (int) $prix['reduction'] > 0) {
+                    $pdo->prepare('DELETE FROM economies WHERE user_id = ? AND evenement_id = ?')->execute([$moi, $cibleId]);
+                    $pdo->prepare('INSERT INTO economies (user_id, evenement_id, montant, date_economie) VALUES (?, ?, ?, CURDATE())')
+                        ->execute([$moi, $cibleId, round((float) $prix['prix_normal'] * (int) $prix['reduction'] / 100, 2)]);
+                }
+            } elseif ($invite['type'] === 'culture') {
+                $pdo->prepare("INSERT IGNORE INTO culture_inscriptions (user_id, evenement_id) VALUES (?,?)")
+                    ->execute([$moi, $cibleId]);
+            } else {
+                $pdo->prepare("INSERT IGNORE INTO squad_membres (squad_id, user_id) VALUES (?,?)")
+                    ->execute([$cibleId, $moi]);
+            }
+        }
+
+        $pdo->prepare("UPDATE invitations SET statut = 'accepted' WHERE id = ?")->execute([$inviteId]);
+        $pdo->commit();
+    } catch (PDOException $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        logErreur("Acceptation d'invitation impossible", $e, ['invitation' => $inviteId, 'user' => $moi]);
+        echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
+        exit;
     }
 
-    $pdo->prepare("UPDATE invitations SET statut = 'accepted' WHERE id = ?")->execute([$inviteId]);
 
     // Trois choses viennent de changer : ma propre pastille, celle de la
     // personne qui m'a invite, et le compteur de la sortie rejointe.
