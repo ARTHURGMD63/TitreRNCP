@@ -24,10 +24,10 @@ apiExigerMethode('POST');
 $ip = ipClient();
 // Vingt signalements par quart d'heure et par adresse : largement assez pour
 // un vrai plantage, pas pour un script qui s'amuse.
-if (isRateLimited($pdo, $ip, 20, 900, 'erreur-app')) {
+if (limiteAtteinte($pdo, 'erreur_app', $ip, 20)) {
     apiReponse(['success' => true]);
 }
-recordLoginAttempt($pdo, $ip, 'erreur-app');
+enregistrerTentative($pdo, 'erreur_app', $ip);
 
 $corps = apiCorps();
 $texte = static fn (string $cle, int $max): string => mb_substr(

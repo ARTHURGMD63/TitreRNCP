@@ -39,7 +39,9 @@ if (!in_array((string) $u['type'], ['etudiant', 'partenaire'], true)) {
 }
 
 $ip = ipClient();
-if (isRateLimited($pdo, $ip, 5, 900)) {
+// Compteur propre à cette action, par compte et par adresse : un réseau
+// partagé (campus) ne bloque pas tout le monde.
+if (limiteAtteinte($pdo, 'compte', $ip, 20, 900, (string) $uid, 5)) {
     apiErreur('Trop de tentatives. Réessaie dans quinze minutes.', 429, 'trop_de_tentatives');
 }
 
@@ -52,7 +54,7 @@ $stmt->execute([$uid]);
 $hash = (string) $stmt->fetchColumn();
 
 if ($actuel === '' || $hash === '' || !password_verify($actuel, $hash)) {
-    recordLoginAttempt($pdo, $ip, (string) $u['email']);
+    enregistrerTentative($pdo, 'compte', $ip, (string) $uid);
     apiErreur('Mot de passe actuel incorrect.', 403, 'mot_de_passe');
 }
 

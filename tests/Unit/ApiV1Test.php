@@ -306,7 +306,9 @@ final class ApiV1Test extends TestCase
         // Un jeton perime ne doit pas ouvrir de session : sans la condition
         // d'echeance, la revocation et l'expiration ne serviraient a rien sur
         // ce chemin-la, qui est pourtant celui de toutes les ecritures.
-        $this->assertStringContainsString('expire_le >= NOW()', $pont);
+        // L'échéance est comparée à l'heure de PHP, qui l'a écrite (date()).
+        $this->assertStringContainsString('expire_le >= ?', $pont);
+        $this->assertStringContainsString("date('Y-m-d H:i:s')", $pont);
         $this->assertStringContainsString('apiEmpreinte(', $pont);
     }
 

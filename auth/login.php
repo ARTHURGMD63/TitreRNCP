@@ -78,8 +78,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && is_array($enAttente) && isset($_POS
 
         // Hachage témoin quand le compte n'existe pas : même durée de réponse
         // dans les deux cas (voir api/v1/login.php).
-        $hachage = $user ? (string) $user['password'] : '$2y$12$0000000000000000000000000000000000000000000000000000';
-        $valide  = password_verify($pass, $hachage) && $user;
+        $hachage = $user ? (string) $user['password'] : hachageTemoin();
+        $valide  = password_verify($pass, $hachage) && $user && !hachageInterdit($hachage);
 
         if (!$valide || ($user['type'] ?? '') === 'supprime') {
             recordLoginAttempt($pdo, $ip, $email);

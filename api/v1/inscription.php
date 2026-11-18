@@ -24,8 +24,10 @@ apiExigerMethode('POST');
 // Même garde que login.php, un seuil plus large : cet endpoint répond
 // différemment selon qu'un e-mail existe déjà (409) ou non (201), ce qui en
 // ferait sinon un outil d'énumération des comptes à débit illimité.
+// Chaque création compte (et plus seulement les adresses déjà prises) : sans
+// cela, un script créait des comptes jetables à volonté.
 $ip = ipClient();
-if (isRateLimited($pdo, $ip, 20, 900)) {
+if (limiteAtteinte($pdo, 'inscription', $ip, 20)) {
     apiErreur('Trop de tentatives. Réessaie dans quinze minutes.', 429, 'trop_de_tentatives');
 }
 
@@ -60,6 +62,11 @@ $longueurMin = longueurMinimaleMotDePasse($type);
 
 if (!$prenom || !$nom || !$email || !$pass) {
     apiErreur('Merci de remplir tous les champs obligatoires.', 422, 'champs_manquants');
+} elseif (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 255) {
+    apiErreur("Cette adresse e-mail n'est pas valide.", 422, 'email');
+} elseif (mb_strlen($prenom) > 100 || mb_strlen($nom) > 100 || mb_strlen($ecole) > 150 || mb_strlen($promo) > 50
+    || mb_strlen($etablNom) > 150 || mb_strlen((string) $etudiantVille) > 100 || mb_strlen($etablVille) > 100) {
+    apiErreur('Un des champs est trop long.', 422, 'champ_trop_long');
 } elseif (strlen($pass) < $longueurMin) {
     apiErreur("Le mot de passe doit faire au moins $longueurMin caractères.", 422, 'mot_de_passe_court');
 } elseif ($age === null) {
@@ -72,6 +79,8 @@ if (!$prenom || !$nom || !$email || !$pass) {
     apiErreur('Merci d’accepter les conditions générales pour continuer.', 422, 'cgu');
 }
 
+// Tout ou rien : un compte partenaire sans son établissement serait inutilisable.
+$pdo->beginTransaction();
 try {
     $stmt = $pdo->prepare(
         "INSERT INTO users (nom, prenom, email, password, ecole, promo, ville,
@@ -89,16 +98,23 @@ try {
     if ($type === 'partenaire' && $etablNom) {
         $pdo->prepare('INSERT INTO etablissements (user_id, nom, type, ville, verification) VALUES (?,?,?,?,?)')
             ->execute([$userId, $etablNom, $etablType, $etablVille, verificationInitiale($etablType)]);
+    }
+    $pdo->commit();
+    enregistrerTentative($pdo, 'inscription', $ip);
+    if ($type === 'partenaire' && $etablNom) {
         emailBienvenueEtablissement($email, $prenom, $etablNom, $etablType);
     }
 } catch (PDOException $e) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
     // Code MySQL 1062 (clé dupliquée), et non le texte du message : sur un
     // serveur dont la langue des erreurs n'est pas l'anglais (le nôtre en
     // développement dit « Duplicata... », pas « Duplicate... »), chercher
     // "Duplicate" ne matchait jamais — chaque email déjà pris tombait dans
     // l'erreur générique 500 au lieu du message dédié.
     if (($e->errorInfo[1] ?? null) === 1062) {
-        recordLoginAttempt($pdo, $ip, $email);
+        enregistrerTentative($pdo, 'inscription', $ip);
         apiErreur('Cet email est déjà utilisé.', 409, 'email_pris');
     }
     apiErreur('Erreur lors de la création du compte.', 500, 'creation');
