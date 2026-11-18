@@ -20,7 +20,7 @@
  */
 
 import React, { useCallback, useRef, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 
 import { actions, api, ErreurApi, type ReponseSport, type Squad } from '../../api';
@@ -42,7 +42,7 @@ import { confirmer } from '../../confirmer';
 import { court, dateFr } from '../../format';
 import { libelleVisibilite, niveauCompatible } from '../../regles';
 import { useJeton } from '../../session';
-import { couleursCategorie, espace, fs, gutter, rayon, sans, taille } from '../../theme';
+import { couleursCategorie, espace, fs, gutter, hauteurBouton, rayon, sans, taille } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 type Rubrique = 'parties' | 'terrains' | 'clubs' | 'abonnements';
@@ -111,15 +111,17 @@ function CarteSquad({ s, onGerer }: { s: Squad; onGerer: () => void }) {
     }
   }
 
-  const cta = (libelle: string | null, style: object, couleur: string, props: { onPress?: () => void; disabled?: boolean; icone?: 'check' | 'engrenage' }) => (
+  const cta = (libelle: string | null, style: object, couleur: string, props: { onPress?: () => void; disabled?: boolean; chargement?: boolean; icone?: 'check' | 'engrenage' | 'fleche-d' }) => (
     <PressableAnime
       onPress={props.onPress}
       disabled={props.disabled}
       accessibilityRole="button"
       accessibilityLabel={libelle ?? 'Inscrit'}
-      style={[{ flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 36, minWidth: 40, justifyContent: 'center', paddingHorizontal: 12, borderRadius: rayon.sm, borderWidth: 1, borderColor: 'transparent' }, style]}
+      accessibilityState={{ disabled: !!props.disabled, busy: !!props.chargement }}
+      style={[{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: hauteurBouton.fin, minWidth: hauteurBouton.fin, justifyContent: 'center', paddingHorizontal: 14, borderRadius: rayon.sm, borderWidth: 1, borderColor: 'transparent' }, style]}
     >
-      {props.icone ? <Icone nom={props.icone} taille={14} couleur={couleur} trait={props.icone === 'check' ? 2.5 : 2} /> : null}
+      {props.chargement ? <ActivityIndicator size="small" color={couleur} style={{ width: 14, height: 14 }} />
+        : props.icone ? <Icone nom={props.icone} taille={14} couleur={couleur} trait={props.icone === 'check' ? 2.5 : 2} /> : null}
       {libelle ? <Text style={{ fontFamily: sans(600), fontSize: fs[4], color: couleur }}>{libelle}</Text> : null}
     </PressableAnime>
   );
@@ -159,7 +161,7 @@ function CarteSquad({ s, onGerer }: { s: Squad; onGerer: () => void }) {
               ? cta(null, { backgroundColor: sport.accent }, '#FFFFFF', { disabled: true, icone: 'check' })
               : complet
                 ? cta('Complet', { backgroundColor: c.surface2 }, c.grisFonce, { disabled: true })
-                : cta(attente ? '…' : 'Rejoindre', { backgroundColor: sport.accent }, '#FFFFFF', { onPress: rejoindre, disabled: attente })}
+                : cta('Rejoindre', { backgroundColor: sport.accent }, '#FFFFFF', { onPress: rejoindre, disabled: attente, chargement: attente })}
       </View>
     </View>
   );
@@ -314,7 +316,7 @@ export default function Sport() {
               <>
                 <TitreSection style={{ marginBottom: 12 }}>Mes parties</TitreSection>
                 {donnees.mes_parties.map((p) => (
-                  <CarteCreneau key={`m${p.id}`} cr={p} action={p.statut === 'annule' ? 'Annulée' : 'Ma partie'} onPress={() => ouvrirCreneau(p.id)} />
+                  <CarteCreneau key={`m${p.id}`} cr={p} onPress={() => ouvrirCreneau(p.id)} />
                 ))}
                 <View style={{ height: 8 }} />
               </>
@@ -322,7 +324,7 @@ export default function Sport() {
 
             {rubrique === 'parties' ? (
               <>
-                {parties.map((p) => <CarteCreneau key={p.id} cr={p} action="Compléter" onPress={() => ouvrirCreneau(p.id)} />)}
+                {parties.map((p) => <CarteCreneau key={p.id} cr={p} onPress={() => ouvrirCreneau(p.id)} />)}
                 {parties.length === 0 ? (
                   <VideSport titre={`Aucune partie à compléter${niveau !== 'tous' ? ' à ce niveau' : ''}${horsZone}.`} texte="Réserve un terrain libre et ouvre les places restantes : d'autres viendront compléter." />
                 ) : null}
@@ -331,7 +333,7 @@ export default function Sport() {
 
             {rubrique === 'terrains' ? (
               <>
-                {donnees.libres.map((p) => <CarteCreneau key={p.id} cr={p} action="Réserver" onPress={() => ouvrirCreneau(p.id)} />)}
+                {donnees.libres.map((p) => <CarteCreneau key={p.id} cr={p} onPress={() => ouvrirCreneau(p.id)} />)}
                 {donnees.libres.length === 0 ? <VideSport titre={`Aucun terrain libre${horsZone}.`} texte="Les clubs n'ont pas encore mis de créneaux en ligne." /> : null}
               </>
             ) : null}

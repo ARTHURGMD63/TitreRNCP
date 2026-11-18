@@ -14,7 +14,7 @@ import React, { useState } from 'react';
 import { Platform, Pressable, Text, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 
-import { fixe, fs, lh, rayon, sans } from '../theme';
+import { fixe, fs, hauteurBouton, lh, rayon, sans } from '../theme';
 import { useTheme } from '../useTheme';
 import { Feuille } from './Feuille';
 import { Icone } from './Icone';
@@ -336,7 +336,7 @@ export function ChampDate({ etiquette, valeur, onChange, mode = 'date', min, max
         <Pressable
           onPress={() => { onChange(brouillon); setOuvert(false); }}
           accessibilityRole="button"
-          style={{ marginTop: 12, minHeight: 46, borderRadius: rayon.md, backgroundColor: c.rouge, alignItems: 'center', justifyContent: 'center' }}
+          style={{ marginTop: 12, minHeight: hauteurBouton.plein, borderRadius: rayon.md, backgroundColor: c.rouge, alignItems: 'center', justifyContent: 'center' }}
         >
           <Text style={{ fontFamily: sans(700), fontSize: fs[4] + 1, color: fixe.surAccent }}>Valider</Text>
         </Pressable>

@@ -330,6 +330,8 @@ export default function FicheEvenement() {
       <PressableAnime
         onPress={partager}
         accessibilityRole="button"
+        // 42 px visibles, 44 au toucher (constat MOB-09).
+        hitSlop={1}
         style={{ position: 'absolute', top: top + 36, right: gutter, flexDirection: 'row', alignItems: 'center', gap: 7, height: 42, paddingHorizontal: 14, borderRadius: rayon.sm, backgroundColor: fixe.basalte }}
       >
         <Icone nom="partage" taille={16} couleur={fixe.craie} />

@@ -44,6 +44,8 @@ export function BoutonIcone({ icone, libelle, onPress, pastille, etendu, style }
       accessibilityRole="button"
       accessibilityLabel={pastille ? `${libelle}, non lues` : libelle}
       accessibilityState={etendu === undefined ? undefined : { expanded: etendu }}
+      // 42 px visibles, 44 au toucher : le minimum d'Apple (constat MOB-09).
+      hitSlop={1}
       style={[{ width: 42, height: 42, borderRadius: rayon.sm, backgroundColor: c.blanc, alignItems: 'center', justifyContent: 'center' }, style]}
     >
       <Icone nom={icone} taille={19} couleur={c.noir} />
@@ -79,6 +81,7 @@ export function EnTeteApp({ rubrique = 'bleu', onRecherche, rechercheOuverte, on
             onPress={action.onPress}
             accessibilityRole="button"
             accessibilityLabel={action.accessibilityLabel ?? action.libelle}
+            hitSlop={1}
             style={{ height: 42, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, borderRadius: rayon.sm, backgroundColor: teinte.accent }}
           >
             <Icone nom={action.icone} taille={18} couleur="#FFFFFF" trait={2.5} />

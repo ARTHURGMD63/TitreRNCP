@@ -18,7 +18,7 @@ import type { Creneau, EvenementSport, JoueurCreneau } from '../api';
 import { FORMATS_SPORT, NIVEAUX_SQUAD, SPORTS } from '../catalogue';
 import { dateFr, majuscules } from '../format';
 import { formatEuros, libellePlaces, prixParJoueur } from '../regles';
-import { espace, fs, rayon, sans, taille, teintes } from '../theme';
+import { espace, fs, hauteurBouton, rayon, sans, taille, teintes } from '../theme';
 import { useTheme } from '../useTheme';
 import { PressableAnime } from './Animations';
 import { BoutonAction, Pastille, teinteAvatar } from './Design';
@@ -96,7 +96,7 @@ export function ActionCarte({ libelle, onPress, plein = true, icone }: { libelle
       disabled={!onPress}
       accessibilityRole="button"
       style={[
-        { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 36, paddingHorizontal: 12, borderRadius: rayon.sm },
+        { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: hauteurBouton.fin, paddingHorizontal: 14, borderRadius: rayon.sm },
         plein ? { backgroundColor: sport.accent } : { backgroundColor: c.surface2 },
       ]}
     >
@@ -150,15 +150,31 @@ function dateCourte(iso: string) {
 }
 
 /**
- * Un créneau : partie à compléter, terrain libre, ou l'une de mes parties.
- * `action` est le libellé du bouton (« Compléter », « Réserver », « Voir ») ;
- * il ouvre la fiche du créneau, comme toute la carte.
+ * Le bouton d'une carte de créneau, décidé par mon rôle dans la partie :
+ *   - j'organise : « Gérer la partie » (ouvrir, refermer, annuler) ;
+ *   - j'y joue déjà : « Inscrit », coché ;
+ *   - partie d'un autre avec des places : « Rejoindre la partie » ;
+ *   - terrain libre : « Réserver ».
  */
-export function CarteCreneau({ cr, action, onPress }: { cr: Creneau; action: string; onPress: () => void }) {
+export function actionCreneau(cr: Pick<Creneau, 'statut' | 'je_joue' | 'je_organise'>): { libelle: string; mode: 'plein' | 'neutre' | 'fait'; icone?: NomIcone } {
+  if (cr.statut === 'annule') return { libelle: 'Annulée', mode: 'neutre' };
+  if (cr.je_organise) return { libelle: 'Gérer la partie', mode: 'plein', icone: 'reglages' };
+  if (cr.je_joue) return { libelle: 'Inscrit', mode: 'fait', icone: 'check' };
+  if (cr.statut === 'libre') return { libelle: 'Réserver', mode: 'plein', icone: 'fleche-d' };
+  return { libelle: 'Rejoindre la partie', mode: 'plein', icone: 'fleche-d' };
+}
+
+/**
+ * Un créneau : partie à compléter, terrain libre, ou l'une de mes parties.
+ * Le bouton suit mon rôle (actionCreneau) ; il ouvre la fiche du créneau,
+ * comme toute la carte.
+ */
+export function CarteCreneau({ cr, onPress }: { cr: Creneau; onPress: () => void }) {
   const { c, mode } = useTheme();
   const sport = teintes('sport', mode);
   const annule = cr.statut === 'annule';
   const libre = cr.statut === 'libre';
+  const action = actionCreneau(cr);
   return (
     <CadreCarte onPress={onPress} libelleAcces={`${libelleSport(cr.sport)} chez ${cr.club.nom}`}>
       <Haut gauche={libre ? undefined : annule ? 'Annulé' : (NIVEAUX_SQUAD[cr.niveau] ?? cr.niveau)} date={dateCourte(cr.debut)} alerte={annule} />
@@ -167,7 +183,7 @@ export function CarteCreneau({ cr, action, onPress }: { cr: Creneau; action: str
         <Titre>{cr.club.nom}</Titre>
         <T taille={fs[3]} couleur={c.gris} numberOfLines={1} style={{ marginTop: 2 }}>
           {cr.places.total} joueurs · {prixParJoueur(cr.prix, cr.places.total)}
-          {cr.organisateur && !libre ? ` · par ${cr.organisateur.prenom}` : ''}
+          {cr.je_organise ? ' · tu organises' : cr.organisateur && !libre ? ` · par ${cr.organisateur.prenom}` : ''}
         </T>
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingTop: 10, marginTop: 2, borderTopWidth: 1, borderTopColor: c.grisClair }}>
@@ -181,10 +197,10 @@ export function CarteCreneau({ cr, action, onPress }: { cr: Creneau; action: str
             </>
           )}
         </View>
-        {annule || cr.je_joue ? (
-          <ActionCarte libelle={action} onPress={onPress} plein={false} icone={cr.je_joue && !annule ? 'check' : undefined} />
+        {action.mode === 'plein' ? (
+          <BoutonAction fin libelle={action.libelle} icone={action.icone} iconeADroite accent={sport.accent} onPress={onPress} style={{ flex: 0, minWidth: 136 }} />
         ) : (
-          <BoutonAction fin libelle={action} icone="fleche-d" iconeADroite accent={sport.accent} onPress={onPress} style={{ flex: 0, minWidth: 136 }} />
+          <ActionCarte libelle={action.libelle} onPress={onPress} plein={false} icone={action.icone} />
         )}
       </View>
     </CadreCarte>

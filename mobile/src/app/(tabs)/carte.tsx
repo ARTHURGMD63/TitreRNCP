@@ -49,6 +49,7 @@ import { AvatarsEmpiles, BoutonIcone, Pastille } from '../../composants/Design';
 import { BoutonRetour } from '../../composants/Elements';
 import { Icone } from '../../composants/Icone';
 import { T } from '../../composants/Texte';
+import { useToast } from '../../composants/Toast';
 import { LIBELLES_TYPE } from '../../catalogue';
 import { dateFr } from '../../format';
 import { libelleInscrits, libellesAffluence, palierAffluence } from '../../regles';
@@ -381,6 +382,7 @@ const CarteSoiree = memo(function CarteSoiree({ evenement, actif, largeur, onPre
 export default function CarteEvenements() {
   const { c, sombre, mode } = useTheme();
   const jeton = useJeton();
+  const toast = useToast();
   const { top, bottom } = useSafeAreaInsets();
   const { width: largeurEcran, height: hauteurEcran } = useWindowDimensions();
   const carteRef = useRef<MapView>(null);
@@ -523,19 +525,25 @@ export default function CarteEvenements() {
   }
 
   async function meLocaliser() {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      setAutorisationPosition('refusee');
-      return;
+    // Localisation coupée dans le système, GPS sans signal : la promesse est
+    // rejetée. Sans ce try, le bouton ne faisait rien, sans un mot.
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setAutorisationPosition('refusee');
+        return;
+      }
+      setAutorisationPosition('accordee');
+      const position = await Location.getCurrentPositionAsync({});
+      carteRef.current?.animateToRegion({
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        latitudeDelta: 0.03,
+        longitudeDelta: 0.03,
+      }, 500);
+    } catch {
+      toast('Position introuvable. Vérifie que la localisation est activée.', 'error');
     }
-    setAutorisationPosition('accordee');
-    const position = await Location.getCurrentPositionAsync({});
-    carteRef.current?.animateToRegion({
-      latitude: position.coords.latitude,
-      longitude: position.coords.longitude,
-      latitudeDelta: 0.03,
-      longitudeDelta: 0.03,
-    }, 500);
   }
 
   // Le point bleu « où je suis » peut s'afficher dès que la permission est
@@ -543,7 +551,7 @@ export default function CarteEvenements() {
   useEffect(() => {
     Location.getForegroundPermissionsAsync().then(({ status }) => {
       if (status === 'granted') setAutorisationPosition('accordee');
-    });
+    }).catch(() => {});
   }, []);
 
   const teintes = [c.bleu, c.lime, c.orange, c.alerteVif];
