@@ -34,23 +34,16 @@ require_once __DIR__ . '/icons.php';
 const NOTIF_FENETRE_HEURES = 24;
 
 /**
- * Epoch Unix d'un horodatage de base (created_at, joined_at, lues_le...), en
- * le traitant comme UTC.
+ * Epoch Unix d'un horodatage de base (created_at, joined_at, lues_le...).
  *
- * Ces colonnes sont ecrites par CURRENT_TIMESTAMP / NOW() cote base -- donc a
- * l'heure du SERVEUR DE BASE DE DONNEES, pas de PHP. Sur cet hebergement
- * (TiDB Cloud derriere Render), la base tourne en UTC pendant que PHP
- * affiche en Europe/Paris (date_default_timezone_set(), auth_check.php). Un
- * simple strtotime() sur la chaine brute la lirait comme une heure de Paris
- * et annoncerait "il y a 2 h" (l'ecart Paris-UTC) pour un evenement vieux de
- * quelques secondes -- exactement le bug observe sur les invitations.
- * Ancrer la lecture en UTC avant d'en tirer l'epoch regle ca, quel que soit
- * le fuseau actif cote PHP.
+ * La base et PHP comptent tous deux en heure de Paris (fuseau de session posé
+ * à la connexion, includes/db.php) : l'horodatage se lit dans le fuseau de
+ * PHP. Le nom est historique, du temps où la base en ligne tournait en UTC.
  */
 function epochUtc(string $ts): int
 {
     try {
-        return (new DateTimeImmutable($ts, new DateTimeZone('UTC')))->getTimestamp();
+        return (new DateTimeImmutable($ts))->getTimestamp();
     } catch (Exception $e) {
         return 0;
     }
@@ -213,7 +206,7 @@ function notificationsEtudiant(PDO $pdo, int $uid, int $limite = 25): array
     // ── Notifications comprises dans un post sponsorisé (v30) ───────────
     // L'établissement choisit l'heure d'envoi (heure de Paris). Elle compte
     // pour les abonnés du lieu, dès cette heure et pendant la fenêtre
-    // habituelle. Le fil attend des horodatages UTC : on convertit.
+    // habituelle. Même fuseau que le reste du fil : aucune conversion.
     $stmt = $pdo->prepare("
         SELECT e.id, e.titre, e.date_heure, sn.envoyer_le, et.nom AS lieu
         FROM sponsor_notifications sn
@@ -230,9 +223,8 @@ function notificationsEtudiant(PDO $pdo, int $uid, int $limite = 25): array
     $maintenantParis = date('Y-m-d H:i:s');
     $stmt->execute([$uid, $maintenantParis, $maintenantParis, date('Y-m-d H:i:s', strtotime('-' . NOTIF_FENETRE_HEURES . ' hour'))]);
     foreach ($stmt->fetchAll() as $e) {
-        $utc = (new DateTime((string) $e['envoyer_le'], new DateTimeZone('Europe/Paris')))
-            ->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
-        $items[] = ['type' => 'lieu', 'ts' => $utc, 'traiter' => false, 'event' => $e + ['ts' => $utc, 'promo' => true]];
+        $ts = (string) $e['envoyer_le'];
+        $items[] = ['type' => 'lieu', 'ts' => $ts, 'traiter' => false, 'event' => $e + ['ts' => $ts, 'promo' => true]];
     }
 
     // Ce qui attend une réponse n'est jamais coupé par la limite : sinon la
