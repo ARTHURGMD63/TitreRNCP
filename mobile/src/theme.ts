@@ -57,6 +57,15 @@ export const fixe = {
   squadCommun: '#FFE58A',
   /** Voile du panneau Filtres. */
   voile: 'rgba(17,17,22,0.45)',
+  /**
+   * Fond des pastilles posées sur un aplat d'accent (bleu, Sport, Culture).
+   * Un voile basalte et non plus blanc : le texte blanc y passe de 4,3:1
+   * (voile blanc à 18 % sur le bleu) à 7,2:1, et reste au-dessus de 5,9:1
+   * sur le rouge Sport.
+   */
+  voileAccent: 'rgba(17,17,22,0.16)',
+  /** Filet d'un bouton contour posé sur un aplat d'accent ou une photo. */
+  filetMedia: 'rgba(255,255,255,0.55)',
 } as const;
 
 /**
@@ -212,29 +221,63 @@ export const gutter = 18;
 export const toucheMin = 44;
 
 /**
+ * Espacements communs des cartes (2026-11-18) : une seule mesure pour toutes
+ * les cartes de liste, pleines ou accent, et pour les états vides, au lieu
+ * des 14/16/18 et 24/28/36 qui variaient d'un écran à l'autre.
+ *
+ *  - carte : padding intérieur ; ecart : entre deux blocs d'une carte ;
+ *  - entreCartes : marge sous chaque carte d'une liste ;
+ *  - vide : l'état vide (« Aucune soirée ») centré dans une carte.
+ */
+export const espace = {
+  carte: 14,
+  ecart: 8,
+  entreCartes: 16,
+  vide: { paddingVertical: 32, paddingHorizontal: 24 },
+} as const;
+
+/**
+ * Hauteurs des boutons, pour que deux boutons voisins s'alignent :
+ * normal 44 (cible tactile), plein 48 (bas d'écran, feuille), fin 40
+ * (dans une carte).
+ */
+export const hauteurBouton = { normal: 44, plein: 48, fin: 40 } as const;
+
+/**
+ * Durées et courbes des animations (en ms), partagées par Animations.tsx,
+ * la feuille et le toast : une seule cadence dans toute l'application.
+ */
+export const duree = { appui: 90, relache: 160, apparition: 380, cascade: 45, cascadeMax: 6, feuille: 260, toast: 220 } as const;
+
+/**
  * Les rubriques de l'application et leur couleur. Elle colore le logo, le
  * surlignage du titre, la carte principale de l'écran et les boutons
  * d'action principale.
  *
  *  - accent : l'aplat ; ce qui est posé dessus est blanc ;
- *  - surAccent2 : le texte secondaire sur l'aplat ;
+ *  - accentDeep : l'aplat assombri, bas du dégradé des fiches sans photo ;
+ *  - surAccent2 : le texte secondaire sur l'aplat (4,5:1 au moins) ;
  *  - doux / texteDoux : la pastille teintée (niveau, statut) et son texte.
  */
 export type Rubrique = 'bleu' | 'sport' | 'culture';
-export type Teintes = { accent: string; surAccent2: string; doux: string; texteDoux: string };
+export type Teintes = { accent: string; accentDeep: string; surAccent2: string; doux: string; texteDoux: string };
 
 const TEINTES: Record<Rubrique, Record<Mode, Teintes>> = {
   bleu: {
-    clair: { accent: '#1D55F0', surAccent2: '#E3EAFF', doux: '#E3EAFF', texteDoux: '#1A47C8' },
-    sombre: { accent: '#1D55F0', surAccent2: '#E3EAFF', doux: '#1D2647', texteDoux: '#A9BDFF' },
+    clair: { accent: '#1D55F0', accentDeep: '#1A47C8', surAccent2: '#E3EAFF', doux: '#E3EAFF', texteDoux: '#1A47C8' },
+    sombre: { accent: '#1D55F0', accentDeep: '#1A47C8', surAccent2: '#E3EAFF', doux: '#1D2647', texteDoux: '#A9BDFF' },
   },
   sport: {
-    clair: { accent: '#E02D24', surAccent2: '#FDE3E1', doux: '#FDE3E1', texteDoux: '#A3160F' },
-    sombre: { accent: '#E02D24', surAccent2: '#FDE3E1', doux: '#3D1A18', texteDoux: '#FF9C96' },
+    // Sur le rouge Sport, même le blanc n'atteint que 4,6:1 : le texte
+    // secondaire y reste blanc (l'ancien rose #FDE3E1 tombait à 3,8:1),
+    // la hiérarchie passe par la graisse et la taille.
+    clair: { accent: '#E02D24', accentDeep: '#B5211A', surAccent2: '#FFFFFF', doux: '#FDE3E1', texteDoux: '#A3160F' },
+    sombre: { accent: '#E02D24', accentDeep: '#B5211A', surAccent2: '#FFFFFF', doux: '#3D1A18', texteDoux: '#FF9C96' },
   },
   culture: {
-    clair: { accent: '#7B4DF2', surAccent2: '#EDE5FF', doux: '#EDE5FF', texteDoux: '#5B3BB5' },
-    sombre: { accent: '#7B4DF2', surAccent2: '#EDE5FF', doux: '#2C2250', texteDoux: '#C7B3FF' },
+    // #EDE5FF ne donnait que 4,1:1 sur le violet ; #F7F2FF atteint 4,6:1.
+    clair: { accent: '#7B4DF2', accentDeep: '#5B3BB5', surAccent2: '#F7F2FF', doux: '#EDE5FF', texteDoux: '#5B3BB5' },
+    sombre: { accent: '#7B4DF2', accentDeep: '#5B3BB5', surAccent2: '#F7F2FF', doux: '#2C2250', texteDoux: '#C7B3FF' },
   },
 };
 
