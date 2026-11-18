@@ -15,6 +15,7 @@ import { Platform, Pressable, Text, TextInput, View, type StyleProp, type TextIn
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 
 import { fixe, fs, hauteurBouton, lh, rayon, sans } from '../theme';
+import { filtrerOptions } from '../recherche';
 import { useTheme } from '../useTheme';
 import { Feuille } from './Feuille';
 import { Icone } from './Icone';
@@ -93,7 +94,7 @@ export function Champ({ etiquette, aide, multiligne, style, marge = 16, ...input
 
 export type Option = { valeur: string; libelle: string };
 
-export function Selecteur({ etiquette, valeur, options, onChange, titre, style, apparence = 'champ', marge = 16 }: {
+export function Selecteur({ etiquette, valeur, options, onChange, titre, style, apparence = 'champ', marge = 16, recherche, motsCles, repli }: {
   etiquette?: string;
   valeur: string;
   options: Option[];
@@ -104,10 +105,20 @@ export function Selecteur({ etiquette, valeur, options, onChange, titre, style, 
   /** « filtre » : la pilule des filtres de l'annuaire (.filtre-annuaire). */
   apparence?: 'champ' | 'filtre';
   marge?: number;
+  /** Un champ de recherche en haut de la feuille, pour les longues listes. */
+  recherche?: string;
+  /** Mots que la recherche regarde en plus du libellé, par valeur. */
+  motsCles?: Record<string, string>;
+  /** Valeur toujours proposée quand la recherche ne trouve rien (« Autre »). */
+  repli?: string;
 }) {
   const { c } = useTheme();
   const [ouvert, setOuvert] = useState(false);
+  const [requete, setRequete] = useState('');
   const choisi = options.find((o) => o.valeur === valeur) ?? options[0];
+  const visibles = recherche ? filtrerOptions(options, requete, motsCles) : options;
+  const optionRepli = repli !== undefined && visibles.length === 0 ? options.find((o) => o.valeur === repli) : undefined;
+  const ouvrir = () => { setRequete(''); setOuvert(true); };
 
   const filtreActif = apparence === 'filtre' && valeur !== '';
   // Refonte 2026-11 : menus surface sans bordure, rayon 16, 52 px de haut ;
@@ -129,7 +140,7 @@ export function Selecteur({ etiquette, valeur, options, onChange, titre, style, 
     <View style={[apparence === 'champ' ? { marginBottom: marge } : null, style]}>
       {etiquette ? <Etiquette>{etiquette}</Etiquette> : null}
       <Pressable
-        onPress={() => setOuvert(true)}
+        onPress={ouvrir}
         accessibilityRole="combobox"
         accessibilityLabel={etiquette ?? titre}
         accessibilityValue={{ text: choisi?.libelle }}
@@ -143,8 +154,26 @@ export function Selecteur({ etiquette, valeur, options, onChange, titre, style, 
 
       <Feuille visible={ouvert} onClose={() => setOuvert(false)}>
         <Display taille={fs[5] + 2} style={{ marginBottom: 14 }}>{titre ?? etiquette ?? ''}</Display>
+        {recherche ? (
+          <Champ
+            value={requete}
+            onChangeText={setRequete}
+            placeholder={recherche}
+            accessibilityLabel={recherche}
+            autoCorrect={false}
+            autoCapitalize="none"
+            returnKeyType="search"
+            clearButtonMode="while-editing"
+            marge={12}
+          />
+        ) : null}
+        {recherche && visibles.length === 0 ? (
+          <Aide style={{ marginTop: 0, marginBottom: 10 }}>
+            {optionRepli ? `Aucun résultat. Choisis « ${optionRepli.libelle} » si elle n’est pas dans la liste.` : 'Aucun résultat.'}
+          </Aide>
+        ) : null}
         <View style={{ gap: 8 }}>
-          {options.map((o) => {
+          {(optionRepli ? [optionRepli] : visibles).map((o) => {
             const actif = o.valeur === valeur;
             return (
               <Pressable

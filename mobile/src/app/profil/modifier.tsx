@@ -3,7 +3,7 @@
  *
  * Refonte 2026-11 : il quitte la vitrine de Moi pour son propre écran,
  * ouvert par « Modifier ». Rien ne change dans ce qu'il fait : mêmes champs
- * (photo, retrait de la photo, école, promo, centres d'intérêt, compte
+ * (photo, retrait de la photo, école (avec une recherche), promo, centres d'intérêt, compte
  * public), même chargement (moi.php), même enregistrement (profil.php), mêmes
  * messages. Les hashtags du profil sont ses centres d'intérêt : « Tes
  * hashtags » en montre l'aperçu, tel qu'il s'affichera dans Moi.
@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 
 import { api, ErreurApi, type ReponseMoi } from '../../api';
+import { ecolesProposees, MOTS_CLES_ECOLES } from '../../catalogue';
 import { Bouton } from '../../composants/Bouton';
 import { useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
@@ -55,8 +56,9 @@ export default function ModifierProfil() {
       setErreur(null);
       const r = await api.pageMoi(jeton);
       setDonnees(r);
-      // <select> sans valeur correspondante : le navigateur montre la première option.
-      setEcole(r.moi.ecole && r.choix.ecoles.includes(r.moi.ecole) ? r.moi.ecole : r.choix.ecoles[0]);
+      // Une école retirée de la liste reste affichée (voir ecolesProposees) :
+      // l'enregistrer ne doit pas la remplacer par la première de la liste.
+      setEcole(r.moi.ecole || r.choix.ecoles[0]);
       setPromo(r.moi.promo && r.choix.promos.includes(r.moi.promo) ? r.moi.promo : r.choix.promos[0]);
       setInterets(r.moi.interets);
       setComptePrive(r.moi.compte_prive);
@@ -165,7 +167,9 @@ export default function ModifierProfil() {
           </View>
 
           <View style={{ flexDirection: 'row', gap: 12, marginBottom: 18 }}>
-            <Selecteur style={{ flex: 1 }} marge={0} etiquette="École" valeur={ecole} onChange={setEcole} options={choix.ecoles.map((e) => ({ valeur: e, libelle: e }))} />
+            <Selecteur style={{ flex: 1 }} marge={0} etiquette="École" valeur={ecole} onChange={setEcole}
+              recherche="Rechercher une école" motsCles={MOTS_CLES_ECOLES} repli="Autre"
+              options={ecolesProposees(choix.ecoles, moi.ecole).map((e) => ({ valeur: e, libelle: e }))} />
             <Selecteur style={{ flex: 1 }} marge={0} etiquette="Promo" valeur={promo} onChange={setPromo} options={choix.promos.map((p) => ({ valeur: p, libelle: p }))} />
           </View>
 

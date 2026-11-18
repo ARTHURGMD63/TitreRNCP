@@ -7,7 +7,65 @@
 
 import type { NomIcone } from './composants/Icone';
 
-export const ECOLES = ['UCA', 'SIGMA Clermont', 'INP Ingénieurs', 'IFSI', 'Autre'];
+/**
+ * Les écoles de Clermont-Ferrand, la seule ville ouverte pour l'instant.
+ * La valeur est enregistrée telle quelle sur le compte (et sert au
+ * classement « Mon école ») : ne pas renommer une entrée existante, en
+ * ajouter. Même liste que ecolesDisponibles() dans includes/ecoles.php.
+ */
+export const ECOLES = [
+  'UCA',
+  'IUT Clermont Auvergne',
+  'Polytech Clermont',
+  'Clermont Auvergne INP',
+  'ISIMA',
+  'SIGMA Clermont',
+  'INSPÉ Clermont-Auvergne',
+  'Clermont School of Business',
+  'VetAgro Sup',
+  'ENSACF',
+  'ESACM',
+  'Conservatoire (CRR)',
+  'IFSI',
+  'Cnam Auvergne',
+  'Prépa (CPGE)',
+  'BTS',
+  'Autre',
+];
+
+/**
+ * Ce que l'on tape sans connaître le nom exact : la recherche du sélecteur
+ * d'école regarde aussi ces mots (sans accents ni majuscules).
+ */
+export const MOTS_CLES_ECOLES: Record<string, string> = {
+  'UCA': 'Université Clermont Auvergne fac faculté droit économie lettres sciences médecine pharmacie dentaire sages-femmes STAPS psychologie',
+  'IUT Clermont Auvergne': 'IUT BUT institut universitaire de technologie',
+  'Polytech Clermont': 'école d’ingénieurs ingénieur',
+  'Clermont Auvergne INP': 'INP école d’ingénieurs ingénieur',
+  'ISIMA': 'informatique école d’ingénieurs ingénieur INP',
+  'SIGMA Clermont': 'chimie mécanique école d’ingénieurs ingénieur INP',
+  'INSPÉ Clermont-Auvergne': 'ESPE enseignement professeur prof MEEF éducation',
+  'Clermont School of Business': 'ESC école de commerce business school management',
+  'VetAgro Sup': 'vétérinaire véto agronomie agro Lempdes',
+  'ENSACF': 'architecture école nationale supérieure d’architecture',
+  'ESACM': 'art arts beaux-arts école supérieure d’art',
+  'Conservatoire (CRR)': 'musique danse théâtre conservatoire Chabrier',
+  'IFSI': 'infirmier infirmière soins santé CHU',
+  'Cnam Auvergne': 'CNAM formation continue alternance',
+  'Prépa (CPGE)': 'classe préparatoire prépa Blaise-Pascal Lafayette lycée',
+  'BTS': 'brevet de technicien supérieur lycée',
+};
+
+/**
+ * La liste du sélecteur d'école d'un profil : celle du serveur, plus
+ * l'école déjà enregistrée si elle n'y figure plus (une ancienne entrée
+ * comme « INP Ingénieurs »), placée avant « Autre » pour ne pas la perdre.
+ */
+export function ecolesProposees(liste: string[], actuelle: string | null | undefined): string[] {
+  if (!actuelle || liste.includes(actuelle)) return liste;
+  const fin = liste.at(-1) === 'Autre' ? liste.length - 1 : liste.length;
+  return [...liste.slice(0, fin), actuelle, ...liste.slice(fin)];
+}
 
 export const PROMOS = ['L1', 'L2', 'L3', 'M1', 'M2', 'BUT1', 'BUT2', 'BUT3'];
 
