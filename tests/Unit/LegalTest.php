@@ -14,9 +14,9 @@ require_once __DIR__ . '/../../includes/textes_legaux.php';
  */
 final class LegalTest extends TestCase
 {
-    public function testLesTroisDocumentsExistent(): void
+    public function testLesQuatreDocumentsExistent(): void
     {
-        $this->assertSame(['mentions-legales', 'cgu', 'confidentialite'], array_keys(textesLegaux()));
+        $this->assertSame(['mentions-legales', 'cgu', 'cgv', 'confidentialite'], array_keys(textesLegaux()));
     }
 
     public function testChaqueDocumentAUnTitreUneDateEtDesSections(): void
@@ -81,7 +81,7 @@ final class LegalTest extends TestCase
 
         $this->assertStringContainsString('<h2>Article 3 — Utilisation de la plateforme</h2>', $html);
         $this->assertStringContainsString('<li>Usurper l\'identité d\'une autre personne</li>', str_replace('&#039;', "'", $html));
-        $this->assertStringContainsString('Dernière mise à jour : 14/10/2026', $html);
+        $this->assertStringContainsString('Dernière mise à jour : 18/11/2026', $html);
     }
 
     /**

@@ -22,6 +22,7 @@ final class PagesProtegeesTest extends TestCase
         // Page d'arrivée des étudiants : « c'est dans l'application ».
         'application.php',
         'cgu.php',
+        'cgv.php',
         'confidentialite.php',
         'index.php',
         'mentions-legales.php',
