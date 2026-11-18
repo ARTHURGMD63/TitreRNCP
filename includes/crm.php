@@ -61,9 +61,9 @@ function crmOffres(): array
 {
     return [
         'aucune'    => ['libelle' => 'Aucune',     'tarif' => 0,     'note' => "Pas encore d'abonnement"],
-        'bde'       => ['libelle' => 'BDE',        'tarif' => 25,    'note' => 'Bureaux des étudiants et associations'],
+        'bde'       => ['libelle' => 'BDE',        'tarif' => 25.99, 'note' => 'Bureaux des étudiants et associations'],
         'fondateur' => ['libelle' => 'Fondateur',  'tarif' => 39,    'note' => '0 € pendant 3 mois avec 8 événements par mois, puis 39 € gelés — 15 places'],
-        'club'      => ['libelle' => 'Club',       'tarif' => 49,    'note' => 'Clubs et établissements sportifs, créneaux de terrain illimités'],
+        'club'      => ['libelle' => 'Club',       'tarif' => 49.99, 'note' => 'Clubs et établissements sportifs, créneaux de terrain illimités'],
         'essentiel' => ['libelle' => 'Essentiel',  'tarif' => 49.99, 'note' => 'Bars et restaurants'],
         'premium'   => ['libelle' => 'Premium',    'tarif' => 69.99, 'note' => 'Discothèques, groupes, multi-établissements'],
     ];
@@ -310,7 +310,7 @@ function offreFondateurOuverte(PDO $pdo, ?int $maintenant = null): bool
 /**
  * Les formules qu'un établissement peut choisir lui-même.
  *
- * BDE (25 €/mois) est une formule payante comme les autres : elle se prend
+ * BDE (25,99 €/mois) est une formule payante comme les autres : elle se prend
  * en libre-service.
  *
  * Un club sportif (v28) n'a qu'une formule, Club : la grille des soirées

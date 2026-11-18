@@ -44,7 +44,7 @@ final class CrmTest extends TestCase
 
     public function testLaFormuleClubEstMensuelleA49(): void
     {
-        $this->assertSame(49, crmOffres()['club']['tarif']);
+        $this->assertSame(49.99, crmOffres()['club']['tarif']);
     }
 
     public function testLesTarifsSuiventLaGrilleDeSl03(): void
@@ -53,7 +53,7 @@ final class CrmTest extends TestCase
         $this->assertSame(39, $offres['fondateur']['tarif']);
         $this->assertSame(49.99, $offres['essentiel']['tarif']);
         $this->assertSame(69.99, $offres['premium']['tarif']);
-        $this->assertSame(25, $offres['bde']['tarif']);
+        $this->assertSame(25.99, $offres['bde']['tarif']);
     }
 
     public function testUnCodeInconnuSeRabatSurLuiMeme(): void
