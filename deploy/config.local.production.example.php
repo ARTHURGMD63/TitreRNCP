@@ -45,6 +45,11 @@ return [
     'mail_smtp_utilisateur' => 'noreply@__DOMAINE__',
     'mail_smtp_motdepasse'  => '',
 
+    // ─── Surveillance (cron/sante.php) ──────────────────────────────────
+    // Destinataire des alertes de panne et de sauvegarde manquée : une boîte
+    // lue chaque jour (vide ou absente : contact@outsee.fr).
+    'alerte_email' => 'contact@__DOMAINE__',
+
     // ─── Liens des stores (vitrine et page « c'est dans l'appli ») ──────
     'app_store_url'  => '',
     'play_store_url' => '',

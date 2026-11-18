@@ -43,19 +43,28 @@ function santeDisque(?string $dossier = null): bool
 /**
  * La dernière sauvegarde est-elle récente ?
  *
- * Vrai si le dossier de sauvegarde n'existe pas (poste de développement,
- * hébergement sans sauvegarde locale) : ce contrôle ne vaut que sur le VPS.
+ * Lit le témoin écrit par deploy/sauvegarder.sh après chaque sauvegarde
+ * réussie (la date, en secondes Unix). Le dossier des sauvegardes lui-même
+ * est réservé à root : la sonde, qui tourne en www-data, ne peut pas le lire.
+ *
+ * Vrai si le dossier du témoin n'existe pas (poste de développement,
+ * hébergement sans sauvegarde locale) : ce contrôle ne vaut que sur le VPS,
+ * où installer_serveur.sh crée ce dossier. Faux si le dossier existe mais
+ * que le témoin manque ou est illisible : aucune sauvegarde n'a abouti.
  */
-function santeSauvegarde(string $dossier = '/var/backups/outsee'): bool
+function santeSauvegarde(string $temoin = '/var/lib/outsee/derniere_sauvegarde'): bool
 {
-    if (!is_dir($dossier)) {
+    if (!is_dir(dirname($temoin))) {
         return true;
     }
 
-    $plusRecent = 0;
-    foreach (glob($dossier . '/outsee_*.sql.gz') ?: [] as $fichier) {
-        $plusRecent = max($plusRecent, (int) filemtime($fichier));
+    $contenu = @file_get_contents($temoin);
+    if ($contenu === false) {
+        return false;
     }
 
-    return $plusRecent > 0 && (time() - $plusRecent) <= SANTE_SAUVEGARDE_MAX_S;
+    // La date écrite dans le fichier, à défaut sa date de modification.
+    $date = ctype_digit(trim($contenu)) ? (int) trim($contenu) : (int) @filemtime($temoin);
+
+    return $date > 0 && (time() - $date) <= SANTE_SAUVEGARDE_MAX_S;
 }

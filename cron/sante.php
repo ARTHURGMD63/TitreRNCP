@@ -67,7 +67,9 @@ if (!santeSauvegarde()) {
 // Une alerte à la panne, une au rétablissement.
 $fichierEtat = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'outsee_sante.etat';
 $enPanne     = is_file($fichierEtat);
-$destinataire = reglage('ALERTE_EMAIL', 'alerte_email', 'contact@outsee.fr');
+// Une clé présente mais vide dans config.local.php ne doit pas laisser les
+// alertes sans destinataire.
+$destinataire = reglage('ALERTE_EMAIL', 'alerte_email') ?: 'contact@outsee.fr';
 
 if ($problemes && !$enPanne) {
     $sujet = 'Outsee — ALERTE : le service a un problème';
@@ -75,9 +77,14 @@ if ($problemes && !$enPanne) {
            . "\n\nUn seul message est envoyé par panne ; un autre suivra quand tout sera rétabli.\n";
     if ($simulation) {
         echo "[simulation] $sujet\n$texte";
-    } else {
-        envoyerEmail($destinataire, $sujet, $texte);
+    } elseif (envoyerEmail($destinataire, $sujet, $texte)) {
         file_put_contents($fichierEtat, (string) time());
+    } else {
+        // L'état n'est écrit qu'une fois l'alerte réellement partie : un SMTP
+        // mal réglé ne doit pas rendre la surveillance muette. Le prochain
+        // passage, dans cinq minutes, retentera l'envoi.
+        logErreur('Alerte de surveillance non envoyée', null, ['destinataire' => $destinataire]);
+        echo "Envoi de l'alerte impossible : nouvel essai au prochain passage.\n";
     }
     exit(1);
 }
@@ -87,9 +94,12 @@ if (!$problemes && $enPanne) {
     $texte = "Tout est revenu à la normale le " . date('d/m/Y à H:i') . ".\n";
     if ($simulation) {
         echo "[simulation] $sujet\n$texte";
-    } else {
-        envoyerEmail($destinataire, $sujet, $texte);
+    } elseif (envoyerEmail($destinataire, $sujet, $texte)) {
         @unlink($fichierEtat);
+    } else {
+        // L'état de panne reste en place : le rétablissement sera annoncé au
+        // prochain passage, une fois l'envoi possible.
+        logErreur('Message de rétablissement non envoyé', null, ['destinataire' => $destinataire]);
     }
 }
 

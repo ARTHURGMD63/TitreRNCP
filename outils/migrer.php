@@ -70,6 +70,27 @@ if (!$toutes) {
     exit(1);
 }
 
+// ── Verrou ──────────────────────────────────────────────────────────────────
+//
+// Deux passages simultanés (deux déploiements, un déploiement et une main
+// dans le terminal) joueraient les mêmes ALTER et UPDATE deux fois. Le verrou
+// nommé est tenu par la connexion : il tombe tout seul à la fin du script,
+// même sur une erreur. --etat ne modifie rien et n'en a pas besoin.
+if (!$etat) {
+    try {
+        $verrou = $pdo->query("SELECT GET_LOCK('outsee_migrations', 0)")->fetchColumn();
+    } catch (PDOException $e) {
+        // Base sans verrous nommés : on continue, comme avant ce contrôle.
+        $verrou = null;
+        fwrite(STDERR, "Verrou de migration indisponible ({$e->getMessage()}) : poursuite sans verrou.\n");
+    }
+    if ($verrou !== null && (string) $verrou !== '1') {
+        fwrite(STDERR, "Une autre migration est en cours sur cette base (verrou outsee_migrations).\n");
+        fwrite(STDERR, "Attendre qu'elle se termine, puis relancer : rien n'a été modifié.\n");
+        exit(3);
+    }
+}
+
 try {
     $faites = array_flip(migrationsAppliquees($pdo));
 } catch (PDOException $e) {
@@ -147,17 +168,34 @@ foreach ($attente as $version => $chemin) {
 
         // Toutes les migrations ne sont pas rejouables : certaines posent une
         // colonne ou un index sans condition, et échouent sur « already
-        // exists » quand le schéma les a déjà. Ce message affirmait
-        // l'inverse — il envoyait chercher une erreur dans le fichier SQL
-        // alors que la base était simplement déjà à jour sur ce point.
+        // exists » quand le schéma les a déjà.
+        //
+        // Ce message conseillait --adopter=$version. Or l'erreur a pu tomber
+        // au milieu de la migration : adopter cette version la déclarait
+        // appliquée alors que ses instructions suivantes n'avaient jamais
+        // été jouées, et la base passait pour à jour en étant incomplète.
+        // Seule une vérification à la main dit ce qui est réellement posé.
         $deja = str_contains($e->getMessage(), 'already exists')
              || str_contains($e->getMessage(), 'Duplicate');
         if ($deja) {
-            fwrite(STDERR, "Cette erreur dit que le schéma porte déjà ce que la migration voulait\n");
-            fwrite(STDERR, "ajouter : la base est en avance sur son suivi. La raccorder plutôt que\n");
-            fwrite(STDERR, "la rejouer, avec la dernière version qu'elle contient réellement :\n");
-            fwrite(STDERR, "    php outils/migrer.php --adopter=$version\n");
-            fwrite(STDERR, "puis relancer sans option pour poser les suivantes.\n");
+            $versions    = array_keys($toutes);
+            $rang        = array_search($version, $versions, true);
+            $precedente  = ($rang !== false && $rang > 0) ? $versions[$rang - 1] : null;
+
+            fwrite(STDERR, "Cette erreur dit que le schéma porte déjà une partie de ce que\n");
+            fwrite(STDERR, "$version voulait ajouter. NE PAS adopter $version sans vérification :\n");
+            fwrite(STDERR, "elle a pu s'arrêter au milieu, et ses instructions suivantes manqueraient.\n\n");
+            fwrite(STDERR, "1. Ouvrir " . basename($chemin) . " et vérifier dans la base, instruction\n");
+            fwrite(STDERR, "   par instruction, ce qui est déjà posé (SHOW CREATE TABLE …).\n");
+            fwrite(STDERR, "2. Poser à la main ce qui manque, ou rendre l'instruction rejouable\n");
+            fwrite(STDERR, "   (IF NOT EXISTS), puis relancer sans option.\n");
+            if ($precedente !== null) {
+                fwrite(STDERR, "3. Si $version n'a rien posé et que la base est simplement en retard\n");
+                fwrite(STDERR, "   sur son suivi pour les versions d'avant, raccorder jusqu'à la\n");
+                fwrite(STDERR, "   précédente seulement :\n");
+                fwrite(STDERR, "       php outils/migrer.php --adopter=$precedente\n");
+                fwrite(STDERR, "   puis relancer sans option pour rejouer $version.\n");
+            }
         } else {
             fwrite(STDERR, "Corriger la cause, puis relancer.\n");
         }

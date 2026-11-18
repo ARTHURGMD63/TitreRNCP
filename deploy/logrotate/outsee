@@ -1,0 +1,22 @@
+# ============================================================
+#  Outsee — rotation des journaux de /var/log/outsee
+#  Installé dans /etc/logrotate.d/outsee (root, 644) par
+#  installer_serveur.sh et appliquer_config.sh.
+#
+#  Ces journaux citent parfois des adresses e-mail : huit semaines de
+#  conservation, pas davantage, puis suppression.
+#
+#  su www-data : le dossier appartient à www-data (les tâches planifiées y
+#  écrivent), logrotate refuse sinon d'y travailler. PHP rouvre son journal
+#  à chaque écriture : aucun rechargement de PHP-FPM n'est nécessaire.
+# ============================================================
+/var/log/outsee/*.log {
+    su www-data www-data
+    weekly
+    rotate 8
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 640 www-data www-data
+}
