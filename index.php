@@ -404,4 +404,10 @@ siteDebut('Outsee — Le réseau social des sorties étudiantes', [
 
   <?= piedSite() ?>
 </div>
+
+<?php /* Téléphone seulement : apparaît quand l'accroche est passée (vitrine.js, vitrine.css). */ ?>
+<div class="lp-collant" id="lp-collant">
+  <a class="pilule pilule--noire" href="#telecharger">Télécharger l'application</a>
+</div>
+<script src="<?= htmlspecialchars(asset('/assets/js/vitrine.js'), ENT_QUOTES) ?>" defer></script>
 <?php siteFin(); ?>
