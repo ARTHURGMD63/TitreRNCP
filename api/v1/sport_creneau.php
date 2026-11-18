@@ -129,6 +129,17 @@ try {
             refuser($pdo, 'Ce créneau vient d’être réservé.', 409, 'deja_reserve');
         }
 
+        // Un compte ne tient pas plus de SPORT_RESERVATIONS_MAX terrains à
+        // venir : sans plafond, une boucle de requêtes bloquait tous les
+        // terrains de tous les clubs. Compté sous le verrou du créneau.
+        $stmt = $pdo->prepare(
+            "SELECT COUNT(*) FROM creneaux WHERE organisateur_id = ? AND statut = 'reserve' AND debut > ?"
+        );
+        $stmt->execute([$uid, date('Y-m-d H:i:s')]);
+        if ((int) $stmt->fetchColumn() >= SPORT_RESERVATIONS_MAX) {
+            refuser($pdo, 'Tu as déjà ' . SPORT_RESERVATIONS_MAX . ' terrains réservés à venir : annules-en un pour en réserver un autre.', 409, 'trop_de_reservations');
+        }
+
         // Les amis : des personnes que je suis, avec une demande acceptée.
         // Un identifiant quelconque glissé dans la liste ne doit pas inscrire
         // un inconnu à une partie à son insu.

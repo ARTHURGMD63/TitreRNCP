@@ -43,7 +43,7 @@ if ($methode === 'POST') {
     }
 
     $legende = trim(is_string($_POST['legende'] ?? null) ? $_POST['legende'] : '');
-    $legende = $legende !== '' ? substr($legende, 0, 255) : null;
+    $legende = $legende !== '' ? mb_substr($legende, 0, 255) : null;
 
     $result = storeUploadedImage($_FILES['photo'], venuePhotoDir());
     if (!$result['ok']) {

@@ -21,12 +21,24 @@ if (!$inscription_id) {
     exit;
 }
 
-$stmt = $pdo->prepare("SELECT id, evenement_id FROM inscriptions WHERE id = ? AND user_id = ? AND statut = 'inscrit'");
-$stmt->execute([$inscription_id, $_SESSION['user_id']]);
+$stmt = $pdo->prepare(
+    "SELECT i.id, i.evenement_id, e.date_heure
+       FROM inscriptions i JOIN evenements e ON e.id = i.evenement_id
+      WHERE i.id = ? AND i.user_id = ? AND i.statut = 'inscrit'"
+);
+$stmt->execute([(int) $inscription_id, $_SESSION['user_id']]);
 $inscription = $stmt->fetch();
 
 if (!$inscription) {
     echo json_encode(['success' => false, 'message' => 'Pass introuvable ou déjà utilisé']);
+    exit;
+}
+
+// Une fois la soirée commencée, un pass ne s'annule plus : sinon une absence
+// devenait une « annulation », et les statistiques de présence de
+// l'établissement étaient faussées.
+if (strtotime((string) $inscription['date_heure']) <= time()) {
+    echo json_encode(['success' => false, 'message' => 'La soirée a commencé : le pass ne peut plus être annulé']);
     exit;
 }
 
@@ -47,6 +59,9 @@ try {
 
     echo json_encode(['success' => true, 'message' => 'Pass annulé avec succès']);
 } catch (PDOException $e) {
-    $pdo->rollBack();
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+    logErreur('Annulation de pass impossible', $e, ['inscription' => $inscription['id']]);
     echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
 }

@@ -72,9 +72,18 @@ function checkBadges(PDO $pdo, int $uid): array {
             $check = $pdo->prepare("SELECT 1 FROM user_badges WHERE user_id=? AND badge_code=?");
             $check->execute([$uid, $code]);
             if (!$check->fetch()) {
-                $ins = $pdo->prepare("INSERT INTO user_badges (user_id, badge_code) VALUES (?,?)");
-                $ins->execute([$uid, $code]);
-                $unlocked[] = $code;
+                // Deux requêtes simultanées (double clic) peuvent passer le
+                // SELECT ensemble : le doublon est ignoré au lieu de faire
+                // échouer, après coup, une action déjà réussie.
+                try {
+                    $ins = $pdo->prepare("INSERT INTO user_badges (user_id, badge_code) VALUES (?,?)");
+                    $ins->execute([$uid, $code]);
+                    $unlocked[] = $code;
+                } catch (PDOException $e) {
+                    if ($e->getCode() !== '23000') {
+                        throw $e;
+                    }
+                }
             }
         }
     }
