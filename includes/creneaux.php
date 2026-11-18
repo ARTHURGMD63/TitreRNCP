@@ -26,7 +26,7 @@ function sqlCreneauBase(): string
 }
 
 /** Les rayons proposés par le filtre « autour d'un point » de l'onglet Sport. */
-const SPORT_RAYONS_KM = [5, 10, 15, 20];
+const SPORT_RAYONS_KM = [1, 2, 5, 10, 15, 20];
 
 /**
  * Lit le filtre de distance : un point (lat, lng) et un rayon parmi

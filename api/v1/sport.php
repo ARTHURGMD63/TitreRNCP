@@ -15,10 +15,11 @@
  *   - mes_parties: les créneaux où je joue, y compris ceux que le club a
  *                  annulés, pour que l'annulation se voie.
  *
- * Le filtre par sport s'applique à tout. Le filtre par niveau, lui, reste à
- * l'application : il ne retire que quelques cartes d'une liste déjà courte.
+ * Le filtre par sport s'applique à tout, « mes parties » comprises. Le filtre
+ * par niveau, lui, reste à l'application (parties et événements d'étudiants) :
+ * il ne retire que quelques cartes d'une liste déjà courte.
  *
- * Le filtre de distance (?lat=…&lng=…&rayon=5|10|15|20) garde les parties,
+ * Le filtre de distance (?lat=…&lng=…&rayon=1|2|5|10|15|20) garde les parties,
  * les terrains et les événements dont le club est dans le rayon. Il ne touche
  * ni à « mes parties » (elles me concernent où qu'elles soient), ni aux
  * événements d'étudiants, qui n'ont qu'un lieu en texte libre.
@@ -77,11 +78,18 @@ $libres = apiCreneaux($pdo, $stmt->fetchAll(), $uid);
 
 // ─── Mes parties ────────────────────────────────────────────────────────────
 
-$stmt = $pdo->prepare(sqlCreneauBase() . "
+// Le filtre par sport s'y applique aussi : en choisissant Tennis, une partie
+// de padel en tête de liste se lisait comme un résultat Tennis.
+$sql = sqlCreneauBase() . "
      JOIN creneau_joueurs moi ON moi.creneau_id = c.id AND moi.user_id = ?
-     WHERE c.statut IN ('reserve', 'annule') AND c.fin > NOW()
-     ORDER BY c.debut ASC LIMIT 20");
-$stmt->execute([$uid]);
+     WHERE c.statut IN ('reserve', 'annule') AND c.fin > NOW()";
+$params = [$uid];
+if ($sport !== '') {
+    $sql .= ' AND t.sport = ?';
+    $params[] = $sport;
+}
+$stmt = $pdo->prepare($sql . ' ORDER BY c.debut ASC LIMIT 20');
+$stmt->execute($params);
 $mesParties = apiCreneaux($pdo, $stmt->fetchAll(), $uid);
 
 // ─── Événements des clubs ───────────────────────────────────────────────────
