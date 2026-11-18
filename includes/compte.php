@@ -485,7 +485,12 @@ function compteSupprimerPartenaire(PDO $pdo, int $uid): array
             )->execute([$etabId]);
 
             // Les clés étrangères font le reste : soirées, inscriptions,
-            // photos, terrains, créneaux, abonnés, achats, paiements en attente.
+            // photos, terrains, créneaux, abonnés.
+            // Pièces comptables : détachées avant la suppression, pour ne
+            // jamais dépendre de la règle de la clé étrangère (TiDB ne la
+            // modifie pas, voir db_migrations_v40.sql).
+            $pdo->prepare('UPDATE achats_partenaires SET etablissement_id = NULL WHERE etablissement_id = ?')->execute([$etabId]);
+            $pdo->prepare('UPDATE paiements_evenements SET etablissement_id = NULL WHERE etablissement_id = ?')->execute([$etabId]);
             $pdo->prepare('DELETE FROM etablissements WHERE id = ?')->execute([$etabId]);
         }
 

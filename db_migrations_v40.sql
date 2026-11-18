@@ -22,6 +22,12 @@
 ALTER TABLE achats_partenaires MODIFY etablissement_id INT NULL;
 ALTER TABLE paiements_evenements MODIFY etablissement_id INT NULL;
 
+-- TiDB annonce dans information_schema des noms de clés étrangères qu'il
+-- refuse ensuite de supprimer (erreur 1091). Sur TiDB, on ne touche donc pas
+-- aux clés : la conservation est assurée par le code, qui détache achats et
+-- paiements avant de supprimer un établissement (compteSupprimerPartenaire()).
+SET @tidb := (SELECT VERSION() LIKE '%TiDB%');
+
 -- achats_partenaires : la clé vers etablissements, quel que soit son nom.
 SET @fk := (SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'achats_partenaires'
@@ -29,7 +35,7 @@ SET @fk := (SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
              LIMIT 1);
 SET @regle := (SELECT DELETE_RULE FROM information_schema.REFERENTIAL_CONSTRAINTS
                 WHERE CONSTRAINT_SCHEMA = DATABASE() AND CONSTRAINT_NAME = @fk LIMIT 1);
-SET @s := IF(@fk IS NOT NULL AND @regle <> 'SET NULL',
+SET @s := IF(@tidb = 0 AND @fk IS NOT NULL AND @regle <> 'SET NULL',
   CONCAT('ALTER TABLE achats_partenaires DROP FOREIGN KEY `', @fk, '`'),
   'SELECT "achats_partenaires : clé déjà en SET NULL ou absente"');
 PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
@@ -38,7 +44,7 @@ SET @fk := (SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'achats_partenaires'
                AND COLUMN_NAME = 'etablissement_id' AND REFERENCED_TABLE_NAME = 'etablissements'
              LIMIT 1);
-SET @s := IF(@fk IS NULL,
+SET @s := IF(@tidb = 0 AND @fk IS NULL,
   'ALTER TABLE achats_partenaires ADD CONSTRAINT fk_achat_etablissement FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE SET NULL',
   'SELECT "achats_partenaires : clé présente"');
 PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
@@ -50,7 +56,7 @@ SET @fk := (SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
              LIMIT 1);
 SET @regle := (SELECT DELETE_RULE FROM information_schema.REFERENTIAL_CONSTRAINTS
                 WHERE CONSTRAINT_SCHEMA = DATABASE() AND CONSTRAINT_NAME = @fk LIMIT 1);
-SET @s := IF(@fk IS NOT NULL AND @regle <> 'SET NULL',
+SET @s := IF(@tidb = 0 AND @fk IS NOT NULL AND @regle <> 'SET NULL',
   CONCAT('ALTER TABLE paiements_evenements DROP FOREIGN KEY `', @fk, '`'),
   'SELECT "paiements_evenements : clé déjà en SET NULL ou absente"');
 PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
@@ -59,7 +65,7 @@ SET @fk := (SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'paiements_evenements'
                AND COLUMN_NAME = 'etablissement_id' AND REFERENCED_TABLE_NAME = 'etablissements'
              LIMIT 1);
-SET @s := IF(@fk IS NULL,
+SET @s := IF(@tidb = 0 AND @fk IS NULL,
   'ALTER TABLE paiements_evenements ADD CONSTRAINT fk_paiement_etablissement FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE SET NULL',
   'SELECT "paiements_evenements : clé présente"');
 PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
