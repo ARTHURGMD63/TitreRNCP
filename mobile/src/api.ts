@@ -550,6 +550,11 @@ export type ReponseAbonnements = {
   pagination: { page: number; a_suivre: boolean; restants: number };
 };
 
+/** Les personnes que j'ai bloquées (blocages.php), les plus récentes d'abord. */
+export type ReponseBlocages = {
+  personnes: (Personne & { bloque_le: string })[];
+};
+
 export type ReponseAvis = {
   evenement: { id: number; titre: string; etablissement: string; date: string };
   avis: { note: number; commentaire: string } | null;
@@ -929,6 +934,7 @@ export const api = {
   classement: (jeton: string, portee: string) => appelApi<ReponseClassement>('classement.php', { jeton, params: { portee } }),
   abonnements: (jeton: string, params: { type: string; q?: string; p?: number }) =>
     appelApi<ReponseAbonnements>('abonnements.php', { jeton, params }),
+  blocages: (jeton: string) => appelApi<ReponseBlocages>('blocages.php', { jeton }),
   avis: (jeton: string, eventId: number) => appelApi<ReponseAvis>('avis.php', { jeton, params: { event_id: eventId } }),
   envoyerAvis: (jeton: string, eventId: number, note: number, commentaire: string) =>
     appelApi<{ message: string }>('avis.php', { methode: 'POST', jeton, corps: { event_id: eventId, note, commentaire } }),
