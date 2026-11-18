@@ -81,6 +81,7 @@ if (!$prenom || !$nom || !$email || !$pass) {
 
 // Tout ou rien : un compte partenaire sans son établissement serait inutilisable.
 $pdo->beginTransaction();
+$enTransaction = true;
 try {
     $stmt = $pdo->prepare(
         "INSERT INTO users (nom, prenom, email, password, ecole, promo, ville,
@@ -92,21 +93,34 @@ try {
                     $naissance, $type, interetsVersTexte($interets)]);
     $userId = (int) $pdo->lastInsertId();
 
-    synchroniserInterets($pdo, $userId, $interets);
-    oublierEcolesRepresentees();
-
     if ($type === 'partenaire' && $etablNom) {
         $pdo->prepare('INSERT INTO etablissements (user_id, nom, type, ville, verification) VALUES (?,?,?,?,?)')
             ->execute([$userId, $etablNom, $etablType, $etablVille, verificationInitiale($etablType)]);
     }
     $pdo->commit();
+    $enTransaction = false;
+
+    // Après la validation, et non dedans : user_interets est une table dérivée
+    // de la colonne `interests` (reconstruite par la migration v15 au besoin),
+    // et synchroniserInterets() tient sa propre transaction. Appelée dans
+    // celle-ci, elle en ouvrait une seconde — et sur Render (PHP 8.3, TiDB),
+    // l'échec annulait le compte : chaque inscription répondait 500.
+    synchroniserInterets($pdo, $userId, $interets);
+    oublierEcolesRepresentees();
     enregistrerTentative($pdo, 'inscription', $ip);
     if ($type === 'partenaire' && $etablNom) {
         emailBienvenueEtablissement($email, $prenom, $etablNom, $etablType);
     }
 } catch (PDOException $e) {
-    if ($pdo->inTransaction()) {
-        $pdo->rollBack();
+    // Notre propre indicateur plutôt que $pdo->inTransaction(), qui interroge
+    // l'état rapporté par le serveur : derrière la passerelle TiDB, il ne
+    // suffit pas à savoir si la transaction de PDO est encore ouverte.
+    if ($enTransaction) {
+        try {
+            $pdo->rollBack();
+        } catch (PDOException) {
+            // Déjà annulée côté serveur.
+        }
     }
     // Code MySQL 1062 (clé dupliquée), et non le texte du message : sur un
     // serveur dont la langue des erreurs n'est pas l'anglais (le nôtre en
@@ -117,6 +131,7 @@ try {
         enregistrerTentative($pdo, 'inscription', $ip);
         apiErreur('Cet email est déjà utilisé.', 409, 'email_pris');
     }
+    logErreur('Création de compte impossible', $e, ['type' => $type]);
     apiErreur('Erreur lors de la création du compte.', 500, 'creation');
 }
 
