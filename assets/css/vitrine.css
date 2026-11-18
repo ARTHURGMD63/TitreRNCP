@@ -270,7 +270,7 @@
 .lp-scene {
   position: relative; overflow: hidden; display: grid; grid-template-columns: 1.05fr .95fr; gap: 32px; align-items: center;
   padding: 64px; border-radius: 32px;
-  background: linear-gradient(180deg, #A9A9B2 0%, #D9D9DE 55%, #F3F3F5 100%);
+  background: linear-gradient(180deg, #E3EAFF 0%, #EDF1FF 55%, #F6F8FF 100%);
 }
 .lp-scene__titre { font-size: clamp(44px, 6vw, 84px); font-weight: 600; line-height: .95; letter-spacing: -.06em; }
 .lp-scene__titre sup { font-size: .4em; top: -1.1em; font-weight: 500; }
@@ -388,3 +388,112 @@
   .lp-notif__bouton { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .lp-bulle { animation: none; } }
+
+/* ─── Mouvement léger ───────────────────────────────────────────
+   Entrée de l'accroche (CSS seul) et apparition au défilement
+   (vitrine.js, qui pose .js-anim sur <html> : sans lui, tout reste visible). */
+@keyframes lp-monte { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+.lp-hero .lp-titre,
+.lp-hero .lp-sous,
+.lp-hero .lp-actions { animation: lp-monte .7s cubic-bezier(.2, .7, .2, 1) both; }
+.lp-hero .lp-sous { animation-delay: .1s; }
+.lp-hero .lp-actions { animation-delay: .2s; }
+.lp-hero .lp-notif { animation: lp-monte .7s cubic-bezier(.2, .7, .2, 1) .45s both; }
+.lp-hero .lp-notif + .lp-notif { animation-delay: .6s; }
+.lp-hero .lp-notif + .lp-notif + .lp-notif { animation-delay: .75s; }
+
+.js-anim .lp-revele {
+  opacity: 0; transform: translateY(26px);
+  transition: opacity .75s cubic-bezier(.2, .7, .2, 1) var(--d, 0ms), transform .75s cubic-bezier(.2, .7, .2, 1) var(--d, 0ms);
+}
+.js-anim .lp-revele.lp-vu { opacity: 1; transform: none; }
+
+/* Barre « Télécharger » : téléphone seulement, une fois l'accroche passée. */
+.lp-collant { display: none; }
+
+@media (max-width: 600px) {
+  /* Cibles tactiles de 44 px au moins (charte). */
+  .lp-nav .pilule--petite { min-height: 44px; }
+  .lp-pied a, .lp-scene__actions .lien { display: inline-flex; align-items: center; min-height: 44px; }
+  .lp-pied nav { gap: 0 20px; }
+  .lp-pied { padding: 28px 18px 24px; }
+
+  /* Accroche : boutons pleine largeur, empilés. */
+  .lp-actions { flex-direction: column; align-items: stretch; }
+  .lp-actions .pilule { width: 100%; min-height: 50px; }
+  .lp-titre, .lp-h2, .lp-scene__titre { text-wrap: balance; }
+  .lp-sous { font-size: 17px; }
+
+  /* Bande des catégories plus compacte. */
+  .lp-bande { padding: 20px 18px 32px; }
+  .lp-bande ul { gap: 10px 22px; }
+  .lp-bande li { font-size: 16px; }
+
+  .lp-collant {
+    display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(255, 255, 255, .86); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--ligne);
+    transform: translateY(110%); visibility: hidden;
+    transition: transform .35s cubic-bezier(.2, .7, .2, 1), visibility 0s linear .35s;
+  }
+  .lp-collant.est-visible { transform: none; visibility: visible; transition-delay: 0s; }
+  .lp-collant .pilule { width: 100%; min-height: 50px; }
+}
+
+/* Réglage « réduire les animations » : on garde un simple fondu, sans mouvement. */
+@keyframes lp-fondu { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .lp-hero .lp-titre, .lp-hero .lp-sous, .lp-hero .lp-actions, .lp-hero .lp-notif { animation-name: lp-fondu; }
+  .js-anim .lp-revele { transform: none; transition: opacity .6s ease var(--d, 0ms); }
+  .lp-collant { transition-duration: .01s; }
+}
+
+/* ─── Animations continues, discrètes ──────────────────────────
+   `translate` (propriété distincte de `transform`) pour ne pas écraser
+   les positionnements existants. */
+@keyframes lp-derive { 50% { translate: 0 -7px; } }
+@keyframes lp-tourne-a { from { transform: rotate(-20deg); } to { transform: rotate(340deg); } }
+@keyframes lp-tourne-b { from { transform: rotate(30deg); } to { transform: rotate(-330deg); } }
+@keyframes lp-scan { 0% { top: 8%; } 50% { top: 88%; } 100% { top: 8%; } }
+@keyframes lp-halo { 0% { box-shadow: 0 0 0 0 rgba(17, 17, 22, .28); } 70%, 100% { box-shadow: 0 0 0 14px rgba(17, 17, 22, 0); } }
+
+/* Arcs bleus des anneaux de l'accroche : rotation très lente. */
+.lp-anneaux span:nth-child(2)::after { animation: lp-tourne-a 48s linear infinite; }
+.lp-anneaux span:nth-child(3)::after { animation: lp-tourne-b 64s linear infinite; }
+
+/* Notifications de l'accroche et cartes en verre : flottement doux. */
+.lp-hero .lp-notif,
+.lp-social__scene .lp-verre,
+.lp-scene__visuel .lp-verre { animation-name: lp-monte, lp-derive; animation-duration: .7s, 6s; animation-timing-function: cubic-bezier(.2, .7, .2, 1), ease-in-out; animation-iteration-count: 1, infinite; animation-fill-mode: both, none; animation-delay: .45s, 1.4s; }
+.lp-hero .lp-notif + .lp-notif { animation-delay: .6s, 2.4s; }
+.lp-hero .lp-notif + .lp-notif + .lp-notif { animation-delay: .75s, 3.4s; }
+.lp-social__scene .lp-verre,
+.lp-scene__visuel .lp-verre { animation-name: lp-derive; animation-duration: 7s; animation-iteration-count: infinite; animation-delay: 0s; }
+.lp-social__scene .lp-verre:nth-child(2n),
+.lp-scene__visuel .lp-verre:nth-child(2n) { animation-delay: -3.5s; }
+
+/* Pass : une ligne de scan parcourt le QR code. */
+.lp-pass__qr { position: relative; overflow: hidden; }
+.lp-pass__qr::after {
+  content: ''; position: absolute; left: 8%; right: 8%; top: 8%; height: 3px; border-radius: 3px;
+  background: var(--bleu); box-shadow: 0 0 14px 3px rgba(29, 85, 240, .45);
+  animation: lp-scan 3.2s ease-in-out infinite;
+}
+
+/* Appel principal de l'accroche : un halo qui pulse. */
+.lp-hero .pilule--noire { animation: lp-halo 2.6s ease-out 1.2s infinite; }
+
+/* Survol (souris seulement) : les cartes se soulèvent. */
+@media (hover: hover) {
+  .lp-tuile, .lp-tarif { transition: transform .25s ease, box-shadow .25s ease; }
+  .lp-tuile:hover, .lp-tarif:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(17, 17, 22, .08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-anneaux span::after, .lp-pass__qr::after, .lp-hero .pilule--noire,
+  .lp-social__scene .lp-verre, .lp-scene__visuel .lp-verre { animation: none; }
+  .lp-hero .lp-notif, .lp-hero .lp-notif + .lp-notif, .lp-hero .lp-notif + .lp-notif + .lp-notif { animation: lp-fondu .7s ease .45s both; }
+  .lp-pass__qr::after { display: none; }
+  .lp-tuile:hover, .lp-tarif:hover { transform: none; }
+}
