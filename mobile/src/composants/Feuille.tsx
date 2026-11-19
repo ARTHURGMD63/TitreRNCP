@@ -26,6 +26,13 @@ type Props = {
   visible: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  /**
+   * Appelé une fois la feuille entièrement partie (animation finie, Modal
+   * retirée). Ce qui fait apparaître un nouvel écran ou une autre feuille
+   * doit attendre ce moment : sur iOS, une Modal montée pendant qu'une autre
+   * est encore présentée ne s'ouvre plus jamais (voir ChampDate).
+   */
+  onFerme?: () => void;
 };
 
 // Refonte 2026-11 : montée en 300 ms ease-out, voile rgba(17,17,22,.45).
@@ -34,7 +41,7 @@ type Props = {
 const courbe = Easing.out(Easing.cubic);
 const courbeSortie = Easing.in(Easing.cubic);
 
-export function Feuille({ visible, onClose, children }: Props) {
+export function Feuille({ visible, onClose, children, onFerme }: Props) {
   const { c } = useTheme();
   const reduit = useMouvementReduit();
   const { height } = useWindowDimensions();
@@ -53,6 +60,32 @@ export function Feuille({ visible, onClose, children }: Props) {
   // jamais pendant le rendu lui-même.
   const onCloseRef = useRef(onClose);
   useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+
+  const onFermeRef = useRef(onFerme);
+  useEffect(() => { onFermeRef.current = onFerme; }, [onFerme]);
+
+  // Fermeture complète, signalée une seule fois. iOS : quand la Modal a fini
+  // de disparaître (onDismiss, plus bas), avec un filet d'une demi-seconde si
+  // l'événement ne venait pas — une date validée ne doit jamais se perdre.
+  // Ailleurs, dès qu'elle est démontée.
+  const etaitMonte = useRef(monte);
+  const fermeSignale = useRef(true);
+  const signalerFerme = useRef(() => {
+    if (fermeSignale.current) return;
+    fermeSignale.current = true;
+    onFermeRef.current?.();
+  });
+  useEffect(() => {
+    let filet: ReturnType<typeof setTimeout> | null = null;
+    if (monte) {
+      fermeSignale.current = false;
+    } else if (etaitMonte.current) {
+      if (Platform.OS === 'ios') filet = setTimeout(() => signalerFerme.current(), 500);
+      else signalerFerme.current();
+    }
+    etaitMonte.current = monte;
+    return () => { if (filet) clearTimeout(filet); };
+  }, [monte]);
 
   // Ouverture : la Modal se monte avant que l'animation ne commence.
   if (visible !== precedent) {
@@ -102,7 +135,8 @@ export function Feuille({ visible, onClose, children }: Props) {
   }));
 
   return (
-    <Modal visible={monte} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible={monte} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent
+      onDismiss={Platform.OS === 'ios' ? () => signalerFerme.current() : undefined}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={{ flex: 1, justifyContent: 'flex-end' }}>
           <Animated.View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, opacity: voile }}>
