@@ -32,6 +32,7 @@ require_once __DIR__ . '/evenements_temps.php';
 require_once __DIR__ . '/musique.php';
 require_once __DIR__ . '/temps_reel.php';
 require_once __DIR__ . '/stripe.php';
+require_once __DIR__ . '/evenements_modification.php';
 
 /** Une date ISO en valeur de champ datetime-local. */
 function valeurDateLocale(?string $date): string
@@ -92,6 +93,13 @@ function traiterFormulaireEvenement(PDO $pdo, array $etab, array $capacites, ?ar
     }
     if ($v['quota'] < 1 || $v['quota'] > 10000) {
         $erreurs[] = 'Le nombre de places doit être compris entre 1 et 10 000.';
+    }
+    if ($existant !== null) {
+        // Terminé, redaté dans le passé, ou moins de places que de pass pris :
+        // règles communes avec l'application (evenements_modification.php).
+        $erreurs = array_merge($erreurs, evenementModificationRefus(
+            $existant, $v['date_heure'], $v['date_fin'], (int) $v['quota'], evenementPassPris($pdo, (int) $existant['id'])
+        ));
     }
     if ($v['is_flash'] && !$v['flash_expiry']) {
         $erreurs[] = 'Indiquez jusqu\'à quand court l\'offre flash.';
@@ -242,10 +250,13 @@ function ecrireEvenementPro(PDO $pdo, int $etabId, ?array $existant, array $v, f
         throw $e;
     }
 
-    if ($existant === null) {
-        fluxToucher($pdo, CANAL_GLOBAL);
-    }
+    fluxToucher($pdo, CANAL_GLOBAL);
     fluxToucher($pdo, canalEvenement($id));
+    if ($existant !== null) {
+        evenementPrevenirInscrits($pdo, $id, (string) $v['titre'], evenementChangementsPourInscrits(
+            $existant, ['date_heure' => $v['date_heure'], 'lieu' => $v['lieu']]
+        ));
+    }
 
     return $id;
 }

@@ -46,7 +46,7 @@ proDebut('Modifier un événement', 'evenements', $etab);
   <?= sponsoringChronoHtml($event) ?>
 <?php endif; ?>
 <?php if ($inscrits > 0): ?>
-  <div class="message message--alerte" style="margin-bottom:20px;"><?= iconeSite('info') ?><span><?= $inscrits ?> étudiant<?= $inscrits > 1 ? 's sont inscrits' : ' est inscrit' ?> : prévenez-les si vous changez la date ou l'avantage.</span></div>
+  <div class="message message--alerte" style="margin-bottom:20px;"><?= iconeSite('info') ?><span><?= $inscrits ?> étudiant<?= $inscrits > 1 ? 's sont inscrits' : ' est inscrit' ?> : si vous changez la date, l'heure ou le lieu, chaque inscrit est prévenu automatiquement. Si vous changez l'avantage, prévenez-les vous-même.</span></div>
 <?php endif; ?>
 <?php if ($erreurs): ?>
   <div class="message message--erreur" role="alert" style="margin-bottom:20px;"><?= iconeSite('alerte') ?>

@@ -23,6 +23,7 @@ require_once __DIR__ . '/../../includes/musique.php';
 require_once __DIR__ . '/../../includes/temps_reel.php';
 require_once __DIR__ . '/../../includes/sports.php';
 require_once __DIR__ . '/../../includes/collaborations.php';
+require_once __DIR__ . '/../../includes/evenements_modification.php';
 
 /**
  * Refus d'un achat demandé par l'application. Elle ne vend rien (règles Apple
@@ -321,11 +322,13 @@ if (mb_strlen($titre) > 255) $erreurs[] = 'Le titre est trop long.';
 if ($dateHeure !== '' && strtotime($dateHeure) === false) $erreurs[] = 'Date invalide.';
 if ($dateFin && strtotime($dateFin) === false) $erreurs[] = 'Date de fin invalide.';
 if ($evenementExistant) {
-    // On ne retire pas des places déjà prises : les inscrits ont leur pass.
-    $pris = $pdo->prepare("SELECT COUNT(*) FROM inscriptions WHERE evenement_id = ? AND statut <> 'annule'");
-    $pris->execute([(int) $evenementExistant['id']]);
-    $nbPris = (int) $pris->fetchColumn();
-    if ($quota < $nbPris) $erreurs[] = "Il y a déjà $nbPris inscrits : le nombre de places ne peut pas descendre en dessous.";
+    // Terminé, redaté dans le passé, ou moins de places que de pass pris :
+    // règles communes avec le site (includes/evenements_modification.php).
+    $refusModif = evenementModificationRefus($evenementExistant, $dateHeure, $dateFin, $quota, evenementPassPris($pdo, (int) $evenementExistant['id']));
+    if ($refusModif !== [] && str_starts_with($refusModif[0], 'Cet événement est terminé')) {
+        apiErreur($refusModif[0], 409, 'termine');
+    }
+    $erreurs = array_merge($erreurs, $refusModif);
 }
 if ($isFlash && $flashExpiry === '') $erreurs[] = "Date d'expiration flash requise.";
 // Une soirée se publie pour l'avenir : un événement déjà fini n'est ni
@@ -420,11 +423,21 @@ try {
             }
         }
         $pdo->commit();
-        if ($collaborateurId !== null) {
-            fluxToucher($pdo, CANAL_GLOBAL);
-        }
+        // Le fil et la fiche ouverte se rafraîchissent, comme depuis le site.
+        fluxToucher($pdo, CANAL_GLOBAL);
+        fluxToucher($pdo, canalEvenement((int) $eid));
+        $prevenus = evenementPrevenirInscrits($pdo, (int) $eid, $titre, evenementChangementsPourInscrits(
+            $evenementExistant, ['date_heure' => $dateHeure, 'lieu' => $lieu]
+        ));
 
-        apiReponse(['success' => true, 'message' => 'Événement mis à jour.', 'id' => $eid]);
+        apiReponse([
+            'success'  => true,
+            'message'  => $prevenus > 0
+                ? 'Événement mis à jour. ' . ($prevenus === 1 ? 'La personne inscrite est prévenue' : "Les $prevenus inscrits sont prévenus") . ' du changement.'
+                : 'Événement mis à jour.',
+            'id'       => $eid,
+            'prevenus' => $prevenus,
+        ]);
     }
 
     // Création. Au-delà du quota mensuel, l'événement serait un supplément
