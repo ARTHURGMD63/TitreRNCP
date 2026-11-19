@@ -97,6 +97,8 @@ function textesLegaux(): array
                 ]],
                 ['titre' => 'Article 4 — Réductions et passes', 'blocs' => [
                     $p("Les réductions proposées par les établissements sont valables uniquement sur présentation du QR code lors du check-in. Outsee ne garantit pas la disponibilité des offres et décline toute responsabilité en cas de refus par l'établissement."),
+                    $p("Chaque pass est un billet électronique nominatif, identifié par un numéro relié à son QR code. Il n'est valable qu'une fois, pour son seul titulaire, sur présentation d'une pièce d'identité ; il ne peut être ni cédé ni revendu."),
+                    $p("Chaque événement a un âge minimum, fixé par l'établissement (18 ans au moins), indiqué sur l'événement et sur le billet. L'inscription est refusée à qui n'aura pas cet âge le jour de l'événement. L'établissement organisateur reste seul maître de son entrée : il peut refuser l'accès, notamment pour l'âge, la tenue, le comportement, la sécurité ou la capacité de la salle. Si l'utilisateur a obtenu ou acheté un billet et que l'établissement lui refuse l'entrée, Outsee n'en est pas responsable."),
                 ]],
                 ['titre' => "Article 5 — Responsabilité de l'utilisateur", 'blocs' => [
                     $p("L'utilisateur est seul responsable de son comportement au sein des événements et des activités. Outsee n'est pas partie prenante des rencontres physiques organisées via la plateforme."),
@@ -146,6 +148,7 @@ function textesLegaux(): array
                 ]],
                 ['titre' => 'Article 8 — Contenus publiés', 'blocs' => [
                     $p("L'établissement est seul responsable des événements, tarifs, réductions et visuels qu'il publie, et garantit en détenir les droits. L'éditeur peut retirer un contenu manifestement illicite ou contraire aux CGU."),
+                    $p("Il fixe l'âge minimum de chaque événement (18 ans au moins) et contrôle lui-même l'entrée, pièce d'identité à l'appui ; le scan d'Outsee l'y aide en affichant le nom, le prénom et la date de naissance du titulaire, et en refusant un billet dont le titulaire n'a pas l'âge requis. L'établissement répond seul de ses décisions d'accès et du respect de la réglementation applicable à son activité, notamment l'interdiction de vente d'alcool aux mineurs."),
                 ]],
                 ['titre' => 'Article 9 — Données personnelles', 'blocs' => [
                     $p("L'établissement accède aux données des étudiants inscrits à ses événements pour la seule gestion de ces événements (accueil, contrôle à l'entrée). Il s'interdit toute autre utilisation, notamment commerciale, et toute cession à des tiers. Voir la politique de confidentialité."),

@@ -8,6 +8,7 @@
  */
 
 require_once __DIR__ . '/_socle.php';
+require_once __DIR__ . '/../../includes/age_minimum.php';
 require_once __DIR__ . '/../../includes/places.php';
 require_once __DIR__ . '/../../includes/uploads.php';
 require_once __DIR__ . '/../../includes/agregats.php';
@@ -73,6 +74,10 @@ $stmt = $pdo->prepare("
 $stmt->execute([$uid, $id]);
 $amis = $stmt->fetchAll();
 
+$stmt = $pdo->prepare('SELECT date_naissance FROM users WHERE id = ?');
+$stmt->execute([$uid]);
+$maNaissance = ($n = $stmt->fetchColumn()) ? (string) $n : null;
+
 $notes    = notesEtablissements($pdo);
 $note     = $notes[(int) $e['etablissement_id']] ?? null;
 $quota    = (int) ($e['quota'] ?? 0);
@@ -103,6 +108,10 @@ apiReponse([
         'inscriptions_jusqu_au' => evenementClotureInscriptions((string) $e['date_heure'], $e['inscriptions_jusqu_au'] ?? null),
         'cloture_anticipee'     => evenementClotureInscriptions((string) $e['date_heure'], $e['inscriptions_jusqu_au'] ?? null) !== (string) $e['date_heure'],
         'inscriptions_ouvertes' => evenementInscriptionsOuvertes((string) $e['date_heure'], $e['inscriptions_jusqu_au'] ?? null),
+        // Âge minimum (v44) et, pour cet étudiant, s'il l'aura le jour J :
+        // l'application remplace alors le bouton d'inscription.
+        'age_minimum'   => (int) ($e['age_minimum'] ?? AGE_MINIMUM_DEFAUT),
+        'age_autorise'  => ageMinimumAtteint($maNaissance, (string) $e['date_heure'], (int) ($e['age_minimum'] ?? AGE_MINIMUM_DEFAUT)),
         'lieu'          => (string) ($e['lieu'] ?? ''),
 
         'etablissement' => [

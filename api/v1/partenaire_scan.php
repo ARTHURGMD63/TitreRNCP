@@ -21,6 +21,8 @@
 
 require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/evenements_temps.php';
+require_once __DIR__ . '/../../includes/age_minimum.php';
+require_once __DIR__ . '/../../includes/billet.php';
 
 apiExigerMethode('POST');
 
@@ -54,7 +56,7 @@ if (!$inscriptionId) {
 }
 
 $stmt = $pdo->prepare(
-    'SELECT e.id, e.date_heure, e.date_fin FROM evenements e
+    'SELECT e.id, e.date_heure, e.date_fin, e.age_minimum FROM evenements e
      JOIN etablissements et ON et.id = e.etablissement_id
     WHERE e.id = ? AND et.user_id = ?'
 );
@@ -70,14 +72,14 @@ if (!evenementScanOuvert((string) $evenement['date_heure'], $dateFin)) {
 
 if ($inscriptionId) {
     $stmt = $pdo->prepare(
-        'SELECT i.id, i.statut, u.id AS user_id, u.prenom, u.nom, u.ecole, u.promo, u.photo
+        'SELECT i.id, i.statut, i.qr_code, u.id AS user_id, u.prenom, u.nom, u.ecole, u.promo, u.photo, u.date_naissance
            FROM inscriptions i JOIN users u ON u.id = i.user_id
           WHERE i.id = ? AND i.evenement_id = ?'
     );
     $stmt->execute([$inscriptionId, $eventId]);
 } else {
     $stmt = $pdo->prepare(
-        'SELECT i.id, i.statut, u.id AS user_id, u.prenom, u.nom, u.ecole, u.promo, u.photo
+        'SELECT i.id, i.statut, i.qr_code, u.id AS user_id, u.prenom, u.nom, u.ecole, u.promo, u.photo, u.date_naissance
            FROM inscriptions i JOIN users u ON u.id = i.user_id
           WHERE i.qr_code = ? AND i.evenement_id = ?'
     );
@@ -106,11 +108,38 @@ if (!$inscription) {
     }
     apiErreur('Pass invalide pour cet événement', 404, 'pass_invalide');
 }
+// Ce que l'accueil doit voir pour contrôler l'identité : nom, prénom, date
+// de naissance et âge le jour de l'événement, avec le numéro du billet.
+$naissance  = !empty($inscription['date_naissance']) ? (string) $inscription['date_naissance'] : null;
+$ageMinimum = (int) ($evenement['age_minimum'] ?? AGE_MINIMUM_DEFAUT);
+$personne   = [
+    'id'             => (int) $inscription['user_id'],
+    'prenom'         => (string) $inscription['prenom'],
+    'nom'            => (string) $inscription['nom'],
+    'ecole'          => $inscription['ecole'] !== null ? (string) $inscription['ecole'] : null,
+    'promo'          => $inscription['promo'] !== null ? (string) $inscription['promo'] : null,
+    'photo_url'      => apiPhotoUrl($inscription['photo'] ?? null),
+    'date_naissance' => $naissance,
+    'age'            => ageALaDate($naissance, (string) $evenement['date_heure']),
+    'numero_billet'  => numeroBillet((int) $inscription['id'], (string) ($inscription['qr_code'] ?? '')),
+];
+
 if ($inscription['statut'] === 'checkin') {
     apiErreur('Ce pass a déjà été scanné', 409, 'deja_scanne');
 }
 if ($inscription['statut'] === 'annule') {
     apiErreur('Inscription annulée', 409, 'inscription_annulee');
+}
+// Âge minimum (v44) : l'entrée n'est pas enregistrée, et l'accueil voit qui
+// il a devant lui (écran rouge dans l'application).
+if (!ageMinimumAtteint($naissance, (string) $evenement['date_heure'], $ageMinimum)) {
+    apiReponse([
+        'success'     => false,
+        'code'        => 'age_insuffisant',
+        'message'     => 'Âge insuffisant : ' . $personne['age'] . ' ans, ' . $ageMinimum . ' requis',
+        'age_minimum' => $ageMinimum,
+        'personne'    => $personne,
+    ], 409);
 }
 
 // La condition est dans l'UPDATE, pas seulement dans le SELECT plus haut :
@@ -129,12 +158,6 @@ if ($maj->rowCount() === 0) {
 apiReponse([
     'success' => true,
     'message' => 'Check-in validé pour ' . $inscription['prenom'] . ' ' . $inscription['nom'],
-    'personne' => [
-        'id'        => (int) $inscription['user_id'],
-        'prenom'    => (string) $inscription['prenom'],
-        'nom'       => (string) $inscription['nom'],
-        'ecole'     => $inscription['ecole'] !== null ? (string) $inscription['ecole'] : null,
-        'promo'     => $inscription['promo'] !== null ? (string) $inscription['promo'] : null,
-        'photo_url' => apiPhotoUrl($inscription['photo'] ?? null),
-    ],
+    'age_minimum' => $ageMinimum,
+    'personne' => $personne,
 ]);

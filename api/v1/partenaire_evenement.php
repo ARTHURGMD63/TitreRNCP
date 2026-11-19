@@ -14,6 +14,7 @@
  */
 
 require_once __DIR__ . '/_socle.php';
+require_once __DIR__ . '/../../includes/age_minimum.php';
 require_once __DIR__ . '/../../includes/crm.php';
 require_once __DIR__ . '/../../includes/sponsoring.php';
 require_once __DIR__ . '/../../includes/evenements_temps.php';
@@ -127,6 +128,7 @@ function apiEvenementPourEdition(PDO $pdo, array $e): array
         'date_heure' => (string) $e['date_heure'],
         'date_fin' => $e['date_fin'] !== null ? (string) $e['date_fin'] : null,
         'inscriptions_jusqu_au' => !empty($e['inscriptions_jusqu_au']) ? (string) $e['inscriptions_jusqu_au'] : null,
+        'age_minimum' => (int) ($e['age_minimum'] ?? 18),
         'quota' => (int) $e['quota'],
         'reduction' => (int) ($e['reduction'] ?? 0),
         'prix_normal' => (float) ($e['prix_normal'] ?? 0),
@@ -276,6 +278,8 @@ $dateHeure    = trim((string) ($corps['date_heure'] ?? ''));
 $dateFin      = trim((string) ($corps['date_fin'] ?? '')) ?: null;
 // Clôture anticipée des inscriptions (v38). Vide : on s'inscrit jusqu'au début.
 $inscriptionsJusquAu = trim((string) ($corps['inscriptions_jusqu_au'] ?? '')) ?: null;
+// Âge minimum (v44) : 18 à 99, 18 si rien n'est envoyé (ancienne version de l'app).
+$ageMinimum   = ageMinimumNormalise($corps['age_minimum'] ?? null);
 $quota       = (int) ($corps['quota'] ?? 100);
 $reduction    = (int) ($corps['reduction'] ?? 0);
 $prixNormal   = (float) ($corps['prix_normal'] ?? 0);
@@ -392,13 +396,13 @@ try {
         $pdo->prepare(
             'UPDATE evenements SET
                 titre=?, description=?, type=?, style_musique=?, sport=?, format=?, date_heure=?, date_fin=?, inscriptions_jusqu_au=?,
-                quota=?, reduction=?, prix_normal=?,
+                age_minimum=?, quota=?, reduction=?, prix_normal=?,
                 is_flash=?, flash_expiry=?, is_gratuit=?, lieu=?,
                 is_sponsorise=?, sponsor_formule=?, sponsor_tarif=?, sponsor_jusqu_au=?, sponsor_debut=COALESCE(?, sponsor_debut)
               WHERE id=? AND etablissement_id=?'
         )->execute([
             $titre, $description, $type, $musique ?: null, $sport ?: null, $format ?: null, $dateHeure, $dateFin, $inscriptionsJusquAu,
-            $quota, $reduction, $prixNormal,
+            $ageMinimum, $quota, $reduction, $prixNormal,
             $isFlash, $flashExpiry ?: null, $isGratuit, $lieu,
             $isSponsorise, $sponsorFormule, $sponsorTarif, $sponsorFin, !empty($sponso['nouvelle']) ? date('Y-m-d H:i:s') : null,
             $eid, (int) $etab['id'],
@@ -471,12 +475,12 @@ try {
 
     $pdo->prepare(
         'INSERT INTO evenements
-            (etablissement_id, titre, description, type, style_musique, sport, format, date_heure, date_fin, inscriptions_jusqu_au, quota, reduction, prix_normal, is_flash, flash_expiry, is_gratuit, lieu,
+            (etablissement_id, titre, description, type, style_musique, sport, format, date_heure, date_fin, inscriptions_jusqu_au, age_minimum, quota, reduction, prix_normal, is_flash, flash_expiry, is_gratuit, lieu,
              is_sponsorise, sponsor_formule, sponsor_tarif, sponsor_jusqu_au, sponsor_debut, supplement_tarif)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
     )->execute([
         (int) $etab['id'], $titre, $description, $type, $musique ?: null, $sport ?: null, $format ?: null, $dateHeure, $dateFin, $inscriptionsJusquAu,
-        $quota, $reduction, $prixNormal, $isFlash,
+        $ageMinimum, $quota, $reduction, $prixNormal, $isFlash,
         $flashExpiry ?: null, $isGratuit, $lieu,
         $isSponsorise, $sponsorFormule, $sponsorTarif, $sponsorFin, !empty($sponso['nouvelle']) ? date('Y-m-d H:i:s') : null, $supplementTarif,
     ]);

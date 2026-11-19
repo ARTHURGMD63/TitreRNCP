@@ -6,6 +6,7 @@ require_once __DIR__ . '/../includes/temps_reel.php';
 require_once __DIR__ . '/../includes/evenements_temps.php';
 require_once __DIR__ . '/../includes/comptes.php';
 require_once __DIR__ . '/../includes/evenements_suppression.php';
+require_once __DIR__ . '/../includes/age_minimum.php';
 header('Content-Type: application/json');
 
 // Ecriture : POST obligatoire, jeton CSRF et origine verifies.
@@ -45,7 +46,7 @@ try {
     // autres soirées ne s'attendent pas.
     $finEff = sqlFinEffectiveEvenement();
     $stmt = $pdo->prepare(
-        "SELECT e.quota, e.prix_normal, e.reduction, e.date_heure, e.inscriptions_jusqu_au
+        "SELECT e.quota, e.prix_normal, e.reduction, e.date_heure, e.inscriptions_jusqu_au, e.age_minimum
            FROM evenements e
           WHERE e.id = ? AND $finEff >= NOW() AND " . sqlEvenementNonAnnule('e') . "
             AND EXISTS (SELECT 1 FROM etablissements et
@@ -65,6 +66,17 @@ try {
     if (!evenementInscriptionsOuvertes((string) $event['date_heure'], $event['inscriptions_jusqu_au'] ?? null)) {
         $pdo->rollBack();
         echo json_encode(['success' => false, 'message' => 'Les inscriptions sont closes']);
+        exit;
+    }
+
+    // Âge minimum fixé par l'établissement (v44), le jour de l'événement.
+    $stmt = $pdo->prepare('SELECT date_naissance FROM users WHERE id = ?');
+    $stmt->execute([$uid]);
+    $naissance = $stmt->fetchColumn();
+    $ageMinimum = (int) ($event['age_minimum'] ?? AGE_MINIMUM_DEFAUT);
+    if (!ageMinimumAtteint($naissance !== false ? (string) $naissance : null, (string) $event['date_heure'], $ageMinimum)) {
+        $pdo->rollBack();
+        echo json_encode(['success' => false, 'code' => 'age_minimum', 'message' => ageMinimumMessage($ageMinimum)]);
         exit;
     }
 

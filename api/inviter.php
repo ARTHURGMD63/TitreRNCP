@@ -15,6 +15,7 @@ require_once __DIR__ . '/../includes/temps_reel.php';
 require_once __DIR__ . '/../includes/culture.php';
 require_once __DIR__ . '/../includes/evenements_temps.php';
 require_once __DIR__ . '/../includes/evenements_suppression.php';
+require_once __DIR__ . '/../includes/age_minimum.php';
 header('Content-Type: application/json');
 
 // Ecriture : POST obligatoire, jeton CSRF et origine verifies.
@@ -41,7 +42,7 @@ function cibleValide(PDO $pdo, string $type, int $id): ?array
 {
     if ($type === 'event') {
         $stmt = $pdo->prepare(
-            "SELECT e.titre, e.quota,
+            "SELECT e.titre, e.quota, e.date_heure, e.age_minimum,
                     (SELECT COUNT(*) FROM inscriptions i
                       WHERE i.evenement_id = e.id AND i.statut != 'annule') AS nb
                FROM evenements e
@@ -229,6 +230,16 @@ if ($action === 'accept') {
         $dedans = dejaParticipant($pdo, $invite['type'], $cibleId, $moi);
         if (!$dedans && remplissage((int) $infos['quota'], (int) $infos['nb'])['complet']) {
             $refus("Trop tard, c'est complet");
+        }
+        // Âge minimum de l'événement (v44) : une invitation n'y fait pas exception.
+        if (!$dedans && $invite['type'] === 'event') {
+            $stmt = $pdo->prepare('SELECT date_naissance FROM users WHERE id = ?');
+            $stmt->execute([$moi]);
+            $naissance  = $stmt->fetchColumn();
+            $ageMinimum = (int) ($infos['age_minimum'] ?? AGE_MINIMUM_DEFAUT);
+            if (!ageMinimumAtteint($naissance !== false ? (string) $naissance : null, (string) $infos['date_heure'], $ageMinimum)) {
+                $refus(ageMinimumMessage($ageMinimum));
+            }
         }
 
         if (!$dedans) {
