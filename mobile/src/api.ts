@@ -95,6 +95,25 @@ export function surDeconnexion(f: (jetonRefuse: string) => void): () => void {
   };
 }
 
+/**
+ * Le rappel « mise à jour requise », enregistré par la racine (_layout.tsx).
+ *
+ * Le serveur refuse une version trop ancienne (426) ; sans ce rappel, chaque
+ * écran affichait le message dans son coin, l'un après l'autre, et l'étudiant
+ * pouvait continuer à naviguer dans une application qui ne marche plus
+ * (constat ARC-02). La racine remplace alors toute l'application par un
+ * écran bloquant (MiseAJourRequise.tsx).
+ */
+let rappelMiseAJour: ((message: string) => void) | null = null;
+
+/** Enregistre le rappel ; rend la fonction qui le retire. */
+export function surMiseAJourRequise(f: (message: string) => void): () => void {
+  rappelMiseAJour = f;
+  return () => {
+    if (rappelMiseAJour === f) rappelMiseAJour = null;
+  };
+}
+
 type Options = {
   methode?: 'GET' | 'POST';
   corps?: unknown;
@@ -156,6 +175,9 @@ async function requete<T>(url: string, { methode = 'GET', corps, formulaire, jet
     // envoyé (connexion, mot de passe oublié), un 401 n'est qu'un refus.
     if (jeton && erreur.estDeconnecte && rappelDeconnexion) {
       try { rappelDeconnexion(jeton); } catch { /* jamais bloquant */ }
+    }
+    if (erreur.estMiseAJourRequise && rappelMiseAJour) {
+      try { rappelMiseAJour(erreur.message); } catch { /* jamais bloquant */ }
     }
     throw erreur;
   }

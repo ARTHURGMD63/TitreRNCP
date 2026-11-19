@@ -31,6 +31,8 @@ import { FournisseurTheme, useTheme } from '../useTheme';
 import { FournisseurToast } from '../composants/Toast';
 import { IntroSplash } from '../composants/IntroSplash';
 import { Ecran, Erreur } from '../composants/Ecran';
+import { MiseAJourRequise } from '../composants/MiseAJourRequise';
+import { surMiseAJourRequise } from '../api';
 import { configurerNotifications, ecouterOuvertures } from '../notifications';
 import { installerSuiviErreurs, signalerErreurRattrapee } from '../suiviErreurs';
 
@@ -149,6 +151,19 @@ function Navigation() {
   );
 }
 
+/**
+ * La version minimale : dès qu'une réponse du serveur dit « mise à jour
+ * requise » (426), toute l'application cède la place à l'écran bloquant
+ * (constat ARC-02). Rien ne le referme : seule une nouvelle version, donc un
+ * nouveau lancement, le fait disparaître.
+ */
+function GardeVersion({ children }: { children: React.ReactNode }) {
+  const [message, setMessage] = useState<string | null>(null);
+  useEffect(() => surMiseAJourRequise((m) => setMessage((avant) => avant ?? m)), []);
+  if (message !== null) return <MiseAJourRequise message={message} />;
+  return <>{children}</>;
+}
+
 function Polices({ children }: { children: React.ReactNode }) {
   const [pretes] = useFonts({
     Onest_400Regular, Onest_500Medium, Onest_600SemiBold, Onest_700Bold,
@@ -166,7 +181,9 @@ export default function Racine() {
         <FournisseurTheme>
           <FournisseurSession>
             <FournisseurToast>
-              <Navigation />
+              <GardeVersion>
+                <Navigation />
+              </GardeVersion>
             </FournisseurToast>
           </FournisseurSession>
         </FournisseurTheme>
