@@ -179,7 +179,11 @@ function sqlEtablissementVisible(string $alias = 'et'): string
     return "$alias.verification <> 'refusee'";
 }
 
-/** Même règle, sur une ligne déjà lue. @param array<string, mixed> $etab */
+/**
+ * Même règle, sur une ligne déjà lue.
+ *
+ * @param array<string, mixed> $etab
+ */
 function etablissementVisible(array $etab): bool
 {
     return ($etab['verification'] ?? '') !== 'refusee';
