@@ -36,15 +36,34 @@ final class IpClientTest extends TestCase
         }
     }
 
-    public function testParDefautSeuleRemoteAddrCompte(): void
+    public function testModeAucunSeuleRemoteAddrCompte(): void
     {
         // L'ancienne règle croyait CF-Connecting-IP dès que REMOTE_ADDR était
         // privée : derrière Render, chaque requête choisissait son adresse.
+        putenv('IP_ENTETE=aucun');
         $_SERVER['REMOTE_ADDR']           = '10.0.4.2';
         $_SERVER['HTTP_CF_CONNECTING_IP'] = '198.51.100.7';
         $_SERVER['HTTP_X_FORWARDED_FOR']  = '198.51.100.8';
 
         $this->assertSame('10.0.4.2', ipClient());
+    }
+
+    public function testParDefautDerriereUnProxyPriveOnLitLEntreeDeDroite(): void
+    {
+        // Sans réglage (Render), le client peut écrire à gauche mais pas à droite.
+        $_SERVER['REMOTE_ADDR']           = '10.0.4.2';
+        $_SERVER['HTTP_CF_CONNECTING_IP'] = '6.6.6.6';
+        $_SERVER['HTTP_X_FORWARDED_FOR']  = '6.6.6.6, 198.51.100.8';
+
+        $this->assertSame('198.51.100.8', ipClient());
+    }
+
+    public function testParDefautSansProxyLEnTeteNEstPasLu(): void
+    {
+        $_SERVER['REMOTE_ADDR']          = '203.0.113.9';
+        $_SERVER['HTTP_X_FORWARDED_FOR'] = '198.51.100.8';
+
+        $this->assertSame('203.0.113.9', ipClient());
     }
 
     public function testClientDirectNePeutPasForgerUnEnTeteDeProxy(): void

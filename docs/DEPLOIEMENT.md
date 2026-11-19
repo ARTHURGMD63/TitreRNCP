@@ -91,8 +91,9 @@ répartiteur, la même pour tout le monde ; le répartiteur ajoute l'adresse du
 visiteur à droite de `X-Forwarded-For`. L'application remonte cet en-tête de
 droite à gauche en sautant les proxys déclarés (réseaux privés de Render et
 plages de Cloudflare) et garde la première adresse qui n'en est pas un. Sans
-ces deux variables, seule `REMOTE_ADDR` compte : tous les visiteurs partagent
-alors le même compteur par adresse. Les en-têtes ne sont jamais crus quand la
+ces deux variables, l'application lit déjà `X-Forwarded-For` derrière un
+réseau privé ; les poser ajoute les plages de Cloudflare si Render en
+place devant. Les en-têtes ne sont jamais crus quand la
 connexion ne vient pas d'un proxy déclaré : un client ne peut plus choisir son
 adresse en écrivant `CF-Connecting-IP` (audit SEC-07).
 

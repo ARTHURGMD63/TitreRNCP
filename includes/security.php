@@ -420,15 +420,28 @@ function ipDepuisRequete(array $server, string $mode, array $proxys): string {
  * (audit SEC-07).
  *
  * Deux réglages (variable d'environnement, ou clé de config.local.php) :
- *   - IP_ENTETE / ip_entete : 'aucun' (défaut, seule REMOTE_ADDR compte),
- *     'cloudflare' (CF-Connecting-IP) ou 'x-forwarded-for' ;
+ *   - IP_ENTETE / ip_entete : 'aucun' (seule REMOTE_ADDR compte),
+ *     'cloudflare' (CF-Connecting-IP) ou 'x-forwarded-for' ; non réglé :
+ *     'x-forwarded-for' avec les réseaux privés pour proxys de confiance ;
  *   - PROXY_CONFIANCE / proxy_confiance : les plages d'où l'en-tête est
  *     accepté (« 10.0.0.0/8, prive, cloudflare »). Vide en mode cloudflare :
  *     les plages de Cloudflare.
  */
 function ipClient(): string {
-    $mode = strtolower(trim(reglage('IP_ENTETE', 'ip_entete', 'aucun')));
+    $mode = strtolower(trim(reglage('IP_ENTETE', 'ip_entete')));
     $brut = reglage('PROXY_CONFIANCE', 'proxy_confiance');
+    if ($mode === '') {
+        // Rien de déclaré : X-Forwarded-For, mais seulement quand la connexion
+        // vient d'un réseau privé (répartiteur de Render, Docker). Sans proxy,
+        // REMOTE_ADDR est publique et l'en-tête n'est jamais lu ; derrière un
+        // proxy, on prend l'entrée la plus à droite non privée, que le client
+        // ne peut pas écrire. Évite qu'un oubli de réglage sur Render fasse
+        // compter tous les visiteurs comme une seule adresse.
+        $mode = 'x-forwarded-for';
+        if (trim($brut) === '') {
+            $brut = 'prive';
+        }
+    }
     if ($mode === 'cloudflare' && trim($brut) === '') {
         $brut = 'cloudflare';
     }
