@@ -76,10 +76,12 @@ $ecoles = array_map(
     $lignesEcoles
 );
 
-// Les inscrits eux-mêmes, avec de quoi les joindre (nom, e-mail, école) : seul
-// l'établissement propriétaire de l'événement les voit (filtre plus haut).
+// Les inscrits eux-mêmes (nom, école, présence) : seul l'établissement
+// propriétaire de l'événement les voit (filtre plus haut). Plus leur
+// e-mail (PAY-08) : l'entrée se gère sans, et la politique de
+// confidentialité ne le confie plus aux établissements (minimisation).
 $stmt = $pdo->prepare(
-    "SELECT u.id, u.prenom, u.nom, u.email, u.ecole, u.promo, i.statut, i.created_at
+    "SELECT u.id, u.prenom, u.nom, u.ecole, u.promo, i.statut, i.created_at
        FROM inscriptions i JOIN users u ON u.id = i.user_id
       WHERE i.evenement_id = ? AND i.statut <> 'annule'
       ORDER BY u.nom, u.prenom"
@@ -90,7 +92,6 @@ $participants = array_map(
         'id'         => (int) $r['id'],
         'prenom'     => (string) $r['prenom'],
         'nom'        => (string) $r['nom'],
-        'email'      => (string) $r['email'],
         'ecole'      => $r['ecole'] !== null && $r['ecole'] !== '' ? (string) $r['ecole'] : null,
         'promo'      => $r['promo'] !== null && $r['promo'] !== '' ? (string) $r['promo'] : null,
         'present'    => $r['statut'] === 'checkin',

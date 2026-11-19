@@ -190,7 +190,7 @@ function textesLegaux(): array
                 ['titre' => '4. Destinataires et sous-traitants', 'blocs' => [
                     $p("Tes données sont accessibles à l'éditeur, et :"),
                     $liste(
-                        "**Les établissements**, pour les événements auxquels tu t'inscris : prénom, nom, e-mail, école, promotion et présence, pour la seule gestion de l'événement",
+                        "**Les établissements**, pour les événements auxquels tu t'inscris : prénom, nom, école, promotion et présence, pour la seule gestion de l'événement",
                         "**Render** (hébergement de l'application, États-Unis) et **TiDB Cloud / PingCAP** (base de données)",
                         "**OVH** (messagerie électronique, France)",
                         "**Stripe** (paiement des établissements)",
