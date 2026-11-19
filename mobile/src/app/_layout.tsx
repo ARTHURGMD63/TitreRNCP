@@ -125,6 +125,7 @@ function Navigation() {
           <Stack.Screen name="avis/[id]" />
           <Stack.Screen name="profil/modifier" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="bloques" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="historique" options={{ animation: 'slide_from_right' }} />
         </Stack.Protected>
 
         <Stack.Protected guard={partenaire}>
