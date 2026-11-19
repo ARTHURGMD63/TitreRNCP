@@ -1,5 +1,6 @@
 /**
- * Mon compte — changer son adresse e-mail et son mot de passe.
+ * Mon compte — changer son adresse e-mail et son mot de passe, et régler
+ * les notifications (ReglagesNotifications).
  *
  * Valable pour un étudiant comme pour un établissement : c'est le même compte
  * côté serveur (api/v1/compte.php). Les deux changements demandent le mot de
@@ -20,6 +21,7 @@ import { Bouton } from '../composants/Bouton';
 import { Contenu, Ecran, EnTete } from '../composants/Ecran';
 import { BoutonRetour, Encart } from '../composants/Elements';
 import { Champ } from '../composants/Formulaire';
+import { ReglagesNotifications } from '../composants/ReglagesNotifications';
 import { Display, T, TitreSection } from '../composants/Texte';
 import { ecrireALEquipe } from '../contact';
 import { useJeton, useSession } from '../session';
@@ -229,6 +231,8 @@ export default function MonCompte() {
           />
           <Bouton libelle="Changer de mot de passe" plein chargement={enCoursMdp} onPress={changerMotDePasse} />
         </View>
+
+        <ReglagesNotifications />
 
         <Bouton libelle="Aide et contact" icone="info" variante="contour" plein onPress={() => ecrireALEquipe(profil?.email)} />
       </Contenu>

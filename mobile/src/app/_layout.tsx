@@ -32,6 +32,7 @@ import { FournisseurToast } from '../composants/Toast';
 import { IntroSplash } from '../composants/IntroSplash';
 import { Ecran, Erreur } from '../composants/Ecran';
 import { MiseAJourRequise } from '../composants/MiseAJourRequise';
+import { PropositionNotifications } from '../composants/ReglagesNotifications';
 import { surMiseAJourRequise } from '../api';
 import { configurerNotifications, ecouterOuvertures } from '../notifications';
 import { installerSuiviErreurs, signalerErreurRattrapee } from '../suiviErreurs';
@@ -147,6 +148,9 @@ function Navigation() {
         </Stack.Protected>
       </Stack>
       {introVisible ? <IntroSplash onTermine={() => setIntroVisible(false)} /> : null}
+      {/* Une fois connecté, et une seule fois par téléphone : la proposition
+          d'activer les notifications (voir notifications.ts). */}
+      {(etudiant && !nouveau) || partenaire ? <PropositionNotifications pret={!introVisible} /> : null}
     </>
   );
 }

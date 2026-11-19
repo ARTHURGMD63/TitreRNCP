@@ -6,7 +6,11 @@
  *  1. LA PERMISSION SE DEMANDE UNE FOIS, POUR UNE RAISON QUE LA PERSONNE
  *     COMPREND — jamais au lancement. iOS ne repose pas la question après un
  *     refus : une demande à froid, refusée par réflexe, est perdue pour de bon.
- *     Elle part donc d'un bouton explicite (Moi, ou la page Notifications).
+ *     Une fois connecté (étudiant ou établissement), une feuille explique à
+ *     quoi servent les notifications et propose de les activer — une seule
+ *     fois par appareil (propositionAFaire). Le réglage reste ensuite dans
+ *     « Mon compte » ; après un refus définitif, il renvoie aux réglages du
+ *     téléphone (constat MOB-02 : la permission n'était jamais demandée).
  *
  *  2. LE JETON SUIT LE COMPTE. Il est rattaché au serveur à chaque ouverture
  *     de session (il peut changer), et retiré à la déconnexion : le prochain
@@ -20,7 +24,7 @@
  * (includes/push.php) — préférences, nuit, plafonds.
  */
 
-import { Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
@@ -30,6 +34,8 @@ import { api } from './api';
 import { routeSure, type EtatPermission } from './pushRegles';
 
 const CLE_JETON_PUSH = 'outsee.jetonPush';
+/** Posée une fois la feuille de proposition montrée, quelle que soit la réponse. */
+const CLE_PROPOSITION = 'outsee.pushPropose';
 
 /** Les canaux Android : un par catégorie, pour que chacune se règle dans le système. */
 const CANAUX: { id: string; nom: string; importance: Notifications.AndroidImportance }[] = [
@@ -75,6 +81,36 @@ export async function etatPermission(): Promise<EtatPermission> {
   } catch {
     return 'indisponible';
   }
+}
+
+/**
+ * Vrai si la feuille « Activer les notifications » doit être montrée : la
+ * permission n'a encore jamais été demandée au système, et la feuille n'a
+ * pas déjà été montrée sur ce téléphone. Un refus (même « Plus tard ») ne
+ * la fait jamais revenir : le réglage de « Mon compte » prend le relais.
+ */
+export async function propositionAFaire(): Promise<boolean> {
+  if ((await etatPermission()) !== 'a_demander') return false;
+  try {
+    return (await SecureStore.getItemAsync(CLE_PROPOSITION)) === null;
+  } catch {
+    // Trousseau indisponible : mieux vaut ne rien proposer que proposer à chaque fois.
+    return false;
+  }
+}
+
+/** La feuille de proposition a été montrée : elle ne reviendra pas. */
+export async function marquerPropositionFaite(): Promise<void> {
+  try {
+    await SecureStore.setItemAsync(CLE_PROPOSITION, '1');
+  } catch {
+    // Sans trousseau, propositionAFaire() répond déjà non.
+  }
+}
+
+/** Après un refus définitif, seuls les réglages du téléphone peuvent rendre la permission. */
+export function ouvrirReglagesSysteme(): void {
+  Linking.openSettings().catch(() => {});
 }
 
 /** Demande la permission au système, puis rattache l'appareil si elle est donnée. */
