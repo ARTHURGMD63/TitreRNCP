@@ -5,7 +5,10 @@
  * ordre : prénom et nom côte à côte, email, mot de passe, date de naissance
  * (réservée aux majeurs, bornée comme le champ du site), école (avec une
  * recherche) et promo, centres d'intérêt ; ou, pour un partenaire,
- * l'établissement. Pas de choix de ville : Outsee n'est ouvert qu'à
+ * l'établissement. L'étudiant donne aussi son mobile (v43), vérifié par un
+ * code SMS avant la création du compte quand le serveur en envoie : le
+ * premier appui envoie alors le code, le second crée le compte. Sans SMS
+ * configuré, le premier appui crée directement le compte. Pas de choix de ville : Outsee n'est ouvert qu'à
  * Clermont-Ferrand pour l'instant, le serveur l'enregistre d'office. Les
  * conditions générales s'ouvrent depuis la case, comme les liens du site.
  *
@@ -18,7 +21,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } fro
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ErreurApi } from '../api';
+import { api, ErreurApi } from '../api';
 import { ECOLES, INTERETS, MOTS_CLES_ECOLES, PROMOS, TYPES_ETABLISSEMENT } from '../catalogue';
 import { Bouton } from '../composants/Bouton';
 import { Encart } from '../composants/Elements';
@@ -26,6 +29,7 @@ import { Aide, Case, Champ, ChampDate, Etiquette, isoDate, SelecteurInterets, Se
 import { Marque } from '../composants/Marque';
 import { T, TitreEcran } from '../composants/Texte';
 import { useSession } from '../session';
+import { afficherTelephone, normaliserTelephone } from '../telephone';
 import { fs, lh, rayon, sans } from '../theme';
 import { useTheme } from '../useTheme';
 
@@ -49,6 +53,14 @@ export default function Inscription() {
   const [etabType, setEtabType] = useState('bar');
   const [cgu, setCgu] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [telephone, setTelephone] = useState('');
+  // Le numéro auquel le code est parti (format international), null avant
+  // l'envoi ; `avecCode` faux quand le serveur n'envoie pas de SMS.
+  const [telEnvoye, setTelEnvoye] = useState<string | null>(null);
+  const [avecCode, setAvecCode] = useState(true);
+  const [codeTel, setCodeTel] = useState('');
+  const [envoiCode, setEnvoiCode] = useState(false);
+  const [infoCode, setInfoCode] = useState<string | null>(null);
 
   const aujourdhui = new Date();
   const borneMajeur = new Date(aujourdhui.getFullYear() - 18, aujourdhui.getMonth(), aujourdhui.getDate());
@@ -65,14 +77,51 @@ export default function Inscription() {
   }
   const afficherEcolePromo = age !== null && age >= 18 && age <= 25;
 
+  const etudiant = type === 'etudiant';
+  const telNormalise = normaliserTelephone(telephone);
+  // Le code saisi ne vaut que pour le numéro auquel il est parti.
+  const etapeCode = etudiant && telEnvoye !== null && telEnvoye === telNormalise && avecCode;
+
+  async function envoyerCode(numero: string): Promise<boolean> {
+    setEnvoiCode(true);
+    try {
+      const rep = await api.codeTelephone(numero);
+      setTelEnvoye(rep.telephone);
+      setAvecCode(rep.verification);
+      setCodeTel(rep.code_dev ?? '');
+      setInfoCode(rep.verification ? `Code envoyé par SMS au ${afficherTelephone(rep.telephone)}.` : null);
+      return !rep.verification;
+    } catch (e) {
+      setErreur(e instanceof ErreurApi ? e.message : "Le SMS n'a pas pu être envoyé, réessaie dans un instant.");
+      return false;
+    } finally {
+      setEnvoiCode(false);
+    }
+  }
+
   async function creer() {
     setErreur(null);
+    if (etudiant) {
+      if (!telNormalise) {
+        setErreur('Saisis un numéro de mobile français (06 ou 07).');
+        return;
+      }
+      if (telEnvoye !== telNormalise) {
+        // Premier appui : le code part ; sans SMS configuré, on enchaîne.
+        const sansCode = await envoyerCode(telNormalise);
+        if (!sansCode) return;
+      } else if (avecCode && codeTel.trim().length !== 6) {
+        setErreur('Saisis le code à six chiffres reçu par SMS.');
+        return;
+      }
+    }
     try {
       await inscription({
         type, prenom: prenom.trim(), nom: nom.trim(), email: email.trim(), password: motDePasse,
         date_naissance: naissance ? isoDate(naissance) : '',
         ecole: afficherEcolePromo ? ecole : '', promo: afficherEcolePromo ? promo : '', interets,
         etablissement_nom: etabNom.trim(), etablissement_type: etabType,
+        telephone: etudiant ? telNormalise : undefined, code_telephone: etudiant ? codeTel.trim() : undefined,
         cgu,
       });
     } catch (e) {
@@ -122,6 +171,18 @@ export default function Inscription() {
         </View>
 
         <Champ etiquette="Email" value={email} onChangeText={setEmail} placeholder="arthur@uca.fr" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" textContentType="emailAddress" />
+        {etudiant ? (
+          <Champ
+            etiquette="Téléphone mobile"
+            value={telephone}
+            onChangeText={setTelephone}
+            placeholder="06 12 34 56 78"
+            keyboardType="phone-pad"
+            autoComplete="tel"
+            textContentType="telephoneNumber"
+            aide="L’établissement d’un événement auquel tu t’inscris le voit, pour te joindre au sujet de cet événement, jusqu’à 30 jours après."
+          />
+        ) : null}
         <Champ etiquette="Mot de passe" value={motDePasse} onChangeText={setMotDePasse} placeholder="••••••••" secureTextEntry autoComplete="new-password" textContentType="newPassword" />
 
         <ChampDate
@@ -169,7 +230,37 @@ export default function Inscription() {
           </T>
         </Case>
 
-        <Bouton libelle="Créer mon compte" plein onPress={creer} chargement={enCours} style={{ marginTop: 14 }} />
+        {etapeCode ? (
+          <View style={{ marginTop: 14 }}>
+            {infoCode ? <Encart genre="info">{infoCode}</Encart> : null}
+            <Champ
+              etiquette="Code reçu par SMS"
+              value={codeTel}
+              onChangeText={(v) => setCodeTel(v.replace(/\D/g, '').slice(0, 6))}
+              placeholder="123456"
+              keyboardType="number-pad"
+              autoComplete="sms-otp"
+              textContentType="oneTimeCode"
+              maxLength={6}
+              marge={8}
+            />
+            <Text
+              onPress={() => { if (!envoiCode && telNormalise) void envoyerCode(telNormalise); }}
+              accessibilityRole="button"
+              style={{ fontFamily: sans(600), fontSize: fs[3], color: c.grisFonce, textDecorationLine: 'underline', marginBottom: 4 }}
+            >
+              Renvoyer le code
+            </Text>
+          </View>
+        ) : null}
+
+        <Bouton
+          libelle="Créer mon compte"
+          plein
+          onPress={creer}
+          chargement={enCours || envoiCode}
+          style={{ marginTop: 14 }}
+        />
 
         <View style={{ flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', marginTop: 20 }}>
           <T taille={fs[4]} couleur={c.gris}>Déjà un compte ? </T>
