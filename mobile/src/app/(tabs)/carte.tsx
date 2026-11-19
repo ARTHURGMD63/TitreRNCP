@@ -42,7 +42,8 @@ import * as Location from 'expo-location';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { api, type Evenement } from '../../api';
+import { api, ErreurApi, type Evenement } from '../../api';
+import { Bouton } from '../../composants/Bouton';
 import { reserveBarre } from '../../composants/BarreOnglets';
 import { PastilleEnCours } from '../../composants/CarteEvenement';
 import { AvatarsEmpiles, BoutonIcone, Pastille } from '../../composants/Design';
@@ -389,6 +390,11 @@ export default function CarteEvenements() {
   const listeRef = useRef<FlatList<Evenement>>(null);
 
   const [evenements, setEvenements] = useState<Evenement[] | null>(null);
+  // Le chargement a échoué : un panneau le dit, avec « Réessayer ». Avant,
+  // l'échec vidait la carte en silence, comme s'il n'y avait aucune soirée
+  // (constat MOB-07).
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [nouvelEssai, setNouvelEssai] = useState(false);
   const [selectionId, setSelectionId] = useState<number | null>(null);
   const [autorisationPosition, setAutorisationPosition] = useState<'inconnue' | 'accordee' | 'refusee'>('inconnue');
   const [prete, setPrete] = useState(false);
@@ -407,8 +413,13 @@ export default function CarteEvenements() {
     try {
       const r = await api.evenements(jeton, { type: 'all' });
       setEvenements(r.evenements);
-    } catch {
-      setEvenements([]);
+      setErreur(null);
+    } catch (e) {
+      // Les soirées déjà affichées restent : seul le panneau d'erreur s'ajoute.
+      setEvenements((avant) => avant ?? []);
+      setErreur(e instanceof ErreurApi ? e.message : 'Impossible de charger les soirées.');
+    } finally {
+      setNouvelEssai(false);
     }
   }, [jeton]);
 
@@ -599,7 +610,7 @@ export default function CarteEvenements() {
         <BoutonRetour style={ombreCarte(mode)} />
         <View style={[{ flexShrink: 1, height: 42, justifyContent: 'center', backgroundColor: c.blanc, borderRadius: rayon.sm, paddingHorizontal: 14 }, ombreCarte(mode)]}>
           <T taille={fs[3]} poids={600} numberOfLines={1}>
-            {evenements === null ? 'Chargement…' : `${localisables.length} soirée${localisables.length > 1 ? 's' : ''} sur la carte`}
+            {evenements === null ? 'Chargement…' : erreur && localisables.length === 0 ? 'Carte indisponible' : `${localisables.length} soirée${localisables.length > 1 ? 's' : ''} sur la carte`}
           </T>
         </View>
         <BoutonIcone
@@ -659,6 +670,25 @@ export default function CarteEvenements() {
           )}
         />
       </Animated.View>
+
+      {erreur && !ouvert ? (
+        <View
+          accessibilityRole="alert"
+          style={[{
+            position: 'absolute', left: 16, right: 16, bottom: espaceBarre + 16,
+            backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 16, gap: 12, alignItems: 'center',
+          }, ombreCarte(mode)]}
+        >
+          <T taille={fs[4]} couleur={c.grisFonce} style={{ textAlign: 'center' }}>{erreur}</T>
+          <Bouton
+            libelle="Réessayer"
+            variante="contour"
+            chargement={nouvelEssai}
+            onPress={() => { setNouvelEssai(true); void charger(); }}
+            style={{ alignSelf: 'center' }}
+          />
+        </View>
+      ) : null}
     </View>
   );
 }

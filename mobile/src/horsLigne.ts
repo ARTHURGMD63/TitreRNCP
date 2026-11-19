@@ -24,9 +24,20 @@
  * l'écoute (useHorsLigne) et dit de quand datent les données affichées. Une
  * autre lecture qui réussit ne l'efface pas : seule une nouvelle réponse du
  * serveur pour la même adresse le fait.
+ *
+ * LE RETOUR DU RÉSEAU
+ *
+ * Rien ne relançait les lectures quand le réseau revenait : l'étudiant
+ * gardait la copie et son bandeau jusqu'à tirer l'écran vers le bas
+ * (constat BUG-09). L'application n'embarque pas NetInfo ; le moment le plus
+ * sûr où le réseau a pu revenir est le retour au premier plan (on sort du
+ * métro, on rouvre l'application). useRechargementAuRetour() relance alors
+ * le chargement des écrans qui affichent une copie — et seulement eux, et
+ * seulement tant qu'une copie est affichée.
  */
 
-import { useSyncExternalStore } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
+import { AppState } from 'react-native';
 
 import { copiesASupprimer, lireCopie, nomCopie, type Copie } from './horsLigneRegles';
 
@@ -172,4 +183,29 @@ function abonner(f: () => void) {
 /** La date des données affichées hors connexion (ms), ou null en ligne. */
 export function useHorsLigne(): number | null {
   return useSyncExternalStore(abonner, () => depuis, () => depuis);
+}
+
+/**
+ * Tant que des données hors connexion sont affichées, relance `recharger`
+ * à chaque retour de l'application au premier plan. Une lecture qui
+ * aboutit efface la copie affichée (signaler) : le bandeau disparaît, et
+ * l'écoute avec lui. Branché sur l'écran entier (Ecran.tsx), avec son
+ * « tirer pour rafraîchir ».
+ */
+export function useRechargementAuRetour(recharger: (() => void) | undefined): void {
+  const horsLigne = useHorsLigne() !== null;
+  // Le dernier `recharger` reçu, sans réabonner l'écoute à chaque rendu.
+  const rappel = useRef(recharger);
+  useEffect(() => { rappel.current = recharger; }, [recharger]);
+
+  useEffect(() => {
+    if (!horsLigne) return;
+    let etatPrecedent = AppState.currentState;
+    const abonnement = AppState.addEventListener('change', (etat) => {
+      // Seulement un vrai retour : arrière-plan (ou inactif) → actif.
+      if (etat === 'active' && etatPrecedent !== 'active') rappel.current?.();
+      etatPrecedent = etat;
+    });
+    return () => abonnement.remove();
+  }, [horsLigne]);
 }

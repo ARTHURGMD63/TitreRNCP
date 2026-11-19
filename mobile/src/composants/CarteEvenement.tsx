@@ -18,7 +18,7 @@ import { actions, ErreurApi, type Evenement } from '../api';
 import { ICONES_TYPE, LIBELLES_TYPE } from '../catalogue';
 import { dateFr, dureeCourte, heure, ts } from '../format';
 import { creerHorloge } from '../horloge';
-import { prixEvenement } from '../regles';
+import { libelleApresEchecInscription, prixEvenement } from '../regles';
 import { useJeton } from '../session';
 import { couleursCategorie, espace, fixe, fs, rayon, sans } from '../theme';
 import { useTheme } from '../useTheme';
@@ -220,7 +220,7 @@ function useInscription(ev: Evenement) {
     } catch (e) {
       const msg = e instanceof ErreurApi ? e.message : 'Erreur réseau';
       // Comme le site : le bouton affiche la raison du refus (« Complet »).
-      setLibelleErreur(e instanceof ErreurApi && e.statut !== 0 ? msg : '→ je rejoins');
+      setLibelleErreur(libelleApresEchecInscription(e instanceof ErreurApi ? e.statut : null, msg));
       setEtat('libre');
       toast(msg, 'error');
     }

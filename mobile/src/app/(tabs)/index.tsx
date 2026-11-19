@@ -16,7 +16,7 @@
  */
 
 import React, { useCallback, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 
 import { api, type CibleInvitation, type Evenement, type Notification } from '../../api';
@@ -26,7 +26,7 @@ import { Apparition } from '../../composants/Animations';
 import { BarreRecherche } from '../../composants/BarreRecherche';
 import { EnTeteApp, PanneauFiltres, rangeeChips, Tuile, useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
-import { Pilule } from '../../composants/Elements';
+import { LienFleche, Pilule } from '../../composants/Elements';
 import { RangeeDefilante } from '../../composants/RangeeDefilante';
 import { Feuille } from '../../composants/Feuille';
 import { Icone } from '../../composants/Icone';
@@ -35,7 +35,7 @@ import { Display, T, TitreEcran } from '../../composants/Texte';
 import { ICONES_TYPE } from '../../catalogue';
 import { ts } from '../../format';
 import { useJeton } from '../../session';
-import { couleursCategorie, espace, fs, gutter, lh, rayon, sans } from '../../theme';
+import { couleursCategorie, espace, fs, gutter, lh, rayon } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 const TYPES = [
@@ -140,13 +140,11 @@ export default function Hub() {
               <View style={{ flex: 1 }}>
                 <SurtitreFeuille>Notifications</SurtitreFeuille>
                 <Display taille={fs[6]}>{notifs?.a_traiter ? `${notifs.a_traiter} à traiter` : 'Quoi de neuf'}</Display>
-                <Text
+                <LienFleche
+                  libelle="Tout voir"
                   onPress={() => { setCloche(false); router.navigate('/notifications'); }}
-                  accessibilityRole="link"
-                  style={{ marginTop: 2, minHeight: 44, paddingVertical: 12, fontFamily: sans(700), fontSize: fs[3], color: c.surRougeClair }}
-                >
-                  Tout voir →
-                </Text>
+                  style={{ marginTop: 2 }}
+                />
               </View>
               <FermerFeuille onPress={() => setCloche(false)} />
             </View>

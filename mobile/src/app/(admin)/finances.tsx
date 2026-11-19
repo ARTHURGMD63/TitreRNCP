@@ -15,14 +15,14 @@ import { api, ErreurApi, type ReponseFinancesAdmin } from '../../api';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
 import { BoutonRetour } from '../../composants/Elements';
 import { Mono, T, TitreEcran } from '../../composants/Texte';
-import { dateFr, nombre } from '../../format';
+import { dateFr } from '../../format';
+import { formatEuros } from '../../regles';
 import { useJeton } from '../../session';
 import { fs, rayon } from '../../theme';
 import { useTheme } from '../../useTheme';
 
-function eur(montant: number): string {
-  return nombre(Math.round(montant)) + ' €';
-}
+/** Des euros entiers : un tableau de bord ne lit pas les centimes. */
+const eur = (montant: number) => formatEuros(Math.round(montant));
 
 function Carte({ children }: { children: React.ReactNode }) {
   const { c, ombre } = useTheme();

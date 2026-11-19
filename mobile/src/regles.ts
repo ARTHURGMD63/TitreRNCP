@@ -50,12 +50,25 @@ export function libelleInscription(etat: EtatInscription, dejaInscrit: boolean, 
  * une panne réseau (statut 0) lui laisse une invitation à réessayer.
  */
 export function libelleApresEchecInscription(statut: number | null, message: string): string {
-  return statut !== null && statut !== 0 ? message : '→ je rejoins';
+  return statut !== null && statut !== 0 ? message : 'Je rejoins';
 }
 
 // ─── Scan des pass ──────────────────────────────────────────────────────────
 
 type Presence = { id: number };
+
+/**
+ * L'identifiant d'événement reçu dans l'adresse d'un écran (`?evenementId=`),
+ * ou null s'il n'en est pas un : uniquement des chiffres, strictement
+ * positif. Number() acceptait tout — « », « 1e3 », « 0x1F » — et un
+ * paramètre absent devenait NaN envoyé au serveur (constat BUG-07).
+ */
+export function lireIdEvenement(brut: string | string[] | null | undefined): number | null {
+  const valeur = Array.isArray(brut) ? brut[0] : brut;
+  if (typeof valeur !== 'string' || !/^\d{1,9}$/.test(valeur)) return null;
+  const id = Number(valeur);
+  return id > 0 ? id : null;
+}
 
 /** Ajoute une personne en tête de la liste des check-in, sans doublon. */
 export function ajouterCheckin<T extends Presence>(liste: readonly T[], personne: T): T[] {
@@ -141,11 +154,22 @@ export function libelleInscrits(inscrits: number): string {
 
 // ─── Sport ──────────────────────────────────────────────────────────────────
 
-/** Un montant en euros, à la française : « 12 € », « 12,50 € ». */
+/**
+ * Un montant en euros, à la française : « 12 € », « 12,50 € », « 1 250 € ».
+ * La seule mise en forme des euros de l'application (constat MOB-14) :
+ * espace simple pour les milliers comme nombre() (format.ts), décimales
+ * seulement quand il y a des centimes.
+ */
 export function formatEuros(montant: number): string {
   const arrondi = Math.round(montant * 100) / 100;
-  const texte = Number.isInteger(arrondi) ? String(arrondi) : arrondi.toFixed(2).replace('.', ',');
-  return `${texte} €`;
+  const [entier, centimes] = Math.abs(arrondi).toFixed(2).split('.');
+  const milliers = entier.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return `${arrondi < 0 ? '-' : ''}${milliers}${centimes === '00' ? '' : ',' + centimes} €`;
+}
+
+/** « Gratuit », « 5 € », « 7,50 € » : le prix d'une entrée Culture. */
+export function libellePrix(prix: number): string {
+  return prix <= 0 ? 'Gratuit' : formatEuros(prix);
 }
 
 /**

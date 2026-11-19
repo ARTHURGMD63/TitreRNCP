@@ -95,6 +95,25 @@ export function surDeconnexion(f: (jetonRefuse: string) => void): () => void {
   };
 }
 
+/**
+ * Le rappel « mise à jour requise », enregistré par la racine (_layout.tsx).
+ *
+ * Le serveur refuse une version trop ancienne (426) ; sans ce rappel, chaque
+ * écran affichait le message dans son coin, l'un après l'autre, et l'étudiant
+ * pouvait continuer à naviguer dans une application qui ne marche plus
+ * (constat ARC-02). La racine remplace alors toute l'application par un
+ * écran bloquant (MiseAJourRequise.tsx).
+ */
+let rappelMiseAJour: ((message: string) => void) | null = null;
+
+/** Enregistre le rappel ; rend la fonction qui le retire. */
+export function surMiseAJourRequise(f: (message: string) => void): () => void {
+  rappelMiseAJour = f;
+  return () => {
+    if (rappelMiseAJour === f) rappelMiseAJour = null;
+  };
+}
+
 type Options = {
   methode?: 'GET' | 'POST';
   corps?: unknown;
@@ -156,6 +175,9 @@ async function requete<T>(url: string, { methode = 'GET', corps, formulaire, jet
     // envoyé (connexion, mot de passe oublié), un 401 n'est qu'un refus.
     if (jeton && erreur.estDeconnecte && rappelDeconnexion) {
       try { rappelDeconnexion(jeton); } catch { /* jamais bloquant */ }
+    }
+    if (erreur.estMiseAJourRequise && rappelMiseAJour) {
+      try { rappelMiseAJour(erreur.message); } catch { /* jamais bloquant */ }
     }
     throw erreur;
   }
@@ -590,6 +612,13 @@ export type PersonneCheckin = {
   checkin_le: string | null;
 };
 
+/** api/v1/partenaire_checkins.php : les entrées d'UN événement, celui qu'on scanne. */
+export type ReponseCheckinsPartenaire = {
+  evenement: { id: number; titre: string };
+  compteurs: { inscrits: number; checkin: number; total: number; places: number };
+  checkins: PersonneCheckin[];
+};
+
 export type ReponseDashboardPartenaire = {
   etablissement: { id: number; nom: string; ville: string };
   evenement: { id: number; titre: string; date_heure: string } | null;
@@ -960,6 +989,9 @@ export const api = {
     appelApi<Ok & { personne: { id: number; prenom: string; nom: string; ecole: string | null; promo: string | null; photo_url: string | null } }>(
       'partenaire_scan.php', { methode: 'POST', jeton, corps }
     ),
+  /** Les entrées d'un événement de l'établissement : compteurs et personnes validées. */
+  partenaireCheckins: (jeton: string, evenementId: number) =>
+    appelApi<{ success: true } & ReponseCheckinsPartenaire>('partenaire_checkins.php', { jeton, params: { evenement_id: evenementId } }),
   partenaireInvites: (jeton: string, evenementId: number, q?: string) =>
     appelApi<{ success: true; invites: { inscription_id: number; prenom: string; nom: string; ecole: string | null; promo: string | null; photo_url: string | null }[] }>(
       'partenaire_invites.php', { jeton, params: { evenement_id: evenementId, q } }

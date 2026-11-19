@@ -38,7 +38,7 @@ import { Icone, type NomIcone } from '../../composants/Icone';
 import { T, TitreEcran, TitreSection } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
-import { compteARebours, court, dateFr, nombre, ts } from '../../format';
+import { compteARebours, court, dateFr, murDeParis, ts } from '../../format';
 import { formatEuros, lireCodePass, prixEvenement } from '../../regles';
 import { parJour, type Groupe } from '../../regroupement';
 import { economiePass } from '../../composants/LignesPass';
@@ -462,7 +462,7 @@ function EnTeteListe({ titre, droite, style }: { titre: string; droite: string; 
 function pastillePrix(p: Pass, reduction: number) {
   const g = genreDe(p);
   if (g === 'partie') return (p.sport && SPORTS[p.sport]) || 'Sport';
-  if (g === 'culture') return (p.prix_normal ?? 0) > 0 ? `${nombre(p.prix_normal!, 2)} €` : 'Entrée libre';
+  if (g === 'culture') return (p.prix_normal ?? 0) > 0 ? formatEuros(p.prix_normal!) : 'Entrée libre';
   // Même règle que la fiche de l'événement : un prix saisi s'affiche, réduit
   // le cas échéant ; « gratuite » seulement quand il n'y en a vraiment pas.
   const prix = prixEvenement({ prix_normal: p.prix_normal, reduction, is_gratuit: p.is_gratuit ?? false });
@@ -541,7 +541,8 @@ export default function Wallet() {
   useFocusEffect(useCallback(() => { void charger(); }, [charger]));
 
   const passes = donnees?.pass_actifs ?? [];
-  const jours = parJour(passes, new Date(maintenant));
+  // « Aujourd'hui », « Demain » : des jours de Paris, comme les dates des pass.
+  const jours = parJour(passes, murDeParis(maintenant));
   const squads = donnees?.squads ?? [];
   const toutesSections: { cle: 'soiree' | 'sport' | 'culture'; titre: string; icone: NomIcone; couleur: string; passes: Pass[] }[] = [
     { cle: 'soiree', titre: 'Événements', icone: 'ticket', couleur: GENRES.soiree.couleur, passes: passes.filter((p) => genreDe(p) === 'soiree') },

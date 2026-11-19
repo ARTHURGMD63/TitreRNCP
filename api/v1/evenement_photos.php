@@ -60,7 +60,7 @@ if ($methode === 'POST') {
     }
 
     $legende = trim(is_string($_POST['legende'] ?? null) ? $_POST['legende'] : '');
-    $legende = $legende !== '' ? substr($legende, 0, 255) : null;
+    $legende = $legende !== '' ? mb_substr($legende, 0, 255) : null;
 
     // Une seule photo par personne et par soirée : reposter remplace la
     // précédente. On la retrouve avant l'upload pour effacer son fichier une

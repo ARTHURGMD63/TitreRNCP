@@ -22,7 +22,7 @@ import { fixe, fs, hauteurBouton, lh, police, rayon, sans, teintes } from '../th
 import { useTheme } from '../useTheme';
 import { PressableAnime, Pulsation } from './Animations';
 import { teinteAvatar } from './Design';
-import { Avatar } from './Elements';
+import { Avatar, LienFleche } from './Elements';
 import { Feuille } from './Feuille';
 import { Icone } from './Icone';
 import { Display, Mono, T } from './Texte';
@@ -314,9 +314,7 @@ export function NotificationsVides({ onLien }: { onLien: () => void }) {
   return (
     <View style={{ paddingVertical: 32, paddingHorizontal: 16, alignItems: 'center' }}>
       <T taille={fs[5]} couleur={c.grisFonce} interligne={lh.snug} style={{ textAlign: 'center' }}>Rien de neuf pour l&apos;instant.</T>
-      <Text onPress={onLien} accessibilityRole="link" style={{ marginTop: 12, fontFamily: sans(700), fontSize: fs[4], color: c.surRougeClair }}>
-        Suis des étudiants et des lieux →
-      </Text>
+      <LienFleche libelle="Suis des étudiants et des lieux" onPress={onLien} taille={fs[4]} centre style={{ marginTop: 4 }} />
     </View>
   );
 }
@@ -410,12 +408,12 @@ export function FeuilleInvitation({ cible, onClose }: { cible: { type: CibleInvi
         {amis && amis.length === 0 ? (
           <View style={{ alignItems: 'center', padding: 24 }}>
             <T taille={fs[4]} couleur={c.gris} style={{ textAlign: 'center' }}>Tu ne suis personne encore.</T>
-            <Text
+            <LienFleche
+              libelle="Trouve des étudiants à suivre"
               onPress={() => { onClose(); router.navigate('/personnes'); }}
-              style={{ fontFamily: sans(700), fontSize: fs[4], color: c.surRougeClair, textAlign: 'center' }}
-            >
-              Trouve des étudiants à suivre →
-            </Text>
+              taille={fs[4]}
+              centre
+            />
           </View>
         ) : null}
       </View>

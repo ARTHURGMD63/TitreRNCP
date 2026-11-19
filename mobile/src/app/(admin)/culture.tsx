@@ -22,7 +22,7 @@ import { Display, Mono, T, TitreEcran } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
 import { libellePlaces } from '../../culture';
-import { lireDate } from '../../format';
+import { lireDateFormulaire } from '../../format';
 import { useJeton } from '../../session';
 import { fs, lh, rayon } from '../../theme';
 import { useTheme } from '../../useTheme';
@@ -51,7 +51,7 @@ const VIDE: Brouillon = {
 function depuis(e: EvenementCultureAdmin): Brouillon {
   return {
     id: e.id, titre: e.titre, description: e.description, categorie: e.categorie, organisateur: e.organisateur,
-    lieu: e.lieu, ville: e.ville, debut: lireDate(e.date_heure), fin: lireDate(e.date_fin),
+    lieu: e.lieu, ville: e.ville, debut: lireDateFormulaire(e.date_heure), fin: lireDateFormulaire(e.date_fin),
     quota: String(e.places.quota), prix: String(e.prix), lien: e.lien ?? '', mis_en_avant: e.mis_en_avant,
   };
 }
