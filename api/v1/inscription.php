@@ -62,6 +62,10 @@ $longueurMin = longueurMinimaleMotDePasse($type);
 
 if (!$prenom || !$nom || !$email || !$pass) {
     apiErreur('Merci de remplir tous les champs obligatoires.', 422, 'champs_manquants');
+} elseif ($type === 'partenaire' && $etablNom === '') {
+    // Un compte partenaire sans établissement passait (ETU-15) : il ne pouvait
+    // ni choisir de formule ni publier, et restait inutilisable.
+    apiErreur('Merci d’indiquer le nom de ton établissement.', 422, 'etablissement_nom');
 } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 255) {
     apiErreur("Cette adresse e-mail n'est pas valide.", 422, 'email');
 } elseif (mb_strlen($prenom) > 100 || mb_strlen($nom) > 100 || mb_strlen($ecole) > 150 || mb_strlen($promo) > 50
@@ -93,7 +97,7 @@ try {
                     $naissance, $type, interetsVersTexte($interets)]);
     $userId = (int) $pdo->lastInsertId();
 
-    if ($type === 'partenaire' && $etablNom) {
+    if ($type === 'partenaire') {
         $pdo->prepare('INSERT INTO etablissements (user_id, nom, type, ville, verification) VALUES (?,?,?,?,?)')
             ->execute([$userId, $etablNom, $etablType, $etablVille, verificationInitiale($etablType)]);
     }
@@ -108,7 +112,7 @@ try {
     synchroniserInterets($pdo, $userId, $interets);
     oublierEcolesRepresentees();
     enregistrerTentative($pdo, 'inscription', $ip);
-    if ($type === 'partenaire' && $etablNom) {
+    if ($type === 'partenaire') {
         emailBienvenueEtablissement($email, $prenom, $etablNom, $etablType);
     }
 } catch (PDOException $e) {
