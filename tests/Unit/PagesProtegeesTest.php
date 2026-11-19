@@ -145,7 +145,10 @@ final class PagesProtegeesTest extends TestCase
     {
         $code = $this->brut('__shot.php');
 
-        foreach (['REMOTE_ADDR', 'APP_ENV', '.shot-enabled'] as $condition) {
+        // estEnDeveloppement() et non getenv('APP_ENV') : la variable lue
+        // seule ignorait l'app_env de config.local.php (audit SEC-17).
+        $this->assertStringNotContainsString("getenv('APP_ENV')", $code);
+        foreach (['REMOTE_ADDR', 'estEnDeveloppement()', '.shot-enabled'] as $condition) {
             $this->assertStringContainsString(
                 $condition,
                 $code,
