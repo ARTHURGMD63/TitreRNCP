@@ -10,7 +10,7 @@
  *    d'un téléphone n'a ni la police ni les couleurs de la charte.
  */
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Platform, Pressable, Text, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 
@@ -280,6 +280,8 @@ export function ChampDate({ etiquette, valeur, onChange, mode = 'date', min, max
   const { c, sombre } = useTheme();
   const [ouvert, setOuvert] = useState(false);
   const [brouillon, setBrouillon] = useState<Date>(valeur ?? max ?? new Date());
+  // La date validée, en attente que la feuille soit partie (voir onFerme).
+  const aAppliquer = useRef<Date | null>(null);
 
   const texte = valeur
     ? mode === 'date'
@@ -320,7 +322,13 @@ export function ChampDate({ etiquette, valeur, onChange, mode = 'date', min, max
       </Pressable>
       {aide ? <Aide>{aide}</Aide> : null}
 
-      <Feuille visible={ouvert} onClose={() => setOuvert(false)}>
+      {/* La date validée n'est remise au formulaire qu'une fois la feuille
+          partie (onFerme). Avant, elle l'était tout de suite : à l'inscription,
+          une date entre 18 et 25 ans fait apparaître École et Promo, dont les
+          feuilles naissaient pendant que celle-ci était encore présentée ; sur
+          iOS, elles ne s'ouvraient alors plus jamais. */}
+      <Feuille visible={ouvert} onClose={() => { aAppliquer.current = null; setOuvert(false); }}
+        onFerme={() => { const d = aAppliquer.current; aAppliquer.current = null; if (d) onChange(d); }}>
         {etiquette ? <Display taille={fs[5] + 2} style={{ marginBottom: 8 }}>{etiquette}</Display> : null}
         <DateTimePicker
           value={brouillon}
@@ -334,7 +342,7 @@ export function ChampDate({ etiquette, valeur, onChange, mode = 'date', min, max
           onChange={(_, d) => d && setBrouillon(d)}
         />
         <Pressable
-          onPress={() => { onChange(brouillon); setOuvert(false); }}
+          onPress={() => { aAppliquer.current = brouillon; setOuvert(false); }}
           accessibilityRole="button"
           style={{ marginTop: 12, minHeight: hauteurBouton.plein, borderRadius: rayon.md, backgroundColor: c.rouge, alignItems: 'center', justifyContent: 'center' }}
         >
