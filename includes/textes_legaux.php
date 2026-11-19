@@ -77,13 +77,14 @@ function textesLegaux(): array
 
         'cgu' => [
             'titre'    => "Conditions Générales d'Utilisation",
-            'maj'      => '2026-11-18',
+            'maj'      => '2026-11-19',
             'sections' => [
                 ['titre' => 'Article 1 — Objet', 'blocs' => [
                     $p("Les présentes CGU régissent l'usage de la plateforme Outsee, éditée par {$editeur['nom']} ({$editeur['forme']}), qui permet aux étudiants de découvrir des événements, de bénéficier de réductions et de se regrouper pour des activités sportives ou sociales. Les services payants proposés aux établissements relèvent des Conditions Générales de Vente."),
                 ]],
                 ['titre' => 'Article 2 — Inscription', 'blocs' => [
                     $p("L'inscription est gratuite et réservée aux personnes majeures et aux établissements. L'utilisateur s'engage à fournir des informations exactes et à maintenir la confidentialité de son mot de passe."),
+                    $p("L'étudiant fournit un numéro de téléphone mobile, qui peut être vérifié par un code envoyé par SMS ; un même numéro ne peut servir qu'à un seul compte. Ce numéro est communiqué à l'établissement qui organise un événement auquel l'étudiant s'inscrit, afin qu'il puisse le joindre au sujet de cet événement (changement d'horaire, annulation, objet perdu), jusqu'à 30 jours après la fin de l'événement. S'inscrire à un événement vaut accord pour cette transmission."),
                 ]],
                 ['titre' => 'Article 3 — Utilisation de la plateforme', 'blocs' => [
                     $p("L'utilisateur s'interdit de :"),
@@ -115,7 +116,7 @@ function textesLegaux(): array
 
         'cgv' => [
             'titre'    => 'Conditions Générales de Vente',
-            'maj'      => '2026-11-18',
+            'maj'      => '2026-11-19',
             'sections' => [
                 ['titre' => 'Article 1 — Objet et champ', 'blocs' => [
                     $p("Les présentes CGV régissent la vente, par {$editeur['nom']} ({$editeur['forme']}, SIREN {$editeur['siren']}), des services payants d'Outsee aux établissements professionnels et associations (bars, clubs, BDE, organisateurs) : abonnements, événements au-delà du quota mensuel et mises en avant. Elles sont acceptées lors de la souscription sur le site. Ces services ne sont pas vendus dans l'application mobile."),
@@ -148,6 +149,7 @@ function textesLegaux(): array
                 ]],
                 ['titre' => 'Article 9 — Données personnelles', 'blocs' => [
                     $p("L'établissement accède aux données des étudiants inscrits à ses événements pour la seule gestion de ces événements (accueil, contrôle à l'entrée). Il s'interdit toute autre utilisation, notamment commerciale, et toute cession à des tiers. Voir la politique de confidentialité."),
+                    $p("Le numéro de téléphone des inscrits lui est accessible jusqu'à 30 jours après la fin de l'événement. Il ne s'en sert que pour joindre l'inscrit au sujet de cet événement : ni prospection, ni message publicitaire, ni ajout à un fichier client. Il ne le recopie pas hors d'Outsee, ou l'efface au plus tard à l'issue de ce délai. Il agit alors comme responsable de traitement distinct et répond seul d'un usage contraire à cet article, qui peut entraîner la suspension de son compte."),
                 ]],
                 ['titre' => 'Article 10 — Droit applicable et litiges', 'blocs' => [
                     $p("Les présentes CGV sont soumises au droit français. À défaut d'accord amiable, tout litige entre professionnels relève des tribunaux compétents du ressort de Clermont-Ferrand."),
@@ -169,6 +171,7 @@ function textesLegaux(): array
                 ['titre' => '2. Données collectées', 'blocs' => [
                     $liste(
                         "**Identité et compte :** nom, prénom, e-mail, mot de passe (haché), date de naissance (vérification de la majorité), ville, photo de profil facultative",
+                        "**Téléphone (étudiants) :** numéro de mobile, pouvant être vérifié par un code SMS à l'inscription ; le code lui-même n'est conservé que sous forme chiffrée et 10 minutes au plus",
                         "**Profil étudiant :** école, promotion, centres d'intérêt",
                         "**Activité :** inscriptions aux événements et présence (scan du pass), activités sportives et culturelles, abonnements, avis, photos de soirée publiées",
                         "**Position :** utilisée au moment d'une recherche par distance, si tu l'autorises ; elle n'est pas enregistrée dans ton compte",
@@ -182,6 +185,8 @@ function textesLegaux(): array
                     $liste(
                         "Gérer ton compte, t'authentifier, sécuriser le service : exécution du contrat (CGU) et intérêt légitime (sécurité)",
                         "Te proposer des événements et des personnes pertinents, gérer tes inscriptions et le check-in : exécution du contrat",
+                        "Vérifier ton numéro de téléphone (un numéro, un compte) pour limiter les faux comptes et les abus : intérêt légitime (sécurité du service)",
+                        "Permettre à l'établissement qui organise un événement auquel tu t'inscris de te joindre à son sujet : exécution du contrat (CGU, article 2)",
                         "T'envoyer des notifications : consentement, retirable dans les réglages du téléphone",
                         "Facturer les établissements : exécution du contrat (CGV) et obligation légale (comptabilité)",
                         "Fournir aux établissements des statistiques de fréquentation agrégées : intérêt légitime",
@@ -191,9 +196,9 @@ function textesLegaux(): array
                 ['titre' => '4. Destinataires et sous-traitants', 'blocs' => [
                     $p("Tes données sont accessibles à l'éditeur, et :"),
                     $liste(
-                        "**Les établissements**, pour les événements auxquels tu t'inscris : prénom, nom, école, promotion et présence, pour la seule gestion de l'événement",
+                        "**Les établissements**, pour les événements auxquels tu t'inscris : prénom, nom, école, promotion, présence et numéro de téléphone, pour la seule gestion de l'événement. Le numéro ne leur est plus affiché 30 jours après la fin de l'événement ; ils s'engagent à ne pas s'en servir à d'autres fins (CGV, article 9)",
                         "**Render** (hébergement de l'application, États-Unis) et **TiDB Cloud / PingCAP** (base de données)",
-                        "**OVH** (messagerie électronique, France)",
+                        "**OVH** (messagerie électronique et envoi des SMS de vérification, France)",
                         "**Stripe** (paiement des établissements)",
                         "**Expo, Google Firebase et Apple** (acheminement des notifications)",
                         "**Google Maps** (carte sur Android) et **OpenStreetMap / Nominatim** (conversion des adresses des établissements)"
@@ -205,6 +210,8 @@ function textesLegaux(): array
                         "**Compte :** tant qu'il est actif ; à sa suppression, les données personnelles sont effacées immédiatement (voir point 6)",
                         "**Session dans l'application :** 30 jours après la dernière utilisation (1 jour pour un administrateur)",
                         "**Tentatives de connexion :** 7 jours",
+                        "**Numéro de téléphone :** tant que le compte est actif ; côté établissement, affiché jusqu'à 30 jours après la fin de l'événement concerné",
+                        "**Code SMS de vérification :** 10 minutes, effacé dès qu'il a servi",
                         "**Historique des notifications envoyées :** 30 jours ; téléphone inactif : 180 jours",
                         "**Heures d'utilisation de l'application** (servent à mesurer la fréquentation et les heures de pointe) **:** 120 jours",
                         "**Paiements non aboutis :** 90 jours",
@@ -214,7 +221,7 @@ function textesLegaux(): array
                 ]],
                 ['titre' => '6. Tes droits', 'blocs' => [
                     $p("Tu disposes d'un droit d'accès, de rectification, d'effacement, de limitation, de portabilité et d'opposition, ainsi que du droit de définir des directives sur le sort de tes données après ton décès. Pour les exercer : {$editeur['contact']}. Une réponse t'est apportée sous un mois."),
-                    $p("**Supprimer ton compte** : depuis l'application, dans « Moi », « Supprimer mon compte ». Tes informations personnelles (nom, e-mail, photo, ville, date de naissance, centres d'intérêt, abonnements, activités, avis, photos de soirée, appareils) sont effacées immédiatement. Seules sont conservées, sans ton nom, tes présences passées avec ton école et ta promotion, pour que les statistiques des établissements restent exactes."),
+                    $p("**Supprimer ton compte** : depuis l'application, dans « Moi », « Supprimer mon compte ». Tes informations personnelles (nom, e-mail, téléphone, photo, ville, date de naissance, centres d'intérêt, abonnements, activités, avis, photos de soirée, appareils) sont effacées immédiatement. Seules sont conservées, sans ton nom, tes présences passées avec ton école et ta promotion, pour que les statistiques des établissements restent exactes."),
                     $p("Tu peux aussi adresser une réclamation à la CNIL (cnil.fr)."),
                 ]],
                 ['titre' => '7. Cookies et stockage', 'blocs' => [

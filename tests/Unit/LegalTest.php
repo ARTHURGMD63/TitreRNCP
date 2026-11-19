@@ -81,7 +81,7 @@ final class LegalTest extends TestCase
 
         $this->assertStringContainsString('<h2>Article 3 — Utilisation de la plateforme</h2>', $html);
         $this->assertStringContainsString('<li>Usurper l\'identité d\'une autre personne</li>', str_replace('&#039;', "'", $html));
-        $this->assertStringContainsString('Dernière mise à jour : 18/11/2026', $html);
+        $this->assertStringContainsString('Dernière mise à jour : 19/11/2026', $html);
     }
 
     /**

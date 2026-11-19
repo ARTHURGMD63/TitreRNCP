@@ -150,6 +150,17 @@ Obligation : article 30 du RGPD. Ce registre doit être tenu à jour et présent
 | Destinataires | Public, pour la fiche établissement |
 | Conservation proposée | Durée du contrat, puis 5 ans pour les seuls éléments nécessaires à la preuve de la relation commerciale |
 
+### T13 — Numéro de téléphone des étudiants (v43)
+
+| | |
+| --- | --- |
+| Finalité | Vérifier le numéro à l'inscription (un numéro, un compte : limiter les faux comptes) ; permettre à l'établissement organisateur de joindre un inscrit au sujet de son événement |
+| Base légale | Intérêt légitime (sécurité du service) pour la vérification ; exécution du contrat (CGU, article 2) pour la transmission à l'établissement |
+| Personnes concernées | Étudiants inscrits depuis la v43, et ceux qui l'ajoutent depuis Mon compte |
+| Données | `users.telephone`, `users.telephone_verifie_le` ; code SMS stocké en empreinte SHA-256 (`verifications_telephone`) |
+| Destinataires | Établissement organisateur, pour ses seuls inscrits ; OVH (envoi des SMS, France) |
+| Conservation | Tant que le compte est actif, effacé à sa suppression ; affiché à l'établissement jusqu'à 30 jours après l'événement ; code SMS 10 minutes, effacé dès qu'il a servi, purgé par `cron/entretien.php` |
+
 ---
 
 ## 3. Sous-traitants et hébergement
