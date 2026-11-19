@@ -4,7 +4,7 @@ Outsee — établi le 16/09/2026 · Version 1 (projet)
 Rédigé par : Arthur Gramond
 Obligation : article 30 du RGPD. Ce registre doit être tenu à jour et présenté sur demande de la CNIL.
 
-**Statut du document.** Version de travail établie à partir du schéma de base réel de l'application. Elle doit être relue par un professionnel, et surtout corrigée sur un point : les durées de conservation ci-dessous sont des **propositions**, pas un constat. À ce jour, l'application ne purge presque rien (voir partie 4). Un registre qui annonce des durées non appliquées est pire que pas de registre.
+**Statut du document.** Version de travail établie à partir du schéma de base réel de l'application. Elle doit être relue par un professionnel, et surtout corrigée sur un point : les durées de conservation ci-dessous sont des **propositions**, pas un constat. Depuis novembre 2026, la tâche `cron/entretien.php` applique la plupart d'entre elles (voir partie 4, point 3) ; celles qui ne le sont pas encore y sont listées. Un registre qui annonce des durées non appliquées est pire que pas de registre.
 
 ---
 
@@ -174,7 +174,7 @@ Ces cinq points sont ressortis de la lecture du schéma. Ce sont des chantiers, 
 
 2. **Le `ON DELETE CASCADE` est un piège.** Toutes les tables liées à `users` sont en cascade : supprimer un compte effacerait ses inscriptions et ses check-ins, donc **les statistiques déjà vendues au partenaire**, rétroactivement. La suppression doit donc être une **anonymisation** — dissocier l'identité en conservant l'école, la promotion et le fait de la présence — et non un `DELETE` sur `users`. À concevoir avant de coder la fonctionnalité, pas après.
 
-3. **Une seule durée de conservation est réellement appliquée** : celle de `login_attempts`. Rien ne purge les jetons de réinitialisation expirés, les traces de rappel, les invitations anciennes, les signalements traités, ni les journaux d'erreur. Toutes les durées de ce document restent théoriques tant qu'une tâche planifiée ne les applique pas — le dossier `cron/` existe déjà, c'est l'endroit.
+3. **Durées de conservation appliquées.** *Mis à jour le 19/11/2026.* La tâche quotidienne `cron/entretien.php` purge : tentatives de connexion après 7 jours, jetons de réinitialisation 1 jour après expiration, jetons de l'application et changements d'adresse non confirmés à expiration, paiements non aboutis après 90 jours, téléphones inactifs après 180 jours, historique des notifications après 30 jours. Les journaux techniques tournent sur 8 semaines (`deploy/logrotate/outsee`). Restent sans purge automatique : les traces de rappel, les invitations anciennes, les signalements traités.
 
 4. **La localisation des données chez Railway n'est pas établie.** À vérifier cette semaine : c'est une question de transfert hors UE, et elle est plus lourde à corriger après le lancement qu'avant.
 
@@ -189,7 +189,7 @@ Ces cinq points sont ressortis de la lecture du schéma. Ce sont des chantiers, 
 | Relecture par un professionnel du droit | Arthur | Avant publication |
 | Vérification de la région d'hébergement Railway | Arthur | 22/09/2026 |
 | Contrat de sous-traitance SMTP | Arthur | 29/09/2026 |
-| Tâches planifiées de purge selon les durées retenues | Arthur | 20/10/2026 |
+| Tâches planifiées de purge selon les durées retenues | Arthur | 20/10/2026 — fait en novembre 2026 (`cron/entretien.php`), sauf rappels, invitations et signalements |
 | Anonymisation et suppression de compte | Arthur | 20/10/2026 — fait le 14/10 (étudiants) ; la preuve binaire « majorité vérifiée » du traitement T2 n'est pas encore conservée : la date de naissance est effacée sans être remplacée |
 | Politique de confidentialité alignée sur ce registre | Arthur | 20/10/2026 |
 | Reprise du responsable de traitement après immatriculation | Arthur | Jour de la création |

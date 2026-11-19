@@ -126,7 +126,7 @@ function textesLegaux(): array
                 ['titre' => 'Article 3 — Abonnement', 'blocs' => [
                     $liste(
                         "L'abonnement est mensuel et reconduit tacitement chaque mois.",
-                        "Il est payable d'avance, par carte bancaire, via le prestataire de paiement Stripe.",
+                        "Il est payable d'avance, par carte bancaire ou prélèvement SEPA, via le prestataire de paiement Stripe.",
                         "La période offerte éventuellement associée à une formule est indiquée lors de la souscription ; aucun montant n'est prélevé pendant celle-ci.",
                         "Le changement de formule prend effet immédiatement, au prorata du mois en cours."
                     ),
@@ -203,7 +203,7 @@ function textesLegaux(): array
                     $liste(
                         "**Compte :** tant qu'il est actif ; à sa suppression, les données personnelles sont effacées immédiatement (voir point 6)",
                         "**Session dans l'application :** 30 jours après la dernière utilisation (1 jour pour un administrateur)",
-                        "**Tentatives de connexion :** 15 minutes",
+                        "**Tentatives de connexion :** 7 jours",
                         "**Historique des notifications envoyées :** 30 jours ; téléphone inactif : 180 jours",
                         "**Paiements non aboutis :** 90 jours",
                         "**Pièces comptables (factures, paiements des établissements) :** 10 ans, obligation légale",
