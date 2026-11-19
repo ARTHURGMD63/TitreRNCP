@@ -138,4 +138,17 @@ final class CultureTest extends TestCase
         $this->assertFalse($f['is_gratuit']);
         $this->assertNull($f['lien']);
     }
+
+    public function testUneDoubleAnnulationNEstPasUnSucces(): void
+    {
+        // ETU-17 : la seconde annulation ne supprime rien et doit le dire.
+        $pdo = new \PDO("sqlite::memory:");
+        $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $pdo->exec("CREATE TABLE culture_inscriptions (id INTEGER PRIMARY KEY, user_id INTEGER, evenement_id INTEGER)");
+        $pdo->exec("INSERT INTO culture_inscriptions (user_id, evenement_id) VALUES (1, 3)");
+
+        $this->assertTrue(cultureDesinscrire($pdo, 1, 3));
+        $this->assertFalse(cultureDesinscrire($pdo, 1, 3));
+        $this->assertFalse(cultureDesinscrire($pdo, 2, 3));
+    }
 }

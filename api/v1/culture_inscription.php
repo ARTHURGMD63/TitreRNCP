@@ -27,7 +27,9 @@ if ($id <= 0) {
 }
 
 if ($action === 'annuler') {
-    cultureDesinscrire($pdo, $uid, $id);
+    if (!cultureDesinscrire($pdo, $uid, $id)) {
+        apiErreur('Tu n’étais pas inscrit à cet événement.', 409, 'pas_inscrit');
+    }
 } else {
     $refus = cultureInscrire($pdo, $uid, $id);
     if ($refus !== null) {
