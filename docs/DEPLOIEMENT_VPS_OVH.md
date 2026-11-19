@@ -22,7 +22,7 @@ Les fichiers de configuration sont dans `deploy/` ; ils ne servent qu'au serveur
 | `deploy/php/outsee-fpm.conf`, `99-outsee.ini` | PHP-FPM (80 processus), OPcache, APCu, sessions |
 | `deploy/mariadb/99-outsee.cnf` | Base locale, 12 Go de cache, requêtes lentes journalisées |
 | `deploy/cron/outsee` | Stripe (5 min), push, rappels, entretien, sauvegarde, surveillance ; chaque ligne sous `flock` |
-| `deploy/logrotate/outsee` | Rotation hebdomadaire de `/var/log/outsee`, 8 semaines gardées |
+| `deploy/logrotate/outsee` | Rotation hebdomadaire de `/var/log/outsee` et `/var/log/outsee-sauvegarde`, 8 semaines gardées |
 | `deploy/deployer.sh` | Sauvegarde de la base, migrations, bascule atomique, retour arrière automatique |
 | `deploy/sauvegarder.sh` | Sauvegarde nocturne base + photos, copie distante chiffrée (installée en `/usr/local/sbin/outsee-sauvegarde`) |
 | `deploy/exclusions.txt` | Ce qui ne part jamais sur le serveur |
@@ -187,7 +187,7 @@ Le parcours côté code est décrit en tête de `includes/stripe.php`.
 
 ### Sauvegarde nocturne
 
-`/usr/local/sbin/outsee-sauvegarde` (copie `root:root` de `deploy/sauvegarder.sh`) tourne chaque nuit à 3 h 15 : base et photos, 14 jours dans `/var/backups/outsee` (lisible par root seul). Après chaque sauvegarde réussie, elle écrit la date dans `/var/lib/outsee/derniere_sauvegarde`, que lit la surveillance : au-delà de 36 heures sans sauvegarde, une alerte part. Journal : `/var/log/outsee/sauvegarde.log`.
+`/usr/local/sbin/outsee-sauvegarde` (copie `root:root` de `deploy/sauvegarder.sh`) tourne chaque nuit à 3 h 15 : base et photos, 14 jours dans `/var/backups/outsee` (lisible par root seul). Après chaque sauvegarde réussie, elle écrit la date dans `/var/lib/outsee/derniere_sauvegarde`, que lit la surveillance : au-delà de 36 heures sans sauvegarde, une alerte part. Journal : `/var/log/outsee-sauvegarde/sauvegarde.log`, dans un dossier à root : root n'écrit jamais dans `/var/log/outsee`, que le compte web contrôle. Un ancien `/var/log/outsee/sauvegarde.log` laissé par une installation précédente peut être supprimé.
 
 Chaque déploiement fait en plus une copie de la base juste avant les migrations : `/var/www/outsee/shared/sauvegardes_deploiement/avant_<version>.sql.gz` (les dix dernières).
 
@@ -247,7 +247,8 @@ Seuls des fichiers chiffrés (`.age` ou `.gpg`) partent ; sans moyen de chiffrer
 
 - Activer les **snapshots automatiques** du VPS dans l'espace client OVH.
 - Journaux (tournés chaque semaine, 8 semaines gardées, `/etc/logrotate.d/outsee`) :
-  - `/var/log/outsee/` : tâches planifiées, sauvegarde, et `php.log` (erreurs PHP) ;
+  - `/var/log/outsee/` : tâches planifiées et `php.log` (erreurs PHP) ;
+  - `/var/log/outsee-sauvegarde/` : sauvegarde nocturne (root) ;
   - `/var/log/php8.3-fpm-outsee-lent.log` : requêtes de plus de 3 s ;
   - `/var/log/mysql/lentes.log` : requêtes SQL de plus de 200 ms ;
   - `/var/log/nginx/`.

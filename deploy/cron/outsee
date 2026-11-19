@@ -27,8 +27,10 @@ APP_ENV=production
 30 4 * * *   www-data  flock -n /run/lock/outsee-entretien.lock php /var/www/outsee/current/cron/entretien.php >> /var/log/outsee/entretien.log 2>&1
 
 # Sauvegarde de la base et des photos, chaque nuit. Copie root:root de
-# deploy/sauvegarder.sh, hors des versions déployées.
-15 3 * * *   root      flock -n /run/lock/outsee-sauvegarde.lock bash /usr/local/sbin/outsee-sauvegarde >> /var/log/outsee/sauvegarde.log 2>&1
+# deploy/sauvegarder.sh, hors des versions déployées. Son journal va dans un
+# dossier à root : root n'écrit jamais dans /var/log/outsee, que www-data
+# contrôle.
+15 3 * * *   root      flock -n /run/lock/outsee-sauvegarde.lock bash /usr/local/sbin/outsee-sauvegarde >> /var/log/outsee-sauvegarde/sauvegarde.log 2>&1
 
 # Surveillance : sonde de disponibilité et alerte e-mail (une par panne).
 */5 * * * *  www-data  flock -n /run/lock/outsee-sante.lock php /var/www/outsee/current/cron/sante.php >> /var/log/outsee/sante.log 2>&1
