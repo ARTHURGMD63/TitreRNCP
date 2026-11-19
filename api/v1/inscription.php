@@ -18,6 +18,7 @@ require_once __DIR__ . '/../../includes/comptes.php';
 require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/auth_check.php';
 require_once __DIR__ . '/../../includes/agregats.php';
+require_once __DIR__ . '/../../includes/profil_etudiant.php';
 
 apiExigerMethode('POST');
 
@@ -68,9 +69,13 @@ if (!$prenom || !$nom || !$email || !$pass) {
     apiErreur('Merci d’indiquer le nom de ton établissement.', 422, 'etablissement_nom');
 } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 255) {
     apiErreur("Cette adresse e-mail n'est pas valide.", 422, 'email');
-} elseif (mb_strlen($prenom) > 100 || mb_strlen($nom) > 100 || mb_strlen($ecole) > 150 || mb_strlen($promo) > 50
+} elseif (mb_strlen($prenom) > 100 || mb_strlen($nom) > 100 || ecoleNormalisee($ecole) === null || mb_strlen($promo) > PROMO_LONGUEUR_MAX
     || mb_strlen($etablNom) > 150 || mb_strlen((string) $etudiantVille) > 100 || mb_strlen($etablVille) > 100) {
     apiErreur('Un des champs est trop long.', 422, 'champ_trop_long');
+} elseif (!promoAcceptee($promo)) {
+    // Même liste que le profil (ETU-16) : une promo libre fragmentait le
+    // classement « Mon école ».
+    apiErreur('Choisis ta promo dans la liste.', 422, 'promo');
 } elseif (strlen($pass) < $longueurMin) {
     apiErreur("Le mot de passe doit faire au moins $longueurMin caractères.", 422, 'mot_de_passe_court');
 } elseif ($age === null) {
@@ -82,6 +87,8 @@ if (!$prenom || !$nom || !$email || !$pass) {
 } elseif (!$cgu) {
     apiErreur('Merci d’accepter les conditions générales pour continuer.', 422, 'cgu');
 }
+
+$ecole = (string) ecoleNormalisee($ecole);
 
 // Tout ou rien : un compte partenaire sans son établissement serait inutilisable.
 $pdo->beginTransaction();

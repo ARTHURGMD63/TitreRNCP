@@ -11,6 +11,7 @@
 require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/auth_check.php';
 require_once __DIR__ . '/../../includes/gamification.php';
+require_once __DIR__ . '/../../includes/profil_etudiant.php';
 
 apiExigerMethode('GET');
 
@@ -82,7 +83,7 @@ apiReponse([
     // Les listes des deux sélecteurs de profil.php.
     'choix' => [
         'ecoles'   => ['UCA', 'SIGMA Clermont', 'INP Ingénieurs', 'IFSI', 'Autre'],
-        'promos'   => ['L1', 'L2', 'L3', 'M1', 'M2', 'BUT1', 'BUT2', 'BUT3'],
+        'promos'   => promosDisponibles(),
         'interets' => interetsDisponibles(),
     ],
 ]);
