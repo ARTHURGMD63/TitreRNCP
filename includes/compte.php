@@ -411,7 +411,14 @@ function compteNettoyerApres(PDO $pdo, array $restes): void
  *      « perdu ») et le registre financier. Ce sont des pièces comptables,
  *      que l'entreprise doit garder ; elles ne désignent plus le compte.
  *
- * @return array{avatar: string|null, photos: list<string>, photos_lieu: list<string>, evenements: list<int>}
+ * Les étudiants qui tenaient un pass pour une soirée à venir de
+ * l'établissement sont prévenus après coup (compteNettoyerApresPartenaire()) :
+ * la soirée disparaît de leur portefeuille avec le compte, et sans message ils
+ * se présentaient à une soirée qui n'existait plus (DB-01, PAY-10). La
+ * suppression elle-même reste immédiate et complète : c'est le droit de
+ * l'établissement, et une obligation des stores.
+ *
+ * @return array{avatar: string|null, photos: list<string>, photos_lieu: list<string>, evenements: list<int>, annulations: list<array{user_id: int, evenement_id: int, titre: string}>}
  * @throws RuntimeException quand l'abonnement ne peut pas être résilié
  */
 function compteSupprimerPartenaire(PDO $pdo, int $uid): array
@@ -454,6 +461,7 @@ function compteSupprimerPartenaire(PDO $pdo, int $uid): array
     $photos     = [];
     $photosLieu = [];
     $evenements = [];
+    $annulations = [];
 
     $pdo->beginTransaction();
     try {
@@ -473,6 +481,22 @@ function compteSupprimerPartenaire(PDO $pdo, int $uid): array
             $stmt = $pdo->prepare('SELECT id FROM evenements WHERE etablissement_id = ? AND date_heure > NOW()');
             $stmt->execute([$etabId]);
             $evenements = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+
+            // Qui prévenir : les pass encore valables pour ces soirées.
+            $stmt = $pdo->prepare(
+                "SELECT i.user_id, e.id AS evenement_id, e.titre
+                   FROM inscriptions i JOIN evenements e ON e.id = i.evenement_id
+                  WHERE e.etablissement_id = ? AND e.date_heure > NOW() AND i.statut = 'inscrit'"
+            );
+            $stmt->execute([$etabId]);
+            $annulations = array_map(
+                static fn (array $l): array => [
+                    'user_id'      => (int) $l['user_id'],
+                    'evenement_id' => (int) $l['evenement_id'],
+                    'titre'        => (string) $l['titre'],
+                ],
+                $stmt->fetchAll(PDO::FETCH_ASSOC)
+            );
 
             // La fiche client reste, sans coordonnées : pièce comptable.
             $pdo->prepare(
@@ -551,16 +575,27 @@ function compteSupprimerPartenaire(PDO $pdo, int $uid): array
         'photos'      => $photos,
         'photos_lieu' => $photosLieu,
         'evenements'  => $evenements,
+        'annulations' => $annulations,
     ];
 }
 
 /**
  * Après la suppression d'un établissement : fichiers et temps réel.
  *
- * @param array{avatar: string|null, photos: list<string>, photos_lieu: list<string>, evenements: list<int>} $restes
+ * @param array{avatar: string|null, photos: list<string>, photos_lieu: list<string>, evenements: list<int>, annulations?: list<array{user_id: int, evenement_id: int, titre: string}>} $restes
  */
 function compteNettoyerApresPartenaire(PDO $pdo, array $restes): void
 {
+    // Les inscrits aux soirées à venir apprennent l'annulation. pushNotifier()
+    // ne lève jamais : la suppression est déjà faite, elle ne doit pas
+    // échouer pour une notification.
+    if (!empty($restes['annulations'])) {
+        require_once __DIR__ . '/push.php';
+        foreach ($restes['annulations'] as $a) {
+            [$titre, $corps] = pushTexteEvenementAnnule($a['titre']);
+            pushNotifier($pdo, $a['user_id'], 'rappels', 'annulation:' . $a['evenement_id'], $titre, $corps);
+        }
+    }
     foreach ($restes['photos_lieu'] as $fichier) {
         deleteStoredImage($fichier, venuePhotoDir());
     }

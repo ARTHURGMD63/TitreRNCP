@@ -3,7 +3,8 @@
  * GET  /api/v1/partenaire_evenements.php — la liste des événements de
  *      l'établissement du compte connecté.
  * POST /api/v1/partenaire_evenements.php {action:'supprimer', id} —
- *      supprimer un événement.
+ *      supprimer un événement, s'il n'a ni inscrit ni paiement (409 sinon :
+ *      voir includes/evenements_suppression.php).
  *
  * Reprend partenaire/evenements.php : mêmes colonnes, même agrégation
  * d'inscrits/check-in par sous-requête, même règle de suppression scopée
@@ -19,6 +20,8 @@ require_once __DIR__ . '/../../includes/sponsoring.php';
 require_once __DIR__ . '/../../includes/evenements_temps.php';
 require_once __DIR__ . '/../../includes/capacites.php';
 require_once __DIR__ . '/../../includes/collaborations.php';
+require_once __DIR__ . '/../../includes/evenements_suppression.php';
+require_once __DIR__ . '/../../includes/temps_reel.php';
 
 $u   = apiPartenaire($pdo);
 $uid = (int) $u['id'];
@@ -44,10 +47,20 @@ if ($methode === 'POST') {
         apiErreur('Événement manquant', 422, 'id_manquant');
     }
 
-    $pdo->prepare('DELETE FROM evenements WHERE id=? AND etablissement_id=?')
-        ->execute([$eid, (int) $etab['id']]);
+    // Refusée s'il a des inscrits ou un paiement (PAY-10) : 409, avec le
+    // code inscrits ou paiement et un message à afficher tel quel.
+    $resultat = evenementSupprimer($pdo, $eid, (int) $etab['id']);
+    if (!$resultat['ok']) {
+        $statut = match ($resultat['code']) {
+            'introuvable'    => 404,
+            'erreur_serveur' => 500,
+            default          => 409,
+        };
+        apiErreur($resultat['message'], $statut, $resultat['code']);
+    }
+    fluxToucher($pdo, CANAL_GLOBAL);
 
-    apiReponse(['success' => true, 'message' => 'Événement supprimé.']);
+    apiReponse(['success' => true, 'message' => $resultat['message']]);
 }
 
 apiExigerMethode('GET');

@@ -188,6 +188,12 @@ function pushTexteLieu(string $lieu, string $titreEvenement): array
 }
 
 /** @return array{0:string, 1:string} */
+function pushTexteEvenementAnnule(string $titreEvenement): array
+{
+    return ['Soirée annulée', $titreEvenement . ' n’aura pas lieu : l’établissement a fermé son compte. Ton pass est retiré.'];
+}
+
+/** @return array{0:string, 1:string} */
 function pushTexteRappel(string $titreEvenement, string $heure, string $lieu): array
 {
     return ['C’est demain', $titreEvenement . ' à ' . $heure . ', ' . $lieu . '.'];

@@ -12,6 +12,7 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/sponsoring.php';
 require_once __DIR__ . '/../includes/evenements_temps.php';
 require_once __DIR__ . '/../includes/evenement_pro.php';
+require_once __DIR__ . '/../includes/evenements_suppression.php';
 
 $etab = ouvrirEspacePro($pdo);
 
@@ -20,9 +21,12 @@ traiterRetourPaiementEvenement($pdo, $etab);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['supprimer'])) {
     csrfVerify();
-    $stmt = $pdo->prepare('DELETE FROM evenements WHERE id = ? AND etablissement_id = ?');
-    $stmt->execute([(int) $_POST['supprimer'], (int) $etab['id']]);
-    flashPro($stmt->rowCount() ? 'Événement supprimé.' : 'Cet événement n\'existe plus.', $stmt->rowCount() ? 'succes' : 'alerte');
+    // Refusée s'il a des inscrits ou un paiement (PAY-10).
+    $resultat = evenementSupprimer($pdo, (int) $_POST['supprimer'], (int) $etab['id']);
+    if ($resultat['ok']) {
+        fluxToucher($pdo, CANAL_GLOBAL);
+    }
+    flashPro($resultat['message'], $resultat['ok'] ? 'succes' : 'alerte');
     header('Location: ' . baseUrl('/partenaire/evenements.php'));
     exit;
 }

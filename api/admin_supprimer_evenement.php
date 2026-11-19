@@ -3,10 +3,14 @@
  * Supprime un événement — réservé à l'administrateur.
  *
  * inscriptions et economies référencent evenements.id en ON DELETE CASCADE :
- * supprimer la ligne efface aussi les inscriptions et les économies liées.
+ * supprimer la ligne effacerait aussi les pass des étudiants. La suppression
+ * suit donc la règle commune (includes/evenements_suppression.php, PAY-10) :
+ * refusée tant qu'un pass non annulé ou un paiement encaissé y est rattaché.
  */
 require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/evenements_suppression.php';
+require_once __DIR__ . '/../includes/temps_reel.php';
 header('Content-Type: application/json');
 
 // Ecriture : POST obligatoire, jeton CSRF et origine verifies.
@@ -26,17 +30,8 @@ if (!$evenementId) {
     exit;
 }
 
-$stmt = $pdo->prepare("SELECT id FROM evenements WHERE id = ?");
-$stmt->execute([$evenementId]);
-if (!$stmt->fetch()) {
-    echo json_encode(['success' => false, 'message' => 'Événement introuvable']);
-    exit;
+$resultat = evenementSupprimer($pdo, $evenementId);
+if ($resultat['ok']) {
+    fluxToucher($pdo, CANAL_GLOBAL);
 }
-
-try {
-    $pdo->prepare("DELETE FROM evenements WHERE id = ?")->execute([$evenementId]);
-    echo json_encode(['success' => true, 'message' => 'Événement supprimé']);
-} catch (PDOException $e) {
-    logErreur('Suppression d\'événement impossible', $e, ['evenement' => $evenementId, 'admin' => $_SESSION['user_id']]);
-    echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
-}
+echo json_encode(['success' => $resultat['ok'], 'code' => $resultat['code'], 'message' => $resultat['message']]);
