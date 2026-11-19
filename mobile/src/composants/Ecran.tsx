@@ -35,7 +35,8 @@ export function BandeauHorsLigne({ style }: { style?: StyleProp<ViewStyle> }) {
   const depuis = useHorsLigne();
   if (depuis === null) return null;
   const d = new Date(depuis);
-  const jour = d.toDateString() === new Date().toDateString() ? dateFr(d, 'H\\hi') : dateFr(d, 'j M · H\\hi');
+  // Aujourd'hui à Paris, comme l'heure affichée (format.ts).
+  const jour = dateFr(d, 'Y-m-d') === dateFr(new Date(), 'Y-m-d') ?dateFr(d, 'H\\hi') : dateFr(d, 'j M · H\\hi');
   return (
     <View
       accessibilityRole="alert"

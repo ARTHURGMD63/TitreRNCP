@@ -38,7 +38,7 @@ import { Icone, type NomIcone } from '../../composants/Icone';
 import { T, TitreEcran, TitreSection } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
-import { compteARebours, court, dateFr, ts } from '../../format';
+import { compteARebours, court, dateFr, murDeParis, ts } from '../../format';
 import { formatEuros, lireCodePass, prixEvenement } from '../../regles';
 import { parJour, type Groupe } from '../../regroupement';
 import { economiePass } from '../../composants/LignesPass';
@@ -541,7 +541,8 @@ export default function Wallet() {
   useFocusEffect(useCallback(() => { void charger(); }, [charger]));
 
   const passes = donnees?.pass_actifs ?? [];
-  const jours = parJour(passes, new Date(maintenant));
+  // « Aujourd'hui », « Demain » : des jours de Paris, comme les dates des pass.
+  const jours = parJour(passes, murDeParis(maintenant));
   const squads = donnees?.squads ?? [];
   const toutesSections: { cle: 'soiree' | 'sport' | 'culture'; titre: string; icone: NomIcone; couleur: string; passes: Pass[] }[] = [
     { cle: 'soiree', titre: 'Événements', icone: 'ticket', couleur: GENRES.soiree.couleur, passes: passes.filter((p) => genreDe(p) === 'soiree') },

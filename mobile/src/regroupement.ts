@@ -7,8 +7,9 @@
  * se range par mois.
  *
  * Module sans dépendance (testé par tests/regroupement.test.ts) : les dates
- * du serveur sont lues comme des heures locales, « 2026-11-22 23:30:00 »,
- * comme le fait lireDate() de format.ts.
+ * du serveur, « 2026-11-22 23:30:00 », sont des heures de Paris et se
+ * comparent chiffre à chiffre. `maintenant` doit donc être l'heure de Paris
+ * rendue aux mêmes chiffres : murDeParis() de format.ts (constat BUG-08).
  */
 
 export type Groupe<T> = { cle: string; libelle: string; elements: T[] };

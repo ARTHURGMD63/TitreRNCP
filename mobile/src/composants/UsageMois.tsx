@@ -47,8 +47,8 @@ export function UsageMois({ usage, offreLibelle, essaiJusquau, club }: {
   const bleu = useRubrique('bleu');
   const { evenements: ev, flash, mises_en_avant: mea } = usage;
 
-  const [annee, mois] = usage.mois.split('-').map(Number);
-  const nomMois = dateFr(new Date(annee, (mois ?? 1) - 1, 1), 'F');
+  // « 2026-11 » : le mois de Paris, lu comme une date de l'API.
+  const nomMois = dateFr(`${usage.mois}-01`, 'F');
   const depasse = ev.supplementaires > 0;
   const sponsorises = mea.cout > 0 ? Math.max(1, mea.achetees) : 0;
   const enPlus = ev.supplementaires + sponsorises;

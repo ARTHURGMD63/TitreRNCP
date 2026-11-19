@@ -6,7 +6,9 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { compteARebours, court, dateFr, dureeCourte, heure, lireDate, majuscules, nombre, ts } from '../src/format.ts';
+import {
+  compteARebours, court, dateFr, decalageParis, dureeCourte, heure, lireDate, lireDateFormulaire, majuscules, murDeParis, nombre, ts,
+} from '../src/format.ts';
 
 // 23 septembre 2026 est un mercredi.
 const SOIREE = '2026-09-23 20:30:00';
@@ -43,14 +45,103 @@ test('dateFr : une valeur absente ou illisible donne une chaîne vide', () => {
 });
 
 test('lireDate : accepte l’espace comme le T, et une date seule', () => {
-  assert.equal(lireDate('2026-09-23T20:30')?.getHours(), 20);
-  assert.equal(lireDate('2026-09-23')?.getHours(), 0);
+  assert.equal(lireDate('2026-09-23T20:30')?.toISOString(), '2026-09-23T18:30:00.000Z');
+  assert.equal(lireDate('2026-09-23')?.toISOString(), '2026-09-22T22:00:00.000Z');
   assert.equal(lireDate('23/09/2026'), null);
 });
 
-test('lireDate : lue champ par champ, indépendante du fuseau', () => {
-  const d = lireDate(SOIREE);
-  assert.deepEqual([d?.getFullYear(), d?.getMonth(), d?.getDate(), d?.getHours(), d?.getMinutes()], [2026, 8, 23, 20, 30]);
+// ─── Fuseau : l'heure de Paris, quel que soit le téléphone (BUG-08) ─────────
+
+/** Exécute `f` avec le téléphone réglé sur `fuseau`, puis remet le fuseau d'origine. */
+function avecFuseau<T>(fuseau: string, f: () => T): T {
+  const avant = process.env.TZ;
+  process.env.TZ = fuseau;
+  try {
+    return f();
+  } finally {
+    if (avant === undefined) delete process.env.TZ;
+    else process.env.TZ = avant;
+  }
+}
+
+const FUSEAUX = ['Europe/Paris', 'UTC', 'America/Los_Angeles', 'Asia/Tokyo', 'Pacific/Auckland'];
+
+test('decalageParis : +1 h l’hiver, +2 h l’été, bascule le dernier dimanche à 1 h UTC', () => {
+  assert.equal(decalageParis(Date.UTC(2026, 0, 15, 12)), 60);
+  assert.equal(decalageParis(Date.UTC(2026, 6, 15, 12)), 120);
+  // 2026 : 29 mars et 25 octobre.
+  assert.equal(decalageParis(Date.UTC(2026, 2, 29, 0, 59)), 60);
+  assert.equal(decalageParis(Date.UTC(2026, 2, 29, 1, 0)), 120);
+  assert.equal(decalageParis(Date.UTC(2026, 9, 25, 0, 59)), 120);
+  assert.equal(decalageParis(Date.UTC(2026, 9, 25, 1, 0)), 60);
+});
+
+test('lireDate : une date sans décalage est l’heure de Paris, été comme hiver', () => {
+  for (const fuseau of FUSEAUX) {
+    avecFuseau(fuseau, () => {
+      assert.equal(lireDate(SOIREE)?.toISOString(), '2026-09-23T18:30:00.000Z', fuseau);
+      assert.equal(lireDate('2026-12-31 23:30:00')?.toISOString(), '2026-12-31T22:30:00.000Z', fuseau);
+    });
+  }
+});
+
+test('lireDate : une date ISO avec décalage garde le sien', () => {
+  assert.equal(lireDate('2026-09-23T20:30:00+02:00')?.toISOString(), '2026-09-23T18:30:00.000Z');
+  assert.equal(lireDate('2026-09-23T18:30:00Z')?.toISOString(), '2026-09-23T18:30:00.000Z');
+  assert.equal(lireDate('2026-09-23T18:30:00.250Z')?.toISOString(), '2026-09-23T18:30:00.000Z');
+  assert.equal(lireDate('2026-09-23T13:30:00-0500')?.toISOString(), '2026-09-23T18:30:00.000Z');
+  // DATE_ATOM du PHP, à l'heure d'hiver.
+  assert.equal(lireDate('2026-01-10T21:00:00+01:00')?.toISOString(), '2026-01-10T20:00:00.000Z');
+});
+
+test('lireDate : les heures du changement d’heure', () => {
+  // 29 mars 2026, 2h30 n'existe pas à Paris : on avance à 3h30 (01:30 UTC).
+  assert.equal(lireDate('2026-03-29 02:30:00')?.toISOString(), '2026-03-29T01:30:00.000Z');
+  // 25 octobre 2026, 2h30 existe deux fois : prise à l'heure d'hiver.
+  assert.equal(lireDate('2026-10-25 02:30:00')?.toISOString(), '2026-10-25T01:30:00.000Z');
+  assert.equal(lireDate('2026-10-25 01:30:00')?.toISOString(), '2026-10-24T23:30:00.000Z');
+});
+
+test('dateFr et heure : l’heure de Paris, où que soit le téléphone', () => {
+  for (const fuseau of FUSEAUX) {
+    avecFuseau(fuseau, () => {
+      assert.equal(heure(SOIREE), '20h30', fuseau);
+      assert.equal(dateFr(SOIREE, 'l j F Y'), 'Mercredi 23 Septembre 2026', fuseau);
+      // Un instant exact (une date ISO, un Date) s'écrit aussi à Paris.
+      assert.equal(heure('2026-09-23T18:30:00Z'), '20h30', fuseau);
+      assert.equal(dateFr(new Date(Date.UTC(2026, 11, 31, 23, 30)), 'D j M H\hi'), 'Ven 1 Janv 00h30', fuseau);
+    });
+  }
+});
+
+test('ts et compteARebours : le même instant sur tous les téléphones', () => {
+  const attendu = Date.UTC(2026, 8, 23, 18, 30) / 1000;
+  for (const fuseau of FUSEAUX) {
+    avecFuseau(fuseau, () => {
+      assert.equal(ts(SOIREE), attendu, fuseau);
+      // Deux heures avant la soirée, en temps réel : « Dans 2 h » partout.
+      assert.equal(compteARebours(ts(SOIREE), attendu * 1000 - 2 * 3600_000), 'Dans 2 h', fuseau);
+    });
+  }
+});
+
+test('lireDateFormulaire : les mêmes chiffres dans le fuseau du téléphone', () => {
+  for (const fuseau of FUSEAUX) {
+    avecFuseau(fuseau, () => {
+      const d = lireDateFormulaire(SOIREE);
+      assert.deepEqual([d?.getFullYear(), d?.getMonth(), d?.getDate(), d?.getHours(), d?.getMinutes()], [2026, 8, 23, 20, 30], fuseau);
+    });
+  }
+});
+
+test('murDeParis : les chiffres de l’heure de Paris, pour comparer des jours', () => {
+  for (const fuseau of FUSEAUX) {
+    avecFuseau(fuseau, () => {
+      // 23 h 30 UTC le 31 décembre : déjà le 1er janvier à Paris.
+      const d = murDeParis(Date.UTC(2026, 11, 31, 23, 30));
+      assert.deepEqual([d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes()], [2027, 0, 1, 0, 30], fuseau);
+    });
+  }
 });
 
 test('ts : secondes, 0 si la date est illisible', () => {
