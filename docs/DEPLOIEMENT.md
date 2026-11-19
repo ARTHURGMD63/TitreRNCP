@@ -81,7 +81,20 @@ MYSQLPORT=4000
 MYSQLUSER=xxxxxxxx.root
 MYSQLPASSWORD=le-mot-de-passe
 MYSQLDATABASE=outsee
+IP_ENTETE=x-forwarded-for
+PROXY_CONFIANCE=prive,cloudflare
 ```
+
+`IP_ENTETE` et `PROXY_CONFIANCE` disent aux limiteurs de connexion où lire
+l'adresse du visiteur. Derrière Render, `REMOTE_ADDR` est l'adresse interne du
+répartiteur, la même pour tout le monde ; le répartiteur ajoute l'adresse du
+visiteur à droite de `X-Forwarded-For`. L'application remonte cet en-tête de
+droite à gauche en sautant les proxys déclarés (réseaux privés de Render et
+plages de Cloudflare) et garde la première adresse qui n'en est pas un. Sans
+ces deux variables, seule `REMOTE_ADDR` compte : tous les visiteurs partagent
+alors le même compteur par adresse. Les en-têtes ne sont jamais crus quand la
+connexion ne vient pas d'un proxy déclaré : un client ne peut plus choisir son
+adresse en écrivant `CF-Connecting-IP` (audit SEC-07).
 
 Render construit l'image du `Dockerfile` et donne une adresse
 `https://outsee-xxxx.onrender.com`. Le site est à la racine de cette adresse.

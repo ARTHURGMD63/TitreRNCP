@@ -9,6 +9,8 @@
 // declare que des fonctions, et celles qui dependent d'autres modules ne sont
 // resolues qu'a l'appel.
 require_once __DIR__ . '/api.php';
+// reglage() pour ipClient(), estEnProduction() pour hachageInterdit().
+require_once __DIR__ . '/config.php';
 
 // ─── Headers de sécurité ──────────────────────────────────────────────────
 
@@ -281,53 +283,157 @@ function protegerEcritureApi(): void {
 // ─── Rate limiting (anti-bruteforce) ──────────────────────────────────────
 
 /**
- * L'adresse IP du client, y compris derrière le répartiteur de charge.
- *
- * POURQUOI : en production (Render, Railway, Docker derrière un proxy), la
- * connexion TCP vient du répartiteur, pas de l'utilisateur. `REMOTE_ADDR`
- * vaut alors l'adresse interne du proxy, la même pour tout le monde. Le
- * limiteur de connexion comptait donc les échecs de TOUS les utilisateurs
- * ensemble : cinq fautes de frappe, d'où qu'elles viennent, bloquaient la
- * connexion de chacun pendant quinze minutes — et une connexion réussie
- * effaçait le compteur de l'attaquant.
- *
- * Les en-têtes de transfert ne sont crus que si la connexion vient d'une
- * adresse privée ou de bouclage : un client direct sur Internet ne peut pas
- * se faire passer pour un proxy, et un X-Forwarded-For qu'il ajouterait
- * lui-même est ignoré.
- *
- * Ordre : CF-Connecting-IP (posé par Cloudflare, qui écrase toute valeur
- * envoyée par le client), puis l'entrée la plus à droite de X-Forwarded-For
- * qui n'est pas une adresse privée (celles de gauche sont écrites par le
- * client, celles de droite par les proxys de confiance).
+ * Plages publiées par Cloudflare (https://www.cloudflare.com/ips/), pour le
+ * mot-clé « cloudflare » de PROXY_CONFIANCE. À relire de temps en temps :
+ * Cloudflare les change rarement, mais il les change.
  */
-function ipClient(): string {
-    $direct   = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
-    $valide   = static fn (string $ip): bool => filter_var($ip, FILTER_VALIDATE_IP) !== false;
-    $publique = static fn (string $ip): bool => filter_var(
-        $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
-    ) !== false;
+const PLAGES_CLOUDFLARE = [
+    '173.245.48.0/20', '103.21.244.0/22', '103.22.200.0/22', '103.31.4.0/22',
+    '141.101.64.0/18', '108.162.192.0/18', '190.93.240.0/20', '188.114.96.0/20',
+    '197.234.240.0/22', '198.41.128.0/17', '162.158.0.0/15', '104.16.0.0/13',
+    '104.24.0.0/14', '172.64.0.0/13', '131.0.72.0/22',
+    '2400:cb00::/32', '2606:4700::/32', '2803:f800::/32', '2405:b500::/32',
+    '2405:8100::/32', '2a06:98c0::/29', '2c0f:f248::/32',
+];
 
+/** Plages privées et de bouclage, pour le mot-clé « prive » de PROXY_CONFIANCE. */
+const PLAGES_PRIVEES = [
+    '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '127.0.0.0/8',
+    '100.64.0.0/10', '::1/128', 'fc00::/7',
+];
+
+/**
+ * L'adresse appartient-elle à la plage (notation CIDR, ou adresse seule) ?
+ * IPv4 et IPv6 ; une plage mal écrite ne contient rien.
+ */
+function ipDansPlage(string $ip, string $plage): bool {
+    [$reseau, $longueur] = array_pad(explode('/', trim($plage), 2), 2, null);
+    $binIp     = @inet_pton($ip);
+    $binReseau = @inet_pton((string) $reseau);
+    if ($binIp === false || $binReseau === false || strlen($binIp) !== strlen($binReseau)) {
+        return false;
+    }
+    $bits = strlen($binIp) * 8;
+    $n    = $longueur === null ? $bits : (ctype_digit($longueur) ? (int) $longueur : -1);
+    if ($n < 0 || $n > $bits) {
+        return false;
+    }
+    $octets = intdiv($n, 8);
+    if (substr($binIp, 0, $octets) !== substr($binReseau, 0, $octets)) {
+        return false;
+    }
+    $reste = $n % 8;
+    if ($reste === 0) {
+        return true;
+    }
+    $masque = (0xFF << (8 - $reste)) & 0xFF;
+
+    return (ord($binIp[$octets]) & $masque) === (ord($binReseau[$octets]) & $masque);
+}
+
+/**
+ * Les proxys de confiance déclarés : liste de plages séparées par des
+ * virgules ou des espaces, avec deux mots-clés, « prive » (réseaux privés
+ * et bouclage) et « cloudflare » (plages publiées par Cloudflare).
+ *
+ * @return list<string>
+ */
+function proxysDeConfiance(string $brut): array {
+    $plages = [];
+    foreach (preg_split('/[\s,]+/', strtolower(trim($brut)), -1, PREG_SPLIT_NO_EMPTY) ?: [] as $element) {
+        $ajout = match ($element) {
+            'prive', 'privé', 'private' => PLAGES_PRIVEES,
+            'cloudflare'                => PLAGES_CLOUDFLARE,
+            default                     => [$element],
+        };
+        array_push($plages, ...$ajout);
+    }
+
+    return $plages;
+}
+
+/**
+ * L'adresse du client selon les en-têtes qu'on a décidé de croire.
+ * Séparée de ipClient() pour être testée sans toucher à l'environnement.
+ *
+ * @param array<string,mixed> $server  $_SERVER ou un équivalent
+ * @param string              $mode    'aucun', 'cloudflare' ou 'x-forwarded-for'
+ * @param list<string>        $proxys  plages des proxys de confiance
+ */
+function ipDepuisRequete(array $server, string $mode, array $proxys): string {
+    $valide = static fn (string $ip): bool => filter_var($ip, FILTER_VALIDATE_IP) !== false;
+    $fiable = static function (string $ip) use ($proxys): bool {
+        foreach ($proxys as $plage) {
+            if (ipDansPlage($ip, $plage)) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    $direct = trim((string) ($server['REMOTE_ADDR'] ?? ''));
     if (!$valide($direct)) {
         return '0.0.0.0';
     }
-    if ($publique($direct)) {
-        return $direct; // aucun proxy devant nous : l'adresse est la bonne
+    // Un en-tête n'est lu que si la connexion vient d'un proxy déclaré :
+    // n'importe quel client peut écrire CF-Connecting-IP ou X-Forwarded-For.
+    if (!$fiable($direct)) {
+        return $direct;
     }
 
-    $cf = trim((string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? ''));
-    if ($cf !== '' && $valide($cf)) {
-        return $cf;
+    if ($mode === 'cloudflare') {
+        $cf = trim((string) ($server['HTTP_CF_CONNECTING_IP'] ?? ''));
+        return $valide($cf) ? $cf : $direct;
     }
 
-    $chaine = array_reverse(array_map('trim', explode(',', (string) ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ''))));
-    foreach ($chaine as $ip) {
-        if ($valide($ip) && $publique($ip)) {
-            return $ip;
+    if ($mode === 'x-forwarded-for') {
+        // Chaque proxy ajoute à DROITE l'adresse qui lui a parlé : on remonte
+        // de droite à gauche tant que l'entrée est un proxy de confiance. La
+        // première qui ne l'est pas est le client ; tout ce qui est à sa
+        // gauche a été écrit par lui et ne vaut rien.
+        $chaine = array_reverse(array_map('trim', explode(',', (string) ($server['HTTP_X_FORWARDED_FOR'] ?? ''))));
+        $dernier = $direct;
+        foreach ($chaine as $ip) {
+            if ($ip === '' || !$valide($ip)) {
+                break; // chaîne abîmée : on s'arrête au dernier maillon sûr
+            }
+            if (!$fiable($ip)) {
+                return $ip;
+            }
+            $dernier = $ip;
         }
+        return $dernier;
     }
 
     return $direct;
+}
+
+/**
+ * L'adresse IP du client, comptée par les limiteurs.
+ *
+ * POURQUOI un réglage : derrière un répartiteur (Render, Docker, nginx en
+ * frontal), `REMOTE_ADDR` est l'adresse du proxy, la même pour tout le
+ * monde, et le limiteur compterait tous les utilisateurs comme un seul. Mais
+ * croire un en-tête dès que `REMOTE_ADDR` est privée (l'ancienne règle)
+ * laissait, derrière un proxy qui transmet les en-têtes du client, choisir
+ * son adresse à chaque requête : toutes les limites par IP sautaient
+ * (audit SEC-07).
+ *
+ * Deux réglages (variable d'environnement, ou clé de config.local.php) :
+ *   - IP_ENTETE / ip_entete : 'aucun' (défaut, seule REMOTE_ADDR compte),
+ *     'cloudflare' (CF-Connecting-IP) ou 'x-forwarded-for' ;
+ *   - PROXY_CONFIANCE / proxy_confiance : les plages d'où l'en-tête est
+ *     accepté (« 10.0.0.0/8, prive, cloudflare »). Vide en mode cloudflare :
+ *     les plages de Cloudflare.
+ */
+function ipClient(): string {
+    $mode = strtolower(trim(reglage('IP_ENTETE', 'ip_entete', 'aucun')));
+    $brut = reglage('PROXY_CONFIANCE', 'proxy_confiance');
+    if ($mode === 'cloudflare' && trim($brut) === '') {
+        $brut = 'cloudflare';
+    }
+
+    return ipDepuisRequete($_SERVER, $mode, proxysDeConfiance($brut));
 }
 
 /**

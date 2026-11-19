@@ -81,6 +81,8 @@ Sur le VPS : `sudo nano /var/www/outsee/shared/config.local.php` (modèle commen
 - `alerte_email` : la boîte qui reçoit les alertes de panne et de sauvegarde manquée (lue chaque jour) ;
 - `app_store_url`, `play_store_url` une fois l'application publiée (la vitrine affiche « Bientôt » d'ici là).
 
+`ip_entete` vaut `aucun` : nginx reçoit le visiteur directement et transmet sa vraie adresse dans `REMOTE_ADDR`. Si Cloudflare est placé devant le VPS, activer `real_ip` dans `deploy/nginx/outsee.conf` plutôt que de toucher à ce réglage ; `ip_entete` et `proxy_confiance` ne servent que lorsqu'un proxy est placé entre nginx et PHP.
+
 `app_env` vaut `production` et `url_publique` vaut `https://<domaine>` : ne pas les changer. Ce sont eux qui empêchent d'afficher les erreurs, et de construire un lien de réinitialisation à partir de l'en-tête `Host` envoyé par le client.
 
 ## 5. Reprendre les données de la base actuelle (TiDB Cloud)
