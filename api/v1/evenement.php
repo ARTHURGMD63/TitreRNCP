@@ -14,6 +14,7 @@ require_once __DIR__ . '/../../includes/agregats.php';
 require_once __DIR__ . '/../../includes/sponsoring.php';
 require_once __DIR__ . '/../../includes/evenements_temps.php';
 require_once __DIR__ . '/../../includes/collaborations.php';
+require_once __DIR__ . '/../../includes/comptes.php';
 
 apiExigerMethode('GET');
 
@@ -26,7 +27,7 @@ if ($id <= 0) {
 }
 
 $stmt = $pdo->prepare("
-    SELECT e.*, et.nom AS etablissement_nom, et.ville, et.adresse,
+    SELECT e.*, et.nom AS etablissement_nom, et.ville, et.adresse, et.verification,
            et.type AS etab_type, et.latitude AS etab_latitude, et.longitude AS etab_longitude,
            (SELECT COUNT(*) FROM inscriptions
              WHERE evenement_id = e.id AND statut != 'annule') AS nb_inscrits,
@@ -39,7 +40,9 @@ $stmt = $pdo->prepare("
 $stmt->execute([$uid, $id]);
 $e = $stmt->fetch();
 
-if (!$e) {
+// Un BDE refusé ne montre plus ses soirées (PAY-09), sauf à qui y tient déjà
+// un pass : il doit pouvoir le retrouver et l'annuler.
+if (!$e || (!etablissementVisible($e) && (int) $e['deja_inscrit'] === 0)) {
     apiErreur('Cette soirée n’existe plus', 404, 'introuvable');
 }
 

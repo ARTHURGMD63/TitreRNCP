@@ -31,6 +31,7 @@ require_once __DIR__ . '/musique.php';
 require_once __DIR__ . '/agregats.php';
 require_once __DIR__ . '/cache.php';
 require_once __DIR__ . '/evenements_temps.php';
+require_once __DIR__ . '/comptes.php';
 
 /**
  * Valeur réservée du filtre d'intérêt : « les gens qui aiment ce que j'aime »,
@@ -567,9 +568,11 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
      *    l'établissement (v38) ou début pas encore passés, places restantes.
      *    Le comptage des places ne lit que l'index (evenement_id, statut).
      */
+    // Ni les événements d'un BDE dont la validation a été refusée (PAY-09).
     $ouE     = " FROM evenements e
                  JOIN etablissements et ON et.id = e.etablissement_id
                  WHERE $finEff >= '$maintenantParis'
+                   AND " . sqlEtablissementVisible('et') . "
                    AND e.type <> 'sport'
                    AND (e.id IN ($trousMoi)
                         OR ($clotureSql > '$maintenantParis'

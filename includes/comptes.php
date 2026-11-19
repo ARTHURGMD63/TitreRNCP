@@ -142,6 +142,27 @@ function verificationInitiale(?string $type): string
 }
 
 /**
+ * Condition SQL : les événements de cet établissement peuvent être montrés
+ * aux étudiants et recevoir des inscriptions (PAY-09).
+ *
+ * Un BDE dont l'administrateur a refusé la validation ne peut plus publier,
+ * mais ses événements déjà en ligne restaient dans le fil, sur la carte et
+ * ouverts aux inscriptions : rien ne prouve qu'il soit une association, et
+ * des étudiants continuaient de s'y inscrire. Un compte « en attente » reste
+ * visible : il n'a rien pu publier avant d'être validé (etatAbonnement()).
+ */
+function sqlEtablissementVisible(string $alias = 'et'): string
+{
+    return "$alias.verification <> 'refusee'";
+}
+
+/** Même règle, sur une ligne déjà lue. @param array<string, mixed> $etab */
+function etablissementVisible(array $etab): bool
+{
+    return ($etab['verification'] ?? '') !== 'refusee';
+}
+
+/**
  * Le compte a-t-il une formule valable pour son type ?
  *
  * @param array<string, mixed> $etab
