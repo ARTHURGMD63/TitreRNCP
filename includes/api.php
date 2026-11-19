@@ -404,7 +404,10 @@ function apiProfil(array $u): array
         'photo_url' => !empty($u['photo']) ? avatarUrlAbsolue((string) $u['photo']) : null,
         'interets'  => interetsDepuisTexte($u['interests'] ?? null),
         'compte_prive' => !empty($u['compte_prive']),
-    ];
+    ] + (array_key_exists('telephone', $u)
+        // Seulement quand la requête l'a lu : son propre compte (v43).
+        ? ['telephone' => $u['telephone'] !== null && $u['telephone'] !== '' ? (string) $u['telephone'] : null]
+        : []);
 }
 
 /**

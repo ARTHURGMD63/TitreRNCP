@@ -342,6 +342,7 @@ function compteSupprimerEtudiant(PDO $pdo, int $uid): array
         $pdo->prepare(
             "UPDATE users
                 SET prenom = ?, nom = ?, email = ?, password = ?,
+                    telephone = NULL, telephone_verifie_le = NULL,
                     ville = NULL, photo = NULL,
                     date_naissance = NULL, cgu_acceptees_le = NULL, interests = NULL,
                     compte_prive = 1, type = 'supprime'
@@ -552,6 +553,7 @@ function compteSupprimerPartenaire(PDO $pdo, int $uid): array
         $pdo->prepare(
             "UPDATE users
                 SET prenom = ?, nom = ?, email = ?, password = ?,
+                    telephone = NULL, telephone_verifie_le = NULL,
                     ville = NULL, photo = NULL,
                     date_naissance = NULL, cgu_acceptees_le = NULL, interests = NULL,
                     compte_prive = 1, type = 'supprime'

@@ -52,6 +52,9 @@ CREATE TABLE IF NOT EXISTS users (
     nom VARCHAR(100) NOT NULL,
     prenom VARCHAR(100) NOT NULL,
     email VARCHAR(191) UNIQUE NOT NULL,
+    -- Mobile verifie par code SMS (migration v43).
+    telephone VARCHAR(20) DEFAULT NULL,
+    telephone_verifie_le DATETIME DEFAULT NULL,
     password VARCHAR(255) NOT NULL,
     ecole VARCHAR(100),
     promo VARCHAR(10),
@@ -71,7 +74,8 @@ CREATE TABLE IF NOT EXISTS users (
     -- comportement inchange pour l'existant tant que la personne n'a pas
     -- choisi de passer en public (voir follow.php et evenement_photos.php).
     compte_prive TINYINT(1) NOT NULL DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_users_telephone (telephone)
 );
 
 CREATE TABLE IF NOT EXISTS etablissements (
@@ -1449,6 +1453,16 @@ CREATE TABLE IF NOT EXISTS push_envois (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- v36 : confirmation du changement d'e-mail, double authentification des administrateurs.
+-- Code SMS qui verifie un numero de telephone (migration v43).
+CREATE TABLE IF NOT EXISTS verifications_telephone (
+    telephone VARCHAR(20) NOT NULL PRIMARY KEY,
+    code_hash CHAR(64) NOT NULL,
+    essais TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    expire_le DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY k_verif_tel_expire (expire_le)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS changements_email (
     user_id INT PRIMARY KEY,
     nouvel_email VARCHAR(190) NOT NULL,
@@ -1514,4 +1528,4 @@ UPDATE evenements SET fin_effective = COALESCE(date_fin, DATE_ADD(date_heure, IN
 
 INSERT IGNORE INTO schema_migrations (version) VALUES
 ('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
-('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27'), ('v28'), ('v29'), ('v30'), ('v31'), ('v32'), ('v33'), ('v34'), ('v35'), ('v36'), ('v37'), ('v38'), ('v39'), ('v40'), ('v41'), ('v42');
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27'), ('v28'), ('v29'), ('v30'), ('v31'), ('v32'), ('v33'), ('v34'), ('v35'), ('v36'), ('v37'), ('v38'), ('v39'), ('v40'), ('v41'), ('v42'), ('v43');

@@ -47,6 +47,15 @@ return [
     // Taux de TVA 20 % créé dans Stripe (Produits → Taux de taxe) : txr_…
     'stripe_taux_tva' => '',
 
+    // ─── SMS de vérification du numéro (OVHcloud → Télécom → SMS) ───────
+    // Clés créées sur https://eu.api.ovh.com/createToken/ avec le seul droit
+    // POST /sms/*. Vides : le numéro est enregistré sans code SMS.
+    'ovh_sms_app_key'      => '',
+    'ovh_sms_app_secret'   => '',
+    'ovh_sms_consumer_key' => '',
+    'ovh_sms_service'      => '',        // « sms-ab12345-1 »
+    'ovh_sms_expediteur'   => 'Outsee',  // expéditeur à faire valider par OVH, sinon ''
+
     // ─── E-mails (voir docs/EMAIL.md : SPF, DKIM, DMARC) ────────────────
     'mail_from'             => 'noreply@__DOMAINE__',
     'mail_from_nom'         => 'Outsee',

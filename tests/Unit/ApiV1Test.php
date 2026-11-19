@@ -33,6 +33,8 @@ final class ApiV1Test extends TestCase
     private const PUBLICS = [
         'login.php', 'logout.php', 'inscription.php', 'mot_de_passe_oublie.php',
         'mot_de_passe_reinitialiser.php', 'legal.php',
+        // Code SMS de l'inscription : envoyé avant que le compte existe (plafonné par IP et par numéro).
+        'telephone_code.php',
         // Signalement anonyme d'un plantage de l'application : aucun jeton, aucune donnée de compte.
         'erreur_app.php',
     ];

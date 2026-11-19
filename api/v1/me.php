@@ -13,4 +13,9 @@ apiExigerMethode('GET');
 
 $u = apiUtilisateur($pdo);
 
+// Le numéro (v43) n'est pas lu par apiUtilisateur(), appelé à chaque requête.
+$stmt = $pdo->prepare('SELECT telephone FROM users WHERE id = ?');
+$stmt->execute([(int) $u['id']]);
+$u['telephone'] = $stmt->fetchColumn() ?: null;
+
 apiReponse(['success' => true, 'utilisateur' => apiProfil($u)]);

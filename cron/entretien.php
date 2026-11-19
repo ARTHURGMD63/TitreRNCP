@@ -108,6 +108,11 @@ $purges = [
         'changements_email',
         'expire_le < NOW()',
     ],
+    // Code SMS jamais saisi (v43) : le numéro est en clair.
+    'codes sms' => [
+        'verifications_telephone',
+        'expire_le < NOW()',
+    ],
     // Paiement Stripe abandonné ou expiré depuis plus de 90 jours.
     'paiements' => [
         'paiements_evenements',

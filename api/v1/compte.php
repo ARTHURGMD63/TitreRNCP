@@ -28,6 +28,7 @@ require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/security.php';
 require_once __DIR__ . '/../../includes/mail.php';
 require_once __DIR__ . '/../../includes/email_changement.php';
+require_once __DIR__ . '/../../includes/telephone.php';
 
 apiExigerMethode('POST');
 
@@ -175,6 +176,64 @@ if ($action === 'email_confirmer') {
     }
 
     apiReponse(['success' => true, 'email' => $nouvelle]);
+}
+
+// Ajouter ou changer son numéro (v43) : deux temps, comme l'adresse.
+// « telephone » envoie un code SMS au numéro ; « telephone_confirmer »
+// { telephone, code } le vérifie et l'enregistre. Sans envoi de SMS
+// configuré en production, « telephone » enregistre directement le numéro.
+if ($action === 'telephone' || $action === 'telephone_confirmer') {
+    if ((string) $u['type'] !== 'etudiant') {
+        apiErreur('Le numéro de téléphone ne concerne que les comptes étudiants.', 403, 'type_non_modifiable');
+    }
+    $telephone = telephoneNormaliser(is_scalar($corps['telephone'] ?? null) ? (string) $corps['telephone'] : '');
+    if ($telephone === null) {
+        apiErreur('Saisis un numéro de mobile français (06 ou 07).', 422, 'telephone');
+    }
+    if (telephonePris($pdo, $telephone, $uid)) {
+        apiErreur('Ce numéro est déjà utilisé par un autre compte.', 409, 'telephone_pris');
+    }
+
+    $enregistrer = static function (bool $verifie) use ($pdo, $uid, $telephone): void {
+        try {
+            $pdo->prepare('UPDATE users SET telephone = ?, telephone_verifie_le = ' . ($verifie ? 'NOW()' : 'NULL') . ' WHERE id = ?')
+                ->execute([$telephone, $uid]);
+        } catch (PDOException $e) {
+            if (($e->errorInfo[1] ?? null) === 1062) {
+                apiErreur('Ce numéro est déjà utilisé par un autre compte.', 409, 'telephone_pris');
+            }
+            logErreur('Enregistrement du numéro impossible', $e, ['utilisateur' => $uid]);
+            apiErreur("Le numéro n'a pas pu être enregistré. Réessaie dans un instant.", 500, 'changement');
+        }
+    };
+
+    if ($action === 'telephone') {
+        if (!telephoneVerificationRequise()) {
+            $enregistrer(false);
+            apiReponse(['success' => true, 'verification' => false, 'telephone' => $telephone]);
+        }
+        if (limiteAtteinte($pdo, 'sms', $ip, 5, 3600, $telephone, 3)) {
+            apiErreur('Trop de codes demandés. Réessaie dans une heure.', 429, 'trop_de_tentatives');
+        }
+        $envoi = telephoneEnvoyerCode($pdo, $telephone);
+        if ($envoi['statut'] === 'recent') {
+            apiErreur("Un code vient d'être envoyé. Patiente une minute avant d'en demander un autre.", 429, 'code_recent');
+        }
+        enregistrerTentative($pdo, 'sms', $ip, $telephone);
+        if ($envoi['statut'] === 'echec') {
+            apiErreur("Le SMS n'a pas pu être envoyé. Vérifie le numéro et réessaie.", 502, 'envoi');
+        }
+        apiReponse(['success' => true, 'verification' => true, 'telephone' => $telephone]
+            + (isset($envoi['code_dev']) ? ['code_dev' => $envoi['code_dev']] : []));
+    }
+
+    $saisie = is_scalar($corps['code'] ?? null) ? (string) $corps['code'] : '';
+    if (!telephoneCodeVerifier($pdo, $telephone, $saisie)) {
+        apiErreur('Code SMS incorrect ou expiré. Vérifie-le, ou redemande un code.', 422, 'code_invalide');
+    }
+    $enregistrer(true);
+    telephoneCodeConsommer($pdo, $telephone);
+    apiReponse(['success' => true, 'telephone' => $telephone]);
 }
 
 apiErreur('Action inconnue.', 422, 'action_inconnue');
