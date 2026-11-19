@@ -33,6 +33,7 @@ require_once __DIR__ . '/musique.php';
 require_once __DIR__ . '/temps_reel.php';
 require_once __DIR__ . '/stripe.php';
 require_once __DIR__ . '/evenements_modification.php';
+require_once __DIR__ . '/age_minimum.php';
 
 /** Une date ISO en valeur de champ datetime-local. */
 function valeurDateLocale(?string $date): string
@@ -63,6 +64,8 @@ function traiterFormulaireEvenement(PDO $pdo, array $etab, array $capacites, ?ar
         'date_heure'    => $p('date_heure'),
         'date_fin'      => $p('date_fin') ?: null,
         'quota'         => (int) ($_POST['quota'] ?? 0),
+        // Âge minimum (v44), 18 à 99.
+        'age_minimum'   => ageMinimumNormalise($_POST['age_minimum'] ?? null),
         'reduction'     => max(0, min(100, (int) ($_POST['reduction'] ?? 0))),
         'prix_normal'   => max(0, (float) str_replace(',', '.', $p('prix_normal'))),
         'is_gratuit'    => isset($_POST['is_gratuit']) ? 1 : 0,
@@ -195,6 +198,8 @@ function ecrireEvenementPro(PDO $pdo, int $etabId, ?array $existant, array $v, f
 {
     $commun = [
         $v['titre'], $v['description'], $v['type'], $v['style_musique'] ?: null, $v['date_heure'], $v['date_fin'],
+        // Une publication payée avant la v44 n'a pas la clé : 18.
+        ageMinimumNormalise($v['age_minimum'] ?? null),
         $v['quota'], $v['reduction'], $v['prix_normal'], $v['is_flash'], $v['flash_expiry'], $v['is_gratuit'], $v['lieu'],
         $sponso['is_sponsorise'], $sponso['formule'], $sponso['tarif'], $sponso['fin'],
         // Le moment où une NOUVELLE mise en avant part (heure de Paris, comme sa fin) ;
@@ -220,16 +225,16 @@ function ecrireEvenementPro(PDO $pdo, int $etabId, ?array $existant, array $v, f
 
         if ($existant === null) {
             $pdo->prepare(
-                'INSERT INTO evenements (titre, description, type, style_musique, date_heure, date_fin, quota, reduction, prix_normal,
+                'INSERT INTO evenements (titre, description, type, style_musique, date_heure, date_fin, age_minimum, quota, reduction, prix_normal,
                                          is_flash, flash_expiry, is_gratuit, lieu, is_sponsorise, sponsor_formule, sponsor_tarif, sponsor_jusqu_au, sponsor_debut,
                                          supplement_tarif, etablissement_id)
-                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
             )->execute([...$commun, $supplement, $etabId]);
             $id = (int) $pdo->lastInsertId();
         } else {
             $id = (int) $existant['id'];
             $pdo->prepare(
-                'UPDATE evenements SET titre=?, description=?, type=?, style_musique=?, date_heure=?, date_fin=?, quota=?, reduction=?, prix_normal=?,
+                'UPDATE evenements SET titre=?, description=?, type=?, style_musique=?, date_heure=?, date_fin=?, age_minimum=?, quota=?, reduction=?, prix_normal=?,
                                        is_flash=?, flash_expiry=?, is_gratuit=?, lieu=?, is_sponsorise=?, sponsor_formule=?, sponsor_tarif=?, sponsor_jusqu_au=?, sponsor_debut=COALESCE(?, sponsor_debut)
                   WHERE id = ? AND etablissement_id = ?'
             )->execute([...$commun, $id, $etabId]);
@@ -613,6 +618,11 @@ function formulaireEvenementHtml(PDO $pdo, array $etab, array $capacites, array 
               <label for="reduction">Réduction (%)</label>
               <input type="number" id="reduction" name="reduction" min="0" max="100" value="<?= (int) $val('reduction', 0) ?>">
             </div>
+          </div>
+          <div class="champ">
+            <label for="age_minimum">Âge minimum</label>
+            <input type="number" id="age_minimum" name="age_minimum" min="18" max="99" required value="<?= (int) $val('age_minimum', 18) ?>">
+            <span class="champ__aide">Affiché sur l’événement. Un étudiant plus jeune ne peut pas s’inscrire, et le scan refuse son entrée.</span>
           </div>
           <label class="interrupteur">
             <div><strong>Entrée gratuite</strong><span>Affiché « Gratuit » dans le fil des étudiants.</span></div>

@@ -62,6 +62,12 @@ const CODES_DECONNEXION = new Set(['jeton_invalide', 'non_authentifie']);
 
 /** Erreur portant le code stable renvoyé par l'API. */
 export class ErreurApi extends Error {
+  /**
+   * Le corps complet de la réponse refusée, quand le refus porte des données
+   * utiles à l'écran (le scan refusé pour l'âge rend la personne scannée).
+   */
+  donnees?: Record<string, unknown>;
+
   constructor(message: string, readonly code: string, readonly statut: number) {
     super(message);
     this.name = 'ErreurApi';
@@ -171,6 +177,7 @@ async function requete<T>(url: string, { methode = 'GET', corps, formulaire, jet
     // le porte pas ; le message du serveur est gardé tel quel.
     const code = reponse.status === 426 ? 'mise_a_jour_requise' : donnees?.code ?? String(reponse.status);
     const erreur = new ErreurApi(donnees?.message ?? messageDefaut, code, reponse.status);
+    if (donnees && typeof donnees === 'object') erreur.donnees = donnees as Record<string, unknown>;
     // Un jeton refusé : la session repart à l'écran de connexion. Sans jeton
     // envoyé (connexion, mot de passe oublié), un 401 n'est qu'un refus.
     if (jeton && erreur.estDeconnecte && rappelDeconnexion) {
@@ -277,6 +284,10 @@ export type Evenement = {
   cloture_anticipee?: boolean;
   /** Fiche seulement : peut-on encore s'inscrire ? */
   inscriptions_ouvertes?: boolean;
+  /** Âge minimum fixé par l'établissement (v44) ; absent d'un ancien serveur : 18. */
+  age_minimum?: number;
+  /** Fiche seulement : l'étudiant aura-t-il cet âge le jour de l'événement ? */
+  age_autorise?: boolean;
   lieu: string;
   etablissement: { id: number; nom: string; type: string; ville: string; note: number | null; nb_avis: number; suivi: boolean; latitude: number | null; longitude: number | null };
   places: { quota: number; inscrits: number; restantes: number | null; complet: boolean };
@@ -389,6 +400,12 @@ export type Pass = {
   code_qr: string | null;
   /** Partie de sport : la discipline. */
   sport?: string;
+  /** Le numéro du billet, relié au QR (« OS-000123-3FA2 », v44). */
+  numero_billet?: string | null;
+  date_fin?: string | null;
+  age_minimum?: number | null;
+  /** Adresse de l'établissement, pour le billet PDF. */
+  adresse?: string | null;
 };
 
 export type SquadAgenda = { id: number; titre: string; type: string; niveau: string; date_heure: string; lieu: string; createur_prenom: string };
@@ -617,6 +634,21 @@ export type PersonneCheckin = {
   checkin_le: string | null;
 };
 
+/** La personne que le scan vient de lire : de quoi contrôler son identité à l'entrée. */
+export type PersonneScannee = {
+  id: number;
+  prenom: string;
+  nom: string;
+  ecole: string | null;
+  promo: string | null;
+  photo_url: string | null;
+  /** AAAA-MM-JJ ; null pour un compte antérieur à la vérification de l'âge. */
+  date_naissance?: string | null;
+  /** Âge le jour de l'événement. */
+  age?: number | null;
+  numero_billet?: string | null;
+};
+
 /** api/v1/partenaire_checkins.php : les entrées d'UN événement, celui qu'on scanne. */
 export type ReponseCheckinsPartenaire = {
   evenement: { id: number; titre: string };
@@ -716,6 +748,8 @@ export type EvenementFormulairePartenaire = {
   date_fin: string | null;
   /** Clôture anticipée des inscriptions (v38) ; null : jusqu'au début. */
   inscriptions_jusqu_au?: string | null;
+  /** Âge minimum (v44), 18 à 99. */
+  age_minimum?: number;
   quota: number;
   reduction: number;
   prix_normal: number;
@@ -1074,7 +1108,7 @@ export const api = {
   partenaireRepondreCollaboration: (jeton: string, id: number, action: 'accepter' | 'refuser' | 'quitter') =>
     appelApi<Ok>('partenaire_collaborations.php', { methode: 'POST', jeton, corps: { action, id } }),
   partenaireScan: (jeton: string, corps: { qr_code?: string; inscription_id?: number; event_id: number }) =>
-    appelApi<Ok & { personne: { id: number; prenom: string; nom: string; ecole: string | null; promo: string | null; photo_url: string | null } }>(
+    appelApi<Ok & { personne: PersonneScannee; age_minimum?: number }>(
       'partenaire_scan.php', { methode: 'POST', jeton, corps }
     ),
   /** Les entrées d'un événement de l'établissement : compteurs et personnes validées. */

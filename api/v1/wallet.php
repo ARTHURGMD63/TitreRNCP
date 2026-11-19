@@ -22,6 +22,7 @@
 require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/culture.php';
 require_once __DIR__ . '/../../includes/evenements_temps.php';
+require_once __DIR__ . '/../../includes/billet.php';
 
 apiExigerMethode('GET');
 
@@ -53,8 +54,8 @@ $finEff = sqlFinEffectiveEvenement();
 
 $stmt = $pdo->prepare("
     SELECT i.id, i.qr_code, i.statut, i.created_at,
-           e.id AS evenement_id, e.titre, e.date_heure, e.reduction, e.prix_normal, e.is_gratuit, e.lieu, e.type AS evenement_type,
-           et.nom AS etablissement_nom, et.type AS etab_type,
+           e.id AS evenement_id, e.titre, e.date_heure, e.date_fin, e.age_minimum, e.reduction, e.prix_normal, e.is_gratuit, e.lieu, e.type AS evenement_type,
+           et.nom AS etablissement_nom, et.type AS etab_type, et.adresse AS etab_adresse, et.ville AS etab_ville,
            CASE WHEN e.id IS NULL THEN 1 ELSE 0 END AS evenement_supprime
       FROM inscriptions i
       LEFT JOIN evenements e     ON e.id = i.evenement_id
@@ -164,6 +165,11 @@ function apiPass(array $p, bool $avecCode): array
         'code_qr' => $avecCode && !empty($p['qr_code'])
             ? 'outsee:' . (string) $p['qr_code']
             : null,
+        // Le billet PDF (v44) : numéro relié au QR, fin, âge minimum, adresse.
+        'numero_billet' => $avecCode && !empty($p['qr_code']) ? numeroBillet((int) $p['id'], (string) $p['qr_code']) : null,
+        'date_fin'      => !empty($p['date_fin']) ? (string) $p['date_fin'] : null,
+        'age_minimum'   => isset($p['age_minimum']) ? (int) $p['age_minimum'] : null,
+        'adresse'       => trim(implode(', ', array_filter([(string) ($p['etab_adresse'] ?? ''), (string) ($p['etab_ville'] ?? '')]))) ?: null,
     ];
 }
 

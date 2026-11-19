@@ -81,6 +81,8 @@ function apiEvenement(array $e, array $amis, array $etabsSuivis, array $collabor
         'fin_effective' => date('Y-m-d H:i:s', (int) evenementFinEffective((string) $e['date_heure'], $e['date_fin'] ?? null)),
         'inscriptions_jusqu_au' => evenementClotureInscriptions((string) $e['date_heure'], $e['inscriptions_jusqu_au'] ?? null),
         'cloture_anticipee'     => evenementClotureInscriptions((string) $e['date_heure'], $e['inscriptions_jusqu_au'] ?? null) !== (string) $e['date_heure'],
+        // Âge minimum fixé par l'établissement (v44), 18 par défaut.
+        'age_minimum' => (int) ($e['age_minimum'] ?? 18),
         'lieu'        => (string) ($e['lieu'] ?? ''),
 
         'etablissement' => [

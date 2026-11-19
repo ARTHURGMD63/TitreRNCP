@@ -11,6 +11,10 @@
  *
  * Aucune donnée n'est inventée : une ligne dont le champ est vide (école,
  * promo, lieu) n'est pas écrite.
+ *
+ * Depuis la v44 : le numéro du billet (relié au QR, le même qu'au scan),
+ * l'âge minimum, la fin et l'adresse de l'événement, et les conditions du
+ * billet électronique en bas de page.
  */
 
 import { dateFr } from './format.ts';
@@ -31,6 +35,12 @@ export type PassBillet = {
   is_gratuit?: boolean;
   /** Le code du pass, déjà contrôlé : 64 caractères hexadécimaux. */
   code: string;
+  /** « OS-000123-3FA2 » (v44) ; à défaut, la référence tirée du code. */
+  numero_billet?: string | null;
+  date_fin?: string | null;
+  age_minimum?: number | null;
+  /** Adresse de l'établissement. */
+  adresse?: string | null;
 };
 
 export type TitulaireBillet = {
@@ -68,6 +78,28 @@ export function echapper(s: string | null | undefined): string {
 export function referenceBillet(code: string): string {
   const r = code.slice(0, 8).toUpperCase();
   return `${r.slice(0, 4)} ${r.slice(4)}`;
+}
+
+/** Le numéro imprimé sous le QR : celui du serveur, sinon la référence tirée du code. */
+export function numeroAffiche(p: Pick<PassBillet, 'numero_billet' | 'code'>): string {
+  return p.numero_billet?.trim() || referenceBillet(p.code);
+}
+
+/**
+ * Les conditions du billet électronique, imprimées au bas de chaque billet.
+ * Rédigées pour Outsee : l'établissement organise et contrôle l'entrée,
+ * Outsee met en relation et délivre le billet.
+ */
+export function conditionsBillet(ageMinimum: number): { titre: string; texte: string }[] {
+  return [
+    { titre: 'Billet nominatif', texte: "Ce billet est personnel : il n'est valable que pour la personne dont le nom y figure, sur présentation d'une pièce d'identité officielle avec photo. Il ne peut être ni cédé, ni revendu, ni échangé." },
+    { titre: "Accès décidé par l'établissement", texte: "L'établissement organisateur reste seul maître de son entrée : il peut refuser l'accès, notamment pour l'âge, la tenue, le comportement, l'état d'ébriété, la sécurité ou la capacité de la salle, et appliquer son règlement intérieur. Si tu as obtenu ou acheté ce billet et que l'établissement te refuse l'entrée, Outsee n'en est pas responsable." },
+    { titre: 'Un seul passage', texte: "Le QR code et le numéro de billet sont uniques. Ils ne sont valables qu'une fois : au premier scan, le billet est utilisé et toute copie (capture d'écran, photocopie, impression) est refusée. Ne le partage pas." },
+    { titre: `Âge minimum : ${ageMinimum} ans`, texte: `L'entrée est réservée aux personnes âgées d'au moins ${ageMinimum} ans le jour de l'événement. Une personne qui n'a pas l'âge requis est refusée, même munie d'un billet.` },
+    { titre: "Rôle d'Outsee", texte: "Outsee met en relation les étudiants et les établissements et délivre ce billet. L'événement, son contenu, ses horaires, ses tarifs et ses réductions relèvent de l'établissement qui l'organise." },
+    { titre: 'Modification ou annulation', texte: "En cas de changement d'horaire ou d'annulation par l'établissement, tu es prévenu dans l'application. Tu ne viens plus ? Annule ton pass dans l'application pour libérer la place : ce billet ne sera alors plus valable." },
+    { titre: 'Contrefaçon', texte: "Reproduire, falsifier ou utiliser frauduleusement ce billet est interdit et peut entraîner la suspension du compte, sans préjudice de poursuites." },
+  ];
 }
 
 /** Le tarif écrit sur le billet, avec la même règle que la carte du Pass. */
@@ -155,7 +187,13 @@ export function htmlBillet({ pass, titulaire, qrSvg, genereLe, polices }: Option
   const dateLongue = dateEnLettres(pass.date_heure);
   const heure = dateFr(pass.date_heure, 'H\\hi');
   const quand = [dateLongue, heure].filter(Boolean).join(' · ');
+  const finLongue = pass.date_fin ? [dateEnLettres(pass.date_fin), dateFr(pass.date_fin, 'H\\hi')].filter(Boolean).join(' · ') : '';
   const lieu = [pass.etablissement, pass.lieu].map((s) => s?.trim()).filter(Boolean).join(' · ');
+  const age = Math.max(18, Math.floor(Number(pass.age_minimum) || 18));
+  const numero = numeroAffiche(pass);
+  const conditions = conditionsBillet(age)
+    .map((cond) => `<div class="cond"><b>${echapper(cond.titre)}.</b> ${echapper(cond.texte)}</div>`)
+    .join('');
 
   return `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8">
@@ -167,71 +205,83 @@ ${policesCss(polices)}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{background:${fixe.craie}}
 body{font-family:'Onest',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:${fixe.basalte};-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.page{width:595px;height:842px;overflow:hidden;padding:28px 36px 22px;display:flex;flex-direction:column;gap:12px}
+.page{width:595px;height:842px;overflow:hidden;padding:24px 32px 18px;display:flex;flex-direction:column;gap:10px}
 .tete{display:flex;align-items:center;justify-content:space-between}
-.marque{display:flex;align-items:center;gap:10px;font-weight:700;font-size:24px;letter-spacing:-0.035em}
+.marque{display:flex;align-items:center;gap:10px;font-weight:700;font-size:22px;letter-spacing:-0.035em}
 .marque .ee{color:${t.accent}}
-.ref{text-align:right;font-size:11px;color:#5A5A66;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
-.ref b{display:block;font-size:14px;color:${fixe.basalte};letter-spacing:.08em;margin-top:2px}
-.carte{background:${t.accent};color:#FFFFFF;border-radius:28px;padding:20px 22px;display:flex;flex-direction:column;gap:12px}
-.surtitre{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:${t.surAccent2}}
-.titulaire{font-size:20px;font-weight:700;letter-spacing:-0.03em;margin-top:4px}
-.qr{background:#FFFFFF;border-radius:20px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:12px}
-.qr svg{width:184px;height:184px;display:block}
-.qr p{font-size:13px;color:#55555C;text-align:center}
-.evenement{font-size:20px;font-weight:700;letter-spacing:-0.03em;line-height:1.15;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
-.quand{font-size:14px;color:${t.surAccent2};margin-top:6px}
-.blocs{display:flex;gap:14px}
-.bloc{flex:1;background:#FFFFFF;border-radius:20px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
-.bloc h2{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:${t.texteDoux}}
-.ligne{display:flex;flex-direction:column;gap:2px}
-.libelle{font-size:11px;color:#5A5A66}
-.valeur{font-size:14px;font-weight:600;word-break:break-word;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
-.consignes{background:${t.doux};color:${t.texteDoux};border-radius:16px;padding:12px 16px;font-size:12px;line-height:1.45}
-.pied{margin-top:auto;display:flex;justify-content:space-between;font-size:10px;color:#5A5A66}
+.ref{text-align:right;font-size:10px;color:#5A5A66;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.ref b{display:block;font-size:14px;color:${fixe.basalte};letter-spacing:.06em;margin-top:2px}
+.carte{background:${t.accent};color:#FFFFFF;border-radius:24px;padding:16px 18px;display:flex;gap:16px;align-items:stretch}
+.carte .gauche{flex:1;display:flex;flex-direction:column;justify-content:space-between;gap:10px;min-width:0}
+.surtitre{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:${t.surAccent2}}
+.titulaire{font-size:18px;font-weight:700;letter-spacing:-0.03em;margin-top:3px}
+.evenement{font-size:19px;font-weight:700;letter-spacing:-0.03em;line-height:1.15;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+.quand{font-size:13px;color:${t.surAccent2};margin-top:5px}
+.age{display:inline-block;margin-top:8px;background:#FFFFFF;color:${fixe.basalte};border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700}
+.qr{background:#FFFFFF;border-radius:18px;padding:10px 12px;display:flex;flex-direction:column;align-items:center;gap:5px;width:166px}
+.qr svg{width:140px;height:140px;display:block}
+.qr .num{font-size:10px;color:#5A5A66;text-transform:uppercase;letter-spacing:.06em;font-weight:600;text-align:center}
+.qr .num b{display:block;font-size:13px;color:${fixe.basalte};letter-spacing:.04em;margin-top:1px}
+.bloc{background:#FFFFFF;border-radius:18px;padding:12px 14px}
+.bloc h2{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:${t.texteDoux};margin-bottom:8px}
+.grille{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 14px}
+.ligne{display:flex;flex-direction:column;gap:1px;min-width:0}
+.libelle{font-size:9.5px;color:#5A5A66}
+.valeur{font-size:12px;font-weight:600;word-break:break-word;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.conditions{background:#FFFFFF;border-radius:18px;padding:12px 14px;flex:1;min-height:0;overflow:hidden}
+.conditions h2{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:${t.texteDoux};margin-bottom:7px}
+.conditions .cols{column-count:2;column-gap:16px}
+.cond{font-size:8.4px;line-height:1.38;color:#3A3A44;margin-bottom:5px;break-inside:avoid}
+.cond b{color:${fixe.basalte}}
+.pied{display:flex;justify-content:space-between;font-size:9px;color:#5A5A66}
 </style></head>
 <body><div class="page">
   <div class="tete">
-    <div class="marque">${logoSvg(t.accent, 38)}<span>Outs<span class="ee">ee</span></span></div>
-    <div class="ref">Réf. du pass<b>${echapper(referenceBillet(pass.code))}</b></div>
+    <div class="marque">${logoSvg(t.accent, 34)}<span>Outs<span class="ee">ee</span></span></div>
+    <div class="ref">N° de billet<b>${echapper(numero)}</b></div>
   </div>
 
   <div class="carte">
-    <div>
-      <div class="surtitre">${echapper(infos.surtitre)}</div>
-      <div class="titulaire">${echapper(nomComplet)}</div>
+    <div class="gauche">
+      <div>
+        <div class="surtitre">${echapper(infos.surtitre)} · billet électronique</div>
+        <div class="titulaire">${echapper(nomComplet)}</div>
+      </div>
+      <div>
+        <div class="evenement">${echapper(pass.etablissement)} — ${echapper(pass.titre)}</div>
+        ${quand ? `<div class="quand">${echapper(quand)}</div>` : ''}
+        <div class="age">${age} ans et plus · pièce d'identité exigée</div>
+      </div>
     </div>
     <div class="qr">
       ${qrSvg}
-      <p>Présente ce QR code à l'entrée, depuis ce billet ou l'application.</p>
-    </div>
-    <div>
-      <div class="evenement">${echapper(pass.etablissement)} — ${echapper(pass.titre)}</div>
-      ${quand ? `<div class="quand">${echapper(quand)}</div>` : ''}
+      <div class="num">Billet<b>${echapper(numero)}</b></div>
     </div>
   </div>
 
-  <div class="blocs">
-    <div class="bloc">
-      <h2>Titulaire</h2>
-      ${ligne('Nom', nomComplet)}
-      ${ligne('École', titulaire.ecole)}
-      ${ligne('Promo', titulaire.promo)}
+  <div class="bloc">
+    <h2>Événement et titulaire</h2>
+    <div class="grille">
+      ${ligne('Début', quand)}
+      ${ligne('Fin', finLongue)}
+      ${ligne('Âge minimum', `${age} ans`)}
+      ${ligne('Lieu', lieu)}
+      ${ligne('Adresse', pass.adresse)}
+      ${ligne('Tarif', tarifBillet(pass))}
+      ${ligne('Titulaire', nomComplet)}
+      ${ligne('École', [titulaire.ecole, titulaire.promo].map((v) => v?.trim()).filter(Boolean).join(' · '))}
       ${ligne('E-mail', titulaire.email)}
     </div>
-    <div class="bloc">
-      <h2>Événement</h2>
-      ${ligne('Date et heure', quand)}
-      ${ligne('Lieu', lieu)}
-      ${ligne('Tarif', tarifBillet(pass))}
-    </div>
   </div>
 
-  <div class="consignes">Pass nominatif, valable une seule fois. Une pièce d'identité peut t'être demandée à l'entrée. Tu ne viens plus ? Annule ton pass dans l'application pour libérer la place.</div>
+  <div class="conditions">
+    <h2>Conditions du billet électronique</h2>
+    <div class="cols">${conditions}</div>
+  </div>
 
   <div class="pied">
     <span>Outsee · billet généré le ${echapper(`${dateFr(genereLe, 'j')} ${dateFr(genereLe, 'F').toLocaleLowerCase('fr-FR')} ${dateFr(genereLe, 'Y')} à ${dateFr(genereLe, 'H\\hi')}`)}</span>
-    <span>N° ${pass.id}</span>
+    <span>Présente ce QR code à l'entrée, depuis ce billet ou l'application</span>
   </div>
 </div></body></html>`;
 }

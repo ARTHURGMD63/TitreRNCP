@@ -63,6 +63,7 @@ export default function FormulaireEvenementPartenaire() {
   const [clotureInscriptions, setClotureInscriptions] = useState<Date | null>(null);
   const [lieu, setLieu] = useState('');
   const [quota, setQuota] = useState('100');
+  const [ageMinimum, setAgeMinimum] = useState('18');
   const [prixNormal, setPrixNormal] = useState('0');
   const [reduction, setReduction] = useState('0');
   const [isGratuit, setIsGratuit] = useState(false);
@@ -99,6 +100,7 @@ export default function FormulaireEvenementPartenaire() {
         setClotureInscriptions(e.inscriptions_jusqu_au ? new Date(e.inscriptions_jusqu_au.replace(' ', 'T')) : null);
         setLieu(e.lieu);
         setQuota(String(e.quota));
+        setAgeMinimum(String(e.age_minimum ?? 18));
         setPrixNormal(String(e.prix_normal));
         setReduction(String(e.reduction));
         setIsGratuit(e.is_gratuit);
@@ -138,7 +140,7 @@ export default function FormulaireEvenementPartenaire() {
         date_fin: dateFin ? isoDateHeure(dateFin) : undefined,
         // Chaîne vide : pas de clôture anticipée (on retire celle d'avant).
         inscriptions_jusqu_au: clotureInscriptions ? isoDateHeure(clotureInscriptions) : '',
-        lieu, quota: Number(quota), prix_normal: Number(prixNormal), reduction: Number(reduction),
+        lieu, quota: Number(quota), age_minimum: Number(ageMinimum) || 18, prix_normal: Number(prixNormal), reduction: Number(reduction),
         is_gratuit: isGratuit, is_flash: !donnees?.est_club && isFlash,
         flash_expiry: !donnees?.est_club && isFlash && flashExpiry ? isoDateHeure(flashExpiry) : undefined,
         is_sponsorise: !donnees?.est_club && isSponsorise,
@@ -269,6 +271,14 @@ export default function FormulaireEvenementPartenaire() {
           <Champ style={{ flex: 1 }} etiquette="Prix normal (€)" value={prixNormal} onChangeText={setPrixNormal} keyboardType="decimal-pad" />
         </View>
         <Champ etiquette="Réduction étudiants (%)" value={reduction} onChangeText={setReduction} keyboardType="number-pad" aide="Affichée sur le pass étudiant." />
+        <Champ
+          etiquette="Âge minimum"
+          value={ageMinimum}
+          onChangeText={(v) => setAgeMinimum(v.replace(/\D/g, '').slice(0, 2))}
+          keyboardType="number-pad"
+          maxLength={2}
+          aide="18 ans par défaut. Affiché sur l’événement : un étudiant plus jeune ne peut pas s’inscrire, et le scan refuse son entrée."
+        />
         <Case coche={isGratuit} onChange={setIsGratuit}>
           {club ? 'Inscription gratuite — le pass sera 100% offert' : 'Entrée gratuite — le pass sera 100% offert'}
         </Case>
