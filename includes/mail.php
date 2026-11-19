@@ -236,7 +236,7 @@ function formaterEntetes(array $entetes): string
 function envoyerEmail(string $destinataire, string $sujet, string $corps): bool
 {
     if (!filter_var($destinataire, FILTER_VALIDATE_EMAIL)) {
-        logErreur('Adresse destinataire invalide', null, ['email' => $destinataire]);
+        logErreur('Adresse destinataire invalide', null, ['email' => masquerEmail($destinataire)]);
 
         return false;
     }
@@ -285,7 +285,7 @@ function envoyerEmail(string $destinataire, string $sujet, string $corps): bool
 
         if (!$ok) {
             logErreur('Envoi refusé par mail()', null, [
-                'a'     => $destinataire,
+                'a'     => masquerEmail($destinataire),
                 'sujet' => $sujet,
             ]);
         }
@@ -294,7 +294,7 @@ function envoyerEmail(string $destinataire, string $sujet, string $corps): bool
     } catch (Throwable $e) {
         // Un envoi qui échoue ne doit jamais faire tomber la page qui l'a
         // déclenché : on trace et on rend false, l'appelant décide.
-        logErreur('Envoi du message impossible', $e, ['a' => $destinataire, 'sujet' => $sujet]);
+        logErreur('Envoi du message impossible', $e, ['a' => masquerEmail($destinataire), 'sujet' => $sujet]);
 
         return false;
     }

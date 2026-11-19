@@ -14,6 +14,24 @@
 require_once __DIR__ . '/config.php';
 
 /**
+ * Une adresse e-mail rendue méconnaissable pour le journal.
+ *
+ * Les journaux de /var/log/outsee sont gardés des semaines : ils ne doivent
+ * pas devenir un fichier d'adresses (audit DEP-12). Le domaine reste, utile
+ * pour repérer un fournisseur qui refuse les messages ; de la partie locale
+ * ne reste que la première lettre.
+ */
+function masquerEmail(string $email): string
+{
+    $arobase = strrpos($email, '@');
+    if ($arobase === false || $arobase === 0) {
+        return '***';
+    }
+
+    return mb_substr($email, 0, 1) . '***' . substr($email, $arobase);
+}
+
+/**
  * Consigne une erreur avec son contexte.
  *
  * @param string          $message   Ce qu'on tentait de faire, en clair.

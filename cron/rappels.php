@@ -82,7 +82,8 @@ foreach ($aRappeler as $r) {
     );
 
     if ($simulation) {
-        printf("  [simulation] %-28s %s\n", $r['email'], $sujet);
+        // Adresse masquée : la sortie du cron finit dans /var/log/outsee (DEP-12).
+        printf("  [simulation] %-28s %s\n", masquerEmail((string) $r['email']), $sujet);
         $envoyes++;
         continue;
     }
@@ -90,7 +91,8 @@ foreach ($aRappeler as $r) {
     if (!envoyerEmail($r['email'], $sujet, $corps)) {
         logErreur('Rappel de la veille non envoyé', null, [
             'inscription' => $r['inscription_id'],
-            'email'       => $r['email'],
+            // L'inscription suffit à retrouver le destinataire en base.
+            'email'       => masquerEmail((string) $r['email']),
         ]);
         $echecs++;
         continue;
