@@ -106,3 +106,42 @@ function evenementsMajFinEffectiveManquantes(PDO $pdo): int
 {
     return (int) $pdo->exec('UPDATE evenements SET fin_effective = ' . sqlFinEffectiveEvenement('date_heure', 'date_fin') . ' WHERE fin_effective IS NULL');
 }
+
+/** Les entrées se valident à partir de cette avance sur le début. */
+const SCAN_OUVERTURE_AVANT_HEURES = 2;
+
+/** …et jusqu'à ce délai après la fin retenue. */
+const SCAN_FERMETURE_APRES_HEURES = 2;
+
+/**
+ * Peut-on valider une entrée maintenant ? De SCAN_OUVERTURE_AVANT_HEURES
+ * avant le début à SCAN_FERMETURE_APRES_HEURES après la fin retenue (date_fin,
+ * sinon la fenêtre par défaut).
+ *
+ * Le scan, et surtout la validation manuelle par la liste des inscrits,
+ * étaient acceptés à toute heure, la veille comme un mois après : un
+ * établissement pouvait gonfler ses taux de présence à distance (PAY-17).
+ */
+function evenementScanOuvert(string $dateHeure, ?string $dateFin, ?int $maintenant = null): bool
+{
+    $debut = strtotime($dateHeure);
+    $fin   = evenementFinEffective($dateHeure, $dateFin);
+    if ($debut === false || $fin === null) {
+        return false;
+    }
+    $maintenant ??= time();
+
+    return $maintenant >= $debut - SCAN_OUVERTURE_AVANT_HEURES * 3600
+        && $maintenant <= $fin + SCAN_FERMETURE_APRES_HEURES * 3600;
+}
+
+/** Le message d'un scan refusé hors de la fenêtre. */
+function evenementScanMessageFerme(string $dateHeure, ?string $dateFin, ?int $maintenant = null): string
+{
+    $maintenant ??= time();
+    $debut = (int) strtotime($dateHeure);
+
+    return $maintenant < $debut
+        ? 'Les entrées s’ouvrent ' . SCAN_OUVERTURE_AVANT_HEURES . ' h avant le début de l’événement.'
+        : 'Cet événement est terminé : les entrées ne se valident plus.';
+}
