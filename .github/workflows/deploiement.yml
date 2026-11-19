@@ -21,8 +21,8 @@
 #    DB_USER        if0_00000000
 #    DB_PASSWORD    (mot de passe de la base)
 #
-#  Et dans l'onglet « Variables » (facultatives, mais sans elles le site
-#  se croit hors production) :
+#  Et dans l'onglet « Variables » (FTP_APP_ENV obligatoire : sans elle,
+#  le déploiement s'arrête ; FTP_URL_PUBLIQUE recommandée) :
 #
 #    FTP_APP_ENV        production
 #    FTP_URL_PUBLIQUE   adresse publique du site, en https, sans barre finale
