@@ -31,7 +31,7 @@ import { Avatar } from '../../composants/Elements';
 import { Feuille } from '../../composants/Feuille';
 import { Icone } from '../../composants/Icone';
 import { Display, T } from '../../composants/Texte';
-import { ajouterCheckin, delaiResultatScan, lireCodePass, MESSAGE_QR_ETRANGER, messageEchecScan, retirerInvite } from '../../regles';
+import { ajouterCheckin, delaiResultatScan, lireCodePass, lireIdEvenement, MESSAGE_QR_ETRANGER, messageEchecScan, retirerInvite } from '../../regles';
 import { useToast } from '../../composants/Toast';
 import { useJeton } from '../../session';
 import { fixe, fs, lh, rayon, sans } from '../../theme';
@@ -46,6 +46,9 @@ export default function ScanPass() {
   const jeton = useJeton();
   const { top, bottom } = useSafeAreaInsets();
   const { evenementId } = useLocalSearchParams<{ evenementId: string }>();
+  // null : adresse sans événement valable. L'écran d'erreur s'affiche plus
+  // bas, une fois tous les hooks appelés (constat BUG-07).
+  const idEvenement = lireIdEvenement(evenementId);
   const [permission, demanderPermission] = useCameraPermissions();
 
   const toast = useToast();
@@ -67,17 +70,19 @@ export default function ScanPass() {
   const [validationEnCours, setValidationEnCours] = useState<number | null>(null);
 
   const chercherInvites = useCallback(async (q: string) => {
+    if (idEvenement === null) return;
     try {
-      setInvitesManuels((await api.partenaireInvites(jeton, Number(evenementId), q || undefined)).invites);
+      setInvitesManuels((await api.partenaireInvites(jeton, idEvenement, q || undefined)).invites);
     } catch {
       setInvitesManuels([]);
     }
-  }, [jeton, evenementId]);
+  }, [jeton, idEvenement]);
 
   async function validerManuellement(invite: { inscription_id: number; prenom: string; nom: string; ecole: string | null; promo: string | null; photo_url: string | null }) {
+    if (idEvenement === null) return;
     setValidationEnCours(invite.inscription_id);
     try {
-      const rep = await api.partenaireScan(jeton, { inscription_id: invite.inscription_id, event_id: Number(evenementId) });
+      const rep = await api.partenaireScan(jeton, { inscription_id: invite.inscription_id, event_id: idEvenement });
       setCheckins((liste) => ajouterCheckin(liste, { ...rep.personne, checkin_le: new Date().toISOString() }));
       setInvitesManuels((liste) => retirerInvite(liste, invite.inscription_id));
       toast(`${rep.personne.prenom} ${rep.personne.nom} validé·e`, 'success');
@@ -91,13 +96,14 @@ export default function ScanPass() {
   // La liste connue au moment d'ouvrir le scanner : elle s'enrichit ensuite
   // localement à chaque scan reussi, sans re-appeler le tableau de bord.
   useEffect(() => {
+    if (idEvenement === null) return;
     api.partenaireDashboard(jeton).then((rep) => {
-      if (rep.evenement?.id === Number(evenementId)) setCheckins(rep.stats.checkins);
+      if (rep.evenement?.id === idEvenement) setCheckins(rep.stats.checkins);
     }).catch(() => {});
-  }, [jeton, evenementId]);
+  }, [jeton, idEvenement]);
 
   const scanner = useCallback(async (resultat: BarcodeScanningResult) => {
-    if (enTraitement.current) return;
+    if (enTraitement.current || idEvenement === null) return;
     enTraitement.current = true;
 
     let succes = false;
@@ -110,7 +116,7 @@ export default function ScanPass() {
       return;
     }
     try {
-      const rep = await api.partenaireScan(jeton, { qr_code: `outsee:${code}`, event_id: Number(evenementId) });
+      const rep = await api.partenaireScan(jeton, { qr_code: `outsee:${code}`, event_id: idEvenement });
       succes = true;
       setPersonneValidee(rep.personne);
       setCheckins((liste) => ajouterCheckin(liste, { ...rep.personne, checkin_le: new Date().toISOString() }));
@@ -123,7 +129,25 @@ export default function ScanPass() {
         setMessageEchec(null);
       }, delaiResultatScan(succes));
     }
-  }, [jeton, evenementId]);
+  }, [jeton, idEvenement]);
+
+  // Une adresse sans événement valable (lien abîmé, paramètre absent) : rien
+  // à scanner, et surtout aucun appel avec un identifiant inventé.
+  if (idEvenement === null) {
+    return (
+      <View style={{ flex: 1, backgroundColor: fixe.basalte, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, paddingTop: top, paddingBottom: bottom }}>
+        <Icone nom="echec" taille={40} couleur={fixe.craie} />
+        <Display taille={fs[5]} couleur={fixe.craie} style={{ textAlign: 'center', marginTop: 16, marginBottom: 10 }}>
+          Événement introuvable
+        </Display>
+        <T taille={fs[4]} couleur={fixe.craie} interligne={lh.normal} style={{ textAlign: 'center', marginBottom: 24, opacity: 0.8 }}>
+          Ouvre le scanner depuis la fiche de ta soirée, dans Événements.
+        </T>
+        <Bouton libelle="Retour" variante="contour" plein onPress={() => router.back()}
+          styleTexte={{ color: fixe.craie }} style={{ borderColor: fixe.craie }} />
+      </View>
+    );
+  }
 
   if (!permission) {
     return <View style={{ flex: 1, backgroundColor: fixe.basalte }} />;

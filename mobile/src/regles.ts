@@ -57,6 +57,19 @@ export function libelleApresEchecInscription(statut: number | null, message: str
 
 type Presence = { id: number };
 
+/**
+ * L'identifiant d'événement reçu dans l'adresse d'un écran (`?evenementId=`),
+ * ou null s'il n'en est pas un : uniquement des chiffres, strictement
+ * positif. Number() acceptait tout — « », « 1e3 », « 0x1F » — et un
+ * paramètre absent devenait NaN envoyé au serveur (constat BUG-07).
+ */
+export function lireIdEvenement(brut: string | string[] | null | undefined): number | null {
+  const valeur = Array.isArray(brut) ? brut[0] : brut;
+  if (typeof valeur !== 'string' || !/^\d{1,9}$/.test(valeur)) return null;
+  const id = Number(valeur);
+  return id > 0 ? id : null;
+}
+
 /** Ajoute une personne en tête de la liste des check-in, sans doublon. */
 export function ajouterCheckin<T extends Presence>(liste: readonly T[], personne: T): T[] {
   return [personne, ...liste.filter((p) => p.id !== personne.id)];

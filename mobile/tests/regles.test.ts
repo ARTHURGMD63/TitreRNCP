@@ -9,7 +9,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ajouterCheckin, connexionComplete, delaiResultatScan, libelleApresEchecInscription,
-  libelleInscription, libelleInscrits, libellesAffluence, lireCodePass, messageConnexion, messageEchecScan,
+  libelleInscription, libelleInscrits, libellesAffluence, lireCodePass, lireIdEvenement, messageConnexion, messageEchecScan,
   palierAffluence, retirerInvite,
 } from '../src/regles.ts';
 
@@ -229,6 +229,14 @@ test('messageEchecScan : une panne réseau le dit, et propose la validation manu
   assert.match(messageEchecScan({ message: 'Erreur réseau', code: 'reseau' }), /Pas de connexion/);
   assert.match(messageEchecScan({ message: 'Trop long', code: 'delai' }), /Pas de connexion/);
   assert.equal(messageEchecScan({ message: 'Ce pass a déjà été scanné', code: 'deja_scanne' }), 'Ce pass a déjà été scanné');
+});
+
+test("lireIdEvenement : un entier positif, rien d'autre", () => {
+  assert.equal(lireIdEvenement('12'), 12);
+  assert.equal(lireIdEvenement(['7', '8']), 7);
+  for (const brut of [undefined, null, '', '0', '-3', '1.5', '1e3', '0x1F', ' 12', '12abc', 'NaN', '1234567890', []]) {
+    assert.equal(lireIdEvenement(brut as string | string[] | null | undefined), null, String(brut));
+  }
 });
 
 test('lireCodePass : un pass Outsee, avec ou sans ancien préfixe', () => {
