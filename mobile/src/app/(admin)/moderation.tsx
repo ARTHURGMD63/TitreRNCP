@@ -1,5 +1,6 @@
 /**
- * Modération — admin/moderation.php.
+ * Modération — admin/moderation.php (onglet « Modération » ; l'écran
+ * d'arrivée de l'admin est désormais le Suivi, index.tsx).
  *
  * Les signalements de profils, à traiter ou déjà traités, avec le compte
  * de récidive (nombre de signalements visant la même personne).
