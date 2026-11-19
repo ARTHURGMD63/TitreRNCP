@@ -69,3 +69,18 @@ test('au scan : date de naissance lisible, refus d’âge reconnu', () => {
   assert.equal(personneRefuseeAge({ code: 'deja_scanne', donnees: { personne } }), null);
   assert.equal(personneRefuseeAge(null), null);
 });
+
+test('la liste du scanner se coche sans attendre le serveur', async () => {
+  const { marquerPresent, heureEntree } = await import('../src/regles.ts');
+  const liste = [
+    { inscription_id: 1, present: false, checkin_le: null as string | null },
+    { inscription_id: 2, present: false, checkin_le: null as string | null },
+  ];
+  const cochee = marquerPresent(liste, 2, '2026-11-22 22:14:05');
+  assert.deepEqual(cochee.map((i) => i.present), [false, true]);
+  assert.equal(cochee[1].checkin_le, '2026-11-22 22:14:05');
+  assert.equal(liste[1].present, false, 'la liste d’origine n’est pas modifiée');
+  assert.deepEqual(marquerPresent(liste, undefined, null), liste);
+  assert.equal(heureEntree('2026-11-22 22:14:05'), 'Entré·e à 22h14');
+  assert.equal(heureEntree(null), null);
+});

@@ -89,7 +89,7 @@ $telVisibles = telephoneVisiblePourEtablissement(
     (string) $e['date_heure']
 );
 $stmt = $pdo->prepare(
-    "SELECT u.id, u.prenom, u.nom, u.ecole, u.promo, u.telephone, i.statut, i.created_at
+    "SELECT u.id, u.prenom, u.nom, u.ecole, u.promo, u.telephone, i.statut, i.created_at, i.checkin_le
        FROM inscriptions i JOIN users u ON u.id = i.user_id
       WHERE i.evenement_id = ? AND i.statut <> 'annule'
       ORDER BY u.nom, u.prenom"
@@ -103,6 +103,7 @@ $participants = array_map(
         'ecole'      => $r['ecole'] !== null && $r['ecole'] !== '' ? (string) $r['ecole'] : null,
         'promo'      => $r['promo'] !== null && $r['promo'] !== '' ? (string) $r['promo'] : null,
         'present'    => $r['statut'] === 'checkin',
+        'checkin_le' => $r['checkin_le'] !== null ? (string) $r['checkin_le'] : null,
         'inscrit_le' => (string) $r['created_at'],
         'telephone'  => $telVisibles && !empty($r['telephone']) ? (string) $r['telephone'] : null,
     ],

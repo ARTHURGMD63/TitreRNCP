@@ -2,14 +2,16 @@
  * Scan des pass à l'entrée — la modale de partenaire/dashboard.php, en
  * plein écran natif.
  *
- * Même règle que le site : un scan à la fois (on ignore les suivants tant
- * que la requête précédente n'a pas répondu), un bip et une carte de
- * profil sur succès (photo, nom, école — pas qu'un texte), un message rouge
- * sur échec, puis reprise automatique — le scanner reste ouvert pour
- * enchaîner les entrées, contrairement au site qui recharge toute la page.
+ * Un scan à la fois. Le résultat d'un pass reconnu reste affiché tant que
+ * l'accueil n'a pas appuyé sur « Scanner le suivant » : photo, nom, prénom,
+ * date de naissance et âge, école, numéro de billet — de quoi comparer avec
+ * la pièce d'identité. Vert : entrée validée ; rouge : âge insuffisant ;
+ * orange : déjà scanné (avec l'heure). Un QR étranger ou une panne réseau
+ * ne donne qu'un message bref, et la caméra repart seule.
  *
- * La liste de qui a été check-in reste visible pendant tout le scan (pastille
- * en haut, feuille au tap) : c'est elle qui répond à « qui j'ai eu ce soir ».
+ * La pastille en haut compte les entrées (« 12/40 ») et ouvre la liste de
+ * TOUS les inscrits, cochés au fur et à mesure des scans : c'est elle qui
+ * répond à « qui est déjà entré ce soir ».
  *
  * « Valider manuellement » (feuille dédiée) cherche parmi les inscrits pas
  * encore check-in de CET événement et les valide sans scan — pour quand le
@@ -24,20 +26,29 @@ import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'ex
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { api, ErreurApi, type PersonneCheckin, type PersonneScannee } from '../../api';
+import { api, ErreurApi, type InscritScan, type PersonneCheckin, type PersonneScannee } from '../../api';
 import { Bouton } from '../../composants/Bouton';
 import { teinteAvatar } from '../../composants/Design';
 import { Avatar } from '../../composants/Elements';
 import { Feuille } from '../../composants/Feuille';
 import { Icone } from '../../composants/Icone';
 import { Display, T } from '../../composants/Texte';
-import { ajouterCheckin, DELAI_REFUS_AGE, delaiResultatScan, ligneNaissance, lireCodePass, lireIdEvenement, MESSAGE_QR_ETRANGER, messageEchecScan, personneRefuseeAge, retirerInvite } from '../../regles';
+import { ajouterCheckin, delaiResultatScan, heureEntree, ligneNaissance, lireCodePass, lireIdEvenement, marquerPresent, MESSAGE_QR_ETRANGER, messageEchecScan, personneRefuseeAge, retirerInvite } from '../../regles';
 import { useToast } from '../../composants/Toast';
 import { useJeton } from '../../session';
 import { fixe, fs, lh, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 type Personne = PersonneScannee;
+
+/** Ce que l'écran garde affiché après un pass reconnu, jusqu'à « Scanner le suivant ». */
+type Resultat = { genre: 'valide' | 'refuse' | 'deja'; personne: Personne; message: string };
+
+const STYLES_RESULTAT = {
+  valide: { fond: '#E3F6EC', bord: '#1E9E5A', encre: '#137A44', icone: 'valide', titre: 'ENTRÉE VALIDÉE' },
+  refuse: { fond: '#FFE3E8', bord: '#D21F3C', encre: '#A3132B', icone: 'interdit', titre: 'ENTRÉE REFUSÉE' },
+  deja: { fond: '#FFF1DC', bord: '#E08A00', encre: '#9A5B00', icone: 'horloge', titre: 'DÉJÀ SCANNÉ' },
+} as const;
 
 export default function ScanPass() {
   // Les feuilles (liste, validation manuelle) suivent le thème ; l'écran
@@ -54,10 +65,10 @@ export default function ScanPass() {
   const toast = useToast();
 
   const [messageEchec, setMessageEchec] = useState<string | null>(null);
-  const [personneValidee, setPersonneValidee] = useState<Personne | null>(null);
-  // Refusée à l'entrée pour son âge (v44) : écran rouge, avec son identité.
-  const [refusAge, setRefusAge] = useState<{ personne: Personne; message: string } | null>(null);
+  const [resultat, setResultat] = useState<Resultat | null>(null);
   const [checkins, setCheckins] = useState<PersonneCheckin[]>([]);
+  // Tous les inscrits, cochés au fil des scans.
+  const [inscrits, setInscrits] = useState<InscritScan[]>([]);
   const [listeOuverte, setListeOuverte] = useState(false);
   const enTraitement = useRef(false);
   // La reprise après un résultat : annulée si l'écran se ferme avant, pour ne
@@ -86,6 +97,7 @@ export default function ScanPass() {
     try {
       const rep = await api.partenaireScan(jeton, { inscription_id: invite.inscription_id, event_id: idEvenement });
       setCheckins((liste) => ajouterCheckin(liste, { ...rep.personne, checkin_le: new Date().toISOString() }));
+      setInscrits((liste) => marquerPresent(liste, invite.inscription_id, rep.checkin_le ?? null));
       setInvitesManuels((liste) => retirerInvite(liste, invite.inscription_id));
       toast(`${rep.personne.prenom} ${rep.personne.nom} validé·e`, 'success');
     } catch (e) {
@@ -101,22 +113,40 @@ export default function ScanPass() {
   // parle que de la prochaine soirée : scanner pour une autre affichait 0
   // (constat MOB-15). Les entrées déjà connues localement sont gardées si la
   // réponse arrive après un premier scan.
+  // Rechargée à chaque ouverture de la liste : un autre téléphone de
+  // l'accueil a peut-être scanné entre-temps.
+  const chargerListe = useCallback(async () => {
+    if (idEvenement === null) return;
+    try {
+      const rep = await api.partenaireCheckins(jeton, idEvenement);
+      setCheckins((locales) => locales.reduceRight((liste, p) => ajouterCheckin(liste, p), rep.checkins));
+      if (rep.inscrits) setInscrits(rep.inscrits);
+    } catch {
+      // La liste se rechargera à la prochaine ouverture.
+    }
+  }, [jeton, idEvenement]);
+
   useEffect(() => {
     if (idEvenement === null) return;
     let annule = false;
     api.partenaireCheckins(jeton, idEvenement).then((rep) => {
       if (annule) return;
       setCheckins((locales) => locales.reduceRight((liste, p) => ajouterCheckin(liste, p), rep.checkins));
+      if (rep.inscrits) setInscrits(rep.inscrits);
     }).catch(() => {});
     return () => { annule = true; };
   }, [jeton, idEvenement]);
+
+  /** Ferme le résultat et réarme la caméra. */
+  function suivant() {
+    setResultat(null);
+    enTraitement.current = false;
+  }
 
   const scanner = useCallback(async (resultat: BarcodeScanningResult) => {
     if (enTraitement.current || idEvenement === null) return;
     enTraitement.current = true;
 
-    let succes = false;
-    let delaiRefus: number | null = null;
     // Un QR code qui n'est pas un pass (menu, site, code abîmé) est écarté
     // ici, sans appel : le refus est immédiat, même sans réseau.
     const code = lireCodePass(resultat.data);
@@ -127,25 +157,24 @@ export default function ScanPass() {
     }
     try {
       const rep = await api.partenaireScan(jeton, { qr_code: `outsee:${code}`, event_id: idEvenement });
-      succes = true;
-      setPersonneValidee(rep.personne);
+      // Le résultat reste affiché : la caméra ne repart qu'avec « Scanner le suivant ».
+      setResultat({ genre: 'valide', personne: rep.personne, message: '' });
       setCheckins((liste) => ajouterCheckin(liste, { ...rep.personne, checkin_le: new Date().toISOString() }));
+      setInscrits((liste) => marquerPresent(liste, rep.personne.inscription_id, rep.checkin_le ?? null));
     } catch (e) {
       const erreur = e instanceof ErreurApi ? e : null;
       const refusee = personneRefuseeAge<Personne>(erreur);
+      const dejaVu = erreur?.code === 'deja_scanne' && erreur.donnees?.personne && typeof erreur.donnees.personne === 'object'
+        ? (erreur.donnees.personne as Personne) : null;
       if (refusee && erreur) {
-        setRefusAge({ personne: refusee, message: erreur.message });
-        delaiRefus = DELAI_REFUS_AGE;
+        setResultat({ genre: 'refuse', personne: refusee, message: erreur.message });
+      } else if (dejaVu && erreur) {
+        setResultat({ genre: 'deja', personne: dejaVu, message: erreur.message });
       } else {
+        // Pas de personne à montrer : message bref, puis la caméra repart seule.
         setMessageEchec(messageEchecScan(erreur));
+        reprise.current = setTimeout(() => { enTraitement.current = false; setMessageEchec(null); }, delaiResultatScan(false));
       }
-    } finally {
-      reprise.current = setTimeout(() => {
-        enTraitement.current = false;
-        setPersonneValidee(null);
-        setRefusAge(null);
-        setMessageEchec(null);
-      }, delaiRefus ?? delaiResultatScan(succes));
     }
   }, [jeton, idEvenement]);
 
@@ -195,7 +224,8 @@ export default function ScanPass() {
     );
   }
 
-  const cadre = personneValidee ? fixe.enCours : messageEchec || refusAge ? '#FF4D6A' : fixe.craie;
+  const cadre = resultat ? STYLES_RESULTAT[resultat.genre].bord : messageEchec ? '#FF4D6A' : fixe.craie;
+  const presents = inscrits.length ? inscrits.filter((i) => i.present).length : checkins.length;
 
   return (
     <View style={{ flex: 1, backgroundColor: fixe.basalte }}>
@@ -218,11 +248,13 @@ export default function ScanPass() {
       <Pressable
         onPress={() => setListeOuverte(true)}
         accessibilityRole="button"
-        accessibilityLabel={`${checkins.length} personnes déjà check-in, voir la liste`}
+        onPressIn={() => void chargerListe()}
+        accessibilityLabel={`${presents} entrées${inscrits.length ? ` sur ${inscrits.length} inscrits` : ''}, voir la liste des inscrits`}
+        testID="scan-liste"
         style={{ position: 'absolute', top: top + 16, left: 20, flexDirection: 'row', alignItems: 'center', gap: 7, height: 46, paddingHorizontal: 16, borderRadius: rayon.bouton, backgroundColor: 'rgba(17,17,22,0.6)' }}
       >
-        <Icone nom="personnes" taille={16} couleur={fixe.craie} />
-        <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: fixe.craie }}>{checkins.length}</Text>
+        <Icone nom="valide" taille={16} couleur={fixe.craie} />
+        <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: fixe.craie }}>{presents}{inscrits.length ? `/${inscrits.length}` : ''}</Text>
       </Pressable>
 
       <Pressable
@@ -245,38 +277,34 @@ export default function ScanPass() {
         }}
       />
 
-      {personneValidee ? (
-        <View style={{ position: 'absolute', left: 24, right: 24, bottom: bottom + 40, backgroundColor: '#FFFFFF', borderRadius: rayon.carte, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <Avatar photo={personneValidee.photo_url} prenom={personneValidee.prenom} taille={52} fond="#C7DCFF" />
-          <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-              <Icone nom="valide" taille={16} couleur="#137A44" />
-              <Text style={{ fontFamily: sans(700), fontSize: fs[2], letterSpacing: 0.06 * fs[2], color: '#137A44' }}>CHECK-IN VALIDÉ</Text>
-            </View>
-            <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: fixe.basalte }}>{personneValidee.prenom} {personneValidee.nom}</Text>
-            {ligneNaissance(personneValidee) ? (
-              <Text testID="scan-naissance" style={{ fontFamily: sans(700), fontSize: fs[4], color: fixe.basalte }}>{ligneNaissance(personneValidee)}</Text>
-            ) : null}
-            <Text style={{ fontFamily: sans(500), fontSize: fs[3], color: '#5A5A66' }}>
-              {personneValidee.ecole ?? '—'}{personneValidee.promo ? ' · ' + personneValidee.promo : ''}
-              {personneValidee.numero_billet ? ` · Billet ${personneValidee.numero_billet}` : ''}
-            </Text>
+      {resultat ? (
+        <View
+          testID={`scan-resultat-${resultat.genre}`}
+          style={{ position: 'absolute', left: 16, right: 16, bottom: bottom + 24, backgroundColor: STYLES_RESULTAT[resultat.genre].fond, borderRadius: rayon.carte, borderWidth: 2, borderColor: STYLES_RESULTAT[resultat.genre].bord, padding: 18, gap: 14 }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Icone nom={STYLES_RESULTAT[resultat.genre].icone} taille={18} couleur={STYLES_RESULTAT[resultat.genre].encre} />
+            <Text style={{ fontFamily: sans(700), fontSize: fs[3], letterSpacing: 0.06 * fs[3], color: STYLES_RESULTAT[resultat.genre].encre }}>{STYLES_RESULTAT[resultat.genre].titre}</Text>
           </View>
-        </View>
-      ) : refusAge ? (
-        <View testID="scan-refus-age" style={{ position: 'absolute', left: 24, right: 24, bottom: bottom + 40, backgroundColor: '#FFE3E8', borderRadius: rayon.carte, borderWidth: 2, borderColor: '#D21F3C', padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <Avatar photo={refusAge.personne.photo_url} prenom={refusAge.personne.prenom} taille={52} fond="#FFC2CD" />
-          <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-              <Icone nom="interdit" taille={16} couleur="#A3132B" />
-              <Text style={{ fontFamily: sans(700), fontSize: fs[2], letterSpacing: 0.06 * fs[2], color: '#A3132B' }}>ENTRÉE REFUSÉE</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+            <Avatar photo={resultat.personne.photo_url} prenom={resultat.personne.prenom} taille={72} fond="#FFFFFF" />
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={{ fontFamily: sans(700), fontSize: fs[6], color: fixe.basalte }}>{resultat.personne.prenom} {resultat.personne.nom}</Text>
+              {ligneNaissance(resultat.personne) ? (
+                <Text testID="scan-naissance" style={{ fontFamily: sans(700), fontSize: fs[5], color: fixe.basalte }}>{ligneNaissance(resultat.personne)}</Text>
+              ) : null}
+              <Text style={{ fontFamily: sans(500), fontSize: fs[4], color: '#4A4A55' }}>
+                {resultat.personne.ecole ?? '—'}{resultat.personne.promo ? ' · ' + resultat.personne.promo : ''}
+              </Text>
+              {resultat.personne.numero_billet ? (
+                <Text style={{ fontFamily: sans(600), fontSize: fs[3], color: '#4A4A55' }}>Billet {resultat.personne.numero_billet}</Text>
+              ) : null}
             </View>
-            <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: fixe.basalte }}>{refusAge.personne.prenom} {refusAge.personne.nom}</Text>
-            {ligneNaissance(refusAge.personne) ? (
-              <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: fixe.basalte }}>{ligneNaissance(refusAge.personne)}</Text>
-            ) : null}
-            <Text style={{ fontFamily: sans(600), fontSize: fs[3], color: '#A3132B' }}>{refusAge.message}</Text>
           </View>
+          {resultat.message ? (
+            <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: STYLES_RESULTAT[resultat.genre].encre }}>{resultat.message}</Text>
+          ) : null}
+          <Bouton libelle="Scanner le suivant" plein onPress={suivant} testID="scan-suivant" />
         </View>
       ) : messageEchec ? (
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: bottom + 40, alignItems: 'center', paddingHorizontal: 24 }}>
@@ -289,19 +317,39 @@ export default function ScanPass() {
       )}
 
       <Feuille visible={listeOuverte} onClose={() => setListeOuverte(false)}>
-        <T taille={20} poids={700} style={{ marginBottom: 16, letterSpacing: -0.03 * 20 }}>
-          {checkins.length} check-in{checkins.length > 1 ? 's' : ''}
+        <T taille={20} poids={700} style={{ marginBottom: 4, letterSpacing: -0.03 * 20 }}>Inscrits</T>
+        <T taille={fs[4]} couleur={c.gris} style={{ marginBottom: 12 }}>
+          {inscrits.length ? `${presents} entré${presents > 1 ? 's' : ''} sur ${inscrits.length}` : `${checkins.length} check-in${checkins.length > 1 ? 's' : ''}`}
         </T>
-        {checkins.length === 0 ? (
-          <T taille={fs[4]} couleur={c.gris}>Personne pour l&apos;instant.</T>
+        {inscrits.length === 0 ? (
+          <T taille={fs[4]} couleur={c.gris}>Personne n&apos;est encore inscrit.</T>
         ) : (
-          checkins.map((p, i) => (
-            <View key={`${p.id}-${i}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: i < checkins.length - 1 ? 1 : 0, borderBottomColor: c.grisClair }}>
-              <Avatar photo={p.photo_url} prenom={p.prenom} taille={40} fond={teinteAvatar(p.prenom + p.id)} />
+          inscrits.map((p, i) => (
+            <View
+              key={p.inscription_id}
+              testID={`scan-inscrit-${p.inscription_id}`}
+              accessibilityLabel={`${p.prenom} ${p.nom}, ${p.present ? 'entré' : 'pas encore entré'}`}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: i < inscrits.length - 1 ? 1 : 0, borderBottomColor: c.grisClair }}
+            >
+              <View style={{ width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: p.present ? c.succes : 'transparent', borderWidth: p.present ? 0 : 2, borderColor: c.line2 }}>
+                {p.present ? <Icone nom="check" taille={15} couleur="#FFFFFF" /> : null}
+              </View>
+              <Avatar photo={p.photo_url} prenom={p.prenom} taille={38} fond={teinteAvatar(p.prenom + p.id)} />
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: c.noir }}>{p.prenom} {p.nom}</Text>
-                <Text style={{ fontFamily: sans(400), fontSize: fs[4], color: c.gris }}>{p.ecole ?? '—'}{p.promo ? ' · ' + p.promo : ''}</Text>
+                <Text style={{ fontFamily: sans(400), fontSize: fs[3], color: p.present ? c.succes : c.gris }}>
+                  {p.present ? (heureEntree(p.checkin_le) ?? 'Entré·e') : `${p.ecole ?? '—'}${p.promo ? ' · ' + p.promo : ''}`}
+                </Text>
               </View>
+              {!p.present ? (
+                <Bouton
+                  libelle="Valider"
+                  variante="contour"
+                  chargement={validationEnCours === p.inscription_id}
+                  onPress={() => void validerManuellement(p)}
+                  testID={`scan-liste-valider-${p.inscription_id}`}
+                />
+              ) : null}
             </View>
           ))
         )}

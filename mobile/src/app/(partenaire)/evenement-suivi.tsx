@@ -21,6 +21,8 @@ import { BoutonRetour, Jauge } from '../../composants/Elements';
 import { Mono, T, TitreEcran, TitreSection } from '../../composants/Texte';
 import { dateFr } from '../../format';
 import { afficherTelephone, lienAppel } from '../../telephone';
+import { heureEntree } from '../../regles';
+import { Icone } from '../../composants/Icone';
 import { useJeton } from '../../session';
 import { fs, halo, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
@@ -181,7 +183,12 @@ export default function SuiviEvenement() {
               <View key={p.id} style={{ gap: 2, paddingVertical: 6 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
                   <T taille={fs[4]} poids={700} style={{ flexShrink: 1 }}>{p.prenom} {p.nom}</T>
-                  {p.present ? <T taille={fs[4]} poids={600} couleur={c.succes}>Présent</T> : null}
+                  {p.present ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                      <Icone nom="valide" taille={15} couleur={c.succes} />
+                      <T taille={fs[4]} poids={600} couleur={c.succes}>{heureEntree(p.checkin_le) ?? 'Présent'}</T>
+                    </View>
+                  ) : null}
                 </View>
                 {p.ecole || p.promo ? <T taille={fs[4]} couleur={c.gris}>{[p.ecole, p.promo].filter(Boolean).join(' · ')}</T> : null}
                 {p.telephone ? (

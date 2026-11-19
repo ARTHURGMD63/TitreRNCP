@@ -97,6 +97,24 @@ export function ajouterCheckin<T extends Presence>(liste: readonly T[], personne
   return [personne, ...liste.filter((p) => p.id !== personne.id)];
 }
 
+/**
+ * Coche un inscrit dans la liste du scanner, sans attendre le serveur.
+ * Un inscrit inconnu de la liste (chargée avant son inscription) n'y est pas
+ * ajouté : la liste se recharge à la prochaine ouverture.
+ */
+export function marquerPresent<T extends { inscription_id: number; present: boolean; checkin_le: string | null }>(
+  liste: readonly T[], inscriptionId: number | undefined, quand: string | null,
+): T[] {
+  if (inscriptionId === undefined) return [...liste];
+  return liste.map((i) => (i.inscription_id === inscriptionId ? { ...i, present: true, checkin_le: i.checkin_le ?? quand } : i));
+}
+
+/** « Entré·e à 22h14 » : l'heure du scan d'un inscrit, null s'il n'est pas entré. */
+export function heureEntree(checkinLe: string | null | undefined): string | null {
+  const m = /[ T](\d{2}):(\d{2})/.exec(checkinLe ?? '');
+  return m ? `Entré·e à ${m[1]}h${m[2]}` : null;
+}
+
 /** Retire de la liste des invités à valider celui qui vient de l'être. */
 export function retirerInvite<T extends { inscription_id: number }>(liste: readonly T[] | null, inscriptionId: number): T[] {
   return (liste ?? []).filter((i) => i.inscription_id !== inscriptionId);
