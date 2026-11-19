@@ -903,6 +903,63 @@ export type MouvementFinance = {
   client: string | null;
 };
 
+/** Un point d'une série quotidienne du suivi (jour 'Y-m-d'). */
+export type PointJour = { jour: string; n: number };
+
+/** Le suivi de l'application (api/v1/admin_suivi.php). Un volet nul : indisponible. */
+export type ReponseSuiviAdmin = {
+  genere_le: string;
+  utilisateurs: {
+    etudiants: number; etablissements: number; admins: number;
+    nouveaux: { jour: number; semaine: number; mois: number; evolution: number | null };
+    actifs: { jour: number; semaine: number; mois: number };
+    serie_inscriptions: PointJour[];
+    record_inscriptions: PointJour | null;
+    heures_de_pointe: { heure: number; moyenne: number }[];
+    pic_horaire: { heure: string; n: number } | null;
+  } | null;
+  evenements: {
+    total: number; publies_mois: number; a_venir: number; annules_mois: number;
+    pass_mois: number; entrees_mois: number; taux_presence_30j: number | null;
+    serie_pass: PointJour[];
+  } | null;
+  abonnements: {
+    actifs: number; nouveaux_mois: number; perdus_mois: number;
+    mrr: number; mrr_engage: number; clients_payants: number;
+    par_offre: { offre: string; libelle: string; nombre: number; essais: number; mrr: number }[];
+  } | null;
+  options: {
+    mois: string; total_mois: number; total_precedent: number;
+    detail: { nature: string; libelle: string; nombre: number; montant: number }[];
+  } | null;
+  revenus: {
+    mrr: number; options_mois: number; recettes_mois: number; depenses_mois: number;
+    resultat_mois: number; tresorerie: number;
+    serie_6_mois: { mois: string; recettes: number; options: number }[];
+  } | null;
+  sante: {
+    erreurs_ouvertes: number; erreurs_serveur: number; plantages_app: number;
+    erreurs_vues_24h: number; erreurs_nouvelles_24h: number;
+    push_en_echec_24h: number | null; push_en_attente: number | null;
+    paiements_en_attente: number | null; signalements: number | null; bde_en_attente: number | null;
+  } | null;
+};
+
+export type FiltreErreurs = 'ouvertes' | 'serveur' | 'app' | 'resolues';
+
+/** Une erreur du journal (api/v1/admin_erreurs.php), regroupée par empreinte. */
+export type ErreurJournal = {
+  id: number;
+  source: 'serveur' | 'app';
+  message: string;
+  detail: string | null;
+  contexte: Record<string, unknown> | null;
+  occurrences: number;
+  premiere_le: string;
+  derniere_le: string;
+  resolu_le: string | null;
+};
+
 export type ReponseFinancesAdmin = {
   tresorerie: { solde: number; plancher: number; sous_le_plancher: boolean; autonomie_mois: number | null };
   mrr: { facture: number; engage: number; clients_payants: number };
@@ -1015,6 +1072,12 @@ export const api = {
     appelApi<{ success: true } & ReponseEvenementsAdmin>('admin_evenements.php', { jeton, params }),
   adminFinances: (jeton: string) =>
     appelApi<{ success: true } & ReponseFinancesAdmin>('admin_finances.php', { jeton }),
+  adminSuivi: (jeton: string) =>
+    appelApi<{ success: true } & ReponseSuiviAdmin>('admin_suivi.php', { jeton }),
+  adminErreurs: (jeton: string, filtre: FiltreErreurs = 'ouvertes') =>
+    appelApi<{ success: true; filtre: FiltreErreurs; erreurs: ErreurJournal[] }>('admin_erreurs.php', { jeton, params: { filtre } }),
+  adminErreurAction: (jeton: string, corps: { action: 'resoudre' | 'rouvrir'; id: number } | { action: 'resoudre_tout'; source?: 'serveur' | 'app' }) =>
+    appelApi<Ok & { resolues?: number }>('admin_erreurs.php', { methode: 'POST', jeton, corps }),
   partenaireProfil: (jeton: string) =>
     appelApi<{ success: true; compte: { prenom: string; nom: string; email: string }; etablissement: { nom: string; type: string; type_modifiable: boolean; verification: string; ville: string; adresse: string; latitude: number | null; longitude: number | null } }>(
       'partenaire_profil.php', { jeton }

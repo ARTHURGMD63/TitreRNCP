@@ -162,7 +162,26 @@ function apiCreerJeton(PDO $pdo, int $userId, ?string $appareil = null, int $jou
         $expire,
     ]);
 
+    apiNoterActivite($pdo, $userId);
+
     return ['token' => $jeton, 'expire_le' => $expire];
+}
+
+/**
+ * Note qu'un compte a utilisé l'application dans l'heure en cours, pour le
+ * suivi des administrateurs (activite_heures, migration v42). Appelée à la
+ * connexion et lors de la mise à jour horaire du jeton : au plus une ligne
+ * par compte et par heure, jamais une écriture à chaque appel d'API.
+ * Ne bloque jamais : sans la table (avant la v42), rien ne se passe.
+ */
+function apiNoterActivite(PDO $pdo, int $userId): void
+{
+    try {
+        $pdo->prepare('INSERT IGNORE INTO activite_heures (heure, user_id) VALUES (?, ?)')
+            ->execute([date('Y-m-d H:00:00'), $userId]);
+    } catch (PDOException) {
+        // Table absente : l'authentification passe quand même.
+    }
 }
 
 /**
@@ -210,6 +229,7 @@ function apiUtilisateur(PDO $pdo): array
             date('Y-m-d H:i:s', time() + apiDureeJetonJours((string) $ligne['type']) * 86400),
             (int) $ligne['token_id'],
         ]);
+        apiNoterActivite($pdo, (int) $ligne['id']);
     }
 
     return $ligne;

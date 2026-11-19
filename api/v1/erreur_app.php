@@ -36,11 +36,22 @@ $texte = static fn (string $cle, int $max): string => mb_substr(
     $max
 );
 
-logErreur('[app mobile] ' . $texte('message', 300), null, [
-    'pile'       => $texte('pile', 1500),
+$message  = $texte('message', 300);
+$pile     = $texte('pile', 1500);
+$contexte = [
     'fatale'     => !empty($corps['fatale']),
     'plateforme' => $texte('plateforme', 20),
     'version'    => $texte('version', 20),
-]);
+    'ecran'      => $texte('ecran', 80),
+];
+// Journal de PHP, comme avant…
+error_log('[Outsee] [app mobile] ' . $message . ' | ' . json_encode($contexte + ['pile' => $pile], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+// …et journal lisible depuis l'application admin, regroupé par erreur. La
+// première ligne de la pile situe le plantage : elle entre dans l'empreinte.
+require_once __DIR__ . '/../../includes/journal_erreurs.php';
+$lieu = mb_substr(trim((string) strtok($pile, '/')), 0, 120);
+if (journalEnregistrer($pdo, 'app', $message, $pile, $contexte, $lieu)) {
+    journalAlerterAdmins($pdo, 'app', $message);
+}
 
 apiReponse(['success' => true]);
