@@ -5,6 +5,11 @@
  * POST /api/v1/partenaire_evenements.php {action:'supprimer', id} —
  *      supprimer un événement, s'il n'a ni inscrit ni paiement (409 sinon :
  *      voir includes/evenements_suppression.php).
+ * POST /api/v1/partenaire_evenements.php {action:'annuler', id, motif?} —
+ *      annuler un événement pas encore terminé : ses pass sont annulés et
+ *      les inscrits prévenus. Possible même sans formule valable : un
+ *      établissement dont l'abonnement a pris fin doit pouvoir prévenir ses
+ *      inscrits.
  *
  * Reprend partenaire/evenements.php : mêmes colonnes, même agrégation
  * d'inscrits/check-in par sous-requête, même règle de suppression scopée
@@ -30,7 +35,6 @@ $etab = apiEtablissementDe($pdo, $uid);
 if (!$etab) {
     apiErreur('Aucun établissement associé à ce compte.', 404, 'etablissement_absent');
 }
-exigerAbonnementValide($pdo, $etab);
 
 $methode = (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET');
 
@@ -38,7 +42,7 @@ if ($methode === 'POST') {
     $corps  = apiCorps();
     $action = (string) ($corps['action'] ?? '');
 
-    if ($action !== 'supprimer') {
+    if ($action !== 'supprimer' && $action !== 'annuler') {
         apiErreur('Action inconnue', 422, 'action_inconnue');
     }
 
@@ -46,6 +50,24 @@ if ($methode === 'POST') {
     if (!$eid) {
         apiErreur('Événement manquant', 422, 'id_manquant');
     }
+
+    if ($action === 'annuler') {
+        $motif    = is_string($corps['motif'] ?? null) ? $corps['motif'] : null;
+        $resultat = evenementAnnuler($pdo, $eid, (int) $etab['id'], $uid, $motif);
+        if (!$resultat['ok']) {
+            $statut = match ($resultat['code']) {
+                'introuvable'    => 404,
+                'erreur_serveur' => 500,
+                default          => 409,
+            };
+            apiErreur($resultat['message'], $statut, $resultat['code']);
+        }
+        fluxToucher($pdo, CANAL_GLOBAL);
+
+        apiReponse(['success' => true, 'message' => $resultat['message'], 'pass_annules' => $resultat['pass_annules'] ?? 0]);
+    }
+
+    exigerAbonnementValide($pdo, $etab);
 
     // Refusée s'il a des inscrits ou un paiement (PAY-10) : 409, avec le
     // code inscrits ou paiement et un message à afficher tel quel.
@@ -64,6 +86,7 @@ if ($methode === 'POST') {
 }
 
 apiExigerMethode('GET');
+exigerAbonnementValide($pdo, $etab);
 
 $stmt = $pdo->prepare(
     "SELECT e.*,
@@ -110,7 +133,9 @@ apiReponse([
                 'sponsor_restant_s' => sponsoringChrono($e)['restant_s'] ?? null,
                 'supplement_tarif' => (float) ($e['supplement_tarif'] ?? 0),
                 'sponsor_tarif'  => (float) ($e['sponsor_tarif'] ?? 0),
-                'statut'         => $passe ? 'passe' : ($complet ? 'complet' : 'actif'),
+                'statut'         => $e['annule_le'] !== null ? 'annule' : ($passe ? 'passe' : ($complet ? 'complet' : 'actif')),
+                'annule_le'      => $e['annule_le'] !== null ? (string) $e['annule_le'] : null,
+                'annule_motif'   => $e['annule_motif'] !== null ? (string) $e['annule_motif'] : null,
                 'collaboration'  => ($collaborations[(int) $e['id']] ?? [])[0] ?? null,
             ];
         },

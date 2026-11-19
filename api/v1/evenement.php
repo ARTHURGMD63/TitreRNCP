@@ -13,6 +13,7 @@ require_once __DIR__ . '/../../includes/uploads.php';
 require_once __DIR__ . '/../../includes/agregats.php';
 require_once __DIR__ . '/../../includes/sponsoring.php';
 require_once __DIR__ . '/../../includes/evenements_temps.php';
+require_once __DIR__ . '/../../includes/evenements_suppression.php';
 require_once __DIR__ . '/../../includes/collaborations.php';
 require_once __DIR__ . '/../../includes/comptes.php';
 
@@ -32,17 +33,24 @@ $stmt = $pdo->prepare("
            (SELECT COUNT(*) FROM inscriptions
              WHERE evenement_id = e.id AND statut != 'annule') AS nb_inscrits,
            (SELECT COUNT(*) FROM inscriptions
-             WHERE evenement_id = e.id AND user_id = ? AND statut != 'annule') AS deja_inscrit
+             WHERE evenement_id = e.id AND user_id = ? AND statut != 'annule') AS deja_inscrit,
+           (SELECT COUNT(*) FROM inscriptions
+             WHERE evenement_id = e.id AND user_id = ?) AS a_eu_un_pass
       FROM evenements e
       JOIN etablissements et ON et.id = e.etablissement_id
      WHERE e.id = ?
 ");
-$stmt->execute([$uid, $id]);
+$stmt->execute([$uid, $uid, $id]);
 $e = $stmt->fetch();
 
 // Un BDE refusé ne montre plus ses soirées (PAY-09), sauf à qui y tient déjà
 // un pass : il doit pouvoir le retrouver et l'annuler.
 if (!$e || (!etablissementVisible($e) && (int) $e['deja_inscrit'] === 0)) {
+    apiErreur('Cette soirée n’existe plus', 404, 'introuvable');
+}
+// Un événement annulé ne se montre qu'à qui y avait un pass : il apprend
+// par la fiche pourquoi son pass a disparu (champ annule plus bas).
+if ($e['annule_le'] !== null && (int) $e['a_eu_un_pass'] === 0) {
     apiErreur('Cette soirée n’existe plus', 404, 'introuvable');
 }
 
@@ -126,6 +134,10 @@ apiReponse([
         'is_flash'     => $flashEncours,
         'flash_expiry' => $e['flash_expiry'] !== null ? (string) $e['flash_expiry'] : null,
         'deja_inscrit' => ((int) $e['deja_inscrit']) > 0,
+        // Annulé par l'établissement ou l'équipe : la fiche le dit, le
+        // bouton d'inscription disparaît (api/inscrire.php refuse de toute façon).
+        'annule'       => $e['annule_le'] !== null,
+        'annule_motif' => $e['annule_motif'] !== null ? (string) $e['annule_motif'] : null,
         // La mention reste sur la fiche comme sur le web : un contenu payé
         // s'annonce partout où il est lu.
         'sponsorise'   => sponsoringActif($e),

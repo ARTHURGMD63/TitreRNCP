@@ -303,6 +303,10 @@ h1, h2, h3, h4, p { margin: 0; }
 .tableau__titre a { text-decoration: none; }
 .tableau__titre a:hover { color: var(--bleu); }
 .actions-ligne { display: flex; gap: 6px; justify-content: flex-end; }
+.annulation { position: relative; }
+.annulation > summary { list-style: none; cursor: pointer; }
+.annulation > summary::-webkit-details-marker { display: none; }
+.annulation__formulaire { position: absolute; right: 0; top: calc(100% + 6px); z-index: 5; width: 260px; display: grid; gap: 8px; padding: 12px; background: var(--blanc); border: 1px solid var(--ligne); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.12); text-align: left; }
 .bouton-icone { width: 38px; height: 38px; display: inline-grid; place-items: center; border-radius: 12px; border: 1px solid var(--ligne); background: var(--blanc); color: var(--gris-fonce); text-decoration: none; cursor: pointer; }
 .bouton-icone:hover { border-color: var(--encre); color: var(--encre); }
 .bouton-icone--danger:hover { border-color: var(--danger); color: var(--danger); }

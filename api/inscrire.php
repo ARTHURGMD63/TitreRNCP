@@ -5,6 +5,7 @@ require_once __DIR__ . '/../includes/places.php';
 require_once __DIR__ . '/../includes/temps_reel.php';
 require_once __DIR__ . '/../includes/evenements_temps.php';
 require_once __DIR__ . '/../includes/comptes.php';
+require_once __DIR__ . '/../includes/evenements_suppression.php';
 header('Content-Type: application/json');
 
 // Ecriture : POST obligatoire, jeton CSRF et origine verifies.
@@ -46,7 +47,7 @@ try {
     $stmt = $pdo->prepare(
         "SELECT e.quota, e.prix_normal, e.reduction, e.date_heure, e.inscriptions_jusqu_au
            FROM evenements e
-          WHERE e.id = ? AND $finEff >= NOW()
+          WHERE e.id = ? AND $finEff >= NOW() AND " . sqlEvenementNonAnnule('e') . "
             AND EXISTS (SELECT 1 FROM etablissements et
                          WHERE et.id = e.etablissement_id AND " . sqlEtablissementVisible('et') . ")
           FOR UPDATE"

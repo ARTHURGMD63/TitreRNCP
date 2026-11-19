@@ -21,6 +21,10 @@
 --     n'est posé que s'il n'existe aucun doublon : ce sont des pièces
 --     comptables, on n'en efface pas. Un doublon se règle à la main (la
 --     requête de contrôle est en bas du fichier), puis on rejoue v41.
+--  6. evenements.annule_le, annule_motif, annule_par : annulation d'un
+--     événement qui a des inscrits (il ne se supprime plus, PAY-10). Les
+--     pass sont annulés et les inscrits prévenus ; l'événement reste en base
+--     pour l'historique, mais sort du fil et refuse les inscriptions.
 --
 --  Rejouable sans effet. Écrit avec PREPARE (motif de la v40) pour passer
 --  sur MariaDB, MySQL 8 et TiDB : une seule modification par ALTER TABLE.
@@ -143,3 +147,29 @@ PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
 --   SELECT stripe_paiement_id, GROUP_CONCAT(id), COUNT(*)
 --     FROM paiements_evenements WHERE stripe_paiement_id IS NOT NULL
 --    GROUP BY stripe_paiement_id HAVING COUNT(*) > 1;
+
+-- ── 6. Annulation d'un événement ────────────────────────────────────────
+
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'evenements'
+              AND COLUMN_NAME = 'annule_le');
+SET @s := IF(@c = 0,
+  'ALTER TABLE evenements ADD COLUMN annule_le DATETIME NULL DEFAULT NULL AFTER fin_effective',
+  'SELECT "evenements.annule_le déjà présente"');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'evenements'
+              AND COLUMN_NAME = 'annule_motif');
+SET @s := IF(@c = 0,
+  'ALTER TABLE evenements ADD COLUMN annule_motif VARCHAR(255) NULL DEFAULT NULL AFTER annule_le',
+  'SELECT "evenements.annule_motif déjà présente"');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'evenements'
+              AND COLUMN_NAME = 'annule_par');
+SET @s := IF(@c = 0,
+  'ALTER TABLE evenements ADD COLUMN annule_par INT NULL DEFAULT NULL AFTER annule_motif',
+  'SELECT "evenements.annule_par déjà présente"');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;

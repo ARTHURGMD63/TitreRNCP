@@ -29,6 +29,7 @@ require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/creneaux.php';
 require_once __DIR__ . '/../../includes/places.php';
 require_once __DIR__ . '/../../includes/evenements_temps.php';
+require_once __DIR__ . '/../../includes/evenements_suppression.php';
 
 apiExigerMethode('GET');
 
@@ -100,7 +101,7 @@ $sql = "SELECT e.*, et.nom AS etab_nom, et.ville AS etab_ville,
                EXISTS (SELECT 1 FROM inscriptions i WHERE i.evenement_id = e.id AND i.user_id = ? AND i.statut <> 'annule') AS deja_inscrit
           FROM evenements e
           JOIN etablissements et ON et.id = e.etablissement_id
-         WHERE e.type = 'sport' AND $finEff >= NOW() AND $dansRayon";
+         WHERE e.type = 'sport' AND " . sqlEvenementNonAnnule('e') . " AND $finEff >= NOW() AND $dansRayon";
 $params = array_merge([$uid], $paramsRayon);
 if ($sport !== '') {
     $sql .= ' AND e.sport = ?';

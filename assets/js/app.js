@@ -712,6 +712,39 @@ function initApp() {
     });
   });
 
+  // Annulation d'un événement qui a des inscrits (il ne se supprime plus) :
+  // les pass sont annulés et les inscrits prévenus, avec le motif s'il y en a.
+  document.querySelectorAll('.btn-admin-annuler-evenement').forEach(btn => {
+    if (btn._init) return; btn._init = true;
+    btn.addEventListener('click', async () => {
+      const motif = prompt(`Annuler « ${btn.dataset.titre} » ? Les ${btn.dataset.inscrits} pass seront annulés et les inscrits prévenus.
+
+Motif envoyé aux inscrits (facultatif) :`, '');
+      if (motif === null) return;
+      btn.disabled = true;
+      try {
+        const res = await fetch(BASE + '/api/admin_annuler_evenement.php', {
+          method: 'POST', headers: enTetesJson(),
+          body: JSON.stringify({ evenement_id: btn.dataset.id, motif })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message || 'Événement annulé', 'success');
+          const etat = document.createElement('span');
+          etat.textContent = 'Annulé';
+          etat.style.cssText = 'font-size:var(--fs-2);font-weight:var(--fw-bold);color:var(--danger);';
+          btn.replaceWith(etat);
+        } else {
+          btn.disabled = false;
+          showToast(data.message || 'Erreur', 'error');
+        }
+      } catch {
+        btn.disabled = false;
+        showToast('Erreur réseau', 'error');
+      }
+    });
+  });
+
   // Recherche du hub (explore.php) : le bouton révèle le champ et lui donne
   // le focus ; il repart si le champ est vide au moment de refermer.
   const btnRecherche = document.getElementById('btn-recherche-toggle');

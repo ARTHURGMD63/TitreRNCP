@@ -104,6 +104,12 @@ CREATE TABLE IF NOT EXISTS evenements (
     -- par le code a chaque ecriture (evenementMajFinEffective()), indexee
     -- pour le fil.
     fin_effective DATETIME NULL DEFAULT NULL,
+    -- Annulation (migration v41) : l'evenement reste pour l'historique, ses
+    -- pass sont annules et il sort du fil. annule_par : le compte qui a
+    -- annule (partenaire ou administrateur), sans cle : il peut disparaitre.
+    annule_le DATETIME NULL DEFAULT NULL,
+    annule_motif VARCHAR(255) NULL DEFAULT NULL,
+    annule_par INT NULL DEFAULT NULL,
     quota INT DEFAULT 100,
     reduction INT DEFAULT 0,
     prix_normal DECIMAL(8,2) DEFAULT 0,

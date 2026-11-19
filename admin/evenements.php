@@ -170,12 +170,24 @@ adminHeader($pdo, 'evenements', 'Événements',
           <?= (int) $e['reduction'] > 0 ? '−' . (int) $e['reduction'] . ' %' : ($e['is_gratuit'] ? 'Gratuit' : '—') ?>
         </td>
         <td data-label="Actions">
+          <?php if ($e['annule_le'] !== null): ?>
+          <span style="font-size:var(--fs-2);font-weight:var(--fw-bold);color:var(--danger);white-space:nowrap;">Annulé</span>
+          <?php elseif ((int) $e['inscrits'] > 0): ?>
+          <?php // Des pass en cours : la suppression est refusée (PAY-10), on annule et on prévient. ?>
+          <button type="button" class="btn-admin-annuler-evenement" data-id="<?= (int) $e['id'] ?>"
+                  data-titre="<?= htmlspecialchars($e['titre']) ?>" data-inscrits="<?= (int) $e['inscrits'] ?>"
+                  style="background:var(--alerte-vif);color:var(--sur-lave);border:none;border-radius:var(--radius-pill);
+                         padding:7px 14px;font-size:var(--fs-2);font-weight:var(--fw-bold);cursor:pointer;white-space:nowrap;">
+            Annuler
+          </button>
+          <?php else: ?>
           <button type="button" class="btn-admin-supprimer-evenement" data-id="<?= (int) $e['id'] ?>"
                   data-titre="<?= htmlspecialchars($e['titre']) ?>"
                   style="background:var(--alerte-vif);color:var(--sur-lave);border:none;border-radius:var(--radius-pill);
                          padding:7px 14px;font-size:var(--fs-2);font-weight:var(--fw-bold);cursor:pointer;white-space:nowrap;">
             Supprimer
           </button>
+          <?php endif; ?>
         </td>
       </tr>
       <?php endforeach; ?>

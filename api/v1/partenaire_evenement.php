@@ -255,6 +255,9 @@ if ($eid) {
     if (!$evenementExistant) {
         apiErreur('Cet événement n’existe plus.', 404, 'introuvable');
     }
+    if ($evenementExistant['annule_le'] !== null) {
+        apiErreur('Cet événement est annulé : il ne se modifie plus.', 409, 'annule');
+    }
 }
 
 $titre        = trim((string) ($corps['titre'] ?? ''));

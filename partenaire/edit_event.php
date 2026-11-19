@@ -14,8 +14,8 @@ $capacites = capacitesEtablissement($pdo, (int) $etab['id']);
 $stmt = $pdo->prepare('SELECT * FROM evenements WHERE id = ? AND etablissement_id = ?');
 $stmt->execute([(int) ($_GET['id'] ?? 0), (int) $etab['id']]);
 $event = $stmt->fetch();
-if (!$event || ($event['type'] ?? '') === 'sport') {
-    flashPro('Cet événement n\'existe plus ou se modifie depuis l\'application.', 'alerte');
+if (!$event || ($event['type'] ?? '') === 'sport' || $event['annule_le'] !== null) {
+    flashPro('Cet événement n\'existe plus, est annulé, ou se modifie depuis l\'application.', 'alerte');
     header('Location: ' . baseUrl('/partenaire/evenements.php'));
     exit;
 }
