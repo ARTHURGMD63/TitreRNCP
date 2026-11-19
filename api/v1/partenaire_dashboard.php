@@ -63,7 +63,8 @@ if ($event) {
 
     $nbTotal = $nbInscrits + $nbCheckin;
 
-    $stmt = $pdo->prepare('SELECT u.ecole, COUNT(*) as cnt FROM inscriptions i JOIN users u ON u.id=i.user_id WHERE i.evenement_id=? AND u.ecole IS NOT NULL GROUP BY u.ecole ORDER BY cnt DESC');
+    // Sans les pass annulés (PAY-19), comme le suivi d'événement.
+    $stmt = $pdo->prepare("SELECT u.ecole, COUNT(*) as cnt FROM inscriptions i JOIN users u ON u.id=i.user_id WHERE i.evenement_id=? AND i.statut <> 'annule' AND u.ecole IS NOT NULL AND u.ecole <> '' GROUP BY u.ecole ORDER BY cnt DESC");
     $stmt->execute([$eid]);
     $schools     = $stmt->fetchAll();
     $totalSchool = array_sum(array_column($schools, 'cnt')) ?: 1;
