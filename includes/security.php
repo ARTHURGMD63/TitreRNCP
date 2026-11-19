@@ -443,15 +443,24 @@ function ipClient(): string {
  * Sans e-mail : au plus $maxAttempts tentatives par IP dans la fenêtre.
  *
  * Avec l'e-mail (connexion) : trois compteurs.
- *   - IP + compte : $maxAttempts — la règle d'avant, pour un compte visé ;
- *   - compte, toutes IP : 2 × $maxAttempts — un compte attaqué depuis
- *     plusieurs adresses reste protégé ;
+ *   - IP + compte : $maxAttempts — le blocage ordinaire. Il ne touche que
+ *     l'adresse d'où viennent les échecs : un attaquant qui tape dix fois
+ *     un faux mot de passe sur le compte d'un établissement ne l'empêche
+ *     plus de se connecter depuis chez lui (audit SEC-06) ;
+ *   - compte, toutes IP : $maxParCompte (par défaut 10 × $maxAttempts) —
+ *     un plafond de sûreté contre une force brute répartie. Il faut alors
+ *     une dizaine d'adresses pour bloquer la victime, au lieu de deux
+ *     auparavant (2 × $maxAttempts) ;
  *   - IP, tous comptes : 10 × $maxAttempts — un campus entier sort souvent
  *     par une seule adresse (NAT) : cinq fautes de frappe d'étudiants
  *     différents ne doivent pas bloquer tout le monde, mais un robot qui
  *     balaie les comptes depuis une adresse est arrêté.
+ *
+ * Les codes de double authentification passent un $maxParCompte plus bas :
+ * celui qui les essaie connaît déjà le mot de passe, et six chiffres se
+ * devinent bien plus vite qu'un mot de passe.
  */
-function isRateLimited(PDO $pdo, string $ip, int $maxAttempts = 5, int $windowSeconds = 900, ?string $email = null): bool {
+function isRateLimited(PDO $pdo, string $ip, int $maxAttempts = 5, int $windowSeconds = 900, ?string $email = null, ?int $maxParCompte = null): bool {
     // Nettoie les anciennes entrées (index sur attempted_at, migration v33).
     $pdo->prepare("DELETE FROM login_attempts WHERE attempted_at < DATE_SUB(NOW(), INTERVAL ? SECOND)")
         ->execute([$windowSeconds]);
@@ -473,7 +482,7 @@ function isRateLimited(PDO $pdo, string $ip, int $maxAttempts = 5, int $windowSe
     }
 
     return $compter('ip = ? AND email = ?', [$ip, $email]) >= $maxAttempts
-        || $compter('email = ?', [$email]) >= 2 * $maxAttempts
+        || $compter('email = ?', [$email]) >= ($maxParCompte ?? 10 * $maxAttempts)
         || $compter("ip = ? AND $connexion", [$ip]) >= 10 * $maxAttempts;
 }
 

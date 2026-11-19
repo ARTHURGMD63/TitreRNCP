@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && is_array($enAttente) && isset($_POS
     $etapeCode = true;
     $cleLimite = 'totp:' . (int) $enAttente['id'];
 
-    if (isRateLimited($pdo, $ip, 5, 900, $cleLimite)) {
+    if (isRateLimited($pdo, $ip, 5, 900, $cleLimite, 10)) {
         $erreur = 'Trop de tentatives. Réessaie dans quinze minutes.';
     } elseif (!totpAccepterConnexion($pdo, (int) $enAttente['id'], (string) $_POST['code_totp'])) {
         recordLoginAttempt($pdo, $ip, $cleLimite);
