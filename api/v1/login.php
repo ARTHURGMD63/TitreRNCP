@@ -35,7 +35,7 @@ if (isRateLimited($pdo, $ip, 5, 900, $email)) {
     apiErreur('Trop de tentatives. Reessaie dans quinze minutes.', 429, 'trop_de_tentatives');
 }
 
-$stmt = $pdo->prepare('SELECT id, nom, prenom, email, password, ecole, promo, ville, photo, interests, type, compte_prive
+$stmt = $pdo->prepare('SELECT id, nom, prenom, email, telephone, password, ecole, promo, ville, photo, interests, type, compte_prive
                          FROM users WHERE email = ?');
 $stmt->execute([$email]);
 $u = $stmt->fetch();

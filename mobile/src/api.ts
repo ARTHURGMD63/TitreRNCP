@@ -251,6 +251,8 @@ export type Profil = {
   photo_url: string | null;
   interets: string[];
   compte_prive: boolean;
+  /** Mobile au format international (v43) ; null si le compte n'en a pas. Absent d'un ancien serveur. */
+  telephone?: string | null;
 };
 
 /** Un établissement qui co-organise un événement (v39), une fois l'invitation acceptée. */
@@ -800,6 +802,9 @@ export type ReponseAbonnementPartenaire = {
   achats: { evenement_supplementaire: number; sponsoring: (FormulePartenaire & { heures: number; notifications: number })[] };
 };
 
+/** Réponse d'une demande de code SMS. `code_dev` n'est rempli qu'en développement. */
+export type ReponseCodeTelephone = { success: true; verification: boolean; telephone: string; code_dev?: string };
+
 export type SuiviEvenementPartenaire = {
   evenement: {
     id: number; titre: string; type: string; date_heure: string; date_fin: string | null; lieu: string;
@@ -811,8 +816,13 @@ export type SuiviEvenementPartenaire = {
   };
   courbe: { jour: string; inscriptions: number; cumul: number }[];
   ecoles: { nom: string; nombre: number; pourcentage: number }[];
-  /** Les inscrits (hors annulés), sans leur e-mail, pour l'établissement propriétaire. */
-  participants: { id: number; prenom: string; nom: string; ecole: string | null; promo: string | null; present: boolean; inscrit_le: string }[];
+  /**
+   * Les inscrits (hors annulés), sans leur e-mail, pour l'établissement propriétaire.
+   * `telephone` : leur mobile (v43), null après `telephones_jusqu_au` ou s'ils n'en ont pas donné.
+   */
+  participants: { id: number; prenom: string; nom: string; ecole: string | null; promo: string | null; present: boolean; inscrit_le: string; telephone?: string | null }[];
+  /** Fin de la période où les numéros des inscrits restent visibles (30 jours après l'événement). */
+  telephones_jusqu_au?: string;
   mise_en_avant: {
     active: boolean; en_cours: boolean; formule: string | null; libelle: string | null; offerte: boolean; jusqu_au: string | null;
     /** Quand elle a démarré (heure de Paris), null pour une mise en avant d'avant le suivi du début. */
@@ -995,6 +1005,18 @@ export const api = {
   /** Second temps : le code est juste, l'adresse change et l'ancienne en est avertie. */
   confirmerEmail: (jeton: string, motDePasse: string, code: string) =>
     appelApi<{ success: true; email: string }>('compte.php', { methode: 'POST', jeton, corps: { action: 'email_confirmer', mot_de_passe: motDePasse, code } }),
+  /**
+   * Code SMS de l'inscription, avant la création du compte. `verification` faux :
+   * l'envoi de SMS n'est pas configuré, l'inscription se fait sans code.
+   */
+  codeTelephone: (telephone: string) =>
+    appelApi<ReponseCodeTelephone>('telephone_code.php', { methode: 'POST', corps: { telephone } }),
+  /** Mon compte, premier temps : un code part vers le numéro (ou il est enregistré tel quel sans SMS configuré). */
+  changerTelephone: (jeton: string, motDePasse: string, telephone: string) =>
+    appelApi<ReponseCodeTelephone>('compte.php', { methode: 'POST', jeton, corps: { action: 'telephone', mot_de_passe: motDePasse, telephone } }),
+  /** Mon compte, second temps : le code est juste, le numéro est enregistré. */
+  confirmerTelephone: (jeton: string, motDePasse: string, telephone: string, code: string) =>
+    appelApi<{ success: true; telephone: string }>('compte.php', { methode: 'POST', jeton, corps: { action: 'telephone_confirmer', mot_de_passe: motDePasse, telephone, code } }),
   /** Un texte légal, sans jeton : on le lit avant de créer un compte. */
   legal: (slug: string) => appelApi<{ success: true; page: PageLegale }>('legal.php', { params: { page: slug } }),
   deconnexion: (jeton: string) => appelApi<{ success: true }>('logout.php', { methode: 'POST', jeton }),

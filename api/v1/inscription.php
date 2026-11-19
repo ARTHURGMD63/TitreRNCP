@@ -9,7 +9,9 @@
  * ouvre la session dans la foulée, l'application fait de même.
  *
  * Corps JSON : type, prenom, nom, email, password, date_naissance (AAAA-MM-JJ),
- * ecole, promo (étudiant, réservées aux 18-25 ans) ; etablissement_nom,
+ * ecole, promo (étudiant, réservées aux 18-25 ans), telephone et
+ * code_telephone (étudiant : le code SMS reçu par telephone_code.php, exigé
+ * dès que l'envoi de SMS est configuré) ; etablissement_nom,
  * etablissement_type (partenaire) ; cgu
  * (booléen) ; appareil (facultatif).
  */
@@ -19,6 +21,7 @@ require_once __DIR__ . '/_socle.php';
 require_once __DIR__ . '/../../includes/auth_check.php';
 require_once __DIR__ . '/../../includes/agregats.php';
 require_once __DIR__ . '/../../includes/profil_etudiant.php';
+require_once __DIR__ . '/../../includes/telephone.php';
 
 apiExigerMethode('POST');
 
@@ -52,6 +55,11 @@ $etablVille = 'Clermont-Ferrand';
 $naissance  = $texte('date_naissance');
 $cgu        = !empty($corps['cgu']);
 $interets   = $type === 'etudiant' ? filtrerInterets($corps['interets'] ?? []) : [];
+// Le numéro n'est demandé qu'aux étudiants (v43) ; vérifié par SMS avant la
+// création du compte, voir includes/telephone.php.
+$telephone  = $type === 'etudiant' ? telephoneNormaliser($texte('telephone')) : null;
+$codeTel    = $texte('code_telephone');
+$telVerifie = false;
 
 $age = ageEnAnnees($naissance);
 
@@ -86,8 +94,22 @@ if (!$prenom || !$nom || !$email || !$pass) {
     apiErreur('Outsee est réservée aux personnes majeures : l’inscription n’est pas possible avant 18 ans.', 422, 'mineur');
 } elseif ($age > 120) {
     apiErreur('Cette date de naissance ne semble pas correcte.', 422, 'naissance');
+} elseif ($type === 'etudiant' && $telephone === null) {
+    apiErreur('Saisis un numéro de mobile français (06 ou 07).', 422, 'telephone');
 } elseif (!$cgu) {
     apiErreur('Merci d’accepter les conditions générales pour continuer.', 422, 'cgu');
+}
+
+if ($telephone !== null) {
+    if (telephonePris($pdo, $telephone)) {
+        apiErreur('Ce numéro est déjà utilisé par un autre compte.', 409, 'telephone_pris');
+    }
+    if (telephoneVerificationRequise()) {
+        if (!telephoneCodeVerifier($pdo, $telephone, $codeTel)) {
+            apiErreur('Code SMS incorrect ou expiré. Vérifie-le, ou redemande un code.', 422, 'code_telephone');
+        }
+        $telVerifie = true;
+    }
 }
 
 $ecole = (string) ecoleNormalisee($ecole);
@@ -97,11 +119,11 @@ $pdo->beginTransaction();
 $enTransaction = true;
 try {
     $stmt = $pdo->prepare(
-        "INSERT INTO users (nom, prenom, email, password, ecole, promo, ville,
+        "INSERT INTO users (nom, prenom, email, telephone, telephone_verifie_le, password, ecole, promo, ville,
                             date_naissance, cgu_acceptees_le, type, interests)
-         VALUES (?,?,?,?,?,?,?,?,NOW(),?,?)"
+         VALUES (?,?,?,?," . ($telVerifie ? 'NOW()' : 'NULL') . ",?,?,?,?,?,NOW(),?,?)"
     );
-    $stmt->execute([$nom, $prenom, $email, password_hash($pass, PASSWORD_DEFAULT),
+    $stmt->execute([$nom, $prenom, $email, $telephone, password_hash($pass, PASSWORD_DEFAULT),
                     $ecole ?: null, $promo ?: null, $type === 'etudiant' ? $etudiantVille : null,
                     $naissance, $type, interetsVersTexte($interets)]);
     $userId = (int) $pdo->lastInsertId();
@@ -112,6 +134,10 @@ try {
     }
     $pdo->commit();
     $enTransaction = false;
+
+    if ($telVerifie && $telephone !== null) {
+        telephoneCodeConsommer($pdo, $telephone);
+    }
 
     // Après la validation, et non dedans : user_interets est une table dérivée
     // de la colonne `interests` (reconstruite par la migration v15 au besoin),
@@ -142,13 +168,18 @@ try {
     // l'erreur générique 500 au lieu du message dédié.
     if (($e->errorInfo[1] ?? null) === 1062) {
         enregistrerTentative($pdo, 'inscription', $ip);
+        // Le numéro pris entre la vérification et l'écriture : rare, mais
+        // la clé unique a le dernier mot.
+        if (str_contains($e->getMessage(), 'uniq_users_telephone')) {
+            apiErreur('Ce numéro est déjà utilisé par un autre compte.', 409, 'telephone_pris');
+        }
         apiErreur('Cet email est déjà utilisé.', 409, 'email_pris');
     }
     logErreur('Création de compte impossible', $e, ['type' => $type]);
     apiErreur('Erreur lors de la création du compte.', 500, 'creation');
 }
 
-$stmt = $pdo->prepare('SELECT id, nom, prenom, email, ecole, promo, ville, photo, interests, type, compte_prive FROM users WHERE id = ?');
+$stmt = $pdo->prepare('SELECT id, nom, prenom, email, telephone, ecole, promo, ville, photo, interests, type, compte_prive FROM users WHERE id = ?');
 $stmt->execute([$userId]);
 $u = $stmt->fetch();
 

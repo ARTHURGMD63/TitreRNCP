@@ -321,6 +321,28 @@ Supprime son compte. Le mot de passe est redemandé.
 
 Mot de passe faux → `403 mot_de_passe` (compte intact). Détail de ce qui est effacé : `includes/compte.php`.
 
+### `POST /api/v1/telephone_code.php` — public
+Envoie le **code SMS** qui vérifie le mobile d'un étudiant, avant la création du compte (v43). Seuls les mobiles
+français (06, 07) sont acceptés.
+
+```json
+{ "telephone": "06 12 34 56 78" }
+```
+| Réponse | Cas |
+|---|---|
+| `200 { "verification": true, "telephone": "+33612345678" }` | Code parti (6 chiffres, 10 minutes, 5 essais) ; `code_dev` en plus en local |
+| `200 { "verification": false, "telephone": … }` | SMS non configuré en production : l'inscription se fait sans code |
+| `409 telephone_pris` | Numéro déjà rattaché à un compte |
+| `422 telephone` | Pas un mobile français |
+| `429 code_recent` / `trop_de_tentatives` | Un code par minute ; 5 demandes par heure et par IP, 3 par numéro |
+| `502 envoi` | OVH a refusé l'envoi |
+
+`POST /api/v1/inscription.php` reçoit ensuite `telephone` et `code_telephone` (obligatoires pour un étudiant ;
+`422 code_telephone` si le code est faux). Depuis Mon compte, `compte.php` accepte les actions `telephone`
+(`{ mot_de_passe, telephone }`, envoie le code) et `telephone_confirmer` (`{ mot_de_passe, telephone, code }`).
+L'établissement lit le numéro de ses inscrits dans `partenaire_evenement_suivi.php` (`participants[].telephone`),
+jusqu'à `telephones_jusqu_au` : 30 jours après la fin de l'événement, puis `null`.
+
 ---
 
 ## Codes d'erreur communs

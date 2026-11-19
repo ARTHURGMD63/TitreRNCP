@@ -14,6 +14,7 @@ require_once __DIR__ . '/../../includes/comptes.php';
 require_once __DIR__ . '/../../includes/sponsoring.php';
 require_once __DIR__ . '/../../includes/places.php';
 require_once __DIR__ . '/../../includes/evenements_temps.php';
+require_once __DIR__ . '/../../includes/telephone.php';
 
 apiExigerMethode('GET');
 
@@ -80,8 +81,15 @@ $ecoles = array_map(
 // propriétaire de l'événement les voit (filtre plus haut). Plus leur
 // e-mail (PAY-08) : l'entrée se gère sans, et la politique de
 // confidentialité ne le confie plus aux établissements (minimisation).
+// Leur numéro de téléphone (v43), oui : pour joindre un inscrit au sujet de
+// cet événement, et seulement jusqu'à 30 jours après sa fin (voir
+// includes/telephone.php et la politique de confidentialité).
+$telVisibles = telephoneVisiblePourEtablissement(
+    isset($e['date_fin']) ? (string) $e['date_fin'] : null,
+    (string) $e['date_heure']
+);
 $stmt = $pdo->prepare(
-    "SELECT u.id, u.prenom, u.nom, u.ecole, u.promo, i.statut, i.created_at
+    "SELECT u.id, u.prenom, u.nom, u.ecole, u.promo, u.telephone, i.statut, i.created_at
        FROM inscriptions i JOIN users u ON u.id = i.user_id
       WHERE i.evenement_id = ? AND i.statut <> 'annule'
       ORDER BY u.nom, u.prenom"
@@ -96,6 +104,7 @@ $participants = array_map(
         'promo'      => $r['promo'] !== null && $r['promo'] !== '' ? (string) $r['promo'] : null,
         'present'    => $r['statut'] === 'checkin',
         'inscrit_le' => (string) $r['created_at'],
+        'telephone'  => $telVisibles && !empty($r['telephone']) ? (string) $r['telephone'] : null,
     ],
     $stmt->fetchAll()
 );
@@ -141,6 +150,8 @@ apiReponse([
     'courbe' => $courbe,
     'ecoles' => $ecoles,
     'participants' => $participants,
+    // Jusqu'à quand les numéros restent affichés (heure de Paris).
+    'telephones_jusqu_au' => date('Y-m-d H:i:s', (int) strtotime((string) ($e['date_fin'] ?: $e['date_heure'])) + TELEPHONE_VISIBILITE_JOURS * 86400),
     'mise_en_avant' => [
         'active'                 => (bool) $e['is_sponsorise'],
         'en_cours'               => sponsoringActif($e),

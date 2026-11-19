@@ -1,5 +1,6 @@
 /**
- * Mon compte — changer son adresse e-mail et son mot de passe, et régler
+ * Mon compte — changer son adresse e-mail, son numéro de mobile (étudiants,
+ * SectionTelephone) et son mot de passe, et régler
  * les notifications (ReglagesNotifications).
  *
  * Valable pour un étudiant comme pour un établissement : c'est le même compte
@@ -22,6 +23,7 @@ import { Contenu, Ecran, EnTete } from '../composants/Ecran';
 import { BoutonRetour, Encart } from '../composants/Elements';
 import { Champ } from '../composants/Formulaire';
 import { ReglagesNotifications } from '../composants/ReglagesNotifications';
+import { SectionTelephone } from '../composants/SectionTelephone';
 import { Display, T, TitreSection } from '../composants/Texte';
 import { ecrireALEquipe } from '../contact';
 import { useJeton, useSession } from '../session';
@@ -194,6 +196,8 @@ export default function MonCompte() {
             </>
           )}
         </View>
+
+        {profil?.type === 'etudiant' ? <SectionTelephone /> : null}
 
         <View style={{ backgroundColor: c.blanc, borderRadius: rayon.carte, padding: 14, marginBottom: 16 }}>
           <TitreSection style={{ marginBottom: 14 }}>Mot de passe</TitreSection>
