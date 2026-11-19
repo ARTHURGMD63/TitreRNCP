@@ -190,4 +190,70 @@ final class UploadsTest extends TestCase
         $this->assertGreaterThan(0, UPLOAD_MAX_BYTES);
         $this->assertSame(['image/jpeg', 'image/png', 'image/webp'], array_keys(UPLOAD_ALLOWED_TYPES));
     }
+
+    // ── Réencodage (audit SEC-14) ───────────────────────────────────────────
+
+    /**
+     * Un JPEG déjà à la bonne taille, avec un segment EXIF et un script collé
+     * après la fin de l'image : réécrit, il ne garde que ses pixels.
+     */
+    public function testUneImageDejaPetiteEstReencodeeSansSesMetadonnees(): void
+    {
+        if (!function_exists('imagecreatetruecolor') || !function_exists('imagejpeg')) {
+            $this->markTestSkipped('GD absente.');
+        }
+        $chemin = $this->dossier . '/photo.jpg';
+        $image  = imagecreatetruecolor(300, 200);
+        imagejpeg($image, $chemin, 90);
+        imagedestroy($image);
+
+        // APP1 « Exif » juste après le marqueur de début, puis un polyglotte.
+        $exif   = "Exif\0\0GPS-45.7772N-3.0870E";
+        $brut   = (string) file_get_contents($chemin);
+        $brut   = substr($brut, 0, 2) . "\xFF\xE1" . pack('n', strlen($exif) + 2) . $exif . substr($brut, 2)
+                . '<?php echo "polyglotte"; ?>';
+        file_put_contents($chemin, $brut);
+        $this->assertNotFalse(@getimagesize($chemin), 'Le fichier piégé doit rester une image lisible.');
+
+        $this->assertTrue(reencoderImage($chemin, IMAGETYPE_JPEG, 1600));
+
+        $apres = (string) file_get_contents($chemin);
+        $this->assertStringNotContainsString('GPS-45.7772N', $apres);
+        $this->assertStringNotContainsString('polyglotte', $apres);
+        $this->assertSame([300, 200], array_slice((array) getimagesize($chemin), 0, 2));
+        $this->assertFileDoesNotExist($chemin . '.reencodage');
+    }
+
+    public function testUneImageTropLargeEstReduite(): void
+    {
+        if (!function_exists('imagecreatetruecolor') || !function_exists('imagepng')) {
+            $this->markTestSkipped('GD absente.');
+        }
+        $chemin = $this->dossier . '/large.png';
+        $image  = imagecreatetruecolor(800, 400);
+        imagepng($image, $chemin);
+        imagedestroy($image);
+
+        $this->assertTrue(reencoderImage($chemin, IMAGETYPE_PNG, 400));
+        $this->assertSame([400, 200], array_slice((array) getimagesize($chemin), 0, 2));
+    }
+
+    public function testUnFichierIndechiffrableNEstPasReecrit(): void
+    {
+        $chemin = $this->dossier . '/faux.jpg';
+        file_put_contents($chemin, 'pas une image');
+
+        $this->assertFalse(reencoderImage($chemin, IMAGETYPE_JPEG, 1600));
+        $this->assertSame('pas une image', file_get_contents($chemin));
+    }
+
+    public function testLEnvoiRefuseUneImageQueGdNeSaitPasReecrire(): void
+    {
+        $source = (string) file_get_contents(dirname(__DIR__, 2) . '/includes/uploads.php');
+
+        $this->assertMatchesRegularExpression(
+            '#if \(!reencoderImage\(\$dest[^)]*\) && function_exists\(\'imagecreatetruecolor\'\)\) \{\s*(//[^\n]*\s*)*@unlink\(\$dest\);#',
+            $source
+        );
+    }
 }

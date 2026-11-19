@@ -51,21 +51,35 @@ if ($manquants !== []) {
 
 $config['port'] = getenv('DB_PORT') ?: '3306';
 
-// Facultatifs : environnement et adresse publique. Sans app_env, le site se
-// croit hors production (traces d'erreur, codes de test) ; sans url_publique,
-// les liens des e-mails se construisent depuis l'en-tête Host du client. Ils
-// viennent des variables du dépôt, jamais d'une valeur écrite ici.
-$facultatifs = [
-    'app_env'      => 'APP_ENV',
-    'url_publique' => 'URL_PUBLIQUE',
-];
-foreach ($facultatifs as $cle => $variable) {
-    $valeur = getenv($variable);
-    if ($valeur === false || $valeur === '') {
-        fwrite(STDERR, "::warning::Variable $variable absente : '$cle' n'est pas écrit dans la configuration.\n");
-        continue;
-    }
-    $config[$cle] = $valeur;
+/// Environnement : OBLIGATOIRE. Sans app_env, le site se croyait hors
+// production : traces d'erreur affichées, codes de test renvoyés, et
+// surtout les comptes de démonstration au mot de passe public « password »
+// s'ouvraient, hachageInterdit() ne les refusant qu'en production (audit
+// SEC-01). Une valeur de poste de développement est refusée pour la même
+// raison : ce workflow publie un site joignable par tous.
+$appEnv = strtolower(trim((string) getenv('APP_ENV')));
+if ($appEnv === '') {
+    fwrite(STDERR, "::error::Variable APP_ENV absente (FTP_APP_ENV dans les variables du dépôt) : "
+        . "le déploiement est arrêté. Valeur attendue : production.\n");
+    exit(1);
+}
+if (in_array($appEnv, ['local', 'dev', 'developpement', 'development', 'test'], true)) {
+    fwrite(STDERR, "::error::APP_ENV vaut « $appEnv » : un site public ne tourne jamais en mode développement.\n");
+    exit(1);
+}
+if (!in_array($appEnv, ['production', 'prod'], true)) {
+    fwrite(STDERR, "::warning::APP_ENV vaut « $appEnv » : hors production, les comptes de démonstration restent ouverts.\n");
+}
+$config['app_env'] = $appEnv;
+
+// Facultative : l'adresse publique. Sans elle, les liens des e-mails ne se
+// construisent pas en production (urlPublique() échoue et le journalise).
+// Elle vient des variables du dépôt, jamais d'une valeur écrite ici.
+$urlPublique = getenv('URL_PUBLIQUE');
+if ($urlPublique === false || $urlPublique === '') {
+    fwrite(STDERR, "::warning::Variable URL_PUBLIQUE absente : 'url_publique' n'est pas écrit dans la configuration.\n");
+} else {
+    $config['url_publique'] = $urlPublique;
 }
 
 $contenu = "<?php\n"

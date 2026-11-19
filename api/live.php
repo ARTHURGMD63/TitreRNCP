@@ -35,6 +35,12 @@ header('X-Content-Type-Options: nosniff');
 $identite = sessionLectureSeule();
 $uid      = $identite['id'];
 
+// Session ouverte avec un ancien mot de passe (audit SEC-05) : traitée comme
+// absente. La fermer revient à la prochaine page, via auth_check.php.
+if ($uid !== null && !sessionIdentifiantsAJour($pdo)) {
+    $uid = null;
+}
+
 // L'application mobile présente un jeton, pas de cookie : même pont que pour
 // les écritures (protegerEcritureApi()). Une requête de navigateur n'est pas
 // concernée — elle n'envoie jamais d'en-tête « Authorization: Bearer ».

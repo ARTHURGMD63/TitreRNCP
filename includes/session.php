@@ -140,3 +140,50 @@ function sessionLectureSeule(): array
 
     return $identite;
 }
+
+/**
+ * Empreinte des identifiants d'un compte, gardée dans la session web.
+ *
+ * Dérivée du hachage du mot de passe : tout changement de mot de passe
+ * (réinitialisation, changement depuis l'application, compte supprimé) en
+ * donne une autre. Le hachage lui-même ne va pas dans la session.
+ */
+function empreinteIdentifiants(string $hachage): string
+{
+    return substr(hash('sha256', 'outsee-session|' . $hachage), 0, 32);
+}
+
+/**
+ * La session web porte-t-elle encore les identifiants actuels du compte ?
+ *
+ * Changer ou réinitialiser le mot de passe ne supprimait que les jetons de
+ * l'application : une session web volée restait ouverte (trente jours pour
+ * un établissement). Chaque requête compare donc l'empreinte rangée à
+ * l'ouverture de la session à celle du mot de passe en base (audit SEC-05).
+ *
+ * Une session ouverte avant ce contrôle n'a pas d'empreinte : elle reçoit
+ * celle du moment, et le prochain changement de mot de passe la fermera.
+ * Vrai aussi quand aucun compte n'est connecté.
+ */
+function sessionIdentifiantsAJour(PDO $pdo): bool
+{
+    if (empty($_SESSION['user_id'])) {
+        return true;
+    }
+
+    $stmt = $pdo->prepare('SELECT password, type FROM users WHERE id = ?');
+    $stmt->execute([(int) $_SESSION['user_id']]);
+    $ligne = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!is_array($ligne) || ($ligne['type'] ?? '') === 'supprime') {
+        return false;
+    }
+
+    $actuelle = empreinteIdentifiants((string) $ligne['password']);
+    $rangee   = $_SESSION['identifiants'] ?? null;
+    if (!is_string($rangee) || $rangee === '') {
+        $_SESSION['identifiants'] = $actuelle;
+        return true;
+    }
+
+    return hash_equals($rangee, $actuelle);
+}

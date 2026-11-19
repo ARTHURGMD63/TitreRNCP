@@ -64,7 +64,7 @@ if (($u['type'] ?? '') === 'admin' && totpActif($pdo, (int) $u['id'])) {
         apiErreur('Code de vérification requis', 401, 'totp_requis');
     }
     $cleLimite = 'totp:' . (int) $u['id'];
-    if (isRateLimited($pdo, $ip, 5, 900, $cleLimite)) {
+    if (isRateLimited($pdo, $ip, 5, 900, $cleLimite, 10)) {
         apiErreur('Trop de tentatives. Reessaie dans quinze minutes.', 429, 'trop_de_tentatives');
     }
     if (!totpAccepterConnexion($pdo, (int) $u['id'], $codeTotp)) {

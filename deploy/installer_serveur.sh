@@ -77,6 +77,10 @@ install -d -o www-data -g www-data -m 2775 \
     "$RACINE/shared/uploads" "$RACINE/shared/uploads/avatars" \
     "$RACINE/shared/uploads/etablissements" "$RACINE/shared/uploads/evenements"
 install -d -o www-data -g www-data -m 750 /var/log/outsee
+# Journal de la sauvegarde : root l'écrit, donc dans un dossier à root. Dans
+# /var/log/outsee (www-data), le compte web pouvait remplacer le fichier par
+# un lien symbolique et faire écrire root où il voulait (audit DEP-02).
+install -d -o root -g root -m 750 /var/log/outsee-sauvegarde
 # Sauvegardes : root seul. Leur date, elle, va dans un témoin lisible par
 # PHP (/var/lib/outsee/derniere_sauvegarde) pour la sonde de santé.
 install -d -o root -g root -m 700 /var/backups/outsee

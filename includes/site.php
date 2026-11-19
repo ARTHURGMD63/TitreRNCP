@@ -335,7 +335,7 @@ function proDebut(string $titre, string $actif, ?array $etab, array $options = [
 
     echo '<div class="pro-cote__bas">'
        . '<a href="' . htmlspecialchars(baseUrl('/'), ENT_QUOTES) . '">' . iconeSite('oeil') . 'Voir le site</a>'
-       . '<a href="' . htmlspecialchars(baseUrl('/auth/logout.php'), ENT_QUOTES) . '">' . iconeSite('sortie') . 'Se déconnecter</a>'
+       . formulaireDeconnexion(iconeSite('sortie') . 'Se déconnecter')
        . '</div>';
     echo '</aside>';
 

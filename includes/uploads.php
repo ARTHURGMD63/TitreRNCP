@@ -161,24 +161,34 @@ function storeUploadedImage(array $file, string $destDir, int $maxLargeur = 1600
     }
     @chmod($dest, 0644);
 
-    // 4) Réduction : une photo prise au téléphone fait plusieurs milliers de
-    //    pixels de large. Servie telle quelle, elle est intégralement
-    //    téléchargée par chaque mobile. On la ramène à une taille d'affichage
-    //    réaliste avant qu'elle ne soit jamais servie.
-    redimensionnerImage($dest, $info[2], $maxLargeur);
+    // 4) Réencodage systématique : l'image est décodée puis réécrite par GD,
+    //    réduite au passage si elle dépasse la largeur cible. Seuls les pixels
+    //    survivent : métadonnées EXIF (position GPS d'une photo prise au
+    //    téléphone) et contenu ajouté au fichier (polyglotte image + script)
+    //    disparaissent. Avant, une image déjà à la bonne taille était servie
+    //    telle quelle (audit SEC-14).
+    if (!reencoderImage($dest, $info[2], $maxLargeur) && function_exists('imagecreatetruecolor')) {
+        // GD est là mais n'a pas su relire ou réécrire le fichier : il n'est
+        // pas servi tel quel.
+        @unlink($dest);
+        return ['ok' => false, 'error' => "Cette image n'a pas pu être traitée. Essaie avec une autre photo."];
+    }
 
     return ['ok' => true, 'filename' => $filename];
 }
 
 /**
- * Réduit une image sur place si elle dépasse la largeur cible.
+ * Réencode une image sur place, en la réduisant si elle dépasse la largeur
+ * cible.
  *
- * Volontairement conservatrice : en cas d'échec (GD absente, mémoire
- * insuffisante), l'original est conservé plutôt que perdu.
+ * L'image réécrite remplace l'original par un renommage : un échec en cours
+ * d'écriture ne laisse jamais un fichier à moitié écrit. Sans GD, rien n'est
+ * fait et false est rendu (poste de développement) ; storeUploadedImage()
+ * refuse en revanche l'image si GD est présente et échoue.
  *
  * @param int $typeImage Constante IMAGETYPE_* renvoyée par getimagesize()
  */
-function redimensionnerImage(string $chemin, int $typeImage, int $largeurCible): bool
+function reencoderImage(string $chemin, int $typeImage, int $largeurCible): bool
 {
     if (!function_exists('imagecreatetruecolor')) {
         return false;
@@ -189,9 +199,13 @@ function redimensionnerImage(string $chemin, int $typeImage, int $largeurCible):
         return false;
     }
     [$largeur, $hauteur] = $info;
-    if ($largeur <= $largeurCible) {
-        return false; // déjà à la bonne échelle
+    if ($largeur < 1 || $hauteur < 1) {
+        return false;
     }
+    $nouvelleLargeur = min($largeur, $largeurCible);
+    $nouvelleHauteur = $nouvelleLargeur === $largeur
+        ? $hauteur
+        : max(1, (int) round($hauteur * $nouvelleLargeur / $largeur));
 
     // Lecture, écriture et qualité décrites au même endroit : le garde
     // ci-dessous suffit ensuite, sans branche morte à la fin.
@@ -213,25 +227,31 @@ function redimensionnerImage(string $chemin, int $typeImage, int $largeurCible):
         return false;
     }
 
-    $nouvelleHauteur = (int) round($hauteur * $largeurCible / $largeur);
-    $cible = imagecreatetruecolor($largeurCible, $nouvelleHauteur);
+    $cible = imagecreatetruecolor($nouvelleLargeur, $nouvelleHauteur);
 
-    // La transparence du PNG et du WebP doit survivre au redimensionnement.
+    // La transparence du PNG et du WebP doit survivre au réencodage.
     if (in_array($typeImage, [IMAGETYPE_PNG, IMAGETYPE_WEBP], true)) {
         imagealphablending($cible, false);
         imagesavealpha($cible, true);
         $transparent = imagecolorallocatealpha($cible, 0, 0, 0, 127);
-        imagefilledrectangle($cible, 0, 0, $largeurCible, $nouvelleHauteur, $transparent);
+        imagefilledrectangle($cible, 0, 0, $nouvelleLargeur, $nouvelleHauteur, $transparent);
     }
 
-    imagecopyresampled($cible, $source, 0, 0, 0, 0, $largeurCible, $nouvelleHauteur, $largeur, $hauteur);
+    imagecopyresampled($cible, $source, 0, 0, 0, 0, $nouvelleLargeur, $nouvelleHauteur, $largeur, $hauteur);
 
-    $ok = $ecrire($cible, $chemin, $qualite);
+    $temporaire = $chemin . '.reencodage';
+    $ok = (bool) @$ecrire($cible, $temporaire, $qualite);
 
     imagedestroy($source);
     imagedestroy($cible);
 
-    return (bool) $ok;
+    if (!$ok || !@rename($temporaire, $chemin)) {
+        @unlink($temporaire);
+        return false;
+    }
+    @chmod($chemin, 0644);
+
+    return true;
 }
 
 /**

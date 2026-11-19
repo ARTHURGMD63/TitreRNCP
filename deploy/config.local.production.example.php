@@ -18,6 +18,19 @@ return [
     // Adresse publique, sans barre finale : liens des e-mails, retours Stripe.
     'url_publique' => 'https://__DOMAINE__',
 
+    // ─── Adresse IP du visiteur (limiteurs de connexion) ────────────────
+    // En-tête cru pour l'adresse du visiteur : 'aucun' (seule REMOTE_ADDR),
+    // 'cloudflare' (CF-Connecting-IP) ou 'x-forwarded-for'. Un en-tête n'est
+    // lu que si la connexion vient d'un proxy listé dans proxy_confiance
+    // (plages CIDR, et les mots-clés « prive » et « cloudflare »).
+    // Sur le VPS, nginx reçoit le visiteur directement : 'aucun'. Si
+    // Cloudflare est placé devant, préférer real_ip dans deploy/nginx
+    // (outsee.conf) et laisser 'aucun' ici.
+    // Sur Render (variables d'environnement) : IP_ENTETE=x-forwarded-for et
+    // PROXY_CONFIANCE=prive,cloudflare.
+    'ip_entete'       => 'aucun',
+    'proxy_confiance' => '',
+
     // ─── Base MariaDB locale (socket) ───────────────────────────────────
     'host' => 'localhost',
     'port' => '3306',

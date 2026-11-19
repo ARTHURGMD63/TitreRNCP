@@ -1,5 +1,6 @@
 # ============================================================
-#  Outsee — rotation des journaux de /var/log/outsee
+#  Outsee — rotation des journaux de /var/log/outsee et
+#  /var/log/outsee-sauvegarde
 #  Installé dans /etc/logrotate.d/outsee (root, 644) par
 #  installer_serveur.sh et appliquer_config.sh.
 #
@@ -19,4 +20,16 @@
     missingok
     notifempty
     create 640 www-data www-data
+}
+
+# Journal de la sauvegarde nocturne, écrit par root : dossier à root, pas de
+# « su ». Même durée de conservation.
+/var/log/outsee-sauvegarde/*.log {
+    weekly
+    rotate 8
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 640 root root
 }

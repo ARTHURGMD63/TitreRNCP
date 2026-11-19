@@ -19,6 +19,18 @@ demarrerSession();
 setSecurityHeaders();
 expirerSessionInactive();
 
+// Une session ouverte avec un ancien mot de passe est fermée (audit SEC-05,
+// voir sessionIdentifiantsAJour()). La base n'est chargée que si un compte
+// est connecté ; jamais en ligne de commande, où les tests remplissent
+// $_SESSION à la main. Chargée ici, au niveau du fichier, pour que $pdo
+// reste la variable globale qu'attendent les pages.
+if (!empty($_SESSION['user_id']) && PHP_SAPI !== 'cli') {
+    require_once __DIR__ . '/db.php';
+    if (($GLOBALS['pdo'] ?? null) instanceof PDO && !sessionIdentifiantsAJour($GLOBALS['pdo'])) {
+        fermerSessionRevoquee();
+    }
+}
+
 // Jeu d'icones : inclus ici parce que ce fichier est le point commun de
 // toutes les pages, donc icon() est disponible partout sans require repete.
 require_once __DIR__ . '/icons.php';
@@ -169,6 +181,19 @@ function expirerSessionInactive(): void {
     $_SESSION['derniere_activite'] = time();
 }
 
+/**
+ * Ferme une session dont le mot de passe a changé depuis son ouverture.
+ * Même procédé qu'expirerSessionInactive() : la session survit le temps de
+ * porter le message jusqu'à l'écran de connexion.
+ */
+function fermerSessionRevoquee(): void {
+    $_SESSION = [];
+    if (!headers_sent()) {
+        session_regenerate_id(true);
+    }
+    $_SESSION['session_revoquee'] = true;
+}
+
 function requireLogin(string $redirect = ''): void {
     if (empty($_SESSION['user_id'])) {
         header('Location: ' . baseUrl('/auth/login.php'));
@@ -208,6 +233,24 @@ function requireStudent(): void {
 
 function isLoggedIn(): bool {
     return !empty($_SESSION['user_id']);
+}
+
+/**
+ * Le bouton « Se déconnecter » : un formulaire POST avec le jeton CSRF.
+ *
+ * auth/logout.php refuse le GET (audit SEC-10) : un simple lien ne
+ * déconnecte plus. Le formulaire est en display:contents pour que le bouton
+ * prenne la place qu'occupait le lien dans la mise en page.
+ *
+ * @param string $contenu HTML du bouton (icône comprise), déjà échappé
+ */
+function formulaireDeconnexion(string $contenu, string $classe = '', string $style = ''): string {
+    return '<form method="post" action="' . htmlspecialchars(baseUrl('/auth/logout.php'), ENT_QUOTES) . '" style="display:contents">'
+         . csrfField()
+         . '<button type="submit"'
+         . ($classe !== '' ? ' class="' . htmlspecialchars($classe, ENT_QUOTES) . '"' : '')
+         . ($style !== '' ? ' style="' . htmlspecialchars($style, ENT_QUOTES) . '"' : '')
+         . '>' . $contenu . '</button></form>';
 }
 
 /**

@@ -36,6 +36,10 @@ ICI="$(cd "$(dirname "$0")" && pwd)"
 
 echo "== Dossiers"
 install -d -o www-data -g www-data -m 750 /var/log/outsee
+# Journal de la sauvegarde : root l'écrit, donc dans un dossier à root. Dans
+# /var/log/outsee (www-data), le compte web pouvait remplacer le fichier par
+# un lien symbolique et faire écrire root où il voulait (audit DEP-02).
+install -d -o root -g root -m 750 /var/log/outsee-sauvegarde
 install -d -o root -g root -m 700 /var/backups/outsee
 install -d -o root -g root -m 755 /var/lib/outsee
 install -d -o root -g root -m 700 /etc/outsee

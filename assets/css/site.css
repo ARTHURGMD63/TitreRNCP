@@ -217,8 +217,10 @@ h1, h2, h3, h4, p { margin: 0; }
 .pro-nav a:hover { background: var(--craie); color: var(--encre); }
 .pro-nav a.actif { background: var(--bleu-doux); color: var(--bleu-fonce); font-weight: 600; }
 .pro-cote__bas { margin-top: auto; display: grid; gap: 4px; }
-.pro-cote__bas a { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; text-decoration: none; font-size: 14px; color: var(--gris); }
-.pro-cote__bas a:hover { background: var(--craie); color: var(--encre); }
+.pro-cote__bas a, .pro-cote__bas button { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; text-decoration: none; font-size: 14px; color: var(--gris); }
+/* Le bouton de déconnexion (formulaire POST) prend l'aspect des liens voisins. */
+.pro-cote__bas button { width: 100%; background: none; border: 0; cursor: pointer; text-align: left; }
+.pro-cote__bas a:hover, .pro-cote__bas button:hover { background: var(--craie); color: var(--encre); }
 
 .pro-haut, .pro-voile { display: none; }
 .pro-main { min-width: 0; padding: 32px clamp(20px, 3vw, 40px) 64px; }

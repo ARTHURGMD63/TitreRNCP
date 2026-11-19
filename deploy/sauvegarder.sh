@@ -26,6 +26,9 @@
 #  phrase secrète du fichier indiqué. Rien ne part en clair : sans moyen de
 #  chiffrer, la copie distante est refusée et le journal le dit.
 #
+#  Journal : /var/log/outsee-sauvegarde/sauvegarde.log (dossier root 750),
+#  jamais /var/log/outsee, qui appartient à www-data (audit DEP-02).
+#
 #  Restauration : docs/DEPLOIEMENT_VPS_OVH.md, étape 9.
 # ============================================================
 set -euo pipefail
