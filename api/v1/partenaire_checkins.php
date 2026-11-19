@@ -69,6 +69,30 @@ $checkins = array_map(
     $stmt->fetchAll()
 );
 
+// Tous les inscrits (hors annulés), entrés ou non : la liste que l'accueil
+// coche au fil des scans. Triée par nom pour qu'on y retrouve quelqu'un.
+$stmt = $pdo->prepare(
+    "SELECT i.id AS inscription_id, i.statut, i.checkin_le, u.id, u.prenom, u.nom, u.ecole, u.promo, u.photo
+       FROM inscriptions i JOIN users u ON u.id = i.user_id
+      WHERE i.evenement_id = ? AND i.statut IN ('inscrit', 'checkin')
+      ORDER BY u.nom, u.prenom"
+);
+$stmt->execute([$eventId]);
+$tousInscrits = array_map(
+    static fn (array $r): array => [
+        'inscription_id' => (int) $r['inscription_id'],
+        'id'             => (int) $r['id'],
+        'prenom'         => (string) $r['prenom'],
+        'nom'            => (string) $r['nom'],
+        'ecole'          => $r['ecole'] !== null ? (string) $r['ecole'] : null,
+        'promo'          => $r['promo'] !== null ? (string) $r['promo'] : null,
+        'photo_url'      => apiPhotoUrl($r['photo'] ?? null),
+        'present'        => $r['statut'] === 'checkin',
+        'checkin_le'     => $r['checkin_le'] !== null ? (string) $r['checkin_le'] : null,
+    ],
+    $stmt->fetchAll()
+);
+
 apiReponse([
     'success'   => true,
     'evenement' => [
@@ -83,4 +107,5 @@ apiReponse([
         'places'   => (int) ($evenement['quota'] ?? 0),
     ],
     'checkins' => $checkins,
+    'inscrits' => $tousInscrits,
 ]);

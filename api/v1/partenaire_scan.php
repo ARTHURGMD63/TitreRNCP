@@ -72,14 +72,14 @@ if (!evenementScanOuvert((string) $evenement['date_heure'], $dateFin)) {
 
 if ($inscriptionId) {
     $stmt = $pdo->prepare(
-        'SELECT i.id, i.statut, i.qr_code, u.id AS user_id, u.prenom, u.nom, u.ecole, u.promo, u.photo, u.date_naissance
+        'SELECT i.id, i.statut, i.qr_code, i.checkin_le, u.id AS user_id, u.prenom, u.nom, u.ecole, u.promo, u.photo, u.date_naissance
            FROM inscriptions i JOIN users u ON u.id = i.user_id
           WHERE i.id = ? AND i.evenement_id = ?'
     );
     $stmt->execute([$inscriptionId, $eventId]);
 } else {
     $stmt = $pdo->prepare(
-        'SELECT i.id, i.statut, i.qr_code, u.id AS user_id, u.prenom, u.nom, u.ecole, u.promo, u.photo, u.date_naissance
+        'SELECT i.id, i.statut, i.qr_code, i.checkin_le, u.id AS user_id, u.prenom, u.nom, u.ecole, u.promo, u.photo, u.date_naissance
            FROM inscriptions i JOIN users u ON u.id = i.user_id
           WHERE i.qr_code = ? AND i.evenement_id = ?'
     );
@@ -122,10 +122,20 @@ $personne   = [
     'date_naissance' => $naissance,
     'age'            => ageALaDate($naissance, (string) $evenement['date_heure']),
     'numero_billet'  => numeroBillet((int) $inscription['id'], (string) ($inscription['qr_code'] ?? '')),
+    'inscription_id' => (int) $inscription['id'],
 ];
 
+// Déjà entré : l'accueil voit QUI et QUAND, pour reconnaître un pass prêté
+// ou une capture d'écran passée à quelqu'un d'autre.
 if ($inscription['statut'] === 'checkin') {
-    apiErreur('Ce pass a déjà été scanné', 409, 'deja_scanne');
+    $quand = $inscription['checkin_le'] !== null ? (string) $inscription['checkin_le'] : null;
+    apiReponse([
+        'success'    => false,
+        'code'       => 'deja_scanne',
+        'message'    => 'Ce pass a déjà été scanné' . ($quand !== null ? ' à ' . date('H\hi', (int) strtotime($quand)) : ''),
+        'checkin_le' => $quand,
+        'personne'   => $personne,
+    ], 409);
 }
 if ($inscription['statut'] === 'annule') {
     apiErreur('Inscription annulée', 409, 'inscription_annulee');
@@ -159,5 +169,6 @@ apiReponse([
     'success' => true,
     'message' => 'Check-in validé pour ' . $inscription['prenom'] . ' ' . $inscription['nom'],
     'age_minimum' => $ageMinimum,
+    'checkin_le'  => date('Y-m-d H:i:s'),
     'personne' => $personne,
 ]);
