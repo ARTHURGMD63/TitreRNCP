@@ -142,6 +142,29 @@ function verificationInitiale(?string $type): string
 }
 
 /**
+ * L'état de validation après une modification du profil de l'établissement.
+ *
+ * Un changement de type repart de verificationInitiale(). À type égal, un
+ * BDE validé qui change de nom repasse en attente (PAY-18) : la validation
+ * portait sur une association précise, et garder la coche en changeant de
+ * nom permettait de se faire passer pour une autre. La casse et les espaces
+ * ne comptent pas. Un refus reste un refus : renommer ne doit pas suffire à
+ * le lever.
+ */
+function verificationApresModification(string $ancienType, string $nouveauType, string $ancienNom, string $nouveauNom, string $etat): string
+{
+    if ($nouveauType !== $ancienType) {
+        return verificationInitiale($nouveauType);
+    }
+    $normaliser = static fn (string $n): string => mb_strtolower(trim((string) preg_replace('/\s+/u', ' ', $n)));
+    if ($etat === 'validee' && verificationRequise($nouveauType) && $normaliser($ancienNom) !== $normaliser($nouveauNom)) {
+        return 'en_attente';
+    }
+
+    return $etat;
+}
+
+/**
  * Condition SQL : les événements de cet établissement peuvent être montrés
  * aux étudiants et recevoir des inscriptions (PAY-09).
  *
