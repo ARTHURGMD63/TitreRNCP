@@ -167,7 +167,8 @@ function CarteEvenementPartenaire({ ev, onSupprime }: { ev: EvenementPartenaire;
           <Action libelle="Scanner" icone="qr" fond={bleu.accent} encre="#FFFFFF"
             onPress={() => router.push({ pathname: '/scan', params: { evenementId: String(ev.id) } })} />
         ) : null}
-        {!annule ? (
+        {/* Terminé : il ne se modifie plus (le redater le republiait hors quota). */}
+        {!annule && ev.statut !== 'passe' ? (
           <Action libelle="Modifier" icone="crayon" fond="transparent" encre={c.noir} filet={c.line2}
             onPress={() => router.push({ pathname: '/evenement-form', params: { id: String(ev.id) } })} />
         ) : null}
