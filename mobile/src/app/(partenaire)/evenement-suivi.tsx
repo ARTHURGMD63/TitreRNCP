@@ -8,7 +8,7 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Linking, Text, View } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 
 import { api, ErreurApi, type SuiviEvenementPartenaire } from '../../api';
@@ -20,6 +20,7 @@ import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecr
 import { BoutonRetour, Jauge } from '../../composants/Elements';
 import { Mono, T, TitreEcran, TitreSection } from '../../composants/Texte';
 import { dateFr } from '../../format';
+import { afficherTelephone, lienAppel } from '../../telephone';
 import { useJeton } from '../../session';
 import { fs, halo, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
@@ -183,8 +184,23 @@ export default function SuiviEvenement() {
                   {p.present ? <T taille={fs[4]} poids={600} couleur={c.succes}>Présent</T> : null}
                 </View>
                 {p.ecole || p.promo ? <T taille={fs[4]} couleur={c.gris}>{[p.ecole, p.promo].filter(Boolean).join(' · ')}</T> : null}
+                {p.telephone ? (
+                  <Text
+                    onPress={() => { void Linking.openURL(lienAppel(p.telephone as string)); }}
+                    accessibilityRole="link"
+                    accessibilityLabel={`Appeler ${p.prenom} ${p.nom}`}
+                    style={{ fontFamily: sans(600), fontSize: fs[4], color: c.grisFonce, textDecorationLine: 'underline', alignSelf: 'flex-start' }}
+                  >
+                    {afficherTelephone(p.telephone)}
+                  </Text>
+                ) : null}
               </View>
             )) : <T taille={fs[4]} couleur={c.gris}>Personne n&apos;est encore inscrit.</T>}
+            {suivi.participants.length && suivi.telephones_jusqu_au ? (
+              <T taille={fs[3]} couleur={c.gris} style={{ marginTop: 8 }}>
+                {`Les numéros servent uniquement à joindre un inscrit au sujet de cet événement. Ils restent visibles jusqu’au ${dateFr(suivi.telephones_jusqu_au, 'j M Y')}.`}
+              </T>
+            ) : null}
           </CarteRefonte>
         </Apparition>
 
