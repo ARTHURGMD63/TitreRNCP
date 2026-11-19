@@ -42,4 +42,13 @@ final class PlacesTest extends TestCase
         $this->assertSame(['restantes' => null, 'complet' => false], remplissage(0, 25));
         $this->assertSame(['restantes' => null, 'complet' => false], remplissage(-1, 3));
     }
+
+    public function testLePlafondDePassAVenirBloqueAuDixieme(): void
+    {
+        // ETU-11 : dix pass actifs à venir, pas un de plus.
+        $this->assertSame(10, INSCRIPTIONS_A_VENIR_MAX);
+        $this->assertFalse(inscriptionPlafondAtteint(0));
+        $this->assertFalse(inscriptionPlafondAtteint(INSCRIPTIONS_A_VENIR_MAX - 1));
+        $this->assertTrue(inscriptionPlafondAtteint(INSCRIPTIONS_A_VENIR_MAX));
+    }
 }

@@ -73,6 +73,28 @@ try {
         exit;
     }
 
+    // Plafond de pass actifs par étudiant (ETU-11). Le verrou sur la ligne
+    // de l'étudiant range ses propres inscriptions simultanées l'une après
+    // l'autre : sans lui, dix onglets ouverts sur dix soirées passaient tous
+    // le comptage. Le pass déjà actif sur CETTE soirée (« déjà inscrit »,
+    // plus bas) n'en ajoute pas.
+    $pdo->prepare('SELECT id FROM users WHERE id = ? FOR UPDATE')->execute([$uid]);
+    $stmt = $pdo->prepare(
+        "SELECT COUNT(*) FROM inscriptions i
+           JOIN evenements e ON e.id = i.evenement_id
+          WHERE i.user_id = ? AND i.statut = 'inscrit' AND i.evenement_id <> ?
+            AND e.fin_effective >= ?"
+    );
+    $stmt->execute([$uid, $evenement_id, date('Y-m-d H:i:s')]);
+    if (inscriptionPlafondAtteint((int) $stmt->fetchColumn())) {
+        $pdo->rollBack();
+        echo json_encode([
+            'success' => false,
+            'message' => 'Tu as déjà ' . INSCRIPTIONS_A_VENIR_MAX . ' pass à venir : annule-en un pour réserver celui-ci.',
+        ]);
+        exit;
+    }
+
     // Identifiant du pass : imprévisible, et propre à ce couple étudiant/événement.
     $qr_code = bin2hex(random_bytes(32));
 
