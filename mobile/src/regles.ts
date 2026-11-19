@@ -36,12 +36,34 @@ export type EtatInscription = 'libre' | 'attente' | 'vient';
  * Le texte du bouton de la fiche d'une soirée. Une soirée déjà complète le
  * dit d'emblée, sans attendre le refus du serveur.
  */
-export function libelleInscription(etat: EtatInscription, dejaInscrit: boolean, libelleErreur: string | null, complet = false, closes = false): string {
+export function libelleInscription(etat: EtatInscription, dejaInscrit: boolean, libelleErreur: string | null, complet = false, closes = false, ageRefuse: number | null = null): string {
   if (etat === 'vient') return 'Inscrit';
   if (dejaInscrit) return 'Tu es inscrit·e';
+  if (ageRefuse !== null) return `Réservé aux ${ageRefuse} ans et plus`;
   if (closes) return 'Inscriptions closes';
   if (complet) return 'Complet';
   return libelleErreur ?? "Rejoindre l'événement";
+}
+
+// ─── Âge minimum (v44) ─────────────────────────────────────────────────────
+
+/** L'âge minimum d'un événement ; 18 quand le serveur ne le dit pas (ancienne version). */
+export function ageMinimum(e: { age_minimum?: number | null }): number {
+  const n = Number(e.age_minimum);
+  return Number.isFinite(n) && n >= 18 ? Math.floor(n) : 18;
+}
+
+/** « 21 ans et plus » sur une pastille ; rien pour le 18 de base, déjà la règle de toute l'app. */
+export function pastilleAgeMinimum(e: { age_minimum?: number | null }): string | null {
+  const n = ageMinimum(e);
+  return n > 18 ? `${n} ans et plus` : null;
+}
+
+/** L'avertissement affiché sur chaque événement : l'établissement reste maître de son entrée. */
+export function avertissementEntree(e: { age_minimum?: number | null }): string {
+  return `Âge minimum : ${ageMinimum(e)} ans. Pièce d'identité exigée à l'entrée. `
+    + "L'établissement reste seul juge de l'accès (âge, tenue, comportement, capacité) : "
+    + "si tu as obtenu ou acheté ton billet et qu'il te refuse l'entrée, Outsee n'en est pas responsable.";
 }
 
 /**
@@ -107,6 +129,30 @@ export function messageEchecScan(erreur: { message: string; code?: string } | nu
   }
   return erreur.message;
 }
+
+/**
+ * « Né·e le 12/03/2005 · 21 ans » : ce que l'accueil compare à la pièce
+ * d'identité. Null si le compte n'a pas de date de naissance.
+ */
+export function ligneNaissance(p: { date_naissance?: string | null; age?: number | null }): string | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(p.date_naissance ?? '');
+  if (!m) return null;
+  const age = typeof p.age === 'number' ? ` · ${p.age} ans` : '';
+  return `Né·e le ${m[3]}/${m[2]}/${m[1]}${age}`;
+}
+
+/**
+ * La personne refusée pour son âge, lue dans le corps du refus du scan
+ * (code « age_insuffisant ») ; null pour tout autre refus.
+ */
+export function personneRefuseeAge<P>(erreur: { code?: string; donnees?: Record<string, unknown> } | null): P | null {
+  if (!erreur || erreur.code !== 'age_insuffisant') return null;
+  const p = erreur.donnees?.personne;
+  return p && typeof p === 'object' ? (p as P) : null;
+}
+
+/** Un refus pour l'âge reste affiché plus longtemps : l'accueil doit le lire et l'expliquer. */
+export const DELAI_REFUS_AGE = 4500;
 
 /** Le refus d'un QR code qui n'est pas un pass Outsee. */
 export const MESSAGE_QR_ETRANGER = "Ce QR code n'est pas un pass Outsee.";

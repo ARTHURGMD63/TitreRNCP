@@ -18,7 +18,7 @@ import { actions, ErreurApi, type Evenement } from '../api';
 import { ICONES_TYPE, LIBELLES_TYPE } from '../catalogue';
 import { dateFr, dureeCourte, heure, ts } from '../format';
 import { creerHorloge } from '../horloge';
-import { libelleApresEchecInscription, prixEvenement } from '../regles';
+import { libelleApresEchecInscription, pastilleAgeMinimum, prixEvenement } from '../regles';
 import { useJeton } from '../session';
 import { couleursCategorie, espace, fixe, fs, rayon, sans } from '../theme';
 import { useTheme } from '../useTheme';
@@ -299,6 +299,7 @@ function Carte({ ev, accent, premiere, flash, onInviter }: { ev: Evenement; acce
           <Pastille petite icone="cadenas" libelle={`Inscriptions jusqu'au ${dateFr(ev.inscriptions_jusqu_au, 'j M · H\\hi')}`} fond={accent ? voile : c.surface2} encre={encre} />
         ) : null}
         {ev.sponsorise ? <Pastille petite libelle="Sponsorisé" fond={accent ? voile : c.surface2} encre={accent ? '#FFFFFF' : c.grisFonce} /> : null}
+        {pastilleAgeMinimum(ev) ? <Pastille petite icone="interdit" libelle={pastilleAgeMinimum(ev)!} fond={accent ? voile : c.surface2} encre={encre} /> : null}
       </View>
 
       {/* Le carré de catégorie, aux couleurs de la chip du hub : on relie la

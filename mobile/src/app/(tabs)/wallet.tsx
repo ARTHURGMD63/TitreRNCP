@@ -98,7 +98,8 @@ function useBillet(p: Pass, code: string | null) {
     setAttente(true);
     try {
       await telechargerBillet(
-        { genre: genreDe(p), id: p.id, titre: p.titre, etablissement: p.etablissement, lieu: p.lieu, date_heure: p.date_heure, reduction: p.reduction, prix_normal: p.prix_normal, is_gratuit: p.is_gratuit, code },
+        { genre: genreDe(p), id: p.id, titre: p.titre, etablissement: p.etablissement, lieu: p.lieu, date_heure: p.date_heure, reduction: p.reduction, prix_normal: p.prix_normal, is_gratuit: p.is_gratuit, code,
+          numero_billet: p.numero_billet, date_fin: p.date_fin, age_minimum: p.age_minimum, adresse: p.adresse },
         { prenom: profil.prenom, nom: profil.nom, email: profil.email, ecole: profil.ecole, promo: profil.promo },
       );
     } catch (e) {

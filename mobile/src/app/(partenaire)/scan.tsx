@@ -24,20 +24,20 @@ import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'ex
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { api, ErreurApi, type PersonneCheckin } from '../../api';
+import { api, ErreurApi, type PersonneCheckin, type PersonneScannee } from '../../api';
 import { Bouton } from '../../composants/Bouton';
 import { teinteAvatar } from '../../composants/Design';
 import { Avatar } from '../../composants/Elements';
 import { Feuille } from '../../composants/Feuille';
 import { Icone } from '../../composants/Icone';
 import { Display, T } from '../../composants/Texte';
-import { ajouterCheckin, delaiResultatScan, lireCodePass, lireIdEvenement, MESSAGE_QR_ETRANGER, messageEchecScan, retirerInvite } from '../../regles';
+import { ajouterCheckin, DELAI_REFUS_AGE, delaiResultatScan, ligneNaissance, lireCodePass, lireIdEvenement, MESSAGE_QR_ETRANGER, messageEchecScan, personneRefuseeAge, retirerInvite } from '../../regles';
 import { useToast } from '../../composants/Toast';
 import { useJeton } from '../../session';
 import { fixe, fs, lh, rayon, sans } from '../../theme';
 import { useTheme } from '../../useTheme';
 
-type Personne = { id: number; prenom: string; nom: string; ecole: string | null; promo: string | null; photo_url: string | null };
+type Personne = PersonneScannee;
 
 export default function ScanPass() {
   // Les feuilles (liste, validation manuelle) suivent le thème ; l'écran
@@ -55,6 +55,8 @@ export default function ScanPass() {
 
   const [messageEchec, setMessageEchec] = useState<string | null>(null);
   const [personneValidee, setPersonneValidee] = useState<Personne | null>(null);
+  // Refusée à l'entrée pour son âge (v44) : écran rouge, avec son identité.
+  const [refusAge, setRefusAge] = useState<{ personne: Personne; message: string } | null>(null);
   const [checkins, setCheckins] = useState<PersonneCheckin[]>([]);
   const [listeOuverte, setListeOuverte] = useState(false);
   const enTraitement = useRef(false);
@@ -114,6 +116,7 @@ export default function ScanPass() {
     enTraitement.current = true;
 
     let succes = false;
+    let delaiRefus: number | null = null;
     // Un QR code qui n'est pas un pass (menu, site, code abîmé) est écarté
     // ici, sans appel : le refus est immédiat, même sans réseau.
     const code = lireCodePass(resultat.data);
@@ -128,13 +131,21 @@ export default function ScanPass() {
       setPersonneValidee(rep.personne);
       setCheckins((liste) => ajouterCheckin(liste, { ...rep.personne, checkin_le: new Date().toISOString() }));
     } catch (e) {
-      setMessageEchec(messageEchecScan(e instanceof ErreurApi ? e : null));
+      const erreur = e instanceof ErreurApi ? e : null;
+      const refusee = personneRefuseeAge<Personne>(erreur);
+      if (refusee && erreur) {
+        setRefusAge({ personne: refusee, message: erreur.message });
+        delaiRefus = DELAI_REFUS_AGE;
+      } else {
+        setMessageEchec(messageEchecScan(erreur));
+      }
     } finally {
       reprise.current = setTimeout(() => {
         enTraitement.current = false;
         setPersonneValidee(null);
+        setRefusAge(null);
         setMessageEchec(null);
-      }, delaiResultatScan(succes));
+      }, delaiRefus ?? delaiResultatScan(succes));
     }
   }, [jeton, idEvenement]);
 
@@ -184,7 +195,7 @@ export default function ScanPass() {
     );
   }
 
-  const cadre = personneValidee ? fixe.enCours : messageEchec ? '#FF4D6A' : fixe.craie;
+  const cadre = personneValidee ? fixe.enCours : messageEchec || refusAge ? '#FF4D6A' : fixe.craie;
 
   return (
     <View style={{ flex: 1, backgroundColor: fixe.basalte }}>
@@ -242,10 +253,29 @@ export default function ScanPass() {
               <Icone nom="valide" taille={16} couleur="#137A44" />
               <Text style={{ fontFamily: sans(700), fontSize: fs[2], letterSpacing: 0.06 * fs[2], color: '#137A44' }}>CHECK-IN VALIDÉ</Text>
             </View>
-            <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: fixe.basalte }}>{personneValidee.prenom} {personneValidee.nom}</Text>
-            <Text style={{ fontFamily: sans(500), fontSize: fs[4], color: '#5A5A66' }}>
+            <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: fixe.basalte }}>{personneValidee.prenom} {personneValidee.nom}</Text>
+            {ligneNaissance(personneValidee) ? (
+              <Text testID="scan-naissance" style={{ fontFamily: sans(700), fontSize: fs[4], color: fixe.basalte }}>{ligneNaissance(personneValidee)}</Text>
+            ) : null}
+            <Text style={{ fontFamily: sans(500), fontSize: fs[3], color: '#5A5A66' }}>
               {personneValidee.ecole ?? '—'}{personneValidee.promo ? ' · ' + personneValidee.promo : ''}
+              {personneValidee.numero_billet ? ` · Billet ${personneValidee.numero_billet}` : ''}
             </Text>
+          </View>
+        </View>
+      ) : refusAge ? (
+        <View testID="scan-refus-age" style={{ position: 'absolute', left: 24, right: 24, bottom: bottom + 40, backgroundColor: '#FFE3E8', borderRadius: rayon.carte, borderWidth: 2, borderColor: '#D21F3C', padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <Avatar photo={refusAge.personne.photo_url} prenom={refusAge.personne.prenom} taille={52} fond="#FFC2CD" />
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+              <Icone nom="interdit" taille={16} couleur="#A3132B" />
+              <Text style={{ fontFamily: sans(700), fontSize: fs[2], letterSpacing: 0.06 * fs[2], color: '#A3132B' }}>ENTRÉE REFUSÉE</Text>
+            </View>
+            <Text style={{ fontFamily: sans(700), fontSize: fs[5], color: fixe.basalte }}>{refusAge.personne.prenom} {refusAge.personne.nom}</Text>
+            {ligneNaissance(refusAge.personne) ? (
+              <Text style={{ fontFamily: sans(700), fontSize: fs[4], color: fixe.basalte }}>{ligneNaissance(refusAge.personne)}</Text>
+            ) : null}
+            <Text style={{ fontFamily: sans(600), fontSize: fs[3], color: '#A3132B' }}>{refusAge.message}</Text>
           </View>
         </View>
       ) : messageEchec ? (

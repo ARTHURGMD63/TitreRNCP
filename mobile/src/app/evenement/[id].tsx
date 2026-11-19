@@ -32,7 +32,7 @@ import { Icone, type NomIcone } from '../../composants/Icone';
 import { Display, Mono, T } from '../../composants/Texte';
 import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
-import { libelleApresEchecInscription, libelleInscription, prixEvenement } from '../../regles';
+import { ageMinimum, avertissementEntree, libelleApresEchecInscription, libelleInscription, pastilleAgeMinimum, prixEvenement } from '../../regles';
 import { dateFr, heure, majuscules, ts } from '../../format';
 import { useJeton } from '../../session';
 import { couleurs, espace, fixe, fs, gutter, lh, lsEm, mono, rayon, sans } from '../../theme';
@@ -195,6 +195,9 @@ export default function FicheEvenement() {
   // Clôture des inscriptions (v38) : celle de l'établissement, sinon le début.
   const cloture = e.inscriptions_jusqu_au ?? e.date_heure;
   const closes = e.inscriptions_ouvertes === false || ts(cloture) <= instant;
+  // Âge minimum (v44) : le serveur dit si l'étudiant l'aura le jour J.
+  const ageRefuse = e.age_autorise === false && !e.deja_inscrit ? ageMinimum(e) : null;
+  const pastilleAge = pastilleAgeMinimum(e);
 
   async function partager() {
     try {
@@ -229,6 +232,7 @@ export default function FicheEvenement() {
         {enCours ? <PastilleEnCours surAccent /> : <PastilleAVenir surAccent />}
         {flash ? <Pastille grande icone="eclair" libelle="Offre flash" fond={fixe.voileAccent} encre={fixe.surAccent} /> : null}
         {e.sponsorise ? <Pastille grande libelle="Sponsorisé" fond={fixe.voileAccent} encre={fixe.surAccent} /> : null}
+        {pastilleAge ? <Pastille grande icone="interdit" libelle={pastilleAge} fond={fixe.voileAccent} encre={fixe.surAccent} /> : null}
       </View>
       <Text style={{ fontFamily: sans(600), fontSize: fs[2], letterSpacing: lsEm.label * fs[2], textTransform: 'uppercase', color: accent, marginBottom: 8 }}>
         {majuscules(e.sport ? `${SPORTS[e.sport] ?? e.sport}${e.format ? ` · ${FORMATS_SPORT[e.format] ?? e.format}` : ''}` : (LIBELLES_TYPE[e.etablissement.type] ?? e.etablissement.type))} · {dateFr(e.date_heure, 'D j M')}{style}
@@ -461,15 +465,22 @@ export default function FicheEvenement() {
           </View>
         ) : null}
 
+        {!e.annule ? (
+          <View testID="evenement-age" style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 12, backgroundColor: ageRefuse !== null ? c.surface2 : c.blanc, borderRadius: rayon.tuile, padding: espace.carte }}>
+            <Icone nom="info" taille={16} couleur={c.gris} />
+            <T taille={fs[3]} couleur={c.grisFonce} interligne={lh.normal} style={{ flex: 1 }}>{avertissementEntree(e)}</T>
+          </View>
+        ) : null}
+
         <View style={{ marginTop: 40, marginBottom: 60, display: e.annule ? 'none' : 'flex' }}>
           <Bouton
             plein
             testID="evenement-rejoindre"
             variante="primaire"
             accent={teinte.accent}
-            libelle={libelleInscription(inscription, !!e.deja_inscrit, libelleErreur, e.places.complet, closes)}
+            libelle={libelleInscription(inscription, !!e.deja_inscrit, libelleErreur, e.places.complet, closes, ageRefuse)}
             fait={inscrit}
-            desactive={e.places.complet || closes}
+            desactive={e.places.complet || closes || ageRefuse !== null}
             chargement={inscription === 'attente'}
             onPress={rejoindre}
           />
