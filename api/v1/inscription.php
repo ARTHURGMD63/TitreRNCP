@@ -9,8 +9,8 @@
  * ouvre la session dans la foulée, l'application fait de même.
  *
  * Corps JSON : type, prenom, nom, email, password, date_naissance (AAAA-MM-JJ),
- * ecole, promo, ville_etudiant (étudiant, école/promo réservées aux 18-25
- * ans) ; etablissement_nom, etablissement_type, ville (partenaire) ; cgu
+ * ecole, promo (étudiant, réservées aux 18-25 ans) ; etablissement_nom,
+ * etablissement_type (partenaire) ; cgu
  * (booléen) ; appareil (facultatif).
  */
 
@@ -42,11 +42,13 @@ $email      = $texte('email');
 $pass       = is_string($corps['password'] ?? null) ? $corps['password'] : '';
 $ecole      = $texte('ecole');
 $promo      = $texte('promo');
-$etudiantVille = $texte('ville_etudiant') !== '' ? $texte('ville_etudiant') : null;
+// Outsee n'est ouvert qu'à Clermont-Ferrand : l'app ne demande plus la ville,
+// elle est enregistrée d'office (une ancienne version de l'app l'envoie encore).
+$etudiantVille = 'Clermont-Ferrand';
 $etablNom   = $texte('etablissement_nom');
 $etablType  = typeEtablissementValide(is_string($corps['etablissement_type'] ?? null) ? $corps['etablissement_type'] : null)
     ? (string) $corps['etablissement_type'] : 'bar';
-$etablVille = $texte('ville') !== '' ? $texte('ville') : 'Clermont-Ferrand';
+$etablVille = 'Clermont-Ferrand';
 $naissance  = $texte('date_naissance');
 $cgu        = !empty($corps['cgu']);
 $interets   = $type === 'etudiant' ? filtrerInterets($corps['interets'] ?? []) : [];

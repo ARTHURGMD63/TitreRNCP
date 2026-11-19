@@ -3,8 +3,10 @@
  *
  * Le sélecteur Étudiant·e / Partenaire, puis les mêmes champs dans le même
  * ordre : prénom et nom côte à côte, email, mot de passe, date de naissance
- * (réservée aux majeurs, bornée comme le champ du site), école et promo,
- * centres d'intérêt ; ou, pour un partenaire, l'établissement. Les
+ * (réservée aux majeurs, bornée comme le champ du site), école (avec une
+ * recherche) et promo, centres d'intérêt ; ou, pour un partenaire,
+ * l'établissement. Pas de choix de ville : Outsee n'est ouvert qu'à
+ * Clermont-Ferrand pour l'instant, le serveur l'enregistre d'office. Les
  * conditions générales s'ouvrent depuis la case, comme les liens du site.
  *
  * Toutes les vérifications décisives restent celles du serveur
@@ -17,7 +19,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErreurApi } from '../api';
-import { ECOLES, INTERETS, PROMOS, TYPES_ETABLISSEMENT, VILLES } from '../catalogue';
+import { ECOLES, INTERETS, MOTS_CLES_ECOLES, PROMOS, TYPES_ETABLISSEMENT } from '../catalogue';
 import { Bouton } from '../composants/Bouton';
 import { Encart } from '../composants/Elements';
 import { Aide, Case, Champ, ChampDate, Etiquette, isoDate, SelecteurInterets, Selecteur } from '../composants/Formulaire';
@@ -42,11 +44,9 @@ export default function Inscription() {
   const [naissance, setNaissance] = useState<Date | null>(null);
   const [ecole, setEcole] = useState('');
   const [promo, setPromo] = useState('');
-  const [villeEtudiant, setVilleEtudiant] = useState('Clermont-Ferrand');
   const [interets, setInterets] = useState<string[]>([]);
   const [etabNom, setEtabNom] = useState('');
   const [etabType, setEtabType] = useState('bar');
-  const [ville, setVille] = useState('Clermont-Ferrand');
   const [cgu, setCgu] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
 
@@ -72,8 +72,7 @@ export default function Inscription() {
         type, prenom: prenom.trim(), nom: nom.trim(), email: email.trim(), password: motDePasse,
         date_naissance: naissance ? isoDate(naissance) : '',
         ecole: afficherEcolePromo ? ecole : '', promo: afficherEcolePromo ? promo : '', interets,
-        ville_etudiant: villeEtudiant,
-        etablissement_nom: etabNom.trim(), etablissement_type: etabType, ville: ville.trim(),
+        etablissement_nom: etabNom.trim(), etablissement_type: etabType,
         cgu,
       });
     } catch (e) {
@@ -136,12 +135,10 @@ export default function Inscription() {
 
         {type === 'etudiant' ? (
           <>
-            <Selecteur etiquette="Ville" valeur={villeEtudiant} onChange={setVilleEtudiant}
-              options={VILLES.map((v) => ({ valeur: v, libelle: v }))} />
-
             {afficherEcolePromo ? (
               <View style={{ flexDirection: 'row', gap: 12 }}>
                 <Selecteur style={{ flex: 1 }} etiquette="École" valeur={ecole} onChange={setEcole}
+                  recherche="Rechercher une école" motsCles={MOTS_CLES_ECOLES} repli="Autre"
                   options={[{ valeur: '', libelle: '— Choisir —' }, ...ECOLES.map((e) => ({ valeur: e, libelle: e }))]} />
                 <Selecteur style={{ flex: 1 }} etiquette="Promo" valeur={promo} onChange={setPromo}
                   options={[{ valeur: '', libelle: '—' }, ...PROMOS.map((p) => ({ valeur: p, libelle: p }))]} />
@@ -159,10 +156,7 @@ export default function Inscription() {
         ) : (
           <>
             <Champ etiquette="Nom de l'établissement" value={etabNom} onChangeText={setEtabNom} placeholder="Le Bec qui Pique" />
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <Selecteur style={{ flex: 1 }} etiquette="Type" valeur={etabType} onChange={setEtabType} options={TYPES_ETABLISSEMENT} />
-              <Champ style={{ flex: 1 }} etiquette="Ville" value={ville} onChangeText={setVille} />
-            </View>
+            <Selecteur etiquette="Type" valeur={etabType} onChange={setEtabType} options={TYPES_ETABLISSEMENT} />
           </>
         )}
 
