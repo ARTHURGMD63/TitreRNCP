@@ -647,6 +647,20 @@ export type PersonneScannee = {
   /** Âge le jour de l'événement. */
   age?: number | null;
   numero_billet?: string | null;
+  inscription_id?: number;
+};
+
+/** Un inscrit de la liste du scanner : coché quand il est entré. */
+export type InscritScan = {
+  inscription_id: number;
+  id: number;
+  prenom: string;
+  nom: string;
+  ecole: string | null;
+  promo: string | null;
+  photo_url: string | null;
+  present: boolean;
+  checkin_le: string | null;
 };
 
 /** api/v1/partenaire_checkins.php : les entrées d'UN événement, celui qu'on scanne. */
@@ -654,6 +668,8 @@ export type ReponseCheckinsPartenaire = {
   evenement: { id: number; titre: string };
   compteurs: { inscrits: number; checkin: number; total: number; places: number };
   checkins: PersonneCheckin[];
+  /** Tous les inscrits, entrés ou non ; absent d'un ancien serveur. */
+  inscrits?: InscritScan[];
 };
 
 export type ReponseDashboardPartenaire = {
@@ -854,7 +870,7 @@ export type SuiviEvenementPartenaire = {
    * Les inscrits (hors annulés), sans leur e-mail, pour l'établissement propriétaire.
    * `telephone` : leur mobile (v43), null après `telephones_jusqu_au` ou s'ils n'en ont pas donné.
    */
-  participants: { id: number; prenom: string; nom: string; ecole: string | null; promo: string | null; present: boolean; inscrit_le: string; telephone?: string | null }[];
+  participants: { id: number; prenom: string; nom: string; ecole: string | null; promo: string | null; present: boolean; inscrit_le: string; telephone?: string | null; checkin_le?: string | null }[];
   /** Fin de la période où les numéros des inscrits restent visibles (30 jours après l'événement). */
   telephones_jusqu_au?: string;
   mise_en_avant: {
@@ -1108,7 +1124,7 @@ export const api = {
   partenaireRepondreCollaboration: (jeton: string, id: number, action: 'accepter' | 'refuser' | 'quitter') =>
     appelApi<Ok>('partenaire_collaborations.php', { methode: 'POST', jeton, corps: { action, id } }),
   partenaireScan: (jeton: string, corps: { qr_code?: string; inscription_id?: number; event_id: number }) =>
-    appelApi<Ok & { personne: PersonneScannee; age_minimum?: number }>(
+    appelApi<Ok & { personne: PersonneScannee; age_minimum?: number; checkin_le?: string }>(
       'partenaire_scan.php', { methode: 'POST', jeton, corps }
     ),
   /** Les entrées d'un événement de l'établissement : compteurs et personnes validées. */
