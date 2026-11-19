@@ -243,9 +243,9 @@ proDebut('Formule et achats', 'abonnement', $etab);
         <label class="case">
           <input type="checkbox" name="engagement" value="1" required>
           <?php if ($enLigne): ?>
-            <span>J'ai pris connaissance du tarif et je souhaite souscrire. Facturation mensuelle par carte ou prélèvement SEPA, sans engagement de durée : la formule se change une fois par mois, la résiliation se fait à tout moment depuis l'espace de paiement.</span>
+            <span>J'ai pris connaissance du tarif et je souhaite souscrire. J'accepte les <a href="<?= htmlspecialchars(baseUrl('/cgv.php')) ?>" target="_blank" rel="noopener">conditions générales de vente</a>. Facturation mensuelle par carte ou prélèvement SEPA, sans engagement de durée : la formule se change une fois par mois, la résiliation se fait à tout moment depuis l'espace de paiement.</span>
           <?php else: ?>
-            <span>J'ai pris connaissance du tarif et je souhaite souscrire. Facturation mensuelle par prélèvement, sans engagement de durée : la formule se change une fois par mois.</span>
+            <span>J'ai pris connaissance du tarif et je souhaite souscrire. J'accepte les <a href="<?= htmlspecialchars(baseUrl('/cgv.php')) ?>" target="_blank" rel="noopener">conditions générales de vente</a>. Facturation mensuelle par prélèvement, sans engagement de durée : la formule se change une fois par mois.</span>
           <?php endif; ?>
         </label>
         <div class="formulaire__pied">
