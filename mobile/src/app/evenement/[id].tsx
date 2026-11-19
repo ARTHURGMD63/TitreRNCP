@@ -442,7 +442,15 @@ export default function FicheEvenement() {
           </View>
         </View>
 
-        {!inscrit ? (
+        {e.annule ? (
+          <View testID="evenement-annule" style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 12, backgroundColor: c.dangerClair, borderRadius: rayon.tuile, padding: espace.carte }}>
+            <Icone nom="croix" taille={16} couleur={c.danger} />
+            <View style={{ flex: 1, gap: 2 }}>
+              <T taille={fs[4]} poids={700} couleur={c.danger}>Événement annulé : ton pass n&apos;est plus valable.</T>
+              {e.annule_motif ? <T taille={fs[4]} couleur={c.danger}>Motif : {e.annule_motif}</T> : null}
+            </View>
+          </View>
+        ) : !inscrit ? (
           <View testID="evenement-cloture" style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12, backgroundColor: closes ? c.surface2 : c.blanc, borderRadius: rayon.tuile, padding: espace.carte }}>
             <Icone nom={closes ? 'cadenas' : 'horloge'} taille={16} couleur={closes ? c.grisFonce : c.gris} />
             <T taille={fs[4]} poids={600} couleur={closes ? c.grisFonce : c.noir} style={{ flex: 1 }}>
@@ -453,7 +461,7 @@ export default function FicheEvenement() {
           </View>
         ) : null}
 
-        <View style={{ marginTop: 40, marginBottom: 60 }}>
+        <View style={{ marginTop: 40, marginBottom: 60, display: e.annule ? 'none' : 'flex' }}>
           <Bouton
             plein
             testID="evenement-rejoindre"

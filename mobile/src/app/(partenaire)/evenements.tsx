@@ -33,7 +33,7 @@ import { espace, fs, hauteurBouton, rayon, sans, taille } from '../../theme';
 import { useTheme } from '../../useTheme';
 
 const LIBELLES_TYPE: Record<string, string> = { bar: 'Bar', boite: 'Boîte', resto: 'Resto', afterwork: 'Afterwork', sport: 'Sport' };
-const LIBELLES_STATUT: Record<EvenementPartenaire['statut'], string> = { passe: 'Passé', complet: 'Complet', actif: 'Actif' };
+const LIBELLES_STATUT: Record<EvenementPartenaire['statut'], string> = { passe: 'Passé', complet: 'Complet', actif: 'Actif', annule: 'Annulé' };
 
 /**
  * Un bouton d'action de carte : 44 px, rayon 16. En cours, la roue prend la
@@ -64,6 +64,7 @@ function CarteEvenementPartenaire({ ev, onSupprime }: { ev: EvenementPartenaire;
   const jeton = useJeton();
   const toast = useToast();
   const [suppression, setSuppression] = useState(false);
+  const [annulation, setAnnulation] = useState(false);
   const pct = ev.quota > 0 ? Math.round((ev.inscrits / ev.quota) * 100) : 0;
 
   async function supprimer() {
@@ -85,16 +86,37 @@ function CarteEvenementPartenaire({ ev, onSupprime }: { ev: EvenementPartenaire;
     }
   }
 
+  // Des pass en cours : la suppression est refusée (PAY-10), on annule et
+  // les inscrits sont prévenus.
+  async function annuler() {
+    if (!(await confirmer(
+      ev.inscrits === 1
+        ? 'Annuler cet événement ? La personne inscrite sera prévenue et son pass annulé. C\'est définitif.'
+        : `Annuler cet événement ? Les ${ev.inscrits} inscrits seront prévenus et leurs pass annulés. C'est définitif.`
+    ))) return;
+    setAnnulation(true);
+    try {
+      const rep = await api.partenaireAnnulerEvenement(jeton, ev.id);
+      toast(rep.message);
+      onSupprime();
+    } catch (e) {
+      toast(e instanceof ErreurApi ? e.message : 'Erreur réseau', 'error');
+    } finally {
+      setAnnulation(false);
+    }
+  }
+
+  const annule = ev.statut === 'annule';
   const statut = ev.statut === 'actif'
     ? { fond: c.succesClair, encre: c.succes, point: '#2BD67B' }
-    : ev.statut === 'complet'
+    : ev.statut === 'complet' || annule
       ? { fond: c.dangerClair, encre: c.danger, point: undefined }
       : { fond: c.surface2, encre: c.gris, point: undefined };
 
   // Passé : la carte recule (fond transparent, simple filet) au lieu de
   // pâlir — une opacité de 75 % faisait tomber le texte gris sous 4,5:1.
   return (
-    <CarteRefonte style={ev.statut === 'passe' ? { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: c.line2 } : undefined}>
+    <CarteRefonte style={ev.statut === 'passe' || annule ? { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: c.line2 } : undefined}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, flexShrink: 1 }}>
           <Pastille libelle={ev.sport ? (SPORTS[ev.sport] ?? ev.sport) : (LIBELLES_TYPE[ev.type] ?? ev.type)} fond={c.surface2} encre={c.noir} />
@@ -118,6 +140,7 @@ function CarteEvenementPartenaire({ ev, onSupprime }: { ev: EvenementPartenaire;
       <View style={{ gap: 6 }}>
         <Text style={{ fontFamily: sans(700), fontSize: taille.titreCarteSport, lineHeight: taille.titreCarteSport * 1.15, letterSpacing: -0.03 * taille.titreCarteSport, color: c.noir }}>{ev.titre}</Text>
         <T taille={fs[4]} couleur={c.gris}>{dateFr(ev.date_heure, 'l j F · H\\hi')}</T>
+        {annule && ev.annule_motif ? <T taille={fs[4]} couleur={c.danger}>Motif : {ev.annule_motif}</T> : null}
         {ev.collaboration ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Icone nom="personnes" taille={14} couleur={c.gris} />
@@ -140,14 +163,21 @@ function CarteEvenementPartenaire({ ev, onSupprime }: { ev: EvenementPartenaire;
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
         <Action libelle="Suivi" icone="activite" fond={bleu.doux} encre={bleu.texteDoux}
           onPress={() => router.push({ pathname: '/evenement-suivi', params: { id: String(ev.id) } })} />
-        {ev.statut !== 'passe' ? (
+        {ev.statut !== 'passe' && !annule ? (
           <Action libelle="Scanner" icone="qr" fond={bleu.accent} encre="#FFFFFF"
             onPress={() => router.push({ pathname: '/scan', params: { evenementId: String(ev.id) } })} />
         ) : null}
-        <Action libelle="Modifier" icone="crayon" fond="transparent" encre={c.noir} filet={c.line2}
-          onPress={() => router.push({ pathname: '/evenement-form', params: { id: String(ev.id) } })} />
-        <Action libelle="Supprimer" icone="croix" fond="transparent" encre={c.danger} filet={c.dangerClair}
-          chargement={suppression} onPress={supprimer} />
+        {!annule ? (
+          <Action libelle="Modifier" icone="crayon" fond="transparent" encre={c.noir} filet={c.line2}
+            onPress={() => router.push({ pathname: '/evenement-form', params: { id: String(ev.id) } })} />
+        ) : null}
+        {!annule && ev.statut !== 'passe' && ev.inscrits > 0 ? (
+          <Action libelle="Annuler" icone="croix" fond="transparent" encre={c.danger} filet={c.dangerClair}
+            chargement={annulation} onPress={annuler} />
+        ) : !annule && ev.inscrits === 0 ? (
+          <Action libelle="Supprimer" icone="croix" fond="transparent" encre={c.danger} filet={c.dangerClair}
+            chargement={suppression} onPress={supprimer} />
+        ) : null}
       </View>
     </CarteRefonte>
   );
