@@ -40,6 +40,9 @@ if ($ts === false) {
     $erreurs[] = 'La date est obligatoire.';
 } elseif ($ts <= time()) {
     $erreurs[] = 'La date doit être à venir.';
+} elseif ($ts > time() + SQUAD_HORIZON_JOURS * 86400) {
+    // Même borne que squadDateValide() pour le site.
+    $erreurs[] = 'La date doit tomber dans les douze prochains mois.';
 }
 if ($quota < 2 || $quota > 500) $erreurs[] = 'Entre 2 et 500 participants.';
 
