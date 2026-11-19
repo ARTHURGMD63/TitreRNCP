@@ -25,6 +25,9 @@ $erreur = '';
 // lit comme un bug.
 $expiree = !empty($_SESSION['session_expiree']);
 unset($_SESSION['session_expiree']);
+// Posé par fermerSessionRevoquee() : le mot de passe a changé depuis la connexion.
+$revoquee = !empty($_SESSION['session_revoquee']);
+unset($_SESSION['session_revoquee']);
 
 $ip = ipClient();
 
@@ -122,6 +125,8 @@ siteDebut('Connexion — Outsee pro', ['description' => "Connectez-vous à l'esp
 
         <?php if ($expiree && $erreur === ''): ?>
           <div class="message message--alerte" role="status"><?= iconeSite('horloge') ?><span>Session expirée après une période d'inactivité. Reconnectez-vous pour continuer.</span></div>
+        <?php elseif ($revoquee && $erreur === ''): ?>
+          <div class="message message--alerte" role="status"><?= iconeSite('alerte') ?><span>Le mot de passe de ce compte a changé : reconnectez-vous avec le nouveau.</span></div>
         <?php endif; ?>
         <?php if ($erreur !== ''): ?>
           <div class="message message--erreur" role="alert"><?= iconeSite('alerte') ?><span><?= htmlspecialchars($erreur) ?></span></div>
@@ -186,6 +191,9 @@ function ouvrirSessionWeb(array $user): never
     $_SESSION['user_nom']    = $user['nom'];
     $_SESSION['user_type']   = $user['type'];
     $_SESSION['user_ecole']  = $user['ecole'];
+    // Comparée à chaque requête (sessionIdentifiantsAJour()) : un mot de passe
+    // changé ailleurs ferme cette session.
+    $_SESSION['identifiants'] = empreinteIdentifiants((string) $user['password']);
 
     header('Location: ' . accueilSelonType($user['type']));
     exit;

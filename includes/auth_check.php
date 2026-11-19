@@ -19,6 +19,18 @@ demarrerSession();
 setSecurityHeaders();
 expirerSessionInactive();
 
+// Une session ouverte avec un ancien mot de passe est fermée (audit SEC-05,
+// voir sessionIdentifiantsAJour()). La base n'est chargée que si un compte
+// est connecté ; jamais en ligne de commande, où les tests remplissent
+// $_SESSION à la main. Chargée ici, au niveau du fichier, pour que $pdo
+// reste la variable globale qu'attendent les pages.
+if (!empty($_SESSION['user_id']) && PHP_SAPI !== 'cli') {
+    require_once __DIR__ . '/db.php';
+    if (($GLOBALS['pdo'] ?? null) instanceof PDO && !sessionIdentifiantsAJour($GLOBALS['pdo'])) {
+        fermerSessionRevoquee();
+    }
+}
+
 // Jeu d'icones : inclus ici parce que ce fichier est le point commun de
 // toutes les pages, donc icon() est disponible partout sans require repete.
 require_once __DIR__ . '/icons.php';
@@ -167,6 +179,19 @@ function expirerSessionInactive(): void {
     }
 
     $_SESSION['derniere_activite'] = time();
+}
+
+/**
+ * Ferme une session dont le mot de passe a changé depuis son ouverture.
+ * Même procédé qu'expirerSessionInactive() : la session survit le temps de
+ * porter le message jusqu'à l'écran de connexion.
+ */
+function fermerSessionRevoquee(): void {
+    $_SESSION = [];
+    if (!headers_sent()) {
+        session_regenerate_id(true);
+    }
+    $_SESSION['session_revoquee'] = true;
 }
 
 function requireLogin(string $redirect = ''): void {
