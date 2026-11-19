@@ -66,6 +66,11 @@ function logErreur(string $message, ?Throwable $e = null, array $contexte = []):
     }
 
     error_log(implode(' | ', $parties));
+
+    // Copie lisible depuis l'application admin (includes/journal_erreurs.php).
+    // Ne lève jamais, ne fait rien sans connexion ni table.
+    require_once __DIR__ . '/journal_erreurs.php';
+    journalDepuisLog($message, $e, $contexte);
 }
 
 /**

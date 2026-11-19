@@ -158,7 +158,7 @@ function textesLegaux(): array
 
         'confidentialite' => [
             'titre'    => 'Politique de confidentialité',
-            'maj'      => '2026-11-18',
+            'maj'      => '2026-11-19',
             'sections' => [
                 ['blocs' => [
                     $p("Cette politique explique quelles données Outsee collecte, pourquoi, avec qui elles sont partagées et combien de temps elles sont gardées, conformément au Règlement Général sur la Protection des Données (RGPD)."),
@@ -184,7 +184,8 @@ function textesLegaux(): array
                         "Te proposer des événements et des personnes pertinents, gérer tes inscriptions et le check-in : exécution du contrat",
                         "T'envoyer des notifications : consentement, retirable dans les réglages du téléphone",
                         "Facturer les établissements : exécution du contrat (CGV) et obligation légale (comptabilité)",
-                        "Fournir aux établissements des statistiques de fréquentation agrégées : intérêt légitime"
+                        "Fournir aux établissements des statistiques de fréquentation agrégées : intérêt légitime",
+                        "Mesurer la fréquentation de l'application et corriger ses pannes (heures d'utilisation, erreurs techniques sans donnée personnelle) : intérêt légitime"
                     ),
                 ]],
                 ['titre' => '4. Destinataires et sous-traitants', 'blocs' => [
@@ -205,6 +206,7 @@ function textesLegaux(): array
                         "**Session dans l'application :** 30 jours après la dernière utilisation (1 jour pour un administrateur)",
                         "**Tentatives de connexion :** 7 jours",
                         "**Historique des notifications envoyées :** 30 jours ; téléphone inactif : 180 jours",
+                        "**Heures d'utilisation de l'application** (servent à mesurer la fréquentation et les heures de pointe) **:** 120 jours",
                         "**Paiements non aboutis :** 90 jours",
                         "**Pièces comptables (factures, paiements des établissements) :** 10 ans, obligation légale",
                         "**Journaux techniques :** 8 semaines"

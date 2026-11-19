@@ -98,6 +98,7 @@ function rgpdRequetes(int $uid, ?int $etablissementId, string $email): array
         'signalements_envoyes'    => ['SELECT reported_id AS compte_id, motif, details, statut, created_at FROM user_reports WHERE reporter_id = ?', [$uid]],
         'sessions'                => ['SELECT appareil, created_at, derniere_utilisation, expire_le FROM api_tokens WHERE user_id = ?', [$uid]],
         'appareils'               => ['SELECT plateforme, appareil, actif, created_at, derniere_vue FROM appareils_push WHERE user_id = ?', [$uid]],
+        'activite'                => ['SELECT heure FROM activite_heures WHERE user_id = ? ORDER BY heure DESC', [$uid]],
         'notifications'           => ['SELECT categorie, titre, corps, envoyer_apres, statut, envoye_le FROM push_envois WHERE user_id = ?', [$uid]],
         'notifications_lues'      => ['SELECT lues_le FROM notifications_lues WHERE user_id = ?', [$uid]],
         'double_authentification' => ['SELECT created_at FROM totp_comptes WHERE user_id = ?', [$uid]],

@@ -275,6 +275,7 @@ function compteSupprimerEtudiant(PDO $pdo, int $uid): array
             'DELETE FROM evenement_photo_signalements WHERE reporter_id = ?',
             'DELETE FROM evenement_photos WHERE user_id = ?',
             'DELETE FROM api_tokens WHERE user_id = ?',
+            'DELETE FROM activite_heures WHERE user_id = ?',
             'DELETE FROM follows_etablissements WHERE user_id = ?',
             'DELETE FROM user_badges WHERE user_id = ?',
             'DELETE FROM user_interets WHERE user_id = ?',
@@ -520,6 +521,7 @@ function compteSupprimerPartenaire(PDO $pdo, int $uid): array
 
         foreach ([
             'DELETE FROM api_tokens WHERE user_id = ?',
+            'DELETE FROM activite_heures WHERE user_id = ?',
             'DELETE FROM user_settings WHERE user_id = ?',
             'DELETE FROM appareils_push WHERE user_id = ?',
             'DELETE FROM preferences_push WHERE user_id = ?',

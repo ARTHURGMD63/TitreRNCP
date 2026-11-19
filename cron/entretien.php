@@ -123,6 +123,16 @@ $purges = [
         'push_envois',
         "statut IN ('envoye', 'ignore', 'echec') AND created_at < NOW() - INTERVAL 30 DAY",
     ],
+    // Suivi des administrateurs (v42) : activité gardée 120 jours, erreurs
+    // corrigées gardées 30 jours, toute erreur muette depuis 90 jours.
+    'activite' => [
+        'activite_heures',
+        'heure < NOW() - INTERVAL 120 DAY',
+    ],
+    'erreurs' => [
+        'journal_erreurs',
+        '(resolu_le IS NOT NULL AND resolu_le < NOW() - INTERVAL 30 DAY) OR derniere_le < NOW() - INTERVAL 90 DAY',
+    ],
 ];
 
 foreach ($purges as $libelle => [$table, $condition]) {
