@@ -16,7 +16,7 @@ import { ActivityIndicator, RefreshControl, ScrollView, View, type StyleProp, ty
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { dateFr } from '../format';
-import { useHorsLigne } from '../horsLigne';
+import { useHorsLigne, useRechargementAuRetour } from '../horsLigne';
 import { fs, gutter, rayon } from '../theme';
 import { useTheme } from '../useTheme';
 import { reserveBarre } from './BarreOnglets';
@@ -56,6 +56,11 @@ type Props = {
   avecBarre?: boolean;
   rafraichit?: boolean;
   onRafraichir?: () => void;
+  /**
+   * Pour un écran sans « tirer pour rafraîchir » qui peut afficher une copie
+   * hors connexion : rechargé au retour au premier plan (voir horsLigne.ts).
+   */
+  rechargerAuRetour?: () => void;
   /** Contenu hors défilement (feuilles modales). */
   horsDefilement?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
@@ -65,9 +70,11 @@ type Props = {
   defilementRef?: React.RefObject<ScrollView | null>;
 };
 
-export function Ecran({ children, avecBarre = true, rafraichit = false, onRafraichir, horsDefilement, style, plein, defilementRef }: Props) {
+export function Ecran({ children, avecBarre = true, rafraichit = false, onRafraichir, rechargerAuRetour, horsDefilement, style, plein, defilementRef }: Props) {
   const { c } = useTheme();
   const { top, bottom } = useSafeAreaInsets();
+  // Données hors connexion à l'écran : nouvel essai au retour au premier plan.
+  useRechargementAuRetour(onRafraichir ?? rechargerAuRetour);
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <ScrollView

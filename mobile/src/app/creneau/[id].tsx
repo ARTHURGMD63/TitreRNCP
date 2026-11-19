@@ -147,7 +147,7 @@ export default function FicheCreneau() {
   );
 
   return (
-    <Ecran avecBarre={false}>
+    <Ecran avecBarre={false} rechargerAuRetour={() => void charger()}>
       <EnTete>
         <BoutonRetour style={{ marginBottom: 18 }} />
         <Mono couleur={sport.texteDoux} style={{ marginBottom: 6 }}>{etiquetteCreneau(cr)}</Mono>
