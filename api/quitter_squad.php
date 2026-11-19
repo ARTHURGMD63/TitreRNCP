@@ -14,10 +14,22 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'etudiant') {
 }
 
 $input = json_decode(file_get_contents('php://input'), true);
-$squad_id = $input['squad_id'] ?? 0;
+$squad_id = (int) ($input['squad_id'] ?? 0);
 
 if (!$squad_id) {
     echo json_encode(['success' => false, 'message' => 'Données invalides']);
+    exit;
+}
+
+// Le créateur ne quitte pas son squad : il resterait à zéro membre, toujours
+// géré par lui, sans personne pour le voir partir (ETU-14). L'application
+// et le site lui proposent déjà « Supprimer » à la place de « Quitter »
+// (api/v1/squads.php) ; ce refus couvre un appel direct.
+$stmt = $pdo->prepare('SELECT createur_id FROM squads WHERE id = ?');
+$stmt->execute([$squad_id]);
+$createur = $stmt->fetchColumn();
+if ($createur !== false && (int) $createur === (int) $_SESSION['user_id']) {
+    echo json_encode(['success' => false, 'message' => 'Tu as créé ce squad : supprime-le plutôt que de le quitter.']);
     exit;
 }
 
