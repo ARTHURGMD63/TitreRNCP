@@ -618,6 +618,11 @@ try {
     exit(1);
 }
 
+// Fin effective (migration v41) : la colonne indexée du fil, que le code
+// tient à jour à chaque écriture. Les semis écrivent en direct : on la pose.
+require_once __DIR__ . '/../includes/evenements_temps.php';
+evenementsMajFinEffectiveManquantes($pdo);
+
 printf(
     "Fait :\n"
     . "  Soirées : %d lieux, %d soirées (une en cours, une flash, deux sponsorisées, des gratuites et des complètes)\n"

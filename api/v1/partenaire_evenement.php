@@ -397,6 +397,8 @@ try {
             $isSponsorise, $sponsorFormule, $sponsorTarif, $sponsorFin, !empty($sponso['nouvelle']) ? date('Y-m-d H:i:s') : null,
             $eid, (int) $etab['id'],
         ]);
+        // Colonne indexée du fil (migration v41), dans la même transaction.
+        evenementMajFinEffective($pdo, (int) $eid);
 
         enregistrerAchatsEvenement($pdo, (int) $etab['id'], $eid, $evenementExistant, [
             'titre' => $titre, 'is_flash' => $isFlash, 'is_sponsorise' => $isSponsorise,
@@ -463,6 +465,7 @@ try {
         $isSponsorise, $sponsorFormule, $sponsorTarif, $sponsorFin, !empty($sponso['nouvelle']) ? date('Y-m-d H:i:s') : null, $supplementTarif,
     ]);
     $nouvelId = (int) $pdo->lastInsertId();
+    evenementMajFinEffective($pdo, $nouvelId);
 
     enregistrerAchatsEvenement($pdo, (int) $etab['id'], $nouvelId, null, [
         'titre' => $titre, 'supplement_tarif' => $supplementTarif, 'is_flash' => $isFlash,

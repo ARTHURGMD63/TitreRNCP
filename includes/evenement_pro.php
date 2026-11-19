@@ -226,6 +226,8 @@ function ecrireEvenementPro(PDO $pdo, int $etabId, ?array $existant, array $v, f
                   WHERE id = ? AND etablissement_id = ?'
             )->execute([...$commun, $id, $etabId]);
         }
+        // Colonne indexée du fil (migration v41), dans la même transaction.
+        evenementMajFinEffective($pdo, $id);
 
         enregistrerAchatsEvenement($pdo, $etabId, $id, $existant, [
             'titre' => $v['titre'], 'supplement_tarif' => $supplement, 'is_flash' => $v['is_flash'],

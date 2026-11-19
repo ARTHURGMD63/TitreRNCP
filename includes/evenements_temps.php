@@ -81,3 +81,28 @@ function sqlFinEffectiveEvenement(string $aliasDateHeure = 'e.date_heure', strin
 {
     return "COALESCE($aliasDateFin, DATE_ADD($aliasDateHeure, INTERVAL " . EVENEMENT_DUREE_PAR_DEFAUT_HEURES . " HOUR))";
 }
+
+/**
+ * Recalcule evenements.fin_effective (migration v41) pour un événement.
+ *
+ * Le fil filtre sur cette colonne indexée plutôt que sur l'expression
+ * sqlFinEffectiveEvenement(), qu'aucun index ne sert (DB-02). Elle n'est pas
+ * générée par la base (TiDB n'accepte pas d'ajouter une colonne générée
+ * STORED) : chaque écriture de date_heure ou de date_fin doit donc appeler
+ * cette fonction, dans la même transaction quand il y en a une. Un oubli se
+ * voit vite : un événement à fin_effective NULL n'apparaît plus dans le fil.
+ */
+function evenementMajFinEffective(PDO $pdo, int $id): void
+{
+    $pdo->prepare('UPDATE evenements SET fin_effective = ' . sqlFinEffectiveEvenement('date_heure', 'date_fin') . ' WHERE id = ?')
+        ->execute([$id]);
+}
+
+/**
+ * Même calcul pour toutes les lignes qui n'ont pas encore de fin effective :
+ * pour les outils de semis, qui insèrent en masse.
+ */
+function evenementsMajFinEffectiveManquantes(PDO $pdo): int
+{
+    return (int) $pdo->exec('UPDATE evenements SET fin_effective = ' . sqlFinEffectiveEvenement('date_heure', 'date_fin') . ' WHERE fin_effective IS NULL');
+}

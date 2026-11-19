@@ -504,7 +504,13 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
     $filter  = (string) $criteres['type'];
     $musique = (string) $criteres['musique'];
     $q       = (string) $criteres['q'];
-    $finEff  = sqlFinEffectiveEvenement();
+    // La fin retenue, lue dans la colonne indexée evenements.fin_effective
+    // (migration v41, tenue par evenementMajFinEffective()) et non plus
+    // recalculée par sqlFinEffectiveEvenement() : la même valeur, mais
+    // l'expression COALESCE(date_fin, DATE_ADD(...)) ne peut se servir
+    // d'aucun index, et chaque affichage du fil parcourait tout
+    // l'historique des événements (DB-02).
+    $finEff  = 'e.fin_effective';
     $clotureSql = sqlClotureInscriptions();
 
     /*
