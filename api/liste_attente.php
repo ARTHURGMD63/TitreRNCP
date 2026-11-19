@@ -30,29 +30,27 @@ try {
     // Le parrain n'est retenu que s'il correspond à une inscription réelle :
     // un code inventé ou périmé s'ignore silencieusement, il ne doit pas
     // faire échouer l'inscription de celui qui le porte.
-    $parrainId = null;
-    $idCandidat = $parrain !== '' ? idDepuisCode($parrain) : null;
-    if ($idCandidat !== null) {
-        $verif = $pdo->prepare('SELECT 1 FROM liste_attente WHERE id = ?');
-        $verif->execute([$idCandidat]);
-        if ($verif->fetchColumn()) {
-            $parrainId = $idCandidat;
-        }
-    }
+    $parrainId = $parrain !== '' ? idListeAttenteDepuisCode($pdo, $parrain) : null;
 
     // INSERT IGNORE : une adresse déjà inscrite ne redonne pas d'erreur — le
     // visiteur revient simplement sur une page qui recharge, sans savoir
     // s'il avait déjà réservé sa place la veille. Le parrain n'est posé qu'à
     // la création : un revenant ne change pas de parrain au second passage.
-    $stmt = $pdo->prepare('INSERT IGNORE INTO liste_attente (email, parrain_id) VALUES (?, ?)');
-    $stmt->execute([$email, $parrainId]);
+    // Code aléatoire (ETU-12). INSERT IGNORE se tait aussi sur un code déjà
+    // pris : si l'adresse n'est pas en base, c'est le code qui a coïncidé,
+    // on en tire un autre (une chance sur 10^15).
+    $id = 0;
+    for ($essai = 0; $essai < 3 && $id === 0; $essai++) {
+        $stmt = $pdo->prepare('INSERT IGNORE INTO liste_attente (email, parrain_id, code) VALUES (?, ?, ?)');
+        $stmt->execute([$email, $parrainId, codeParrainageAleatoire()]);
 
-    if ($stmt->rowCount() > 0) {
-        $id = (int) $pdo->lastInsertId();
-    } else {
-        $existant = $pdo->prepare('SELECT id FROM liste_attente WHERE email = ?');
-        $existant->execute([$email]);
-        $id = (int) $existant->fetchColumn();
+        if ($stmt->rowCount() > 0) {
+            $id = (int) $pdo->lastInsertId();
+        } else {
+            $existant = $pdo->prepare('SELECT id FROM liste_attente WHERE email = ?');
+            $existant->execute([$email]);
+            $id = (int) $existant->fetchColumn();
+        }
     }
 
     $statut = statutListeAttente($pdo, $id);
