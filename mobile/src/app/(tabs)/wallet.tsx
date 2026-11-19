@@ -16,8 +16,11 @@
  *    chacune son carrousel : Événements, Sport (clubs et parties), Culture ;
  *  - les pass actifs regroupés par jour (2026-11-19), le plus proche ouvert ;
  *  - les squads prévus, puis le lien vers l'historique (écran à part, rangé
- *    par mois, aussi ouvert depuis Moi) ;
- *  - « Tes économies » en dernier : le mois et l'année, mêmes calculs.
+ *    par mois, aussi ouvert depuis Moi).
+ *
+ * « Tes économies » n'est plus ici depuis le 2026-11-19 : l'onglet Moi les
+ * montre déjà. Sous chaque QR, « Télécharger le billet » crée un PDF aux
+ * couleurs d'Outsee avec le titulaire, l'événement et le QR (billetPdf.ts).
  *
  * « Luminosité au max » et « Ajouter à Apple Wallet » ne sont pas affichés :
  * l'application ne sait ni régler la luminosité ni générer de pass Wallet.
@@ -30,7 +33,8 @@ import QRCode from 'react-native-qrcode-svg';
 
 import { actions, api, ErreurApi, type GenrePass, type Pass, type ReponseWallet, type SquadAgenda } from '../../api';
 import { SPORTS } from '../../catalogue';
-import { Apparition, Compteur, PressableAnime, useMouvementReduit } from '../../composants/Animations';
+import { telechargerBillet } from '../../billetPdf';
+import { Apparition, PressableAnime, useMouvementReduit } from '../../composants/Animations';
 import { Bouton } from '../../composants/Bouton';
 import { CarreIcone, EnTeteApp, Pastille, useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
@@ -78,14 +82,51 @@ function ouvrirFiche(p: Pass) {
   else router.push({ pathname: '/evenement/[id]', params: { id } });
 }
 
-const MOIS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-
 /**
- * Le format d'un compteur d'économies : celui de toute l'application
- * (formatEuros, « 12,50 € »). Pendant le défilement, des euros entiers ; la
- * valeur exacte, centimes compris, à l'arrivée.
+ * « Télécharger le billet » : le PDF du pass, titulaire compris (le profil de
+ * la session). Le bouton attend pendant la création, puis la feuille de
+ * partage du système prend le relais.
  */
-const formatCompteur = (cible: number) => (n: number) => formatEuros(n === cible ? cible : Math.round(n));
+function useBillet(p: Pass, code: string | null) {
+  const { profil } = useSession();
+  const toast = useToast();
+  const [attente, setAttente] = useState(false);
+  const disponible = !!code && !!profil && !p.evenement_supprime;
+
+  async function telecharger() {
+    if (!code || !profil || attente) return;
+    setAttente(true);
+    try {
+      await telechargerBillet(
+        { genre: genreDe(p), id: p.id, titre: p.titre, etablissement: p.etablissement, lieu: p.lieu, date_heure: p.date_heure, reduction: p.reduction, prix_normal: p.prix_normal, is_gratuit: p.is_gratuit, code },
+        { prenom: profil.prenom, nom: profil.nom, email: profil.email, ecole: profil.ecole, promo: profil.promo },
+      );
+    } catch (e) {
+      toast(e instanceof Error && e.message ? e.message : 'Billet impossible à créer.', 'error');
+    } finally {
+      setAttente(false);
+    }
+  }
+
+  return { telecharger, attente, disponible };
+}
+
+/** Le bouton « Télécharger le billet », sous le QR. */
+function BoutonBillet({ onPress, attente, fond, encre }: { onPress: () => void; attente: boolean; fond: string; encre: string }) {
+  return (
+    <PressableAnime
+      onPress={onPress}
+      disabled={attente}
+      accessibilityRole="button"
+      accessibilityLabel="Télécharger le billet en PDF"
+      accessibilityState={{ disabled: attente, busy: attente }}
+      style={{ minHeight: hauteurBouton.normal, borderRadius: rayon.bouton, backgroundColor: fond, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, opacity: attente ? 0.6 : 1 }}
+    >
+      <Icone nom="telecharger" taille={18} couleur={encre} />
+      <T taille={fs[4]} poids={700} couleur={encre}>{attente ? 'Création du billet…' : 'Télécharger le billet (PDF)'}</T>
+    </PressableAnime>
+  );
+}
 
 /** Un rappel différé, annulé si le composant disparaît avant. */
 function useDiffere() {
@@ -189,6 +230,7 @@ function CarteActivite({ p, index, total, largeur, onAnnule }: {
   const [qr, setQr] = useState(false);
   const codeQr = qrDuPass(p);
   const { annuler, attente, annulable } = useAnnulation(p, onAnnule);
+  const billet = useBillet(p, lireCodePass(p.code_qr));
 
   return (
     <View style={{ width: largeur, backgroundColor: c.blanc, borderRadius: rayon.carte, overflow: 'hidden', marginBottom: 16 }}>
@@ -243,8 +285,11 @@ function CarteActivite({ p, index, total, largeur, onAnnule }: {
         ) : null}
 
         {qr && codeQr ? (
-          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 20, paddingVertical: 18, alignItems: 'center' }}>
-            <QRCode value={codeQr} size={176} color={fixe.qrSombre} backgroundColor={fixe.qrClair} ecl="H" />
+          <View style={{ gap: 10 }}>
+            <View style={{ backgroundColor: '#FFFFFF', borderRadius: 20, paddingVertical: 18, alignItems: 'center' }}>
+              <QRCode value={codeQr} size={176} color={fixe.qrSombre} backgroundColor={fixe.qrClair} ecl="H" />
+            </View>
+            {billet.disponible ? <BoutonBillet onPress={billet.telecharger} attente={billet.attente} fond={teinte.doux} encre={teinte.texteDoux} /> : null}
           </View>
         ) : null}
 
@@ -301,6 +346,7 @@ function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
   const reduction = p.reduction ?? 0;
   const HAUTEUR_QR = 240;
   const codeQr = qrDuPass(p);
+  const billet = useBillet(p, lireCodePass(p.code_qr));
 
   return (
     <Animated.View
@@ -382,6 +428,11 @@ function CartePass({ p, index, total, largeur, nomTitulaire, onAnnule }: {
           )}
         </Pressable>
       )}
+
+      {/* Le billet PDF, juste sous le QR : blanc sur le voile basalte (7,2:1). */}
+      {billet.disponible && codeQr ? (
+        <BoutonBillet onPress={billet.telecharger} attente={billet.attente} fond={fixe.voileAccent} encre={encre} />
+      ) : null}
 
       <View style={{ gap: 8 }}>
         {supprime ? (
@@ -653,24 +704,6 @@ export default function Wallet() {
                 </PressableAnime>
               </Apparition>
             ) : null}
-
-            <Apparition index={6}>
-              <TitreSection style={{ marginBottom: 12 }}>Tes économies</TitreSection>
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <View style={{ flex: 1, borderRadius: rayon.tuile, padding: 16, backgroundColor: c.blanc, gap: 6 }}>
-                  <T taille={fs[4]} couleur={c.gris}>{MOIS[new Date().getMonth()]}</T>
-                  <Compteur valeur={donnees.economies.mois} format={formatCompteur(donnees.economies.mois)}
-                    style={{ fontFamily: sans(700), fontSize: 20, letterSpacing: -0.03 * 20, color: c.succes, fontVariant: ['tabular-nums'] }} />
-                  <T taille={fs[3]} couleur={c.gris}>économisé ce mois</T>
-                </View>
-                <View style={{ flex: 1, borderRadius: rayon.tuile, padding: 16, backgroundColor: c.blanc, gap: 6 }}>
-                  <T taille={fs[4]} couleur={c.gris}>Total année</T>
-                  <Compteur valeur={donnees.economies.annee} delai={120} format={formatCompteur(donnees.economies.annee)}
-                    style={{ fontFamily: sans(700), fontSize: 20, letterSpacing: -0.03 * 20, color: c.noir, fontVariant: ['tabular-nums'] }} />
-                  <T taille={fs[3]} couleur={c.gris}>depuis janvier</T>
-                </View>
-              </View>
-            </Apparition>
           </>
         )}
       </Contenu>
