@@ -93,13 +93,20 @@ export default function ScanPass() {
     }
   }
 
-  // La liste connue au moment d'ouvrir le scanner : elle s'enrichit ensuite
-  // localement à chaque scan reussi, sans re-appeler le tableau de bord.
+  // La liste connue au moment d'ouvrir le scanner, pour CET événement
+  // (partenaire_checkins.php) : elle s'enrichit ensuite localement à chaque
+  // scan réussi. Avant, l'écran rechargeait tout le tableau de bord, qui ne
+  // parle que de la prochaine soirée : scanner pour une autre affichait 0
+  // (constat MOB-15). Les entrées déjà connues localement sont gardées si la
+  // réponse arrive après un premier scan.
   useEffect(() => {
     if (idEvenement === null) return;
-    api.partenaireDashboard(jeton).then((rep) => {
-      if (rep.evenement?.id === idEvenement) setCheckins(rep.stats.checkins);
+    let annule = false;
+    api.partenaireCheckins(jeton, idEvenement).then((rep) => {
+      if (annule) return;
+      setCheckins((locales) => locales.reduceRight((liste, p) => ajouterCheckin(liste, p), rep.checkins));
     }).catch(() => {});
+    return () => { annule = true; };
   }, [jeton, idEvenement]);
 
   const scanner = useCallback(async (resultat: BarcodeScanningResult) => {

@@ -590,6 +590,13 @@ export type PersonneCheckin = {
   checkin_le: string | null;
 };
 
+/** api/v1/partenaire_checkins.php : les entrées d'UN événement, celui qu'on scanne. */
+export type ReponseCheckinsPartenaire = {
+  evenement: { id: number; titre: string };
+  compteurs: { inscrits: number; checkin: number; total: number; places: number };
+  checkins: PersonneCheckin[];
+};
+
 export type ReponseDashboardPartenaire = {
   etablissement: { id: number; nom: string; ville: string };
   evenement: { id: number; titre: string; date_heure: string } | null;
@@ -960,6 +967,9 @@ export const api = {
     appelApi<Ok & { personne: { id: number; prenom: string; nom: string; ecole: string | null; promo: string | null; photo_url: string | null } }>(
       'partenaire_scan.php', { methode: 'POST', jeton, corps }
     ),
+  /** Les entrées d'un événement de l'établissement : compteurs et personnes validées. */
+  partenaireCheckins: (jeton: string, evenementId: number) =>
+    appelApi<{ success: true } & ReponseCheckinsPartenaire>('partenaire_checkins.php', { jeton, params: { evenement_id: evenementId } }),
   partenaireInvites: (jeton: string, evenementId: number, q?: string) =>
     appelApi<{ success: true; invites: { inscription_id: number; prenom: string; nom: string; ecole: string | null; promo: string | null; photo_url: string | null }[] }>(
       'partenaire_invites.php', { jeton, params: { evenement_id: evenementId, q } }

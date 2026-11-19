@@ -343,4 +343,30 @@ final class ApiV1Test extends TestCase
         $this->assertStringContainsString('enteteAutorisation()', $api);
         $this->assertStringNotContainsString('apache_request_headers', $api);
     }
+
+    /**
+     * Les points d'entrée d'une soirée (scan, validation manuelle, compteur
+     * d'entrées) ne répondent que pour un événement de CET établissement.
+     *
+     * L'identifiant d'événement vient du client : sans ce contrôle, un
+     * partenaire lirait la liste des entrées — noms, écoles, photos — de la
+     * soirée d'un concurrent en changeant un nombre dans l'adresse.
+     */
+    public function testLesEntreesDUneSoireeSontReserveesASonEtablissement(): void
+    {
+        foreach (['partenaire_scan.php', 'partenaire_invites.php', 'partenaire_checkins.php'] as $nom) {
+            $source = $this->code(self::DOSSIER . '/' . $nom);
+
+            $this->assertStringContainsString('apiPartenaire(', $source, $nom);
+            $this->assertMatchesRegularExpression('/et\.user_id\s*=\s*\?/', $source, $nom . ' : sans contrôle d\'appartenance');
+            $this->assertStringContainsString("'evenement_non_autorise'", $source, $nom);
+
+            // Le contrôle passe avant la lecture des inscriptions.
+            $controle = strpos($source, 'et.user_id');
+            $lecture  = strpos($source, 'FROM inscriptions');
+            $this->assertIsInt($controle);
+            $this->assertIsInt($lecture);
+            $this->assertLessThan($lecture, $controle, $nom . ' : inscriptions lues avant le contrôle');
+        }
+    }
 }
