@@ -121,9 +121,8 @@ docs/logos/jpg/
 docs/logos/png/
 docs/logos/webp/
 docs/logos/pdf/
-# Répartition du capital, pacte d'associés, grille tarifaire. Encore suivis :
-# cette règle ne prend effet qu'après « git rm --cached » sur chacun (le
-# fichier reste sur le disque ; l'historique, lui, garde les anciennes
-# versions).
+# Répartition du capital, pacte d'associés, grille tarifaire : retirés du
+# suivi le 19/11/2026 (le fichier reste sur le disque ; l'historique Git,
+# lui, garde les anciennes versions).
 docs/Societe_et_Plan_Mobile_Outsee.html
 docs/Grille_Tarifaire_Outsee.xlsx
