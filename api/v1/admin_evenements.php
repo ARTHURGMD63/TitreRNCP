@@ -77,6 +77,7 @@ apiReponse([
                 'is_gratuit'    => (bool) $e['is_gratuit'],
                 'is_flash'      => (bool) $e['is_flash'],
                 'sponsorise_actif' => sponsoringActif($e),
+                'annule'        => ($e['annule_le'] ?? null) !== null,
             ];
         },
         $evenements

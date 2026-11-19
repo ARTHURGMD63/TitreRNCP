@@ -31,6 +31,8 @@ require_once __DIR__ . '/musique.php';
 require_once __DIR__ . '/agregats.php';
 require_once __DIR__ . '/cache.php';
 require_once __DIR__ . '/evenements_temps.php';
+require_once __DIR__ . '/comptes.php';
+require_once __DIR__ . '/evenements_suppression.php';
 
 /**
  * Valeur réservée du filtre d'intérêt : « les gens qui aiment ce que j'aime »,
@@ -504,7 +506,13 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
     $filter  = (string) $criteres['type'];
     $musique = (string) $criteres['musique'];
     $q       = (string) $criteres['q'];
-    $finEff  = sqlFinEffectiveEvenement();
+    // La fin retenue, lue dans la colonne indexée evenements.fin_effective
+    // (migration v41, tenue par evenementMajFinEffective()) et non plus
+    // recalculée par sqlFinEffectiveEvenement() : la même valeur, mais
+    // l'expression COALESCE(date_fin, DATE_ADD(...)) ne peut se servir
+    // d'aucun index, et chaque affichage du fil parcourait tout
+    // l'historique des événements (DB-02).
+    $finEff  = 'e.fin_effective';
     $clotureSql = sqlClotureInscriptions();
 
     /*
@@ -561,9 +569,13 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
      *    l'établissement (v38) ou début pas encore passés, places restantes.
      *    Le comptage des places ne lit que l'index (evenement_id, statut).
      */
+    // Ni les événements d'un BDE dont la validation a été refusée (PAY-09),
+    // ni les événements annulés (leurs pass le sont aussi).
     $ouE     = " FROM evenements e
                  JOIN etablissements et ON et.id = e.etablissement_id
                  WHERE $finEff >= '$maintenantParis'
+                   AND " . sqlEtablissementVisible('et') . "
+                   AND " . sqlEvenementNonAnnule('e') . "
                    AND e.type <> 'sport'
                    AND (e.id IN ($trousMoi)
                         OR ($clotureSql > '$maintenantParis'

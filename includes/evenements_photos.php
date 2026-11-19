@@ -29,3 +29,24 @@ function evenementPhotosEstCheckin(PDO $pdo, int $uid, int $evenementId): bool
 
     return (bool) $stmt->fetchColumn();
 }
+
+/** Signalements de participants qu'il faut au minimum pour masquer une photo. */
+const PHOTO_SIGNALEMENTS_MIN = 3;
+
+/** Au-delà, le seuil ne monte plus : un modérateur regarde de toute façon. */
+const PHOTO_SIGNALEMENTS_MAX = 10;
+
+/**
+ * Combien de signalements de participants masquent automatiquement une
+ * photo, selon le nombre de personnes validées à l'entrée de la soirée.
+ *
+ * Un seuil fixe de trois laissait trois comptes quelconques masquer
+ * n'importe quelle photo (ETU-08). Seuls comptent désormais les signaleurs
+ * validés à l'entrée de CETTE soirée, et il en faut 5 % des présents, entre
+ * PHOTO_SIGNALEMENTS_MIN et PHOTO_SIGNALEMENTS_MAX. Les autres signalements
+ * restent enregistrés pour les modérateurs.
+ */
+function photoSeuilMasquage(int $presents): int
+{
+    return max(PHOTO_SIGNALEMENTS_MIN, min(PHOTO_SIGNALEMENTS_MAX, (int) ceil(max(0, $presents) * 0.05)));
+}

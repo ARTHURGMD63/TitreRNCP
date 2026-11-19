@@ -142,6 +142,54 @@ function verificationInitiale(?string $type): string
 }
 
 /**
+ * L'état de validation après une modification du profil de l'établissement.
+ *
+ * Un changement de type repart de verificationInitiale(). À type égal, un
+ * BDE validé qui change de nom repasse en attente (PAY-18) : la validation
+ * portait sur une association précise, et garder la coche en changeant de
+ * nom permettait de se faire passer pour une autre. La casse et les espaces
+ * ne comptent pas. Un refus reste un refus : renommer ne doit pas suffire à
+ * le lever.
+ */
+function verificationApresModification(string $ancienType, string $nouveauType, string $ancienNom, string $nouveauNom, string $etat): string
+{
+    if ($nouveauType !== $ancienType) {
+        return verificationInitiale($nouveauType);
+    }
+    $normaliser = static fn (string $n): string => mb_strtolower(trim((string) preg_replace('/\s+/u', ' ', $n)));
+    if ($etat === 'validee' && verificationRequise($nouveauType) && $normaliser($ancienNom) !== $normaliser($nouveauNom)) {
+        return 'en_attente';
+    }
+
+    return $etat;
+}
+
+/**
+ * Condition SQL : les événements de cet établissement peuvent être montrés
+ * aux étudiants et recevoir des inscriptions (PAY-09).
+ *
+ * Un BDE dont l'administrateur a refusé la validation ne peut plus publier,
+ * mais ses événements déjà en ligne restaient dans le fil, sur la carte et
+ * ouverts aux inscriptions : rien ne prouve qu'il soit une association, et
+ * des étudiants continuaient de s'y inscrire. Un compte « en attente » reste
+ * visible : il n'a rien pu publier avant d'être validé (etatAbonnement()).
+ */
+function sqlEtablissementVisible(string $alias = 'et'): string
+{
+    return "$alias.verification <> 'refusee'";
+}
+
+/**
+ * Même règle, sur une ligne déjà lue.
+ *
+ * @param array<string, mixed> $etab
+ */
+function etablissementVisible(array $etab): bool
+{
+    return ($etab['verification'] ?? '') !== 'refusee';
+}
+
+/**
  * Le compte a-t-il une formule valable pour son type ?
  *
  * @param array<string, mixed> $etab

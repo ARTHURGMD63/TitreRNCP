@@ -285,6 +285,9 @@ export type Evenement = {
   flash_expiry: string | null;
   sponsorise: boolean;
   deja_inscrit: boolean;
+  /** Annulé par l'établissement ou l'équipe (absent d'un serveur d'avant la v41). */
+  annule?: boolean;
+  annule_motif?: string | null;
   en_cours: boolean;
   amis: { prenoms: string[]; nb: number };
   /** Les établissements qui co-organisent (absent d'un serveur d'avant la v39). */
@@ -676,7 +679,9 @@ export type EvenementPartenaire = {
   sponsor_restant_s: number | null;
   supplement_tarif: number;
   sponsor_tarif: number;
-  statut: 'passe' | 'complet' | 'actif';
+  statut: 'passe' | 'complet' | 'actif' | 'annule';
+  annule_le?: string | null;
+  annule_motif?: string | null;
   /** L'établissement invité à co-organiser, et sa réponse. */
   collaboration?: CollaborationEnvoyee | null;
 };
@@ -806,8 +811,8 @@ export type SuiviEvenementPartenaire = {
   };
   courbe: { jour: string; inscriptions: number; cumul: number }[];
   ecoles: { nom: string; nombre: number; pourcentage: number }[];
-  /** Les inscrits (hors annulés) avec leurs coordonnées, pour l'établissement propriétaire. */
-  participants: { id: number; prenom: string; nom: string; email: string; ecole: string | null; promo: string | null; present: boolean; inscrit_le: string }[];
+  /** Les inscrits (hors annulés), sans leur e-mail, pour l'établissement propriétaire. */
+  participants: { id: number; prenom: string; nom: string; ecole: string | null; promo: string | null; present: boolean; inscrit_le: string }[];
   mise_en_avant: {
     active: boolean; en_cours: boolean; formule: string | null; libelle: string | null; offerte: boolean; jusqu_au: string | null;
     /** Quand elle a démarré (heure de Paris), null pour une mise en avant d'avant le suivi du début. */
@@ -878,6 +883,7 @@ export type EvenementAdmin = {
   is_gratuit: boolean;
   is_flash: boolean;
   sponsorise_actif: boolean;
+  annule?: boolean;
 };
 
 export type ReponseEvenementsAdmin = {
@@ -975,6 +981,9 @@ export const api = {
     appelApi<{ success: true } & SuiviEvenementPartenaire>('partenaire_evenement_suivi.php', { jeton, params: { id } }),
   partenaireSupprimerEvenement: (jeton: string, id: number) =>
     appelApi<Ok>('partenaire_evenements.php', { methode: 'POST', jeton, corps: { action: 'supprimer', id } }),
+  /** Annule un événement qui a des inscrits : pass annulés, inscrits prévenus. */
+  partenaireAnnulerEvenement: (jeton: string, id: number, motif?: string) =>
+    appelApi<{ success: true; message: string; pass_annules: number }>('partenaire_evenements.php', { methode: 'POST', jeton, corps: { action: 'annuler', id, motif } }),
   partenaireFormulaireEvenement: (jeton: string, id?: number) =>
     appelApi<{ success: true } & ReponseFormulaireEvenementPartenaire>('partenaire_evenement.php', { jeton, params: { id } }),
   partenaireEnregistrerEvenement: (jeton: string, corps: Record<string, unknown>) =>
@@ -1108,4 +1117,6 @@ export const actions = {
     action<Ok>('admin_supprimer_utilisateur.php', jeton, { user_id: userId }),
   adminSupprimerEvenement: (jeton: string, evenementId: number) =>
     action<Ok>('admin_supprimer_evenement.php', jeton, { evenement_id: evenementId }),
+  adminAnnulerEvenement: (jeton: string, evenementId: number) =>
+    action<Ok & { message?: string }>('admin_annuler_evenement.php', jeton, { evenement_id: evenementId }),
 };

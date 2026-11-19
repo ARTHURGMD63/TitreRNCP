@@ -29,6 +29,7 @@ function CarteEvenementAdmin({ e, onSupprime }: { e: EvenementAdmin; onSupprime:
   const jeton = useJeton();
   const toast = useToast();
   const [suppression, setSuppression] = useState(false);
+  const [annule, setAnnule] = useState(!!e.annule);
   const remplissage = e.quota > 0 ? Math.min(100, Math.round((e.inscrits / e.quota) * 100)) : 0;
   const couleurTaux = e.taux_presence === null ? c.gris : e.taux_presence < 60 ? c.danger : c.succes;
 
@@ -41,6 +42,22 @@ function CarteEvenementAdmin({ e, onSupprime }: { e: EvenementAdmin; onSupprime:
       onSupprime(e.id);
     } catch (err) {
       toast(err instanceof ErreurApi ? err.message : 'Erreur réseau', 'error');
+      setSuppression(false);
+    }
+  }
+
+  // Des pass en cours : la suppression est refusée (PAY-10). L'annulation
+  // retire l'événement et prévient les inscrits, même s'il est passé.
+  async function annuler() {
+    if (!(await confirmer(`Annuler « ${e.titre} » ? Les ${e.inscrits} pass seront annulés et les inscrits prévenus.`))) return;
+    setSuppression(true);
+    try {
+      const rep = await actions.adminAnnulerEvenement(jeton, e.id);
+      toast(rep.message ?? 'Événement annulé', 'success');
+      setAnnule(true);
+    } catch (err) {
+      toast(err instanceof ErreurApi ? err.message : 'Erreur réseau', 'error');
+    } finally {
       setSuppression(false);
     }
   }
@@ -67,7 +84,13 @@ function CarteEvenementAdmin({ e, onSupprime }: { e: EvenementAdmin; onSupprime:
         ) : null}
       </View>
 
-      <Bouton libelle="Supprimer" variante="alerte" chargement={suppression} onPress={supprimer} />
+      {annule ? (
+        <T taille={fs[3]} poids={700} couleur={c.danger}>Annulé</T>
+      ) : e.inscrits > 0 ? (
+        <Bouton libelle="Annuler l'événement" variante="alerte" chargement={suppression} onPress={annuler} />
+      ) : (
+        <Bouton libelle="Supprimer" variante="alerte" chargement={suppression} onPress={supprimer} />
+      )}
     </View>
   );
 }

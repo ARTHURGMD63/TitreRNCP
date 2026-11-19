@@ -14,6 +14,7 @@ require_once __DIR__ . '/../includes/places.php';
 require_once __DIR__ . '/../includes/temps_reel.php';
 require_once __DIR__ . '/../includes/culture.php';
 require_once __DIR__ . '/../includes/evenements_temps.php';
+require_once __DIR__ . '/../includes/evenements_suppression.php';
 header('Content-Type: application/json');
 
 // Ecriture : POST obligatoire, jeton CSRF et origine verifies.
@@ -44,7 +45,8 @@ function cibleValide(PDO $pdo, string $type, int $id): ?array
                     (SELECT COUNT(*) FROM inscriptions i
                       WHERE i.evenement_id = e.id AND i.statut != 'annule') AS nb
                FROM evenements e
-              WHERE e.id = ? AND " . sqlClotureInscriptions('e') . " > '" . date('Y-m-d H:i:s') . "'"
+              WHERE e.id = ? AND " . sqlEvenementNonAnnule('e') . "
+                AND " . sqlClotureInscriptions('e') . " > '" . date('Y-m-d H:i:s') . "'"
         );
         // Inscriptions closes (clôture de l'établissement ou début, v38) :
         // une invitation n'ouvre pas de porte dérobée.

@@ -188,6 +188,28 @@ function pushTexteLieu(string $lieu, string $titreEvenement): array
 }
 
 /** @return array{0:string, 1:string} */
+function pushTexteEvenementAnnule(string $titreEvenement): array
+{
+    return ['Soirée annulée', $titreEvenement . ' n’aura pas lieu : l’établissement a fermé son compte. Ton pass est retiré.'];
+}
+
+/**
+ * Événement annulé par l'établissement ou par l'équipe Outsee, avec le
+ * motif s'il a été donné.
+ *
+ * @return array{0:string, 1:string}
+ */
+function pushTexteEvenementAnnuleParOrganisateur(string $titreEvenement, ?string $motif = null): array
+{
+    $corps = $titreEvenement . ' n’aura pas lieu. Ton pass est annulé.';
+    if ($motif !== null && trim($motif) !== '') {
+        $corps .= ' Motif : ' . trim($motif);
+    }
+
+    return ['Événement annulé', $corps];
+}
+
+/** @return array{0:string, 1:string} */
 function pushTexteRappel(string $titreEvenement, string $heure, string $lieu): array
 {
     return ['C’est demain', $titreEvenement . ' à ' . $heure . ', ' . $lieu . '.'];

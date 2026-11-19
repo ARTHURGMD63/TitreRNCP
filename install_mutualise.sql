@@ -108,6 +108,16 @@ CREATE TABLE IF NOT EXISTS evenements (
     date_heure DATETIME NOT NULL,
     -- Fin declaree de l'evenement (migration v24).
     date_fin DATETIME NULL DEFAULT NULL,
+    -- Fin retenue (migration v41) : date_fin, sinon date_heure + 12 h. Tenue
+    -- par le code a chaque ecriture (evenementMajFinEffective()), indexee
+    -- pour le fil.
+    fin_effective DATETIME NULL DEFAULT NULL,
+    -- Annulation (migration v41) : l'evenement reste pour l'historique, ses
+    -- pass sont annules et il sort du fil. annule_par : le compte qui a
+    -- annule (partenaire ou administrateur), sans cle : il peut disparaitre.
+    annule_le DATETIME NULL DEFAULT NULL,
+    annule_motif VARCHAR(255) NULL DEFAULT NULL,
+    annule_par INT NULL DEFAULT NULL,
     quota INT DEFAULT 100,
     reduction INT DEFAULT 0,
     prix_normal DECIMAL(8,2) DEFAULT 0,
@@ -130,6 +140,7 @@ CREATE TABLE IF NOT EXISTS evenements (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_sponsor (is_sponsorise, sponsor_jusqu_au),
     INDEX idx_style_musique (style_musique, date_heure),
+    INDEX idx_ev_fin_effective (fin_effective),
     FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE CASCADE
 );
 
@@ -140,6 +151,9 @@ CREATE TABLE IF NOT EXISTS inscriptions (
     qr_code VARCHAR(64) NOT NULL,
     statut ENUM('inscrit', 'checkin', 'annule') DEFAULT 'inscrit',
     checkin_le DATETIME NULL DEFAULT NULL,
+    -- Qui a valide l'entree, et comment (migration v41).
+    checkin_mode ENUM('scan','manuel') NULL DEFAULT NULL,
+    checkin_par INT NULL DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (evenement_id) REFERENCES evenements(id) ON DELETE CASCADE,
@@ -339,8 +353,11 @@ CREATE TABLE IF NOT EXISTS invitations (
     -- jamais : il attendait une contrainte qui n'existait pas.
     UNIQUE KEY uniq_invitation (from_user_id, to_user_id, type, target_id),
     KEY k_to   (to_user_id, statut),
-    KEY k_from (from_user_id)
-);
+    KEY k_from (from_user_id),
+    -- Migration v41 : plus d'invitation orpheline d'un compte efface.
+    CONSTRAINT fk_invitation_expediteur FOREIGN KEY (from_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_invitation_destinataire FOREIGN KEY (to_user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
 
 -- ───────────────────────  CATALOGUE DE BADGES  ───────────────────────
 
@@ -1161,7 +1178,11 @@ CREATE TABLE IF NOT EXISTS liste_attente (
     email       VARCHAR(190) NOT NULL,
     parrain_id  INT NULL DEFAULT NULL,
     cree_le     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    -- Code de parrainage aleatoire (migration v41) ; NULL pour les
+    -- inscriptions plus anciennes, dont le code LK+base36(id) reste valable.
+    code        VARCHAR(16) NULL DEFAULT NULL,
     UNIQUE KEY idx_email (email),
+    UNIQUE KEY uniq_liste_code (code),
     INDEX idx_parrain (parrain_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -1358,6 +1379,7 @@ CREATE TABLE IF NOT EXISTS paiements_evenements (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     paye_le DATETIME NULL DEFAULT NULL,
     UNIQUE KEY uniq_paiement_session (stripe_session_id),
+    UNIQUE KEY uniq_paiement_stripe (stripe_paiement_id),
     KEY k_paiement_etab (etablissement_id, statut),
     FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE SET NULL,
     FOREIGN KEY (evenement_id) REFERENCES evenements(id) ON DELETE SET NULL
@@ -1460,6 +1482,10 @@ CREATE TABLE IF NOT EXISTS evenement_collaborations (
     FOREIGN KEY (etablissement_id) REFERENCES etablissements(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- v41 : fin effective des evenements de demonstration (meme regle que
+-- sqlFinEffectiveEvenement() ; le code la tient a jour ensuite).
+UPDATE evenements SET fin_effective = COALESCE(date_fin, DATE_ADD(date_heure, INTERVAL 12 HOUR)) WHERE fin_effective IS NULL;
+
 INSERT IGNORE INTO schema_migrations (version) VALUES
 ('v4'), ('v5'), ('v6'), ('v7'), ('v8'), ('v9'),
-('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27'), ('v28'), ('v29'), ('v30'), ('v31'), ('v32'), ('v33'), ('v34'), ('v35'), ('v36'), ('v37'), ('v38'), ('v39'), ('v40');
+('v10'), ('v11'), ('v12'), ('v13'), ('v14'), ('v15'), ('v16'), ('v17'), ('v18'), ('v19'), ('v20'), ('v21'), ('v22'), ('v23'), ('v24'), ('v25'), ('v26'), ('v27'), ('v28'), ('v29'), ('v30'), ('v31'), ('v32'), ('v33'), ('v34'), ('v35'), ('v36'), ('v37'), ('v38'), ('v39'), ('v40'), ('v41');

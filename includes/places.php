@@ -40,3 +40,21 @@ function remplissage(int $quota, int $occupees): array
         'complet'   => $occupees >= $quota,
     ];
 }
+
+/**
+ * Pass actifs qu'un étudiant peut tenir en même temps, sur des soirées pas
+ * encore terminées (ETU-11).
+ *
+ * Sans plafond, un compte (ou une poignée de comptes jetables) réservait
+ * toutes les places d'une soirée, ou une place à chaque soirée de la ville,
+ * sans intention de venir. Dix couvre largement un étudiant qui sort
+ * beaucoup : une réservation se libère dès que la soirée est passée ou que
+ * le pass est annulé.
+ */
+const INSCRIPTIONS_A_VENIR_MAX = 10;
+
+/** L'étudiant qui tient déjà $actives pass à venir peut-il en prendre un de plus ? */
+function inscriptionPlafondAtteint(int $actives): bool
+{
+    return $actives >= INSCRIPTIONS_A_VENIR_MAX;
+}

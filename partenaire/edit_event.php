@@ -14,8 +14,8 @@ $capacites = capacitesEtablissement($pdo, (int) $etab['id']);
 $stmt = $pdo->prepare('SELECT * FROM evenements WHERE id = ? AND etablissement_id = ?');
 $stmt->execute([(int) ($_GET['id'] ?? 0), (int) $etab['id']]);
 $event = $stmt->fetch();
-if (!$event || ($event['type'] ?? '') === 'sport') {
-    flashPro('Cet événement n\'existe plus ou se modifie depuis l\'application.', 'alerte');
+if (!$event || ($event['type'] ?? '') === 'sport' || $event['annule_le'] !== null) {
+    flashPro('Cet événement n\'existe plus, est annulé, ou se modifie depuis l\'application.', 'alerte');
     header('Location: ' . baseUrl('/partenaire/evenements.php'));
     exit;
 }
@@ -46,7 +46,7 @@ proDebut('Modifier un événement', 'evenements', $etab);
   <?= sponsoringChronoHtml($event) ?>
 <?php endif; ?>
 <?php if ($inscrits > 0): ?>
-  <div class="message message--alerte" style="margin-bottom:20px;"><?= iconeSite('info') ?><span><?= $inscrits ?> étudiant<?= $inscrits > 1 ? 's sont inscrits' : ' est inscrit' ?> : prévenez-les si vous changez la date ou l'avantage.</span></div>
+  <div class="message message--alerte" style="margin-bottom:20px;"><?= iconeSite('info') ?><span><?= $inscrits ?> étudiant<?= $inscrits > 1 ? 's sont inscrits' : ' est inscrit' ?> : si vous changez la date, l'heure ou le lieu, chaque inscrit est prévenu automatiquement. Si vous changez l'avantage, prévenez-les vous-même.</span></div>
 <?php endif; ?>
 <?php if ($erreurs): ?>
   <div class="message message--erreur" role="alert" style="margin-bottom:20px;"><?= iconeSite('alerte') ?>
@@ -56,12 +56,15 @@ proDebut('Modifier un événement', 'evenements', $etab);
 
 <?php
 $stmt = $pdo->prepare(
-    "SELECT u.prenom, u.nom, u.email, u.ecole, u.promo, i.statut, i.created_at
+    "SELECT u.prenom, u.nom, u.ecole, u.promo, i.statut, i.created_at
        FROM inscriptions i JOIN users u ON u.id = i.user_id
       WHERE i.evenement_id = ? AND i.statut <> 'annule' ORDER BY u.nom, u.prenom"
 );
 $stmt->execute([(int) $event['id']]);
 $participants = $stmt->fetchAll();
+// Pas d'e-mail des inscrits (PAY-08) : l'établissement gère l'entrée avec le
+// nom et la présence ; l'adresse ne lui sert à rien et n'a pas à lui être
+// confiée (minimisation, RGPD).
 $e = static fn ($v): string => htmlspecialchars((string) $v, ENT_QUOTES);
 ?>
 <section class="carte" style="margin-bottom:20px;">
@@ -71,12 +74,11 @@ $e = static fn ($v): string => htmlspecialchars((string) $v, ENT_QUOTES);
   <?php else: ?>
     <div style="overflow-x:auto;">
       <table class="table" style="width:100%;">
-        <thead><tr><th>Nom</th><th>E-mail</th><th>École</th><th>Inscrit le</th><th>Présence</th></tr></thead>
+        <thead><tr><th>Nom</th><th>École</th><th>Inscrit le</th><th>Présence</th></tr></thead>
         <tbody>
         <?php foreach ($participants as $p): ?>
           <tr>
             <td><?= $e($p['prenom'] . ' ' . $p['nom']) ?></td>
-            <td><a href="mailto:<?= $e($p['email']) ?>"><?= $e($p['email']) ?></a></td>
             <td><?= $e(trim(($p['ecole'] ?? '') . ' ' . ($p['promo'] ?? ''))) ?></td>
             <td><?= $e(date('d/m/Y', strtotime((string) $p['created_at']))) ?></td>
             <td><?= $p['statut'] === 'checkin' ? 'Présent' : '—' ?></td>

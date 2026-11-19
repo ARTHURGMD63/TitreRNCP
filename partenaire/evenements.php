@@ -3,7 +3,7 @@
  * Les événements de l'établissement : à venir (et en cours), puis passés.
  *
  * Par ligne : remplissage, entrées scannées, réduction, statut, et les
- * actions — scanner les pass, modifier, supprimer. Supprimer ne rend pas ce
+ * actions — scanner les pass, modifier, annuler (inscrits prévenus), supprimer. Supprimer ne rend pas ce
  * qu'un événement a consommé : le registre des achats (achats_partenaires)
  * garde la trace, voir includes/capacites.php.
  */
@@ -12,17 +12,33 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/sponsoring.php';
 require_once __DIR__ . '/../includes/evenements_temps.php';
 require_once __DIR__ . '/../includes/evenement_pro.php';
+require_once __DIR__ . '/../includes/evenements_suppression.php';
 
 $etab = ouvrirEspacePro($pdo);
 
 // Retour de la page de paiement d'un supplément ou d'une mise en avant.
 traiterRetourPaiementEvenement($pdo, $etab);
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['annuler'])) {
+    csrfVerify();
+    // Pass annulés et inscrits prévenus (includes/evenements_suppression.php).
+    $resultat = evenementAnnuler($pdo, (int) $_POST['annuler'], (int) $etab['id'], (int) $_SESSION['user_id'], (string) ($_POST['motif'] ?? ''));
+    if ($resultat['ok']) {
+        fluxToucher($pdo, CANAL_GLOBAL);
+    }
+    flashPro($resultat['message'], $resultat['ok'] ? 'succes' : 'alerte');
+    header('Location: ' . baseUrl('/partenaire/evenements.php'));
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['supprimer'])) {
     csrfVerify();
-    $stmt = $pdo->prepare('DELETE FROM evenements WHERE id = ? AND etablissement_id = ?');
-    $stmt->execute([(int) $_POST['supprimer'], (int) $etab['id']]);
-    flashPro($stmt->rowCount() ? 'Événement supprimé.' : 'Cet événement n\'existe plus.', $stmt->rowCount() ? 'succes' : 'alerte');
+    // Refusée s'il a des inscrits ou un paiement (PAY-10).
+    $resultat = evenementSupprimer($pdo, (int) $_POST['supprimer'], (int) $etab['id']);
+    if ($resultat['ok']) {
+        fluxToucher($pdo, CANAL_GLOBAL);
+    }
+    flashPro($resultat['message'], $resultat['ok'] ? 'succes' : 'alerte');
     header('Location: ' . baseUrl('/partenaire/evenements.php'));
     exit;
 }
@@ -121,17 +137,33 @@ proDebut('Mes événements', 'evenements', $etab, ['scripts' => SCRIPTS_SCAN_PRO
             <td class="num masquer-mobile"><?= (int) $e['nb_checkin'] ?></td>
             <td class="masquer-mobile"><?= !empty($e['is_gratuit']) ? 'Entrée gratuite' : ((int) $e['reduction'] > 0 ? '-' . (int) $e['reduction'] . ' %' : '—') ?></td>
             <td>
-              <?php if ((int) $e['a_venir'] === 0): ?><span class="pastille pastille--neutre">Terminé</span>
+              <?php if ($e['annule_le'] !== null): ?><span class="pastille pastille--danger">Annulé</span>
+              <?php elseif ((int) $e['a_venir'] === 0): ?><span class="pastille pastille--neutre">Terminé</span>
               <?php elseif ($enCours): ?><span class="pastille pastille--succes pastille--direct">En cours</span>
               <?php elseif ($complet): ?><span class="pastille pastille--danger">Complet</span>
               <?php else: ?><span class="pastille">À venir</span><?php endif; ?>
             </td>
             <td>
               <div class="actions-ligne">
-                <?php if ((int) $e['a_venir'] === 1): ?>
+                <?php $annule = $e['annule_le'] !== null; ?>
+                <?php if ((int) $e['a_venir'] === 1 && !$annule): ?>
                   <button type="button" class="bouton-icone" data-scanner="<?= (int) $e['id'] ?>" data-titre="<?= htmlspecialchars((string) $e['titre'], ENT_QUOTES) ?>"><?= iconeSite('qr', '', 'Scanner les pass') ?></button>
                 <?php endif; ?>
+                <?php if (!$annule): ?>
                 <a class="bouton-icone" href="<?= htmlspecialchars(baseUrl('/partenaire/edit_event.php?id=' . (int) $e['id']), ENT_QUOTES) ?>"><?= iconeSite('crayon', '', 'Modifier') ?></a>
+                <?php endif; ?>
+                <?php if ((int) $e['a_venir'] === 1 && !$annule && $inscr > 0): ?>
+                <details class="annulation">
+                  <summary class="bouton-icone bouton-icone--danger"><?= iconeSite('croix', '', 'Annuler l’événement') ?></summary>
+                  <form method="post" class="annulation__formulaire" data-confirmer="Annuler « <?= htmlspecialchars((string) $e['titre'], ENT_QUOTES) ?> » ? Les <?= $inscr ?> pass seront annulés et les inscrits prévenus. C’est définitif.">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="annuler" value="<?= (int) $e['id'] ?>">
+                    <label for="motif-<?= (int) $e['id'] ?>">Motif, envoyé aux inscrits (facultatif)</label>
+                    <input type="text" id="motif-<?= (int) $e['id'] ?>" name="motif" maxlength="255">
+                    <button type="submit" class="bouton bouton--danger">Annuler l’événement</button>
+                  </form>
+                </details>
+                <?php endif; ?>
                 <form method="post" data-confirmer="Supprimer « <?= htmlspecialchars((string) $e['titre'], ENT_QUOTES) ?> » ? Les inscrits ne la verront plus. Ce qui a été consommé ce mois-ci reste compté.">
                   <?= csrfField() ?>
                   <input type="hidden" name="supprimer" value="<?= (int) $e['id'] ?>">

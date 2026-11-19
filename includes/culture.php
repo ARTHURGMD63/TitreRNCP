@@ -341,8 +341,15 @@ function cultureInscrire(PDO $pdo, int $uid, int $id): ?string
     }
 }
 
-/** Retire l'inscription. Sans effet si elle n'existait pas. */
-function cultureDesinscrire(PDO $pdo, int $uid, int $id): void
+/**
+ * Retire l'inscription. Faux si elle n'existait pas (double annulation,
+ * événement inconnu) : l'appelant le dit au lieu d'annoncer un succès
+ * (ETU-17).
+ */
+function cultureDesinscrire(PDO $pdo, int $uid, int $id): bool
 {
-    $pdo->prepare('DELETE FROM culture_inscriptions WHERE user_id = ? AND evenement_id = ?')->execute([$uid, $id]);
+    $stmt = $pdo->prepare('DELETE FROM culture_inscriptions WHERE user_id = ? AND evenement_id = ?');
+    $stmt->execute([$uid, $id]);
+
+    return $stmt->rowCount() > 0;
 }

@@ -4,6 +4,8 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/places.php';
 require_once __DIR__ . '/../includes/temps_reel.php';
 require_once __DIR__ . '/../includes/evenements_temps.php';
+require_once __DIR__ . '/../includes/comptes.php';
+require_once __DIR__ . '/../includes/evenements_suppression.php';
 header('Content-Type: application/json');
 
 // Ecriture : POST obligatoire, jeton CSRF et origine verifies.
@@ -38,11 +40,16 @@ try {
     // Rejoignable tant qu'elle n'est pas TERMINÉE — donc à venir, ou en cours
     // (voir evenements_temps.php) — et non plus seulement avant son début :
     // une soirée en cours et pas encore complète doit rester rejoignable.
+    // Pas pour un BDE dont la validation a été refusée (PAY-09). La
+    // sous-requête ne verrouille pas l'établissement : les inscriptions à ses
+    // autres soirées ne s'attendent pas.
     $finEff = sqlFinEffectiveEvenement();
     $stmt = $pdo->prepare(
         "SELECT e.quota, e.prix_normal, e.reduction, e.date_heure, e.inscriptions_jusqu_au
            FROM evenements e
-          WHERE e.id = ? AND $finEff >= NOW()
+          WHERE e.id = ? AND $finEff >= NOW() AND " . sqlEvenementNonAnnule('e') . "
+            AND EXISTS (SELECT 1 FROM etablissements et
+                         WHERE et.id = e.etablissement_id AND " . sqlEtablissementVisible('et') . ")
           FOR UPDATE"
     );
     $stmt->execute([$evenement_id]);
@@ -70,6 +77,28 @@ try {
     if (estComplet($nbInscrits, (int) $event['quota'])) {
         $pdo->rollBack();
         echo json_encode(['success' => false, 'message' => 'Complet']);
+        exit;
+    }
+
+    // Plafond de pass actifs par étudiant (ETU-11). Le verrou sur la ligne
+    // de l'étudiant range ses propres inscriptions simultanées l'une après
+    // l'autre : sans lui, dix onglets ouverts sur dix soirées passaient tous
+    // le comptage. Le pass déjà actif sur CETTE soirée (« déjà inscrit »,
+    // plus bas) n'en ajoute pas.
+    $pdo->prepare('SELECT id FROM users WHERE id = ? FOR UPDATE')->execute([$uid]);
+    $stmt = $pdo->prepare(
+        "SELECT COUNT(*) FROM inscriptions i
+           JOIN evenements e ON e.id = i.evenement_id
+          WHERE i.user_id = ? AND i.statut = 'inscrit' AND i.evenement_id <> ?
+            AND e.fin_effective >= ?"
+    );
+    $stmt->execute([$uid, $evenement_id, date('Y-m-d H:i:s')]);
+    if (inscriptionPlafondAtteint((int) $stmt->fetchColumn())) {
+        $pdo->rollBack();
+        echo json_encode([
+            'success' => false,
+            'message' => 'Tu as déjà ' . INSCRIPTIONS_A_VENIR_MAX . ' pass à venir : annule-en un pour réserver celui-ci.',
+        ]);
         exit;
     }
 

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/sports.php';
 header('Content-Type: application/json');
 
 // Ecriture : POST obligatoire, jeton CSRF et origine verifies.
@@ -13,17 +14,30 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'etudiant') {
 }
 
 $input = json_decode(file_get_contents('php://input'), true);
-$titre = mb_substr(trim($input['titre'] ?? ''), 0, 255);
+$input = is_array($input) ? $input : [];
+$texte = static fn (string $cle): string => is_scalar($input[$cle] ?? null) ? trim((string) $input[$cle]) : '';
+$titre = mb_substr($texte('titre'), 0, 255);
 $type = in_array($input['type'] ?? '', ['running', 'velo', 'muscu', 'autre'], true) ? $input['type'] : 'autre';
-$niveau = $input['niveau'] ?? 'tous';
-$date_heure = $input['date_heure'] ?? '';
+// Liste blanche et date contrôlée, comme api/v1/sport_squad.php : une valeur
+// hors liste faisait échouer l'INSERT (erreur masquée), et une date passée
+// créait un squad qui ne pouvait pas avoir lieu (ETU-03, ETU-06).
+$niveau = $texte('niveau') !== '' ? $texte('niveau') : 'tous';
+$date_heure = squadDateValide($texte('date_heure'));
 $quota = max(2, min(500, (int)($input['quota'] ?? 10)));
-$lieu = mb_substr(trim($input['lieu'] ?? ''), 0, 255);
-$desc = mb_substr(trim($input['description'] ?? ''), 0, 1000);
+$lieu = mb_substr($texte('lieu'), 0, 255);
+$desc = mb_substr($texte('description'), 0, 1000);
 $association = !empty($input['cree_par_association']) ? 1 : 0;
 
-if (!$titre || !$date_heure) {
+if (!$titre || $texte('date_heure') === '') {
     echo json_encode(['success' => false, 'message' => 'Veuillez remplir les champs obligatoires']);
+    exit;
+}
+if (!in_array($niveau, niveauxSport(), true)) {
+    echo json_encode(['success' => false, 'message' => 'Niveau invalide']);
+    exit;
+}
+if ($date_heure === null) {
+    echo json_encode(['success' => false, 'message' => 'La date doit être à venir, dans les douze prochains mois']);
     exit;
 }
 

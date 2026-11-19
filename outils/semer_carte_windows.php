@@ -85,5 +85,10 @@ foreach ($lieux as $i => $l) {
     echo "  {$l['nom']} → établissement #$etabId, un événement créé.\n";
 }
 
+// Fin effective (migration v41) : la colonne indexée du fil, que le code
+// tient à jour à chaque écriture. Les semis écrivent en direct : on la pose.
+require_once __DIR__ . '/../includes/evenements_temps.php';
+evenementsMajFinEffectiveManquantes($pdo);
+
 echo "\nFait. Pour tout retirer ensuite :\n";
 echo "  DELETE FROM etablissements WHERE nom LIKE '[TEST CARTE]%';\n";

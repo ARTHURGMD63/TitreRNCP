@@ -12,9 +12,15 @@
  * (api/v1/partenaire_invites.php) : quand le scan ne marche pas — plusieurs
  * événements le même soir, lumière, code abîmé — le partenaire choisit la
  * personne dans la liste des inscrits plutôt que de forcer une photo.
+ *
+ * Depuis l'audit (PAY-17) : refusé hors de la fenêtre de l'événement
+ * (evenementScanOuvert(), 409 hors_horaires), et chaque entrée garde qui l'a
+ * validée et comment (inscriptions.checkin_mode / checkin_par, v41) : une
+ * validation manuelle se distingue d'un scan.
  */
 
 require_once __DIR__ . '/_socle.php';
+require_once __DIR__ . '/../../includes/evenements_temps.php';
 
 apiExigerMethode('POST');
 
@@ -48,13 +54,18 @@ if (!$inscriptionId) {
 }
 
 $stmt = $pdo->prepare(
-    'SELECT e.id FROM evenements e
+    'SELECT e.id, e.date_heure, e.date_fin FROM evenements e
      JOIN etablissements et ON et.id = e.etablissement_id
     WHERE e.id = ? AND et.user_id = ?'
 );
 $stmt->execute([$eventId, $uid]);
-if (!$stmt->fetch()) {
+$evenement = $stmt->fetch();
+if (!$evenement) {
     apiErreur('Événement non autorisé', 403, 'evenement_non_autorise');
+}
+$dateFin = $evenement['date_fin'] !== null ? (string) $evenement['date_fin'] : null;
+if (!evenementScanOuvert((string) $evenement['date_heure'], $dateFin)) {
+    apiErreur(evenementScanMessageFerme((string) $evenement['date_heure'], $dateFin), 409, 'hors_horaires');
 }
 
 if ($inscriptionId) {
@@ -107,10 +118,10 @@ if ($inscription['statut'] === 'annule') {
 // deux « inscrit » et validaient tous deux. Seul celui qui modifie
 // réellement la ligne entre ; l'autre reçoit « déjà scanné ».
 $maj = $pdo->prepare(
-    "UPDATE inscriptions SET statut = 'checkin', checkin_le = NOW()
+    "UPDATE inscriptions SET statut = 'checkin', checkin_le = NOW(), checkin_mode = ?, checkin_par = ?
       WHERE id = ? AND statut NOT IN ('checkin', 'annule')"
 );
-$maj->execute([(int) $inscription['id']]);
+$maj->execute([$inscriptionId ? 'manuel' : 'scan', $uid, (int) $inscription['id']]);
 if ($maj->rowCount() === 0) {
     apiErreur('Ce pass a déjà été scanné', 409, 'deja_scanne');
 }

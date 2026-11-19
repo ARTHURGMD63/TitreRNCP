@@ -52,7 +52,10 @@ function kpiHebdomadaires(PDO $pdo): array
     };
 
     $inscrits7j = $q($pdo, "SELECT COUNT(*) FROM inscriptions WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) AND statut != 'annule'");
-    $scannes7j  = $q($pdo, "SELECT COUNT(*) FROM inscriptions WHERE statut = 'checkin' AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)");
+    // Scannés sur 7 jours : la date du scan (checkin_le, écrite par NOW()),
+    // pas celle de la réservation (PAY-19) — un pass pris il y a deux
+    // semaines et scanné hier comptait zéro.
+    $scannes7j  = $q($pdo, "SELECT COUNT(*) FROM inscriptions WHERE statut = 'checkin' AND checkin_le >= DATE_SUB(NOW(), INTERVAL 7 DAY)");
 
     return [
         'pass_scannes'     => $scannes7j,
@@ -81,11 +84,16 @@ function tauxPresenceGlobal(PDO $pdo, int $joursEnArriere = 30): ?float
                 SUM(i.statut = 'checkin') AS presents
            FROM inscriptions i
            JOIN evenements e ON e.id = i.evenement_id
-          WHERE e.date_heure < NOW()
-            AND e.date_heure >= DATE_SUB(NOW(), INTERVAL ? DAY)
+          WHERE e.date_heure < ?
+            AND e.date_heure >= ?
             AND i.statut != 'annule'"
     );
-    $stmt->execute([$joursEnArriere]);
+    // date_heure est saisie à l'heure de Paris : on la compare à l'heure de
+    // PHP (Europe/Paris), pas à NOW(). includes/db.php règle bien le fuseau
+    // de la session à la connexion, mais une connexion persistante ouverte
+    // avant un changement d'heure garde l'ancien décalage (PAY-19).
+    $maintenant = time();
+    $stmt->execute([date('Y-m-d H:i:s', $maintenant), date('Y-m-d H:i:s', $maintenant - $joursEnArriere * 86400)]);
     $ligne = $stmt->fetch();
 
     return tauxPresence((int) ($ligne['inscrits'] ?? 0), (int) ($ligne['presents'] ?? 0));

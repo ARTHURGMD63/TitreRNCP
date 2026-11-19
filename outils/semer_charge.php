@@ -172,6 +172,11 @@ $n = $inserer($pdo, 'evenements',
      'date_heure', 'quota', 'reduction', 'prix_normal'],
     $evenements, $parPaquet);
 printf("  evenements       %6d lignes\n", $n);
+// Fin effective (migration v41) : la colonne indexée du fil, que le code
+// tient à jour à chaque écriture. Les semis écrivent en direct : on la pose.
+require_once __DIR__ . '/../includes/evenements_temps.php';
+evenementsMajFinEffectiveManquantes($pdo);
+
 
 $idsEv = $pdo->query('SELECT id FROM evenements')->fetchAll(PDO::FETCH_COLUMN);
 

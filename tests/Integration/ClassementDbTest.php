@@ -25,8 +25,9 @@ final class ClassementDbTest extends TestCase
         $this->pdo->exec("
             CREATE TABLE users (id INTEGER PRIMARY KEY, prenom TEXT, nom TEXT, photo TEXT, ecole TEXT, promo TEXT, type TEXT);
             CREATE TABLE inscriptions (id INTEGER PRIMARY KEY, user_id INTEGER, statut TEXT);
-            CREATE TABLE squad_membres (id INTEGER PRIMARY KEY, user_id INTEGER);
-            CREATE TABLE follows_users (id INTEGER PRIMARY KEY, follower_id INTEGER, followed_id INTEGER, statut TEXT NOT NULL DEFAULT 'pending');
+            CREATE TABLE squads (id INTEGER PRIMARY KEY, date_heure TEXT);
+            CREATE TABLE squad_membres (id INTEGER PRIMARY KEY, squad_id INTEGER, user_id INTEGER);
+            CREATE TABLE follows_users (id INTEGER PRIMARY KEY, follower_id INTEGER, followed_id INTEGER, statut TEXT NOT NULL DEFAULT 'pending', created_at TEXT DEFAULT CURRENT_TIMESTAMP);
             CREATE TABLE avis (id INTEGER PRIMARY KEY, user_id INTEGER, evenement_id INTEGER, note INTEGER);
             CREATE TABLE economies (id INTEGER PRIMARY KEY, user_id INTEGER, montant REAL);
         ");
@@ -37,15 +38,23 @@ final class ClassementDbTest extends TestCase
               (3, 'Hugo', 'T', 'SIGMA', 'etudiant'),
               (4, 'Chloé', 'B', 'UCA', 'etudiant'),
               (5, 'Jean', 'P', '', 'partenaire');
-            -- Arthur : 2 sorties dont une annulée, 1 squad, 1 abonnement accepté, 1 en attente, 1 avis
-            INSERT INTO inscriptions (user_id, statut) VALUES (1, 'inscrit'), (1, 'annule');
-            INSERT INTO squad_membres (user_id) VALUES (1);
+            -- Seules comptent les sorties validées à l'entrée et les squads
+            -- passés à deux membres ou plus (ETU-03).
+            INSERT INTO squads (id, date_heure) VALUES
+              (1, '2026-01-10 18:00:00'), (2, '2026-01-11 18:00:00'), (3, '2026-01-12 18:00:00'),
+              (4, '2099-01-01 18:00:00'), (5, '2026-01-13 18:00:00');
+            -- Arthur : 1 sortie validée, 1 inscription et 1 annulée (rien), 1 squad
+            -- passé à deux (avec un partenaire), 1 abonnement accepté, 1 en
+            -- attente, 1 avis : 15 + 10 + 5 + 8 = 38
+            INSERT INTO inscriptions (user_id, statut) VALUES (1, 'checkin'), (1, 'inscrit'), (1, 'annule');
+            INSERT INTO squad_membres (squad_id, user_id) VALUES (1, 1), (1, 5);
             INSERT INTO follows_users (follower_id, followed_id, statut) VALUES (1, 2, 'accepted'), (1, 3, 'pending');
             INSERT INTO avis (user_id, evenement_id, note) VALUES (1, 1, 5);
-            -- Léa : 3 sorties
-            INSERT INTO inscriptions (user_id, statut) VALUES (2, 'inscrit'), (2, 'checkin'), (2, 'inscrit');
-            -- Hugo : 2 squads, ex æquo avec Chloé (20 XP)
-            INSERT INTO squad_membres (user_id) VALUES (3), (3), (4), (4);
+            -- Léa : 3 sorties validées
+            INSERT INTO inscriptions (user_id, statut) VALUES (2, 'checkin'), (2, 'checkin'), (2, 'checkin');
+            -- Hugo et Chloé : 2 squads passés ensemble, ex æquo (20 XP) ; le
+            -- squad à venir (4) et celui de Chloé seule (5) ne comptent pas.
+            INSERT INTO squad_membres (squad_id, user_id) VALUES (2, 3), (2, 4), (3, 3), (3, 4), (4, 3), (4, 4), (5, 4);
         ");
 
         if (!function_exists('classementXp')) {

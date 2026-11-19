@@ -56,10 +56,12 @@ if ($methode === 'POST') {
     }
 
     // Un compte qui devient BDE attend la validation ; qui cesse de l'être
-    // n'en a plus besoin. Un type inchangé garde son état.
-    $verification = $type !== (string) $etab['type']
-        ? verificationInitiale($type)
-        : (string) $etab['verification'];
+    // n'en a plus besoin. Un BDE validé qui change de nom repasse en attente
+    // (PAY-18). Sinon, l'état ne bouge pas.
+    $verification = verificationApresModification(
+        (string) $etab['type'], $type, (string) $etab['nom'], $nom, (string) $etab['verification']
+    );
+    $revalidation = $verification === 'en_attente' && (string) $etab['verification'] === 'validee';
 
     if ($positionFournie) {
         $pdo->prepare('UPDATE etablissements SET nom=?, type=?, verification=?, ville=?, adresse=?, latitude=?, longitude=? WHERE id=? AND user_id=?')
@@ -81,7 +83,12 @@ if ($methode === 'POST') {
         }
     }
 
-    apiReponse(['success' => true, 'message' => 'Établissement mis à jour.']);
+    apiReponse([
+        'success' => true,
+        'message' => $revalidation
+            ? 'Établissement mis à jour. Ton nom a changé : l’équipe Outsee doit valider à nouveau ton compte BDE.'
+            : 'Établissement mis à jour.',
+    ]);
 }
 
 apiExigerMethode('GET');

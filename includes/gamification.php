@@ -4,20 +4,72 @@
  * Appeler checkBadges($pdo, $uid) après chaque action majeure (inscription, squad, follow, avis).
  */
 
+// ─── Ce qui rapporte de l'XP ────────────────────────────────────────────────
+//
+// Avant l'audit (ETU-03), chaque inscription valait 15 XP, chaque squad 10 et
+// chaque abonnement 5, sans présence ni plafond : s'inscrire à tout puis se
+// désinscrire, ou créer des squads vides en boucle, suffisait à monter en tête
+// du classement. Désormais :
+//  - une sortie compte une fois l'entrée validée au scan (statut 'checkin') ;
+//  - un squad compte une fois passé, et seulement s'il a réuni au moins deux
+//    membres ; au plus XP_PLAFOND_SQUADS_JOUR par jour (date du squad) ;
+//  - un abonnement accepté compte, au plus XP_PLAFOND_SUIVIS_JOUR par jour ;
+//  - un avis exige déjà un check-in et reste unique par événement.
+// Le SQL n'emploie que ce qu'acceptent MySQL, MariaDB, TiDB et SQLite (tests) :
+// DATE(), CASE, sous-requêtes ; l'heure courante vient de PHP.
+
+/** Squads comptés au plus par jour. */
+const XP_PLAFOND_SQUADS_JOUR = 2;
+
+/** Abonnements acceptés comptés au plus par jour. */
+const XP_PLAFOND_SUIVIS_JOUR = 5;
+
+/** Membres qu'un squad doit avoir réunis pour compter. */
+const XP_SQUAD_MEMBRES_MIN = 2;
+
 /**
+ * Requête « user_id, n » des squads qui rapportent de l'XP, plafonnés par
+ * jour. $filtre restreint à un étudiant (« AND sm.user_id = ? ») ou rien.
+ */
+function xpSqlSquads(string $filtre = ''): string
+{
+    return "SELECT t.user_id, SUM(CASE WHEN t.n > " . XP_PLAFOND_SQUADS_JOUR . " THEN " . XP_PLAFOND_SQUADS_JOUR . " ELSE t.n END) AS n
+              FROM (SELECT sm.user_id, DATE(s.date_heure) AS jour, COUNT(*) AS n
+                      FROM squad_membres sm JOIN squads s ON s.id = sm.squad_id
+                     WHERE s.date_heure <= ?
+                       AND (SELECT COUNT(*) FROM squad_membres m2 WHERE m2.squad_id = s.id) >= " . XP_SQUAD_MEMBRES_MIN . "
+                       $filtre
+                     GROUP BY sm.user_id, DATE(s.date_heure)) t
+             GROUP BY t.user_id";
+}
+
+/** Même chose pour les abonnements acceptés. $filtre : « AND follower_id = ? » ou rien. */
+function xpSqlSuivis(string $filtre = ''): string
+{
+    return "SELECT t.user_id, SUM(CASE WHEN t.n > " . XP_PLAFOND_SUIVIS_JOUR . " THEN " . XP_PLAFOND_SUIVIS_JOUR . " ELSE t.n END) AS n
+              FROM (SELECT follower_id AS user_id, DATE(created_at) AS jour, COUNT(*) AS n
+                      FROM follows_users
+                     WHERE statut = 'accepted' $filtre
+                     GROUP BY follower_id, DATE(created_at)) t
+             GROUP BY t.user_id";
+}
+
+/**
+ * Ce qui compte pour l'XP et les badges (voir les règles plus haut).
+ *
  * @return array{events: int, squads: int, follows: int, avis: int, economies: float}
  */
 function getUserStats(PDO $pdo, int $uid): array {
     $stats = [];
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM inscriptions WHERE user_id=? AND statut != 'annule'");
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM inscriptions WHERE user_id=? AND statut = 'checkin'");
     $stmt->execute([$uid]);
     $stats['events'] = (int)$stmt->fetchColumn();
 
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM squad_membres WHERE user_id=?");
-    $stmt->execute([$uid]);
+    $stmt = $pdo->prepare('SELECT COALESCE(SUM(n), 0) FROM (' . xpSqlSquads('AND sm.user_id = ?') . ') x');
+    $stmt->execute([date('Y-m-d H:i:s'), $uid]);
     $stats['squads'] = (int)$stmt->fetchColumn();
 
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM follows_users WHERE follower_id=? AND statut='accepted'");
+    $stmt = $pdo->prepare('SELECT COALESCE(SUM(n), 0) FROM (' . xpSqlSuivis('AND follower_id = ?') . ') x');
     $stmt->execute([$uid]);
     $stats['follows'] = (int)$stmt->fetchColumn();
 
@@ -33,7 +85,8 @@ function getUserStats(PDO $pdo, int $uid): array {
 }
 
 /**
- * XP = 15 × events + 10 × squads + 5 × follows + 8 × avis
+ * XP = 15 × sorties validées + 10 × squads + 5 × abonnements + 8 × avis
+ * (comptés et plafonnés par getUserStats()).
  *
  * @param array<string, int|float> $stats
  */
@@ -117,8 +170,9 @@ function getAllBadges(PDO $pdo): array {
 /**
  * Requête de base du classement : chaque étudiant et son XP, calculé en SQL.
  *
- * La formule est exactement celle de getXp() — 15 par sortie non annulée,
- * 10 par squad, 5 par abonnement accepté, 8 par avis. Elle est recalculée ici
+ * La formule est exactement celle de getXp() — 15 par sortie validée à
+ * l'entrée, 10 par squad passé à deux ou plus, 5 par abonnement accepté (ces
+ * deux-là plafonnés par jour), 8 par avis. Elle est recalculée ici
  * plutôt qu'appelée étudiant par étudiant : getUserStats() coûte cinq requêtes,
  * soit cinq cents pour un classement de cent personnes. Les agrégats sont
  * faits une fois par table, puis joints. Un test vérifie que les deux calculs
@@ -134,12 +188,13 @@ function classementSqlBase(array $criteres): array
                (COALESCE(i.n, 0) * 15 + COALESCE(s.n, 0) * 10
                 + COALESCE(f.n, 0) * 5 + COALESCE(a.n, 0) * 8) AS xp
         FROM users u
-        LEFT JOIN (SELECT user_id, COUNT(*) AS n FROM inscriptions WHERE statut <> 'annule' GROUP BY user_id) i ON i.user_id = u.id
-        LEFT JOIN (SELECT user_id, COUNT(*) AS n FROM squad_membres GROUP BY user_id) s ON s.user_id = u.id
-        LEFT JOIN (SELECT follower_id AS user_id, COUNT(*) AS n FROM follows_users WHERE statut = 'accepted' GROUP BY follower_id) f ON f.user_id = u.id
+        LEFT JOIN (SELECT user_id, COUNT(*) AS n FROM inscriptions WHERE statut = 'checkin' GROUP BY user_id) i ON i.user_id = u.id
+        LEFT JOIN (" . xpSqlSquads() . ") s ON s.user_id = u.id
+        LEFT JOIN (" . xpSqlSuivis() . ") f ON f.user_id = u.id
         LEFT JOIN (SELECT user_id, COUNT(*) AS n FROM avis GROUP BY user_id) a ON a.user_id = u.id
         WHERE u.type = 'etudiant'";
-    $params = [];
+    // L'heure de xpSqlSquads(), à l'heure de Paris comme squads.date_heure.
+    $params = [date('Y-m-d H:i:s')];
 
     if (isset($criteres['ids'])) {
         $ids = array_values(array_map('intval', $criteres['ids']));

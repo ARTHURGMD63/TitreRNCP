@@ -191,3 +191,34 @@ function apiClubDe(PDO $pdo, int $uid): array
 
     return $etab;
 }
+
+/** Jusqu'où, en jours, on peut annoncer un squad à l'avance. */
+const SQUAD_HORIZON_JOURS = 365;
+
+/**
+ * La date d'un squad saisie par l'étudiant, normalisée « Y-m-d H:i:s », ou
+ * null si elle est illisible, passée ou trop lointaine.
+ *
+ * Accepte ce qu'envoient le site (« 2026-12-01T18:30 », champ
+ * datetime-local) et l'application (« 2026-12-01 18:30:00 »). Une date
+ * passée ne se crée pas : elle rapportait de l'XP sans que le squad ait lieu
+ * (ETU-03), et une valeur invalide faisait échouer l'INSERT (ETU-06).
+ */
+function squadDateValide(string $saisie, ?int $maintenant = null): ?string
+{
+    $saisie = trim($saisie);
+    if ($saisie === '' || strlen($saisie) > 25
+        || !preg_match('/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2})?$/', $saisie)) {
+        return null;
+    }
+    $ts = strtotime(str_replace('T', ' ', $saisie));
+    if ($ts === false) {
+        return null;
+    }
+    $maintenant ??= time();
+    if ($ts <= $maintenant || $ts > $maintenant + SQUAD_HORIZON_JOURS * 86400) {
+        return null;
+    }
+
+    return date('Y-m-d H:i:s', $ts);
+}
