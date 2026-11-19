@@ -223,6 +223,38 @@ export function BoutonRetour({ media, vers, style, libelle = 'Retour' }: {
   );
 }
 
+// ─── Lien texte suivi d'un chevron ──────────────────────────────────────────
+
+/**
+ * Un lien en toutes lettres (« Tout voir », « Trouve des étudiants à
+ * suivre ») suivi du chevron du jeu d'icônes. Il remplace la flèche tapée
+ * dans le texte : aucun pictogramme Unicode dans l'interface, seulement des
+ * icônes (constat MOB-10). 44 px de haut au toucher, comme les boutons.
+ */
+export function LienFleche({ libelle, onPress, couleur, taille = fs[3], centre, style }: {
+  libelle: string;
+  onPress: () => void;
+  /** Par défaut, le bleu des liens du hub (surRougeClair). */
+  couleur?: string;
+  taille?: number;
+  centre?: boolean;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const { c } = useTheme();
+  const encre = couleur ?? c.surRougeClair;
+  return (
+    <PressableAnime
+      onPress={onPress}
+      accessibilityRole="link"
+      accessibilityLabel={libelle}
+      style={[{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: toucheMin, alignSelf: centre ? 'center' : 'flex-start' }, style]}
+    >
+      <Text style={{ fontFamily: sans(700), fontSize: taille, color: encre }}>{libelle}</Text>
+      <Icone nom="chevron-d" taille={Math.round(taille * 1.15)} couleur={encre} trait={2.5} />
+    </PressableAnime>
+  );
+}
+
 // ─── .card ──────────────────────────────────────────────────────────────────
 
 export function Carte({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {

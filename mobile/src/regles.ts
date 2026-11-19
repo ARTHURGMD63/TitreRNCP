@@ -50,7 +50,7 @@ export function libelleInscription(etat: EtatInscription, dejaInscrit: boolean, 
  * une panne réseau (statut 0) lui laisse une invitation à réessayer.
  */
 export function libelleApresEchecInscription(statut: number | null, message: string): string {
-  return statut !== null && statut !== 0 ? message : '→ je rejoins';
+  return statut !== null && statut !== 0 ? message : 'Je rejoins';
 }
 
 // ─── Scan des pass ──────────────────────────────────────────────────────────

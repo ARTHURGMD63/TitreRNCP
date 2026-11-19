@@ -81,8 +81,8 @@ test('libelleApresEchecInscription : le serveur a répondu, sa phrase reste', ()
 });
 
 test('libelleApresEchecInscription : le serveur n\'a pas répondu', () => {
-  assert.equal(libelleApresEchecInscription(0, 'Erreur réseau'), '→ je rejoins');
-  assert.equal(libelleApresEchecInscription(null, 'Erreur réseau'), '→ je rejoins');
+  assert.equal(libelleApresEchecInscription(0, 'Erreur réseau'), 'Je rejoins');
+  assert.equal(libelleApresEchecInscription(null, 'Erreur réseau'), 'Je rejoins');
 });
 
 // ─── Scan des pass ──────────────────────────────────────────────────────────

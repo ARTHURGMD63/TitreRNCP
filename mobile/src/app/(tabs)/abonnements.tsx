@@ -13,7 +13,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { api, type ReponseAbonnements } from '../../api';
 import { Bouton } from '../../composants/Bouton';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
-import { BoutonRetour, Segments } from '../../composants/Elements';
+import { BoutonRetour, LienFleche, Segments } from '../../composants/Elements';
 import { Icone } from '../../composants/Icone';
 import { LignePersonne } from '../../composants/Social';
 import { Mono, T, TitreEcran } from '../../composants/Texte';
@@ -119,9 +119,11 @@ export default function Abonnements() {
                     <T taille={fs[3]} couleur={c.gris} style={{ textAlign: 'center' }}>
                       {vue === 'abonnes' ? 'Personne ne te suit encore.' : "Tu ne suis personne pour l'instant."}
                     </T>
-                    <Text onPress={() => router.navigate('/personnes')} style={{ fontFamily: sans(700), fontSize: fs[3], color: c.surRougeClair, textAlign: 'center' }}>
-                      {vue === 'abonnes' ? 'Va te faire connaître →' : 'Trouve des étudiants à suivre →'}
-                    </Text>
+                    <LienFleche
+                      centre
+                      libelle={vue === 'abonnes' ? 'Va te faire connaître' : 'Trouve des étudiants à suivre'}
+                      onPress={() => router.navigate('/personnes')}
+                    />
                   </>
                 )}
               </View>
