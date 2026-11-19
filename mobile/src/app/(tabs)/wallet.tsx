@@ -14,8 +14,9 @@
  *    lieu, compte à rebours, « Voir la fiche », et un QR derrière un bouton
  *    pour un club (rien à scanner pour Culture et les parties) ; trois lignes,
  *    chacune son carrousel : Événements, Sport (clubs et parties), Culture ;
- *  - les squads prévus et l'historique, avec « Laisser un avis » après un
- *    passage validé ;
+ *  - les pass actifs regroupés par jour (2026-11-19), le plus proche ouvert ;
+ *  - les squads prévus, puis le lien vers l'historique (écran à part, rangé
+ *    par mois, aussi ouvert depuis Moi) ;
  *  - « Tes économies » en dernier : le mois et l'année, mêmes calculs.
  *
  * « Luminosité au max » et « Ajouter à Apple Wallet » ne sont pas affichés :
@@ -39,6 +40,8 @@ import { useToast } from '../../composants/Toast';
 import { confirmer } from '../../confirmer';
 import { compteARebours, court, dateFr, nombre, ts } from '../../format';
 import { formatEuros, lireCodePass, prixEvenement } from '../../regles';
+import { parJour, type Groupe } from '../../regroupement';
+import { economiePass } from '../../composants/LignesPass';
 import { useJeton, useSession } from '../../session';
 import { fixe, fs, gutter, halo, hauteurBouton, lh, rayon, sans, type Rubrique } from '../../theme';
 import { useTheme } from '../../useTheme';
@@ -467,15 +470,45 @@ function pastillePrix(p: Pass, reduction: number) {
   return reduction > 0 ? `-${reduction}%` : 'Entrée gratuite';
 }
 
-function economie(p: Pass) {
-  const g = genreDe(p);
-  if (g === 'culture' || g === 'partie') return '';
-  if ((p.reduction ?? 0) > 0 && (p.prix_normal ?? 0) > 0) {
-    return '-' + formatEuros((p.prix_normal! * p.reduction!) / 100);
-  }
-  // Payant sans réduction : rien d'économisé, mais ce n'est pas gratuit.
-  if (!p.is_gratuit && (p.prix_normal ?? 0) > 0) return '';
-  return 'Gratuit';
+/**
+ * Les pass d'un même jour, dans un seul bloc : « Demain · 2 pass ». Le jour
+ * le plus proche est ouvert ; les autres se déplient d'un appui, pour que
+ * plusieurs pass ne fassent pas un écran interminable.
+ */
+function GroupeJour({ groupe, ouvert, onBascule, couleurType }: {
+  groupe: Groupe<Pass>; ouvert: boolean; onBascule: () => void; couleurType: (p: Pass) => string;
+}) {
+  const { c } = useTheme();
+  const n = groupe.elements.length;
+  return (
+    <View style={{ backgroundColor: c.blanc, borderRadius: rayon.tuile, overflow: 'hidden' }}>
+      <Pressable
+        onPress={onBascule}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: ouvert }}
+        accessibilityLabel={`${groupe.libelle}, ${n} pass`}
+        style={{ minHeight: 48, paddingHorizontal: 14, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}
+      >
+        <Icone nom="calendrier" taille={18} couleur={c.noir} />
+        <T taille={fs[4]} poids={700} style={{ flex: 1 }}>{groupe.libelle}</T>
+        <T taille={fs[3]} couleur={c.gris}>{n} pass</T>
+        <View style={{ transform: [{ rotate: ouvert ? '180deg' : '0deg' }] }}>
+          <Icone nom="chevron-b" taille={18} couleur={c.gris} />
+        </View>
+      </Pressable>
+      {ouvert ? groupe.elements.map((p) => (
+        <PressableAnime key={clePass(p)} onPress={() => ouvrirFiche(p)} accessibilityRole="button" accessibilityLabel={`${p.titre}, voir la fiche`}
+          style={{ paddingHorizontal: 14, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 12, borderTopWidth: 1, borderTopColor: c.grisClair }}>
+          <CarreIcone icone={GENRES[genreDe(p)].icone} fond={couleurType(p)} encre="#FFFFFF" taille={36} />
+          <View style={{ flex: 1 }}>
+            <T taille={fs[4]} poids={700} numberOfLines={1}>{p.etablissement}</T>
+            <T taille={fs[3]} couleur={c.gris} numberOfLines={1} style={{ marginTop: 2 }}>{dateFr(p.date_heure, 'H\\hi')} · {p.titre}</T>
+          </View>
+          <T taille={fs[4]} poids={700} couleur={c.succes}>{economiePass(p)}</T>
+        </PressableAnime>
+      )) : null}
+    </View>
+  );
 }
 
 export default function Wallet() {
@@ -487,27 +520,28 @@ export default function Wallet() {
   // a, se devine au bord en faisant défiler.
   const largeurCarte = largeurEcran - gutter * 2;
 
-  const [page, setPage] = useState(1);
   const [donnees, setDonnees] = useState<ReponseWallet | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [rafraichit, setRafraichit] = useState(false);
-  const [suite, setSuite] = useState(false);
+  // Les jours dépliés ou repliés à la main ; sinon, seul le premier est ouvert.
+  const [ouverts, setOuverts] = useState<Record<string, boolean>>({});
+  const maintenant = useMinute();
 
-  const charger = useCallback(async (p = page) => {
+  const charger = useCallback(async () => {
     try {
       setErreur(null);
-      setDonnees(await api.wallet(jeton, p));
+      setDonnees(await api.wallet(jeton));
     } catch (e) {
       setErreur(e instanceof Error ? e.message : 'Chargement impossible.');
     } finally {
       setRafraichit(false);
-      setSuite(false);
     }
-  }, [jeton, page]);
+  }, [jeton]);
 
   useFocusEffect(useCallback(() => { void charger(); }, [charger]));
 
   const passes = donnees?.pass_actifs ?? [];
+  const jours = parJour(passes, new Date(maintenant));
   const squads = donnees?.squads ?? [];
   const toutesSections: { cle: 'soiree' | 'sport' | 'culture'; titre: string; icone: NomIcone; couleur: string; passes: Pass[] }[] = [
     { cle: 'soiree', titre: 'Événements', icone: 'ticket', couleur: GENRES.soiree.couleur, passes: passes.filter((p) => genreDe(p) === 'soiree') },
@@ -584,16 +618,10 @@ export default function Wallet() {
               <Apparition index={3} style={{ marginTop: 8 }}>
                 <EnTeteListe titre={`${passes.length} pass actif${passes.length > 1 ? 's' : ''}`} droite="Agenda" />
                 <View style={{ gap: 10, marginBottom: 16 }}>
-                  {passes.map((p) => (
-                    <PressableAnime key={clePass(p)} onPress={() => ouvrirFiche(p)} accessibilityRole="button" accessibilityLabel={`${p.titre}, voir la fiche`}
-                      style={{ padding: 14, borderRadius: rayon.tuile, backgroundColor: c.blanc, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                      <CarreIcone icone={GENRES[genreDe(p)].icone} fond={couleurType(p)} encre="#FFFFFF" taille={40} />
-                      <View style={{ flex: 1 }}>
-                        <T taille={fs[4]} poids={700} numberOfLines={1}>{p.etablissement}</T>
-                        <T taille={fs[4]} couleur={c.gris} numberOfLines={1} style={{ marginTop: 2 }}>{p.titre} · {dateFr(p.date_heure, 'D j M · H\\hi')}</T>
-                      </View>
-                      <T taille={fs[4]} poids={700} couleur={c.succes}>{economie(p)}</T>
-                    </PressableAnime>
+                  {jours.map((g, i) => (
+                    <GroupeJour key={g.cle} groupe={g} couleurType={couleurType}
+                      ouvert={ouverts[g.cle] ?? i === 0}
+                      onBascule={() => setOuverts((o) => ({ ...o, [g.cle]: !(o[g.cle] ?? i === 0) }))} />
                   ))}
                 </View>
               </Apparition>
@@ -610,39 +638,18 @@ export default function Wallet() {
             ) : null}
 
             {donnees.historique.length ? (
+              // L'historique a son écran, rangé par mois (aussi dans Moi) :
+              // en entier ici, il allongeait l'onglet à chaque sortie.
               <Apparition index={5}>
-                <TitreSection style={{ marginBottom: 12 }}>Historique</TitreSection>
-                <View style={{ gap: 10, marginBottom: 16 }}>
-                  {donnees.historique.map((p) => {
-                    const avis = p.statut === 'checkin';
-                    return (
-                      <View key={p.id} style={{ padding: 14, borderRadius: rayon.tuile, backgroundColor: c.blanc, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: avis ? 1 : 0.6 }}>
-                        <CarreIcone icone={avis ? 'check' : 'ticket'} fond={avis ? c.succesClair : c.surface2} encre={avis ? c.succes : c.gris} taille={40} />
-                        <View style={{ flex: 1 }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                            <T taille={fs[4]} poids={700}>{p.etablissement}</T>
-                            {avis ? <T taille={fs[2]} poids={700} couleur={c.succes}>Check-in</T> : null}
-                          </View>
-                          <T taille={fs[4]} couleur={c.gris} style={{ marginTop: 2 }}>{p.titre} · {dateFr(p.date_heure, 'D j M')}</T>
-                          {avis && p.evenement_id ? (
-                            <Text
-                              onPress={() => router.push({ pathname: '/avis/[id]', params: { id: String(p.evenement_id) } })}
-                              accessibilityRole="link"
-                              style={{ marginTop: 4, paddingVertical: 8, fontFamily: sans(700), fontSize: fs[4], color: c.surRougeClair }}
-                            >
-                              Laisser un avis
-                            </Text>
-                          ) : null}
-                        </View>
-                        <T taille={fs[4]} poids={600} couleur={c.gris}>{economie(p)}</T>
-                      </View>
-                    );
-                  })}
-                </View>
-                {donnees.pagination.a_suivre ? (
-                  <Bouton libelle="Voir plus d'historique" variante="contour" plein chargement={suite}
-                    onPress={() => { setSuite(true); const p = page + 1; setPage(p); void charger(p); }} style={{ marginBottom: 16 }} />
-                ) : null}
+                <PressableAnime onPress={() => router.push('/historique' as never)} accessibilityRole="button" testID="ouvrir-historique"
+                  style={{ minHeight: 56, paddingHorizontal: 14, paddingVertical: 12, borderRadius: rayon.tuile, backgroundColor: c.blanc, flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                  <CarreIcone icone="horloge" fond={c.surface2} encre={c.noir} taille={36} />
+                  <View style={{ flex: 1 }}>
+                    <T taille={fs[4]} poids={700}>Historique de mes sorties</T>
+                    <T taille={fs[3]} couleur={c.gris} style={{ marginTop: 2 }}>Rangé par mois, avec les avis à laisser</T>
+                  </View>
+                  <Icone nom="chevron-d" taille={18} couleur={c.gris} />
+                </PressableAnime>
               </Apparition>
             ) : null}
 

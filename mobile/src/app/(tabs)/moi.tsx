@@ -260,6 +260,11 @@ export default function Moi() {
             <Mono>Depuis</Mono>
             <T taille={fs[2]} poids={600}>{moi.depuis}</T>
           </View>
+          <Pressable onPress={() => router.push('/historique' as never)} accessibilityRole="button" testID="historique-sorties"
+            style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 46, paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: c.grisClair }}>
+            <T taille={fs[4]} poids={500}>Historique de mes sorties</T>
+            <Icone nom="chevron-d" taille={18} couleur={c.gris} />
+          </Pressable>
           <Pressable onPress={() => router.push('/compte' as never)} accessibilityRole="button" testID="mon-compte"
             style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 46, paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: c.grisClair }}>
             <T taille={fs[4]} poids={500}>Changer d&apos;e-mail ou de mot de passe</T>
