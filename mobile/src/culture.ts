@@ -24,13 +24,6 @@ export function pourcentagePlaces(p: Places): number | null {
   return Math.min(100, Math.round((p.inscrits / p.quota) * 100));
 }
 
-/** « Gratuit », « 5 € », « 7,50 € ». */
-export function libellePrix(prix: number): string {
-  if (prix <= 0) return 'Gratuit';
-  const arrondi = Math.round(prix * 100) / 100;
-  return (Number.isInteger(arrondi) ? String(arrondi) : arrondi.toFixed(2).replace('.', ',')) + ' €';
-}
-
 /**
  * Un événement de plus de 24 heures (exposition, festival) : la carte annonce
  * « JUSQU'AU 3 DÉC » plutôt qu'une heure de début déjà passée ou sans intérêt.

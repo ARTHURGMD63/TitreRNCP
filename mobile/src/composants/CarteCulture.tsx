@@ -20,8 +20,9 @@ import { router } from 'expo-router';
 
 import { api, ErreurApi, type EvenementCulture } from '../api';
 import { COULEUR_CULTURE_REPLI, ICONES_CULTURE, LIBELLES_CULTURE } from '../catalogue';
-import { libelleBoutonCulture, libellePlaces, libellePrix, surPlusieursJours, type EtatInscriptionCulture } from '../culture';
+import { libelleBoutonCulture, libellePlaces, surPlusieursJours, type EtatInscriptionCulture } from '../culture';
 import { dateFr, majuscules, ts } from '../format';
+import { libellePrix } from '../regles';
 import { useJeton } from '../session';
 import { couleursCategorie, fixe, fs, lh, sans } from '../theme';
 import { useTheme } from '../useTheme';

@@ -5,7 +5,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { libelleAmis, libelleBoutonCulture, libellePlaces, libellePrix, pourcentagePlaces, surPlusieursJours } from '../src/culture.ts';
+import { libelleAmis, libelleBoutonCulture, libellePlaces, pourcentagePlaces, surPlusieursJours } from '../src/culture.ts';
 
 test('libellePlaces : un quota de 0 est une entrée libre, jamais complète', () => {
   assert.equal(libellePlaces({ quota: 0, inscrits: 900, restantes: null, complet: false }), 'Entrée libre');
@@ -21,12 +21,6 @@ test('pourcentagePlaces : pas de jauge sans quota, bornée à 100', () => {
   assert.equal(pourcentagePlaces({ quota: 0, inscrits: 3, restantes: null, complet: false }), null);
   assert.equal(pourcentagePlaces({ quota: 300, inscrits: 75, restantes: 225, complet: false }), 25);
   assert.equal(pourcentagePlaces({ quota: 10, inscrits: 12, restantes: 0, complet: true }), 100);
-});
-
-test('libellePrix : gratuit, entier, décimales à la française', () => {
-  assert.equal(libellePrix(0), 'Gratuit');
-  assert.equal(libellePrix(5), '5 €');
-  assert.equal(libellePrix(7.5), '7,50 €');
 });
 
 test('surPlusieursJours : une exposition oui, un concert non', () => {

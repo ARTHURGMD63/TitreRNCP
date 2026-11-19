@@ -145,7 +145,7 @@ test('libelleInscrits : aucun, un, plusieurs', () => {
 // ─── Sport ──────────────────────────────────────────────────────────────────
 
 import {
-  amisMax, debutsCreneaux, formatEuros, joursRecurrents, libellePlaces, libelleVisibilite,
+  amisMax, debutsCreneaux, formatEuros, joursRecurrents, libellePlaces, libellePrix, libelleVisibilite,
   niveauCompatible, prixParJoueur,
 } from '../src/regles.ts';
 
@@ -162,6 +162,19 @@ test('formatEuros : les économies étudiantes (Pass, Moi) au même format', () 
   assert.equal(formatEuros(0.1 + 0.2), '0,30 €');
   assert.equal(formatEuros(0), '0 €');
   assert.equal(formatEuros(13.001), '13 €');
+});
+
+test("formatEuros : milliers séparés, négatifs (finances de l'administration)", () => {
+  assert.equal(formatEuros(1250), '1 250 €');
+  assert.equal(formatEuros(12345.5), '12 345,50 €');
+  assert.equal(formatEuros(-1234), '-1 234 €');
+  assert.equal(formatEuros(Math.round(999.6)), '1 000 €');
+});
+
+test('libellePrix : gratuit, entier, décimales à la française', () => {
+  assert.equal(libellePrix(0), 'Gratuit');
+  assert.equal(libellePrix(5), '5 €');
+  assert.equal(libellePrix(7.5), '7,50 €');
 });
 
 test('prixParJoueur : la part de chacun, payée au club', () => {
