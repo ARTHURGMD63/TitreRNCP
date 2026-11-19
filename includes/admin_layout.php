@@ -73,8 +73,8 @@ function adminHeader(PDO $pdo, string $page, string $titre, string $surtitre = '
     <div class="sidebar-venue">
       <div class="sidebar-venue-name"><?= htmlspecialchars(trim(($moi['prenom'] ?? '') . ' ' . ($moi['nom'] ?? ''))) ?></div>
       <div class="sidebar-venue-city">Fondateur</div>
-      <a href="<?= baseUrl('/auth/logout.php') ?>" class="lien-action"
-         style="margin-top:12px;display:inline-block;font-size:var(--fs-2);color:var(--gris);text-decoration:none;">→ Déconnexion</a>
+      <?= formulaireDeconnexion('→ Déconnexion', 'lien-action',
+            'margin-top:12px;display:inline-flex;font-size:var(--fs-2);color:var(--gris);text-decoration:none;background:none;border:0;padding:0;cursor:pointer;') ?>
     </div>
   </aside>
 

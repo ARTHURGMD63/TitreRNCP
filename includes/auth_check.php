@@ -236,6 +236,24 @@ function isLoggedIn(): bool {
 }
 
 /**
+ * Le bouton « Se déconnecter » : un formulaire POST avec le jeton CSRF.
+ *
+ * auth/logout.php refuse le GET (audit SEC-10) : un simple lien ne
+ * déconnecte plus. Le formulaire est en display:contents pour que le bouton
+ * prenne la place qu'occupait le lien dans la mise en page.
+ *
+ * @param string $contenu HTML du bouton (icône comprise), déjà échappé
+ */
+function formulaireDeconnexion(string $contenu, string $classe = '', string $style = ''): string {
+    return '<form method="post" action="' . htmlspecialchars(baseUrl('/auth/logout.php'), ENT_QUOTES) . '" style="display:contents">'
+         . csrfField()
+         . '<button type="submit"'
+         . ($classe !== '' ? ' class="' . htmlspecialchars($classe, ENT_QUOTES) . '"' : '')
+         . ($style !== '' ? ' style="' . htmlspecialchars($style, ENT_QUOTES) . '"' : '')
+         . '>' . $contenu . '</button></form>';
+}
+
+/**
  * Applique le thème avant le premier rendu et colore la barre d'état.
  *
  * Sans la balise theme-color, la barre du navigateur restait claire au-dessus

@@ -1,5 +1,20 @@
 <?php
+/**
+ * Déconnexion du site.
+ *
+ * En POST avec le jeton CSRF seulement : en GET, n'importe quelle page
+ * pouvait déconnecter un établissement en glissant
+ * <img src=".../auth/logout.php"> (audit SEC-10). Les liens « Se
+ * déconnecter » sont des formulaires (formulaireDeconnexion()). Un ancien
+ * lien ou favori en GET renvoie simplement vers l'espace du compte.
+ */
 require_once __DIR__ . '/../includes/auth_check.php'; // demarre la session
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: ' . (isLoggedIn() ? accueilSelonType($_SESSION['user_type'] ?? null) : baseUrl('/auth/login.php')));
+    exit;
+}
+csrfVerify();
 
 // Vider les données de session
 $_SESSION = [];

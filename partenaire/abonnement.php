@@ -34,7 +34,7 @@ if (!$etab) {
     siteDebut('Formule — Outsee pro');
     echo '<div class="conteneur" style="padding:80px 24px;max-width:560px;"><h1 class="titre-pro">Aucun établissement</h1>'
        . '<p class="pro-entete__sous" style="margin:12px 0 24px;">Ce compte n\'est rattaché à aucun établissement. Écrivez-nous pour le compléter.</p>'
-       . '<a class="bouton bouton--clair" href="' . htmlspecialchars(baseUrl('/auth/logout.php'), ENT_QUOTES) . '">Se déconnecter</a></div>';
+       . formulaireDeconnexion('Se déconnecter', 'bouton bouton--clair') . '</div>';
     siteFin();
     exit;
 }
