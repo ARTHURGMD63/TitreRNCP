@@ -8,6 +8,7 @@ et le projet adhère au [versioning sémantique](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Removed
+- **« Tes économies » retiré du Pass** de l'app : les économies du mois et de l'année restent affichées dans l'onglet Moi, qui les montrait déjà.
 - **Code mort des anciennes pages étudiantes du site** (explore, wallet, profil, squads, classement, carte, notifications, abonnements, avis, onboarding, view_event, view_profile) : environ 3 700 lignes qui ne s'exécutaient plus, puisque ces pages renvoient vers l'application. Les fichiers restent, réduits à la redirection, pour que les anciens liens ne tombent pas en 404.
 
 ### Added

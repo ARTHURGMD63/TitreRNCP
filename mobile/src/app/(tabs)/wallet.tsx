@@ -16,8 +16,10 @@
  *    chacune son carrousel : Événements, Sport (clubs et parties), Culture ;
  *  - les pass actifs regroupés par jour (2026-11-19), le plus proche ouvert ;
  *  - les squads prévus, puis le lien vers l'historique (écran à part, rangé
- *    par mois, aussi ouvert depuis Moi) ;
- *  - « Tes économies » en dernier : le mois et l'année, mêmes calculs.
+ *    par mois, aussi ouvert depuis Moi).
+ *
+ * « Tes économies » n'est plus ici depuis le 2026-11-19 : l'onglet Moi les
+ * montre déjà.
  *
  * « Luminosité au max » et « Ajouter à Apple Wallet » ne sont pas affichés :
  * l'application ne sait ni régler la luminosité ni générer de pass Wallet.
@@ -30,7 +32,7 @@ import QRCode from 'react-native-qrcode-svg';
 
 import { actions, api, ErreurApi, type GenrePass, type Pass, type ReponseWallet, type SquadAgenda } from '../../api';
 import { SPORTS } from '../../catalogue';
-import { Apparition, Compteur, PressableAnime, useMouvementReduit } from '../../composants/Animations';
+import { Apparition, PressableAnime, useMouvementReduit } from '../../composants/Animations';
 import { Bouton } from '../../composants/Bouton';
 import { CarreIcone, EnTeteApp, Pastille, useRubrique } from '../../composants/Design';
 import { Chargement, Contenu, EnTete, Ecran, Erreur } from '../../composants/Ecran';
@@ -77,15 +79,6 @@ function ouvrirFiche(p: Pass) {
   else if (g === 'partie') router.push({ pathname: '/creneau/[id]', params: { id } });
   else router.push({ pathname: '/evenement/[id]', params: { id } });
 }
-
-const MOIS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-
-/**
- * Le format d'un compteur d'économies : celui de toute l'application
- * (formatEuros, « 12,50 € »). Pendant le défilement, des euros entiers ; la
- * valeur exacte, centimes compris, à l'arrivée.
- */
-const formatCompteur = (cible: number) => (n: number) => formatEuros(n === cible ? cible : Math.round(n));
 
 /** Un rappel différé, annulé si le composant disparaît avant. */
 function useDiffere() {
@@ -653,24 +646,6 @@ export default function Wallet() {
                 </PressableAnime>
               </Apparition>
             ) : null}
-
-            <Apparition index={6}>
-              <TitreSection style={{ marginBottom: 12 }}>Tes économies</TitreSection>
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <View style={{ flex: 1, borderRadius: rayon.tuile, padding: 16, backgroundColor: c.blanc, gap: 6 }}>
-                  <T taille={fs[4]} couleur={c.gris}>{MOIS[new Date().getMonth()]}</T>
-                  <Compteur valeur={donnees.economies.mois} format={formatCompteur(donnees.economies.mois)}
-                    style={{ fontFamily: sans(700), fontSize: 20, letterSpacing: -0.03 * 20, color: c.succes, fontVariant: ['tabular-nums'] }} />
-                  <T taille={fs[3]} couleur={c.gris}>économisé ce mois</T>
-                </View>
-                <View style={{ flex: 1, borderRadius: rayon.tuile, padding: 16, backgroundColor: c.blanc, gap: 6 }}>
-                  <T taille={fs[4]} couleur={c.gris}>Total année</T>
-                  <Compteur valeur={donnees.economies.annee} delai={120} format={formatCompteur(donnees.economies.annee)}
-                    style={{ fontFamily: sans(700), fontSize: 20, letterSpacing: -0.03 * 20, color: c.noir, fontVariant: ['tabular-nums'] }} />
-                  <T taille={fs[3]} couleur={c.gris}>depuis janvier</T>
-                </View>
-              </View>
-            </Apparition>
           </>
         )}
       </Contenu>
