@@ -182,7 +182,6 @@ export default function SuiviEvenement() {
                   <T taille={fs[4]} poids={700} style={{ flexShrink: 1 }}>{p.prenom} {p.nom}</T>
                   {p.present ? <T taille={fs[4]} poids={600} couleur={c.succes}>Présent</T> : null}
                 </View>
-                <T taille={fs[4]} couleur={c.gris} selectable>{p.email}</T>
                 {p.ecole || p.promo ? <T taille={fs[4]} couleur={c.gris}>{[p.ecole, p.promo].filter(Boolean).join(' · ')}</T> : null}
               </View>
             )) : <T taille={fs[4]} couleur={c.gris}>Personne n&apos;est encore inscrit.</T>}
