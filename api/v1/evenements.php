@@ -28,6 +28,7 @@ require_once __DIR__ . '/../../includes/places.php';
 require_once __DIR__ . '/../../includes/hub.php';
 require_once __DIR__ . '/../../includes/musique.php';
 require_once __DIR__ . '/../../includes/evenements_photos.php';
+require_once __DIR__ . '/../../includes/uploads.php';
 require_once __DIR__ . '/../../includes/collaborations.php';
 
 apiExigerMethode('GET');
@@ -97,6 +98,9 @@ function apiEvenement(array $e, array $amis, array $etabsSuivis, array $collabor
             // abouti — l'événement reste listé, simplement pas sur la carte.
             'latitude'  => $e['etab_latitude'] !== null ? (float) $e['etab_latitude'] : null,
             'longitude' => $e['etab_longitude'] !== null ? (float) $e['etab_longitude'] : null,
+            // La photo de couverture du lieu (position 0, choisie dans
+            // l'espace pro) : le haut de la carte du hub. null sans photo.
+            'couverture' => !empty($e['etab_couverture']) ? apiUrlAbsolue(venuePhotoUrl((string) $e['etab_couverture'])) : null,
             // Etat du bouton « + SUIVRE » de la carte. Calcule ici : sans lui,
             // l'application devrait charger la liste des lieux suivis a part
             // puis la croiser elle-meme, pour une information que le serveur a

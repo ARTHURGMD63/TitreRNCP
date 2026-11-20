@@ -646,6 +646,9 @@ function hubEvenements(PDO $pdo, int $uid, array $criteres, array $etabsSuivis, 
     $stmtE = $pdo->prepare(
         "SELECT e.*, et.id AS etab_id, et.nom AS etablissement_nom, et.type AS etab_type, et.ville,
                 et.latitude AS etab_latitude, et.longitude AS etab_longitude,
+                (SELECT p.fichier FROM etablissement_photos p
+                  WHERE p.etablissement_id = et.id
+                  ORDER BY p.position ASC, p.id ASC LIMIT 1) AS etab_couverture,
                 $sponsoActif AS sponso_actif,
                 (e.date_heure <= '$maintenantParis' AND $finEff >= '$maintenantParis') AS en_cours_calc,
                 (SELECT COUNT(*) FROM inscriptions i
