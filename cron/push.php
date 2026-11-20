@@ -5,19 +5,21 @@
  * À lancer chaque minute, en ligne de commande :
  *     php cron/push.php
  *
- * Trois choses, dans cet ordre :
+ * Quatre choses, dans cet ordre :
  *
  *   1. les notifications que les établissements mis en avant ont programmées
  *      (« envoyer le vendredi à 17 h ») partent vers les abonnés du lieu à
  *      l'heure choisie — jamais plus de trois heures après : un message
  *      resté en retard n'a plus de sens ;
+ *   1 bis. un lieu suivi publie une soirée : ses abonnés le savent, dans
+ *      les trois heures qui suivent la publication ;
  *   2. le rappel de la veille, le soir (de 18 h à 22 h) pour les événements
  *      de demain, aux étudiants inscrits ;
  *   3. l'envoi de tout ce qui est dû (includes/push.php : préférences,
  *      plafonds, nuit).
  *
  * Le script est idempotent : la clé de chaque message (« rappel:42 »,
- * « sponso:7:19 ») interdit d'en écrire deux pour la même personne, si bien
+ * « sponso:7:19 », « nouveau:42:19 ») interdit d'en écrire deux pour la même personne, si bien
  * qu'on peut le relancer ou le chevaucher sans risque.
  */
 
@@ -62,6 +64,34 @@ foreach ($stmt->fetchAll() as $l) {
         ) !== null ? 1 : 0;
     } catch (Throwable $e) {
         logErreur('Notification de lieu non écrite', $e, ['sponsor_notification' => $l['sn_id']]);
+    }
+}
+
+// ── 1 bis. Nouvelle soirée d'un lieu suivi ──────────────────────────────────
+// Mêmes bornes que la cloche (includes/notifications.php) : publiée après
+// l'abonnement, pas encore passée, pas annulée. NOW() côté base, comme la
+// cloche, puisque created_at est écrit par la base. La catégorie « lieux »
+// se coupe dans les réglages et plafonne à deux messages par jour.
+$stmt = $pdo->prepare(
+    "SELECT e.id AS evenement_id, e.titre, et.nom AS lieu, fe.user_id
+       FROM evenements e
+       JOIN etablissements et ON et.id = e.etablissement_id
+       JOIN follows_etablissements fe ON fe.etablissement_id = e.etablissement_id
+      WHERE e.created_at >= NOW() - INTERVAL 3 HOUR
+        AND e.created_at >= fe.created_at
+        AND e.date_heure >= ?
+        AND e.annule_le IS NULL"
+);
+$stmt->execute([$maintenant->format('Y-m-d H:i:s')]);
+foreach ($stmt->fetchAll() as $l) {
+    [$titre, $corps] = pushTexteNouvelEvenement((string) $l['lieu'], (string) $l['titre']);
+    try {
+        $ecrits += pushMettreEnFile(
+            $pdo, (int) $l['user_id'], 'lieux', 'nouveau:' . $l['evenement_id'] . ':' . $l['user_id'],
+            $titre, $corps, ['url' => '/evenement/' . $l['evenement_id']]
+        ) !== null ? 1 : 0;
+    } catch (Throwable $e) {
+        logErreur('Notification de nouvelle soirée non écrite', $e, ['evenement' => $l['evenement_id']]);
     }
 }
 

@@ -54,7 +54,7 @@ function pushCategories(): array
         ],
         'lieux' => [
             'libelle'    => 'Offres des lieux suivis',
-            'detail'     => 'Les annonces des établissements que tu suis.',
+            'detail'     => 'Les nouvelles soirées et les annonces des établissements que tu suis.',
             'modifiable' => true,
             'plafond'    => 2,
         ],
@@ -185,6 +185,16 @@ function pushTexteBdeRefuse(): array
 function pushTexteLieu(string $lieu, string $titreEvenement): array
 {
     return [$lieu, $titreEvenement];
+}
+
+/**
+ * Un lieu suivi vient de publier une soirée.
+ *
+ * @return array{0:string, 1:string}
+ */
+function pushTexteNouvelEvenement(string $lieu, string $titreEvenement): array
+{
+    return [$lieu, 'Nouvelle soirée : ' . $titreEvenement];
 }
 
 /** @return array{0:string, 1:string} */

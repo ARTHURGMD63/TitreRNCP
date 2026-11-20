@@ -63,6 +63,7 @@ final class PushTest extends TestCase
             pushTexteDemandeSuivi('Léa'), pushTexteDemandeAcceptee('Léa'),
             pushTexteBdeValide(), pushTexteBdeRefuse(),
             pushTexteLieu('Le Bec', 'Soirée'), pushTexteRappel('Soirée', '22h00', 'Le Bec'),
+            pushTexteNouvelEvenement('Le Bec', 'Soirée'),
         ] as [$titre, $corps]) {
             $this->assertNotSame('', $titre);
             $this->assertNotSame('', $corps);
