@@ -289,7 +289,9 @@ export type Evenement = {
   /** Fiche seulement : l'étudiant aura-t-il cet âge le jour de l'événement ? */
   age_autorise?: boolean;
   lieu: string;
-  etablissement: { id: number; nom: string; type: string; ville: string; note: number | null; nb_avis: number; suivi: boolean; latitude: number | null; longitude: number | null };
+  etablissement: { id: number; nom: string; type: string; ville: string; note: number | null; nb_avis: number; suivi: boolean; latitude: number | null; longitude: number | null;
+    /** Photo de couverture du lieu (fil seulement) ; absente d'un ancien serveur. */
+    couverture?: string | null };
   places: { quota: number; inscrits: number; restantes: number | null; complet: boolean };
   reduction: number | null;
   prix_normal: number | null;
